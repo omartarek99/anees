@@ -11,6 +11,9 @@ export const LEAVES = 5;
 export const RUNE = 6;
 export const RUNEBLOCK = 7;
 export const BEDROCK = 8;
+// A tool, not a world block — never appears in generated terrain or the placeable instancing
+// list. It only ever lives in inventory/hotbar slots.
+export const AXE = 9;
 
 export const TILE_INFO: Record<number, { mineMs: number; nameKey: string }> = {
   [GRASS]: { mineMs: 180, nameKey: 'craft.tileGrass' },
@@ -21,10 +24,17 @@ export const TILE_INFO: Record<number, { mineMs: number; nameKey: string }> = {
   [RUNE]: { mineMs: 700, nameKey: 'craft.tileRune' },
   [RUNEBLOCK]: { mineMs: 200, nameKey: 'craft.tileRuneBrick' },
   [BEDROCK]: { mineMs: Infinity, nameKey: 'craft.tileBedrock' },
+  [AXE]: { mineMs: Infinity, nameKey: 'craft.tileAxe' },
 };
 
-/** Placeable inventory tiles, in hotbar order. */
-export const HOTBAR_ORDER = [GRASS, DIRT, STONE, WOOD, LEAVES, RUNEBLOCK];
+/** How much faster wood/leaves mine while the axe is the selected hotbar slot (and the
+ * player owns at least one). 0.4 = 60% faster, i.e. takes 40% of the normal time. */
+export const AXE_CHOP_MULTIPLIER = 0.4;
+/** Wood cost to craft one axe. */
+export const AXE_RECIPE_WOOD_COST = 3;
+
+/** Placeable inventory tiles plus the axe tool, in hotbar order. */
+export const HOTBAR_ORDER = [GRASS, DIRT, STONE, WOOD, LEAVES, RUNEBLOCK, AXE];
 
 function mulberry32(seed: number) {
   let a = seed | 0;

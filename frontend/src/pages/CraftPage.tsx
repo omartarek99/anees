@@ -18,6 +18,9 @@ import {
   RUNE,
   RUNEBLOCK,
   BEDROCK,
+  AXE,
+  AXE_CHOP_MULTIPLIER,
+  AXE_RECIPE_WOOD_COST,
   TILE_INFO,
   HOTBAR_ORDER,
   idx,
@@ -46,6 +49,7 @@ const SWATCH: Record<number, string> = {
   [RUNE]: '#6a5acd',
   [RUNEBLOCK]: '#f0a83a',
   [BEDROCK]: '#2c2a30',
+  [AXE]: '#c9a24b',
 };
 
 type Player3D = { x: number; y: number; z: number; vx: number; vy: number; vz: number; yaw: number; pitch: number; grounded: boolean };
@@ -102,6 +106,7 @@ export function CraftPage() {
   const rebuildRef = useRef<() => void>(() => {});
   const puzzleOpenRef = useRef(false);
   const introOpenRef = useRef(false);
+  const attemptLockRef = useRef<() => void>(() => {});
 
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -114,6 +119,11 @@ export function CraftPage() {
   const [puzzleBusy, setPuzzleBusy] = useState(false);
   const [showTouch, setShowTouch] = useState(false);
   const [locked, setLocked] = useState(false);
+  // Some browser contexts (embedded frames, certain security policies) silently refuse
+  // pointer lock — no error is guaranteed, so this flips on a timeout too. When it does,
+  // mouse-look falls back to drag-to-look (reusing the same layer built for touch) instead
+  // of leaving the camera stuck.
+  const [pointerLockUnavailable, setPointerLockUnavailable] = useState(false);
 
   function exitLock() {
     if (document.pointerLockElement) document.exitPointerLock();
@@ -483,13 +493,20 @@ export function CraftPage() {
       rebuildAllInstances();
     }
 
+    function holdingAxe(): boolean {
+      return HOTBAR_ORDER[game.selectedSlot] === AXE && (game.inventory[String(AXE)] || 0) > 0;
+    }
+
     function updateMining() {
       const target = game.reticle;
       if (game.mineHeld && target) {
         if (!game.mining || game.mining.x !== target.x || game.mining.y !== target.y || game.mining.z !== target.z) {
           const id = getTile(world, target.x, target.y, target.z);
-          if (id !== AIR && id !== BEDROCK) game.mining = { x: target.x, y: target.y, z: target.z, start: performance.now(), dur: TILE_INFO[id].mineMs, id };
-          else game.mining = null;
+          if (id !== AIR && id !== BEDROCK) {
+            let dur = TILE_INFO[id].mineMs;
+            if ((id === WOOD || id === LEAVES) && holdingAxe()) dur *= AXE_CHOP_MULTIPLIER;
+            game.mining = { x: target.x, y: target.y, z: target.z, start: performance.now(), dur, id };
+          } else game.mining = null;
         }
       } else {
         game.mining = null;
@@ -510,6 +527,7 @@ export function CraftPage() {
       if (getTile(world, px, py, pz) !== AIR) return;
       if (overlapsPlayerVoxel(px, py, pz)) return;
       const placeId = HOTBAR_ORDER[game.selectedSlot];
+      if (placeId === AXE) return; // a tool, not a placeable block
       if ((game.inventory[String(placeId)] || 0) <= 0) return;
       world.tiles[idx(px, py, pz)] = placeId;
       game.worldDiff.set(`${px},${py},${pz}`, placeId);
@@ -521,13 +539,30 @@ export function CraftPage() {
     }
 
     // ---- pointer lock (desktop) ----
-    function onClickCanvas() {
+    function attemptLock() {
       if (puzzleOpenRef.current || introOpenRef.current || showTouch) return;
-      canvas.requestPointerLock();
+      const result = canvas.requestPointerLock() as unknown;
+      if (result && typeof (result as Promise<void>).catch === 'function') {
+        (result as Promise<void>).catch(() => setPointerLockUnavailable(true));
+      }
+      // Some contexts neither resolve/reject a promise nor fire `pointerlockerror` — if we
+      // still aren't locked shortly after asking, treat lock as unsupported here rather than
+      // leaving the camera permanently stuck with no way to look around.
+      window.setTimeout(() => {
+        if (document.pointerLockElement !== canvas) setPointerLockUnavailable(true);
+      }, 400);
+    }
+    attemptLockRef.current = attemptLock;
+    function onClickCanvas() {
+      attemptLock();
     }
     function onPointerLockChange() {
       game.locked = document.pointerLockElement === canvas;
       setLocked(game.locked);
+      if (game.locked) setPointerLockUnavailable(false);
+    }
+    function onPointerLockError() {
+      setPointerLockUnavailable(true);
     }
     function onMouseMove(e: MouseEvent) {
       if (!game.locked) return;
@@ -550,6 +585,7 @@ export function CraftPage() {
 
     canvas.addEventListener('click', onClickCanvas);
     document.addEventListener('pointerlockchange', onPointerLockChange);
+    document.addEventListener('pointerlockerror', onPointerLockError);
     document.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('mousedown', onMouseDown);
     canvas.addEventListener('mouseup', onMouseUp);
@@ -645,6 +681,7 @@ export function CraftPage() {
       ro.disconnect();
       canvas.removeEventListener('click', onClickCanvas);
       document.removeEventListener('pointerlockchange', onPointerLockChange);
+      document.removeEventListener('pointerlockerror', onPointerLockError);
       document.removeEventListener('mousemove', onMouseMove);
       canvas.removeEventListener('mousedown', onMouseDown);
       canvas.removeEventListener('mouseup', onMouseUp);
@@ -712,6 +749,23 @@ export function CraftPage() {
   function selectSlot(i: number) {
     if (gameRef.current) gameRef.current.selectedSlot = i;
     setSelectedSlot(i);
+  }
+
+  const woodCount = inventory[String(WOOD)] ?? 0;
+  const canCraftAxe = woodCount >= AXE_RECIPE_WOOD_COST;
+
+  function craftAxe() {
+    const g = gameRef.current;
+    if (!g) return;
+    const wood = g.inventory[String(WOOD)] || 0;
+    if (wood < AXE_RECIPE_WOOD_COST) return;
+    g.inventory[String(WOOD)] = wood - AXE_RECIPE_WOOD_COST;
+    g.inventory[String(AXE)] = (g.inventory[String(AXE)] || 0) + 1;
+    g.dirty = true;
+    setInventory({ ...g.inventory });
+    // Jump straight to the axe slot so the new tool is immediately equipped and usable.
+    const axeSlot = HOTBAR_ORDER.indexOf(AXE);
+    if (axeSlot !== -1) selectSlot(axeSlot);
   }
 
   async function openPracticePuzzle() {
@@ -816,9 +870,9 @@ export function CraftPage() {
               }}
             />
 
-            {!showTouch && !locked && (
+            {!showTouch && !locked && !pointerLockUnavailable && (
               <div
-                onClick={() => canvasRef.current?.requestPointerLock()}
+                onClick={() => attemptLockRef.current()}
                 style={{
                   position: 'absolute',
                   inset: 0,
@@ -869,6 +923,39 @@ export function CraftPage() {
                 </div>
               </>
             )}
+
+            {/* Pointer lock isn't available in this browser/context (some embedded frames and
+                security policies block it) — fall back to drag-to-look with on-screen dig/build
+                buttons instead of leaving the camera unable to turn. Keyboard WASD still moves. */}
+            {!showTouch && pointerLockUnavailable && (
+              <>
+                <LookDragLayer gameRef={gameRef} />
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 10,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    zIndex: 2,
+                    background: 'rgba(24,35,56,.6)',
+                    color: 'white',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    padding: '6px 12px',
+                    borderRadius: 'var(--radius-pill)',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  {t('craft.dragToLookHint')}
+                </div>
+                <div style={{ position: 'absolute', right: 84, bottom: 14, zIndex: 2 }}>
+                  <TouchActionButton label="⛏" onDown={() => setMineHeld(gameRef, true)} onUp={() => setMineHeld(gameRef, false)} />
+                </div>
+                <div style={{ position: 'absolute', right: 14, bottom: 14, zIndex: 2 }}>
+                  <TouchActionButton label="🧱" onDown={() => queuePlace(gameRef)} onUp={() => {}} />
+                </div>
+              </>
+            )}
           </div>
 
           <div className="pill-row" style={{ padding: '0 18px 18px', alignItems: 'center' }}>
@@ -881,7 +968,11 @@ export function CraftPage() {
                 onClick={() => selectSlot(i)}
                 title={t(tileNameKey(id))}
               >
-                <span className="category-pill-icon" style={{ background: SWATCH[id] }} />
+                {id === AXE ? (
+                  <span className="category-pill-icon">🪓</span>
+                ) : (
+                  <span className="category-pill-icon" style={{ background: SWATCH[id] }} />
+                )}
                 <span style={{ fontSize: 11 }}>
                   {t(tileNameKey(id))}
                   <br />
@@ -889,7 +980,17 @@ export function CraftPage() {
                 </span>
               </button>
             ))}
-            <button type="button" className="btn btn-gold btn-sm" style={{ flexShrink: 0, marginInlineStart: 6 }} onClick={openPracticePuzzle}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              style={{ flexShrink: 0, marginInlineStart: 6 }}
+              onClick={craftAxe}
+              disabled={!canCraftAxe}
+              title={t('craft.craftAxeHint', { cost: AXE_RECIPE_WOOD_COST })}
+            >
+              {t('craft.craftAxeButton', { cost: AXE_RECIPE_WOOD_COST })}
+            </button>
+            <button type="button" className="btn btn-gold btn-sm" style={{ flexShrink: 0 }} onClick={openPracticePuzzle}>
               {t('craft.practicePuzzleButton')}
             </button>
           </div>
@@ -908,6 +1009,7 @@ export function CraftPage() {
               <li>{showTouch ? t('craft.introMoveTouch') : t('craft.introMove')}</li>
               <li>{showTouch ? t('craft.introDigTouch') : t('craft.introDig')}</li>
               <li>{showTouch ? t('craft.introBuildTouch') : t('craft.introBuild')}</li>
+              <li>{t('craft.introAxe')}</li>
               <li>{t('craft.introRune')}</li>
             </ul>
             <button type="button" className="btn btn-primary" onClick={() => setIntroOpen(false)}>
