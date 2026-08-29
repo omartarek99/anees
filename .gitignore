@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Local SQLite database — regenerated automatically (with seed data) on first `npm run dev`
+backend/data/*.db
+backend/data/*.db-shm
+backend/data/*.db-wal
+backend/data/*.bak
+
+# Env files (none committed by default — guard against future secrets)
+.env
+.env.local
+.env.*.local
+
+# Editor/OS cruft
+.DS_Store
+Thumbs.db

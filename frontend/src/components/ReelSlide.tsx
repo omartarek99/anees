@@ -1,0 +1,348 @@
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
+import { api, ApiError } from '../lib/api';
+import { useAuth } from '../lib/auth-context';
+import { useLanguage } from '../lib/language-context';
+import { translateApiError } from '../lib/i18n';
+import { Avatar } from './Avatar';
+import { QuizCard, type QuizAnswer, type QuizQuestion } from './QuizCard';
+import { QuizResults, type ResultItem } from './QuizResults';
+import { LevelUpToast } from './LevelUpToast';
+
+export type ReelSlideData = {
+  levelNumber: number;
+  reelId: number;
+  title: string;
+  scriptText: string;
+  videoUrl: string | null;
+  subjectIcon: string;
+  subjectName: string;
+  questions: QuizQuestion[];
+  completed: boolean;
+  stars: number;
+};
+
+type SubmitResult = {
+  results: ResultItem[];
+  correctCount: number;
+  total: number;
+  xpEarned: number;
+  stars: number;
+  leveledUp: boolean;
+  newPlayerLevel: number;
+};
+
+type WatchResponse = { watchedSeconds: number; xpEarned: number; totalWatchXp: number };
+
+const WATCH_FLUSH_SECONDS = 5;
+
+export const ReelSlide = forwardRef<
+  HTMLDivElement,
+  {
+    data: ReelSlideData;
+    isActive: boolean;
+    isReplay?: boolean;
+    onCompleted: (result: SubmitResult) => void;
+    onNext: () => void;
+    hasNext: boolean;
+  }
+>(function ReelSlide({ data, isActive, isReplay, onCompleted, onNext, hasNext }, ref) {
+  const { t, lang } = useLanguage();
+  const { user, refreshUser } = useAuth();
+  const [mode, setMode] = useState<'watch' | 'quiz' | 'results'>('watch');
+  const [playing, setPlaying] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<SubmitResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [levelUpValue, setLevelUpValue] = useState<number | null>(null);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(() => 40 + ((data.levelNumber * 17) % 260));
+  const [watchProgress, setWatchProgress] = useState(0); // 0-1, cosmetic top progress bar
+
+  const pendingSecondsRef = useRef(0);
+  const watchedTotalRef = useRef(0);
+  const durationEstimate = 60; // reels don't carry a client-side duration yet; used only for the cosmetic bar
+
+  // Real watch-time tracking: only ticks while this slide is the one actually in view and
+  // still in "watch" mode, so scrolled-past or backgrounded slides can't accrue XP.
+  useEffect(() => {
+    if (!isActive || mode !== 'watch') return;
+    setPlaying(true);
+    const tick = setInterval(() => {
+      pendingSecondsRef.current += 1;
+      watchedTotalRef.current = Math.min(durationEstimate, watchedTotalRef.current + 1);
+      setWatchProgress(watchedTotalRef.current / durationEstimate);
+      if (pendingSecondsRef.current >= WATCH_FLUSH_SECONDS) flushWatchTime();
+    }, 1000);
+    return () => {
+      clearInterval(tick);
+      flushWatchTime(true);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive, mode]);
+
+  async function flushWatchTime(force = false) {
+    const pending = pendingSecondsRef.current;
+    if (pending <= 0) return;
+    if (!force && pending < WATCH_FLUSH_SECONDS) return;
+    pendingSecondsRef.current = 0;
+    try {
+      const res = await api.post<WatchResponse>(`/reels/${data.reelId}/watch`, { seconds: pending });
+      if (res.xpEarned > 0) refreshUser();
+    } catch {
+      // watch-time XP is a bonus, not critical — drop silently on failure
+    }
+  }
+
+  async function handleSubmit(answers: QuizAnswer[]) {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await api.post<SubmitResult>(`/reels/${data.reelId}/submit`, { answers });
+      setResult(res);
+      setMode('results');
+      onCompleted(res);
+      if (res.leveledUp) setLevelUpValue(res.newPlayerLevel);
+    } catch (err) {
+      setError(err instanceof ApiError ? translateApiError(lang, err.message) : 'Error');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const captionPreview = useMemo(() => data.scriptText, [data.scriptText]);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        scrollSnapAlign: 'start',
+        scrollSnapStop: 'always',
+        height: '100%',
+        width: '100%',
+        flexShrink: 0,
+        position: 'relative',
+        overflow: 'hidden',
+        background: '#0b0b0f',
+        color: 'white',
+      }}
+    >
+      {/* top progress line — TikTok-style thin bar, driven by tracked watch time */}
+      <div style={{ position: 'absolute', top: 0, insetInlineStart: 0, insetInlineEnd: 0, height: 3, background: 'rgba(255,255,255,0.15)', zIndex: 4 }}>
+        <div
+          style={{
+            height: '100%',
+            width: `${Math.min(100, watchProgress * 100)}%`,
+            background: 'linear-gradient(90deg, var(--gold), #fff)',
+            transition: 'width 0.6s linear',
+          }}
+        />
+      </div>
+
+      {/* level badge */}
+      <div style={{ position: 'absolute', top: 14, insetInlineStart: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span className="badge badge-gold">{t('reels.level', { n: data.levelNumber })}</span>
+        {data.completed && <span style={{ fontSize: 14 }}>{'⭐'.repeat(data.stars)}</span>}
+        {isReplay && (
+          <span className="badge" style={{ background: 'rgba(255,255,255,0.18)', color: 'white', backdropFilter: 'blur(6px)' }}>
+            {t('reels.replayTag')}
+          </span>
+        )}
+      </div>
+
+      {mode === 'watch' && (
+        <div style={{ position: 'absolute', inset: 0 }}>
+          {/* full-bleed background */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'radial-gradient(circle at 50% 38%, #241b3a, #0b0b0f 70%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onClick={() => setPlaying((p) => !p)}
+          >
+            {data.videoUrl ? (
+              <video src={data.videoUrl} autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div
+                style={{
+                  fontSize: 92,
+                  animation: playing ? 'spin 6s linear infinite' : 'none',
+                  filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.5))',
+                }}
+              >
+                {data.subjectIcon}
+              </div>
+            )}
+          </div>
+
+          {/* bottom scrim for text legibility */}
+          <div
+            style={{
+              position: 'absolute',
+              insetInlineStart: 0,
+              insetInlineEnd: 0,
+              bottom: 0,
+              height: '46%',
+              background: 'linear-gradient(180deg, transparent, rgba(0,0,0,0.85) 65%)',
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* right action rail — physical right side, matching TikTok across languages */}
+          <div
+            style={{
+              position: 'absolute',
+              right: 10,
+              bottom: 110,
+              zIndex: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 18,
+            }}
+          >
+            <Avatar avatarKey={user?.avatarKey ?? 'falcon'} size={44} />
+
+            <button
+              type="button"
+              onClick={() => {
+                setLiked((v) => !v);
+                setLikeCount((c) => c + (liked ? -1 : 1));
+              }}
+              style={{ background: 'none', border: 'none', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}
+            >
+              <span style={{ fontSize: 30, transform: liked ? 'scale(1.15)' : 'scale(1)', transition: 'transform 0.15s' }}>
+                {liked ? '❤️' : '🤍'}
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 700, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>{likeCount}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMode('quiz')}
+              style={{ background: 'none', border: 'none', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}
+            >
+              <span style={{ fontSize: 28 }}>📝</span>
+              <span style={{ fontSize: 12, fontWeight: 700, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>{data.questions.length}</span>
+            </button>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+              <span style={{ fontSize: 26 }}>💎</span>
+              <span style={{ fontSize: 12, fontWeight: 700, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>{t('reels.xpTag')}</span>
+            </div>
+
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: 'linear-gradient(150deg, var(--maroon-light), var(--maroon-dark))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18,
+                animation: playing ? 'spin 4s linear infinite' : 'none',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                border: '2px solid rgba(255,255,255,0.25)',
+              }}
+            >
+              {data.subjectIcon}
+            </div>
+          </div>
+
+          {/* bottom-left info block */}
+          <div style={{ position: 'absolute', insetInlineStart: 16, insetInlineEnd: 88, bottom: 20, zIndex: 3 }}>
+            <span
+              className="badge"
+              style={{ background: 'rgba(255,255,255,0.18)', color: 'white', marginBottom: 8, backdropFilter: 'blur(6px)' }}
+            >
+              {data.subjectIcon} {data.subjectName}
+            </span>
+            <h2 style={{ color: 'white', fontSize: 19, margin: '2px 0 6px', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
+            <p
+              style={{
+                color: 'rgba(255,255,255,0.92)',
+                fontSize: 13.5,
+                lineHeight: 1.4,
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+              }}
+            >
+              {captionPreview}
+            </p>
+            {!data.videoUrl && (
+              <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11.5, marginTop: 6 }}>{t('reels.videoComingSoon')}</p>
+            )}
+            <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setMode('quiz')}>
+              {t('reels.takeQuiz')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {mode === 'quiz' && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(238,241,247,0.96)',
+            backdropFilter: 'blur(22px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(22px) saturate(180%)',
+            color: 'var(--ink)',
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
+            padding: '70px 16px 24px',
+            borderRadius: '20px 20px 0 0',
+          }}
+        >
+          {error && <div className="form-error-banner">{error}</div>}
+          <QuizCard questions={data.questions} onSubmit={handleSubmit} submitting={submitting} submitLabel={t('quiz.submit')} />
+        </div>
+      )}
+
+      {mode === 'results' && result && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(238,241,247,0.96)',
+            backdropFilter: 'blur(22px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(22px) saturate(180%)',
+            color: 'var(--ink)',
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
+            padding: '70px 16px 24px',
+            borderRadius: '20px 20px 0 0',
+          }}
+        >
+          <div className="stack">
+            <div className="card text-center" style={{ background: 'var(--sand)' }}>
+              <h2 style={{ fontSize: 22 }}>{t('reels.correctCount', { correct: result.correctCount, total: result.total })}</h2>
+              <div style={{ fontSize: 26 }}>
+                {'⭐'.repeat(result.stars)}
+                {'☆'.repeat(3 - result.stars)}
+              </div>
+              <p className="badge badge-gold" style={{ fontSize: 15, marginTop: 8 }}>
+                {t('common.xpGained', { xp: result.xpEarned })}
+              </p>
+            </div>
+            <QuizResults questions={data.questions} results={result.results} />
+            {hasNext && (
+              <button className="btn btn-primary btn-block" onClick={onNext}>
+                {t('reels.nextLesson')}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      <LevelUpToast newLevel={levelUpValue} onDismiss={() => setLevelUpValue(null)} />
+    </div>
+  );
+});
