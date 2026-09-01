@@ -23,3 +23,18 @@ const craftSaveCols = db.prepare(`PRAGMA table_info(craft_saves)`).all() as { na
 if (!craftSaveCols.some((c) => c.name === 'player_z')) {
   db.exec(`ALTER TABLE craft_saves ADD COLUMN player_z REAL NOT NULL DEFAULT 0`);
 }
+
+// Student/teacher accounts + student grade level, added after the initial users table.
+const userCols = db.prepare(`PRAGMA table_info(users)`).all() as { name: string }[];
+if (!userCols.some((c) => c.name === 'role')) {
+  db.exec(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL CHECK (role IN ('student','teacher')) DEFAULT 'student'`);
+}
+if (!userCols.some((c) => c.name === 'grade')) {
+  db.exec(`ALTER TABLE users ADD COLUMN grade INTEGER`);
+}
+
+// Teacher-authored announcements, added after the initial news_posts table.
+const newsCols = db.prepare(`PRAGMA table_info(news_posts)`).all() as { name: string }[];
+if (!newsCols.some((c) => c.name === 'author_user_id')) {
+  db.exec(`ALTER TABLE news_posts ADD COLUMN author_user_id INTEGER REFERENCES users(id)`);
+}

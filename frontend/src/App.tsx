@@ -6,6 +6,7 @@ import { LanguageToggle } from './components/LanguageToggle';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { HomePage } from './pages/HomePage';
+import { TeacherHomePage } from './pages/TeacherHomePage';
 import { ReelsPage } from './pages/ReelsPage';
 import { MapPage } from './pages/MapPage';
 import { CraftPage } from './pages/CraftPage';
@@ -39,10 +40,25 @@ function ProtectedLayout() {
   );
 }
 
+function RoleHome() {
+  const { user } = useAuth();
+  return user?.role === 'teacher' ? <TeacherHomePage /> : <HomePage />;
+}
+
+/** Gates the wrapped routes to student accounts only — a signed-in teacher who navigates
+ * (or deep-links) here is bounced back to Home, matching the student-only APIs behind these
+ * pages so a teacher account never sees student material through the UI either. */
+function StudentOnly() {
+  const { user } = useAuth();
+  if (user?.role !== 'student') return <Navigate to="/" replace />;
+  return <Outlet />;
+}
+
 function PublicOnlyLayout() {
   const { user, loading } = useAuth();
   if (loading) return <FullScreenLoader />;
-  if (user) return <Navigate to="/" replace />;
+  // First page after signing in: students land on Reels, teachers land on Home.
+  if (user) return <Navigate to={user.role === 'student' ? '/reels' : '/'} replace />;
   return (
     <div style={{ position: 'relative' }}>
       <div style={{ position: 'absolute', top: 16, insetInlineEnd: 16, zIndex: 10 }}>
@@ -65,15 +81,17 @@ export default function App() {
             </Route>
 
             <Route element={<ProtectedLayout />}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/reels" element={<ReelsPage />} />
-              <Route path="/map" element={<MapPage />} />
-              <Route path="/craft" element={<CraftPage />} />
-              <Route path="/worksheets" element={<WorksheetsPage />} />
-              <Route path="/leaderboard" element={<LeaderboardPage />} />
-              <Route path="/friends" element={<FriendsPage />} />
-              <Route path="/messages" element={<MessagesPage />} />
-              <Route path="/messages/:username" element={<MessagesPage />} />
+              <Route path="/" element={<RoleHome />} />
+              <Route element={<StudentOnly />}>
+                <Route path="/reels" element={<ReelsPage />} />
+                <Route path="/map" element={<MapPage />} />
+                <Route path="/craft" element={<CraftPage />} />
+                <Route path="/worksheets" element={<WorksheetsPage />} />
+                <Route path="/leaderboard" element={<LeaderboardPage />} />
+                <Route path="/friends" element={<FriendsPage />} />
+                <Route path="/messages" element={<MessagesPage />} />
+                <Route path="/messages/:username" element={<MessagesPage />} />
+              </Route>
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile/:username" element={<ProfilePage />} />
             </Route>

@@ -301,6 +301,16 @@ export const ReelSlide = forwardRef<
             borderRadius: '20px 20px 0 0',
           }}
         >
+          {/* Lets the student back out of the quiz without submitting — they can reopen it
+              any time from the "Take the Quiz" button, which just re-sets this same mode. */}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ position: 'absolute', top: 16, insetInlineStart: 16, zIndex: 1 }}
+            onClick={() => setMode('watch')}
+          >
+            {t('quiz.exit')}
+          </button>
           {error && <div className="form-error-banner">{error}</div>}
           <QuizCard questions={data.questions} onSubmit={handleSubmit} submitting={submitting} submitLabel={t('quiz.submit')} />
         </div>

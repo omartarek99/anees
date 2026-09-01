@@ -3,6 +3,8 @@ import { api, ApiError } from './api';
 import { DEV_BYPASS_LOGIN, DEV_ACCOUNT } from './dev-config';
 import type { RankTier } from '../components/RankBadge';
 
+export type Role = 'student' | 'teacher';
+
 export type User = {
   id: number;
   username: string;
@@ -11,13 +13,23 @@ export type User = {
   totalXp: number;
   playerLevel: number;
   rankTier: RankTier;
+  role: Role;
+  grade: number | null;
   createdAt: string;
 };
 
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
-  signup: (input: { username: string; email: string; password: string; displayName: string; avatarKey: string }) => Promise<void>;
+  signup: (input: {
+    username: string;
+    email: string;
+    password: string;
+    displayName: string;
+    avatarKey: string;
+    role: Role;
+    grade?: number;
+  }) => Promise<void>;
   login: (input: { username: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;

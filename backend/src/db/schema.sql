@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_key TEXT NOT NULL DEFAULT 'falcon',
   total_xp INTEGER NOT NULL DEFAULT 0,
   is_seed INTEGER NOT NULL DEFAULT 0,
+  role TEXT NOT NULL CHECK (role IN ('student','teacher')) DEFAULT 'student',
+  grade INTEGER,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -36,6 +38,9 @@ CREATE TABLE IF NOT EXISTS news_posts (
   body TEXT NOT NULL,
   body_ar TEXT NOT NULL DEFAULT '',
   icon TEXT NOT NULL DEFAULT '📣',
+  -- NULL for seeded/system announcements; set to the authoring teacher's user id for
+  -- posts created through the teacher news composer.
+  author_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   published_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

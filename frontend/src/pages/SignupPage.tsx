@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../lib/auth-context';
+import { useAuth, type Role } from '../lib/auth-context';
 import { ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
@@ -15,6 +15,8 @@ export function SignupPage() {
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [avatarKey, setAvatarKey] = useState('falcon');
+  const [role, setRole] = useState<Role>('student');
+  const [grade, setGrade] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -23,7 +25,15 @@ export function SignupPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await signup({ username, email, password, displayName, avatarKey });
+      await signup({
+        username,
+        email,
+        password,
+        displayName,
+        avatarKey,
+        role,
+        grade: role === 'student' ? Number(grade) : undefined,
+      });
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
       setError(translateApiError(lang, message));
@@ -61,9 +71,48 @@ export function SignupPage() {
         </div>
 
         <div className="field">
+          <label>{t('auth.iAmA')}</label>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              type="button"
+              className={`btn ${role === 'student' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ flex: 1 }}
+              onClick={() => setRole('student')}
+            >
+              {t('auth.roleStudent')}
+            </button>
+            <button
+              type="button"
+              className={`btn ${role === 'teacher' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ flex: 1 }}
+              onClick={() => setRole('teacher')}
+            >
+              {t('auth.roleTeacher')}
+            </button>
+          </div>
+        </div>
+
+        <div className="field">
           <label htmlFor="displayName">{t('auth.displayName')}</label>
           <input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required maxLength={40} />
         </div>
+        {role === 'student' && (
+          <div className="field">
+            <label htmlFor="grade">{t('auth.grade')}</label>
+            <input
+              id="grade"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={12}
+              placeholder={t('auth.gradePlaceholder')}
+              value={grade}
+              onChange={(e) => setGrade(e.target.value)}
+              required
+              title={t('auth.gradeHint')}
+            />
+          </div>
+        )}
         <div className="field">
           <label htmlFor="username">{t('auth.username')}</label>
           <input

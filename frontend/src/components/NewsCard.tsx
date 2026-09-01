@@ -10,6 +10,7 @@ type NewsPost = {
   icon: string;
   subject: string | null;
   publishedAt: string;
+  isMine?: boolean;
 };
 
 function timeAgo(iso: string, t: (path: string, vars?: Record<string, string | number>) => string): string {
@@ -22,7 +23,7 @@ function timeAgo(iso: string, t: (path: string, vars?: Record<string, string | n
   return t('time.monthsAgo', { n: months });
 }
 
-export function NewsCard({ post }: { post: NewsPost }) {
+export function NewsCard({ post, onDelete }: { post: NewsPost; onDelete?: (id: number) => void }) {
   const { t, lang } = useLanguage();
   return (
     <div className="list-row" style={{ alignItems: 'flex-start' }}>
@@ -30,11 +31,25 @@ export function NewsCard({ post }: { post: NewsPost }) {
       <div style={{ flex: 1 }}>
         <div className="flex-between" style={{ gap: 8 }}>
           <h3 style={{ fontSize: 15, margin: 0 }}>{pickText(lang, post.title, post.titleAr)}</h3>
-          {post.subject && (
-            <span className={`badge ${post.subject === 'math' ? 'badge-maroon' : 'badge-gold'}`}>
-              {post.subject === 'math' ? t('home.filterMath') : t('home.filterScience')}
-            </span>
-          )}
+          <div className="flex gap-sm" style={{ alignItems: 'center' }}>
+            {post.subject && (
+              <span className={`badge ${post.subject === 'math' ? 'badge-maroon' : 'badge-gold'}`}>
+                {post.subject === 'math' ? t('home.filterMath') : t('home.filterScience')}
+              </span>
+            )}
+            {post.isMine && onDelete && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ padding: '4px 10px', fontSize: 12 }}
+                onClick={() => {
+                  if (window.confirm(t('teacher.deleteConfirm'))) onDelete(post.id);
+                }}
+              >
+                {t('teacher.delete')}
+              </button>
+            )}
+          </div>
         </div>
         <p style={{ marginTop: 6, marginBottom: 6, color: 'var(--ink-soft)', fontSize: 14 }}>{pickText(lang, post.body, post.bodyAr)}</p>
         <span className="muted" style={{ fontSize: 12 }}>

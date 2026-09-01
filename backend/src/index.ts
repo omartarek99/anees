@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { seed } from './db/seed.js';
 import { apiLimiter } from './middleware/rateLimit.js';
+import { requireAuth, requireRole } from './middleware/auth.js';
 import { authRouter } from './routes/auth.js';
 import { usersRouter } from './routes/users.js';
 import { reelsRouter } from './routes/reels.js';
@@ -38,16 +39,21 @@ app.use('/api', apiLimiter);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
+// Student-only feature areas — a teacher account gets a 403 from the API even if it
+// somehow reaches these routes directly, matching the student-only UI/routing on the
+// frontend. News stays open to both roles (everyone reads announcements; only the
+// POST/DELETE routes inside newsRouter itself are teacher-gated).
+const studentOnly = [requireAuth, requireRole('student')];
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
-app.use('/api/reels', reelsRouter);
-app.use('/api/map', mapRouter);
-app.use('/api/worksheets', worksheetsRouter);
-app.use('/api/leaderboard', leaderboardRouter);
-app.use('/api/friends', friendsRouter);
-app.use('/api/messages', messagesRouter);
+app.use('/api/reels', ...studentOnly, reelsRouter);
+app.use('/api/map', ...studentOnly, mapRouter);
+app.use('/api/worksheets', ...studentOnly, worksheetsRouter);
+app.use('/api/leaderboard', ...studentOnly, leaderboardRouter);
+app.use('/api/friends', ...studentOnly, friendsRouter);
+app.use('/api/messages', ...studentOnly, messagesRouter);
 app.use('/api/news', newsRouter);
-app.use('/api/craft', craftRouter);
+app.use('/api/craft', ...studentOnly, craftRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found.' });

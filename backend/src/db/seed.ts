@@ -37,7 +37,21 @@ function makePool(qs: Q[]): Q[] {
   return qs.map((q, i) => rotateCorrect(q, i % 4));
 }
 
+/** Ensures the dev teacher test account exists even on a database that was already seeded
+ * before the teacher role was added — the full seed() below is a no-op past that point, so
+ * this small idempotent check runs on every boot instead of only on a brand-new database. */
+function ensureDevTeacher() {
+  const exists = db.prepare(`SELECT id FROM users WHERE username = 'dev_teacher'`).get();
+  if (exists) return;
+  const passwordHash = bcrypt.hashSync('teachpass123', 10);
+  db.prepare(
+    `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade) VALUES (?,?,?,?,?,?,?,?,?)`
+  ).run('dev_teacher', 'dev_teacher@anees.local', passwordHash, 'Dev Teacher', 'explorer', 0, 0, 'teacher', null);
+  console.log('[seed] Added dev_teacher account to existing database.');
+}
+
 export function seed() {
+  ensureDevTeacher();
   const subjectCount = (db.prepare('SELECT COUNT(*) as c FROM subjects').get() as { c: number }).c;
   if (subjectCount > 0) return; // already seeded
 
@@ -626,7 +640,7 @@ export function seed() {
   // Dev bypass account (real seeded account backing frontend dev-config.ts)
   // ---------------------------------------------------------------------
   const insertUser = db.prepare(
-    `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp, is_seed) VALUES (?,?,?,?,?,?,?)`
+    `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade) VALUES (?,?,?,?,?,?,?,?,?)`
   );
   const insertProgress = db.prepare(
     `INSERT INTO user_level_progress (user_id, map_level_id, status) VALUES (?,?,?)`
@@ -635,9 +649,10 @@ export function seed() {
 
   const devPasswordHash = bcrypt.hashSync('devpass123', 10);
   const devUserId = Number(
-    insertUser.run('dev_student', 'dev_student@anees.local', devPasswordHash, 'Dev Student', 'falcon', 0, 0).lastInsertRowid
+    insertUser.run('dev_student', 'dev_student@anees.local', devPasswordHash, 'Dev Student', 'falcon', 0, 0, 'student', 5).lastInsertRowid
   );
   insertProgress.run(devUserId, levelIds.get(1)!, 'available');
+  // dev_teacher is created by ensureDevTeacher() above (runs on every boot, not just first-seed).
 
   // ---------------------------------------------------------------------
   // Demo seed students — populate leaderboard/friends so the app isn't
@@ -656,7 +671,7 @@ export function seed() {
     const randomPassword = crypto.randomBytes(24).toString('hex');
     const hash = bcrypt.hashSync(randomPassword, 10);
     const userId = Number(
-      insertUser.run(s.username, `${s.username}@anees.local`, hash, s.displayName, s.avatar, s.xp, 1).lastInsertRowid
+      insertUser.run(s.username, `${s.username}@anees.local`, hash, s.displayName, s.avatar, s.xp, 1, 'student', 5).lastInsertRowid
     );
     insertXpEvent.run(userId, s.xp, 'seed_bootstrap', toSqlite(now));
   }

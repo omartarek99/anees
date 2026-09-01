@@ -24,13 +24,23 @@ export const emailSchema = z.string().trim().email('Please enter a valid email a
 
 export const avatarKeySchema = z.enum(AVATAR_KEYS);
 
-export const signupSchema = z.object({
-  username: usernameSchema,
-  email: emailSchema,
-  password: passwordSchema,
-  displayName: displayNameSchema,
-  avatarKey: avatarKeySchema,
-});
+export const roleSchema = z.enum(['student', 'teacher']);
+export const gradeSchema = z.number().int().min(1).max(12);
+
+export const signupSchema = z
+  .object({
+    username: usernameSchema,
+    email: emailSchema,
+    password: passwordSchema,
+    displayName: displayNameSchema,
+    avatarKey: avatarKeySchema,
+    role: roleSchema,
+    grade: gradeSchema.optional(),
+  })
+  .refine((data) => data.role !== 'student' || data.grade !== undefined, {
+    message: 'Please enter your grade.',
+    path: ['grade'],
+  });
 
 export const loginSchema = z.object({
   username: usernameSchema,

@@ -30,12 +30,14 @@ function publicUser(user: any) {
     totalXp: user.total_xp,
     playerLevel: getPlayerLevel(user.id),
     rankTier: getRankTier(user.total_xp),
+    role: user.role,
+    grade: user.grade,
     createdAt: user.created_at,
   };
 }
 
 authRouter.post('/signup', authLimiter, requireCsrfHeader, validateBody(signupSchema), (req, res) => {
-  const { username, email, password, displayName, avatarKey } = req.body;
+  const { username, email, password, displayName, avatarKey, role, grade } = req.body;
 
   const usernameCheck = moderateText(username);
   if (!usernameCheck.allowed) {
@@ -60,15 +62,18 @@ authRouter.post('/signup', authLimiter, requireCsrfHeader, validateBody(signupSc
   const userId = Number(
     db
       .prepare(
-        `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp) VALUES (?,?,?,?,?,0)`
+        `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp, role, grade) VALUES (?,?,?,?,?,0,?,?)`
       )
-      .run(username, email, passwordHash, displayName, avatarKey).lastInsertRowid
+      .run(username, email, passwordHash, displayName, avatarKey, role, role === 'student' ? grade ?? null : null).lastInsertRowid
   );
 
-  db.prepare(
-    `INSERT INTO user_level_progress (user_id, map_level_id, status)
-     SELECT ?, id, 'available' FROM map_levels WHERE level_number = 1`
-  ).run(userId);
+  // Only students progress through the map — a teacher account has no lessons to unlock.
+  if (role === 'student') {
+    db.prepare(
+      `INSERT INTO user_level_progress (user_id, map_level_id, status)
+       SELECT ?, id, 'available' FROM map_levels WHERE level_number = 1`
+    ).run(userId);
+  }
 
   const { token, expiresAt } = createSession(userId);
   res.cookie(SESSION_COOKIE, token, cookieOptions);
