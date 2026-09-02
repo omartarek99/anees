@@ -112,6 +112,10 @@ const en = {
     correctCount: '{correct}/{total} Correct!',
     nextLesson: 'Next Lesson ↓',
     locked: 'Locked',
+    stillWatchingTitle: 'Still watching? 👀',
+    stillWatchingBody: "This lesson has been replaying with no taps for a while. Let us know you're still here to keep earning XP for it!",
+    stillWatchingConfirm: "Yes, I'm still here!",
+    stillWatchingCountdown: 'This won’t count as watched in {n}s…',
   },
   quiz: {
     submit: 'Submit Quiz ✅',
@@ -373,6 +377,10 @@ const ar: typeof en = {
     correctCount: '{correct}/{total} إجابة صحيحة!',
     nextLesson: 'الدرس التالي ↓',
     locked: 'مقفل',
+    stillWatchingTitle: 'هل ما زلت تشاهد؟ 👀',
+    stillWatchingBody: 'ظلّ هذا الدرس يُعاد تشغيله من تلقاء نفسه دون أي تفاعل لفترة. أخبرنا أنك ما زلت هنا لتستمر في كسب نقاط الخبرة!',
+    stillWatchingConfirm: 'نعم، ما زلت هنا!',
+    stillWatchingCountdown: 'لن يُحتسب هذا كمشاهدة خلال {n} ثانية…',
   },
   quiz: {
     submit: 'إرسال الإجابات ✅',

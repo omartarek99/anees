@@ -860,6 +860,16 @@ svg {
   padding: 48px 20px;
   color: var(--ink-soft);
 }
+/* Scrolls normally, just hides the visible scrollbar track/thumb (e.g. the reel quiz and
+   results overlays, which already have their own gesture-based navigation cues). */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Chromium Edge */
+}
+
 .spinner {
   width: 32px;
   height: 32px;
