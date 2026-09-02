@@ -13,7 +13,6 @@ import { CraftPage } from './pages/CraftPage';
 import { WorksheetsPage } from './pages/WorksheetsPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { FriendsPage } from './pages/FriendsPage';
-import { MessagesPage } from './pages/MessagesPage';
 import { ProfilePage } from './pages/ProfilePage';
 
 function FullScreenLoader() {
@@ -89,8 +88,6 @@ export default function App() {
                 <Route path="/worksheets" element={<WorksheetsPage />} />
                 <Route path="/leaderboard" element={<LeaderboardPage />} />
                 <Route path="/friends" element={<FriendsPage />} />
-                <Route path="/messages" element={<MessagesPage />} />
-                <Route path="/messages/:username" element={<MessagesPage />} />
               </Route>
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile/:username" element={<ProfilePage />} />

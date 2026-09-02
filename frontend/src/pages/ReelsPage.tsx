@@ -1,5 +1,9 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Mousewheel } from 'swiper/modules';
+import type { Swiper as SwiperClass } from 'swiper';
+import 'swiper/css';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -24,10 +28,6 @@ type ReelDetailResponse = {
   progress: { status: 'locked' | 'available' | 'completed'; stars: number };
 };
 
-// How many upcoming slides must remain before we extend the feed with another lap —
-// keeps the scroll seamless, since growth happens well before the student reaches the end.
-const GROW_WHEN_WITHIN = 3;
-
 export function ReelsPage() {
   const { refreshUser } = useAuth();
   const { t, lang } = useLanguage();
@@ -35,13 +35,19 @@ export function ReelsPage() {
   const [rawDetails, setRawDetails] = useState<ReelDetailResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [laps, setLaps] = useState(1);
-  const slideRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
-  const pendingScrollLevel = useRef<number | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const [activeKey, setActiveKey] = useState<string | null>(null);
+  // null until Swiper reports a real slide-change event — see `initialIndex` fallback below.
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const swiperRef = useRef<SwiperClass | null>(null);
 
-  const baseSlides: ReelSlideData[] = useMemo(
+  // Deep-link support (e.g. a Map-page "Watch the lesson" link with ?level=N): captured once
+  // on mount, then handed to Swiper as `initialSlide` so it starts on the right slide from
+  // its very first render — no post-mount imperative jump needed.
+  const [deepLinkLevel] = useState(() => {
+    const level = searchParams.get('level');
+    return level ? Number(level) : null;
+  });
+
+  const slides: ReelSlideData[] = useMemo(
     () =>
       rawDetails.map((detail) => ({
         levelNumber: detail.level.levelNumber,
@@ -64,18 +70,15 @@ export function ReelsPage() {
     [rawDetails, lang]
   );
 
-  // The rendered feed loops the student's unlocked levels endlessly instead of dead-ending —
-  // each lap gets its own key suffix so React (and the ref map) can tell repeats apart.
-  const renderedSlides = useMemo(() => {
-    if (baseSlides.length === 0) return [];
-    const items: { key: string; lap: number; data: ReelSlideData }[] = [];
-    for (let lap = 0; lap < laps; lap++) {
-      for (const slide of baseSlides) {
-        items.push({ key: `${slide.levelNumber}#${lap}`, lap, data: slide });
-      }
-    }
-    return items;
-  }, [baseSlides, laps]);
+  // Swiper's own `loop` mode gives us the endless-feed behavior for free (it clones slides
+  // internally for seamless wraparound) — no need to manually duplicate laps of data.
+  const loopEnabled = slides.length > 1;
+
+  const initialIndex = useMemo(() => {
+    if (deepLinkLevel === null) return 0;
+    const index = slides.findIndex((s) => s.levelNumber === deepLinkLevel);
+    return index === -1 ? 0 : index;
+  }, [slides, deepLinkLevel]);
 
   async function fetchPlayableDetails(excludeLevels: Set<number> = new Set()): Promise<ReelDetailResponse[]> {
     const mapData = await api.get<{ levels: MapLevel[] }>('/map');
@@ -89,8 +92,7 @@ export function ReelsPage() {
   const loadFeed = useCallback(async () => {
     setLoading(true);
     try {
-      const details = await fetchPlayableDetails();
-      setRawDetails(details);
+      setRawDetails(await fetchPlayableDetails());
       setError(null);
     } catch {
       setError(t('reels.loadError'));
@@ -104,64 +106,19 @@ export function ReelsPage() {
     loadFeed();
   }, [loadFeed]);
 
+  // The deep-link level was captured into state on mount; drop it from the URL right away so
+  // it doesn't re-trigger anything on a later re-render.
   useEffect(() => {
-    const levelParam = searchParams.get('level');
-    if (levelParam) pendingScrollLevel.current = Number(levelParam);
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (pendingScrollLevel.current !== null && baseSlides.some((s) => s.levelNumber === pendingScrollLevel.current)) {
-      const el = slideRefs.current.get(`${pendingScrollLevel.current}#0`);
-      el?.scrollIntoView({ behavior: 'auto' });
-      pendingScrollLevel.current = null;
-      setSearchParams({}, { replace: true });
-    }
-  }, [baseSlides, setSearchParams]);
-
-  // Tracks which slide is actually in view so only that one accrues watch-time XP —
-  // scrolled-past slides stop ticking immediately. Driven by scroll position (layout-only)
-  // rather than IntersectionObserver, since the latter depends on the document actually
-  // painting and can silently never fire in some rendering states.
-  useEffect(() => {
-    const root = scrollContainerRef.current;
-    if (!root || renderedSlides.length === 0) return;
-
-    function computeActive() {
-      const containerEl = root!;
-      const center = containerEl.scrollTop + containerEl.clientHeight / 2;
-      let best: { key: string; dist: number } | null = null;
-      for (const item of renderedSlides) {
-        const el = slideRefs.current.get(item.key);
-        if (!el) continue;
-        const mid = el.offsetTop + el.offsetHeight / 2;
-        const dist = Math.abs(mid - center);
-        if (!best || dist < best.dist) best = { key: item.key, dist };
-      }
-      if (best) setActiveKey(best.key);
-    }
-
-    computeActive();
-    root.addEventListener('scroll', computeActive, { passive: true });
-    return () => root.removeEventListener('scroll', computeActive);
-  }, [renderedSlides]);
-
-  // Extends the feed with another lap once the student scrolls near the end of the current one.
-  useEffect(() => {
-    if (!activeKey || renderedSlides.length === 0) return;
-    const idx = renderedSlides.findIndex((item) => item.key === activeKey);
-    if (idx !== -1 && idx >= renderedSlides.length - GROW_WHEN_WITHIN) {
-      setLaps((l) => l + 1);
-    }
-  }, [activeKey, renderedSlides]);
+    if (deepLinkLevel !== null) setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleCompleted() {
     await refreshUser();
     try {
       const existing = new Set(rawDetails.map((d) => d.level.levelNumber));
       const freshDetails = await fetchPlayableDetails(existing);
-      if (freshDetails.length > 0) {
-        setRawDetails((prev) => [...prev, ...freshDetails]);
-      }
+      if (freshDetails.length > 0) setRawDetails((prev) => [...prev, ...freshDetails]);
       // Sync completed/star state for the whole feed (covers the just-completed slide too).
       const mapData = await api.get<{ levels: MapLevel[] }>('/map');
       setRawDetails((prev) =>
@@ -173,13 +130,6 @@ export function ReelsPage() {
     } catch {
       // feed will resync on next visit
     }
-  }
-
-  function scrollToNext() {
-    if (!activeKey) return;
-    const idx = renderedSlides.findIndex((item) => item.key === activeKey);
-    const next = renderedSlides[idx + 1];
-    if (next) slideRefs.current.get(next.key)?.scrollIntoView({ behavior: 'smooth' });
   }
 
   if (loading) {
@@ -199,36 +149,41 @@ export function ReelsPage() {
       <div className="text-center muted" style={{ fontSize: 13, marginBottom: 10 }}>
         {t('reels.swipeHint')}
       </div>
-      <div
-        ref={scrollContainerRef}
+      <Swiper
+        direction="vertical"
+        loop={loopEnabled}
+        initialSlide={initialIndex}
+        modules={[Mousewheel]}
+        mousewheel={{ forceToAxis: true }}
+        // A reel never has to finish playing before the student can move on — swiping (or
+        // scrolling) to the next lesson is always available in watch mode; only the quiz/
+        // results overlays opt out via the swiper-no-swiping/-mousewheel classes above.
+        onSwiper={(swiper) => {
+          swiperRef.current = swiper;
+        }}
+        onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
         style={{
           height: 'calc(100vh - 160px)',
           maxWidth: 460,
           margin: '0 auto',
-          overflowY: 'auto',
-          scrollSnapType: 'y mandatory',
           borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-lg)',
           background: '#0b0b0f',
           border: '1px solid rgba(255,255,255,0.08)',
         }}
       >
-        {renderedSlides.map((item) => (
-          <ReelSlide
-            key={item.key}
-            ref={(el) => {
-              slideRefs.current.set(item.key, el);
-              if (el) el.dataset.slideKey = item.key;
-            }}
-            data={item.data}
-            isReplay={item.lap > 0}
-            isActive={item.key === activeKey}
-            onCompleted={handleCompleted}
-            onNext={scrollToNext}
-            hasNext
-          />
+        {slides.map((slide, i) => (
+          <SwiperSlide key={slide.reelId}>
+            <ReelSlide
+              data={slide}
+              isActive={i === (activeIndex ?? initialIndex)}
+              onCompleted={handleCompleted}
+              onNext={() => swiperRef.current?.slideNext()}
+              hasNext={loopEnabled}
+            />
+          </SwiperSlide>
         ))}
-      </div>
+      </Swiper>
     </div>
   );
 }

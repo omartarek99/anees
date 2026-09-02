@@ -11,7 +11,6 @@ import { mapRouter } from './routes/map.js';
 import { worksheetsRouter } from './routes/worksheets.js';
 import { leaderboardRouter } from './routes/leaderboard.js';
 import { friendsRouter } from './routes/friends.js';
-import { messagesRouter } from './routes/messages.js';
 import { newsRouter } from './routes/news.js';
 import { craftRouter } from './routes/craft.js';
 
@@ -51,7 +50,6 @@ app.use('/api/map', ...studentOnly, mapRouter);
 app.use('/api/worksheets', ...studentOnly, worksheetsRouter);
 app.use('/api/leaderboard', ...studentOnly, leaderboardRouter);
 app.use('/api/friends', ...studentOnly, friendsRouter);
-app.use('/api/messages', ...studentOnly, messagesRouter);
 app.use('/api/news', newsRouter);
 app.use('/api/craft', ...studentOnly, craftRouter);
 

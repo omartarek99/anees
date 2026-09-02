@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -35,17 +35,19 @@ type WatchResponse = { watchedSeconds: number; xpEarned: number; totalWatchXp: n
 
 const WATCH_FLUSH_SECONDS = 5;
 
-export const ReelSlide = forwardRef<
-  HTMLDivElement,
-  {
-    data: ReelSlideData;
-    isActive: boolean;
-    isReplay?: boolean;
-    onCompleted: (result: SubmitResult) => void;
-    onNext: () => void;
-    hasNext: boolean;
-  }
->(function ReelSlide({ data, isActive, isReplay, onCompleted, onNext, hasNext }, ref) {
+export function ReelSlide({
+  data,
+  isActive,
+  onCompleted,
+  onNext,
+  hasNext,
+}: {
+  data: ReelSlideData;
+  isActive: boolean;
+  onCompleted: (result: SubmitResult) => void;
+  onNext: () => void;
+  hasNext: boolean;
+}) {
   const { t, lang } = useLanguage();
   const { user, refreshUser } = useAuth();
   const [mode, setMode] = useState<'watch' | 'quiz' | 'results'>('watch');
@@ -113,13 +115,9 @@ export const ReelSlide = forwardRef<
 
   return (
     <div
-      ref={ref}
       style={{
-        scrollSnapAlign: 'start',
-        scrollSnapStop: 'always',
         height: '100%',
         width: '100%',
-        flexShrink: 0,
         position: 'relative',
         overflow: 'hidden',
         background: '#0b0b0f',
@@ -142,11 +140,6 @@ export const ReelSlide = forwardRef<
       <div style={{ position: 'absolute', top: 14, insetInlineStart: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
         <span className="badge badge-gold">{t('reels.level', { n: data.levelNumber })}</span>
         {data.completed && <span style={{ fontSize: 14 }}>{'⭐'.repeat(data.stars)}</span>}
-        {isReplay && (
-          <span className="badge" style={{ background: 'rgba(255,255,255,0.18)', color: 'white', backdropFilter: 'blur(6px)' }}>
-            {t('reels.replayTag')}
-          </span>
-        )}
       </div>
 
       {mode === 'watch' && (
@@ -288,6 +281,10 @@ export const ReelSlide = forwardRef<
 
       {mode === 'quiz' && (
         <div
+          // swiper-no-swiping / swiper-no-mousewheel: dragging or wheel-scrolling through the
+          // questions must not also be read as a swipe-to-next-reel gesture by the parent
+          // Swiper — it uses two separate opt-out classes for touch/drag vs. wheel input.
+          className="swiper-no-swiping swiper-no-mousewheel"
           style={{
             position: 'absolute',
             inset: 0,
@@ -305,11 +302,29 @@ export const ReelSlide = forwardRef<
               any time from the "Take the Quiz" button, which just re-sets this same mode. */}
           <button
             type="button"
-            className="btn btn-secondary"
-            style={{ position: 'absolute', top: 16, insetInlineStart: 16, zIndex: 1 }}
+            aria-label={t('quiz.exit')}
+            title={t('quiz.exit')}
+            style={{
+              position: 'absolute',
+              top: 16,
+              insetInlineEnd: 16,
+              zIndex: 1,
+              width: 30,
+              height: 30,
+              borderRadius: '50%',
+              border: 'none',
+              background: 'rgba(0,0,0,0.08)',
+              color: 'var(--ink)',
+              fontSize: 17,
+              lineHeight: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+            }}
             onClick={() => setMode('watch')}
           >
-            {t('quiz.exit')}
+            ×
           </button>
           {error && <div className="form-error-banner">{error}</div>}
           <QuizCard questions={data.questions} onSubmit={handleSubmit} submitting={submitting} submitLabel={t('quiz.submit')} />
@@ -318,6 +333,7 @@ export const ReelSlide = forwardRef<
 
       {mode === 'results' && result && (
         <div
+          className="swiper-no-swiping swiper-no-mousewheel"
           style={{
             position: 'absolute',
             inset: 0,
@@ -355,4 +371,4 @@ export const ReelSlide = forwardRef<
       <LevelUpToast newLevel={levelUpValue} onDismiss={() => setLevelUpValue(null)} />
     </div>
   );
-});
+}

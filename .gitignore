@@ -1,5 +1,8 @@
 # Dependencies
 node_modules/
+fastapi-backend/.venv/
+fastapi-backend/__pycache__/
+fastapi-backend/**/__pycache__/
 
 # Build output
 dist/
@@ -10,6 +13,9 @@ backend/data/*.db
 backend/data/*.db-shm
 backend/data/*.db-wal
 backend/data/*.bak
+
+# Generated reel videos — recreated on demand by POST /reels/generate
+fastapi-backend/assets/*.mp4
 
 # Env files (none committed by default — guard against future secrets)
 .env

@@ -16,7 +16,6 @@ const STUDENT_LINKS: SidebarLink[] = [
   { to: '/worksheets', key: 'nav.worksheets', icon: '📝' },
   { to: '/leaderboard', key: 'nav.leaderboard', icon: '🏆' },
   { to: '/friends', key: 'nav.friends', icon: '🧑‍🤝‍🧑' },
-  { to: '/messages', key: 'nav.messages', icon: '💬' },
 ];
 
 export function Sidebar() {

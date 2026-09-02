@@ -131,9 +131,6 @@ export function FriendsPage() {
                   </div>
                 </div>
               </Link>
-              <Link to={`/messages/${f.username}`} className="btn btn-secondary btn-sm">
-                {t('friends.message')}
-              </Link>
             </div>
           ))}
         </div>

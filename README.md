@@ -39,7 +39,6 @@ To reset all data (accounts, progress, messages), stop the servers and delete `b
 | `/worksheets` | Generate easy/medium/hard practice worksheets per subject; XP scales with difficulty |
 | `/leaderboard` | Monthly top-XP students, medals for top 3 |
 | `/friends` | Search students, send/accept friend requests |
-| `/messages` | Chat with friends only, every message is safety-checked before sending |
 | `/profile` | XP, level, stats, avatar & display name editing |
 
 ## Content

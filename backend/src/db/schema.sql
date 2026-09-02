@@ -168,14 +168,6 @@ CREATE TABLE IF NOT EXISTS friendships (
   UNIQUE(user_a_id, user_b_id)
 );
 
-CREATE TABLE IF NOT EXISTS messages (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  from_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  to_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  body TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 CREATE TABLE IF NOT EXISTS craft_saves (
   user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   seed INTEGER NOT NULL,
@@ -188,6 +180,5 @@ CREATE TABLE IF NOT EXISTS craft_saves (
 );
 
 CREATE INDEX IF NOT EXISTS idx_xp_events_user_time ON xp_events(user_id, created_at);
-CREATE INDEX IF NOT EXISTS idx_messages_pair ON messages(from_user_id, to_user_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_progress_user ON user_level_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash);
