@@ -29,6 +29,7 @@ import {
   spawnPoint,
   type CraftWorld,
 } from '../lib/craftWorld';
+import { buildBlockMaterials } from '../lib/craftTextures';
 
 const GRAVITY = 24;
 const MOVE_SPEED = 4.3;
@@ -237,18 +238,9 @@ export function CraftPage() {
     scene.add(sun);
 
     const cubeGeom = new THREE.BoxGeometry(1, 1, 1);
-    const grassSide = new THREE.MeshLambertMaterial({ color: 0x7a5230 });
-    const grassTop = new THREE.MeshLambertMaterial({ color: 0x5fa83d });
-    const materials: Record<number, THREE.Material | THREE.Material[]> = {
-      [GRASS]: [grassSide, grassSide, grassTop, grassSide, grassSide, grassSide],
-      [DIRT]: new THREE.MeshLambertMaterial({ color: 0x7a5230 }),
-      [STONE]: new THREE.MeshLambertMaterial({ color: 0x9a9aa2 }),
-      [WOOD]: new THREE.MeshLambertMaterial({ color: 0x8a5a30 }),
-      [LEAVES]: new THREE.MeshLambertMaterial({ color: 0x4c9a3c }),
-      [RUNE]: new THREE.MeshLambertMaterial({ color: 0x6a5acd, emissive: 0x2d1f66, emissiveIntensity: 0.7 }),
-      [RUNEBLOCK]: new THREE.MeshLambertMaterial({ color: 0xf0a83a, emissive: 0x5c3d10, emissiveIntensity: 0.5 }),
-      [BEDROCK]: new THREE.MeshLambertMaterial({ color: 0x2c2a30 }),
-    };
+    // Pixel-art canvas textures per block type (grass/wood use a different texture per face).
+    const blockMaterials = buildBlockMaterials();
+    const materials = blockMaterials.materials;
 
     const instances = new Map<number, InstanceGroup>();
     const dummy = new THREE.Object3D();
@@ -696,9 +688,7 @@ export function CraftPage() {
         g.mesh.dispose();
       });
       cubeGeom.dispose();
-      Object.values(materials)
-        .flat()
-        .forEach((m) => (m as THREE.Material).dispose());
+      blockMaterials.dispose();
       renderer.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

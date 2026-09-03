@@ -8,7 +8,14 @@ import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
-import { ReelSlide, type ReelSlideData } from '../components/ReelSlide';
+import { ReelSlide, type ReelSlideData, type ReelSlideControls } from '../components/ReelSlide';
+
+// The "are you still watching?" check fires once per 20 minutes of genuine watch time spent
+// on the Reels page (it only advances while a reel is actually playing in view, and resets
+// when the student leaves the page). If they don't confirm within 10 seconds, the watch time
+// from that 20-minute stretch is dropped instead of counted toward XP.
+const STILL_WATCHING_INTERVAL_SECONDS = 20 * 60;
+const STILL_WATCHING_TIMEOUT_SECONDS = 10;
 
 type MapLevel = {
   levelNumber: number;
@@ -38,6 +45,58 @@ export function ReelsPage() {
   // null until Swiper reports a real slide-change event — see `initialIndex` fallback below.
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const swiperRef = useRef<SwiperClass | null>(null);
+
+  // ---- page-level "are you still watching?" engagement check ----
+  const [stillWatching, setStillWatching] = useState(false);
+  const [swCountdown, setSwCountdown] = useState(STILL_WATCHING_TIMEOUT_SECONDS);
+  const engagedSecondsRef = useRef(0);
+  const stillWatchingRef = useRef(false);
+  // Controls for whichever ReelSlide is currently active — lets us flush or drop its
+  // un-committed watch seconds when the prompt is answered or ignored.
+  const activeControlsRef = useRef<ReelSlideControls | null>(null);
+
+  const registerActiveControls = useCallback((controls: ReelSlideControls | null) => {
+    activeControlsRef.current = controls;
+  }, []);
+
+  // Called once per genuinely-watched second by the active slide.
+  const reportWatchSecond = useCallback(() => {
+    if (stillWatchingRef.current) return;
+    engagedSecondsRef.current += 1;
+    if (engagedSecondsRef.current >= STILL_WATCHING_INTERVAL_SECONDS) {
+      stillWatchingRef.current = true;
+      setStillWatching(true);
+    }
+  }, []);
+
+  function endStillWatching(counts: boolean) {
+    engagedSecondsRef.current = 0;
+    stillWatchingRef.current = false;
+    if (counts) activeControlsRef.current?.commit();
+    else activeControlsRef.current?.discard();
+    setStillWatching(false);
+  }
+  const confirmStillWatching = () => endStillWatching(true);
+
+  // Auto-dismiss-as-"not watching" countdown, Netflix-style — paused while the tab is hidden
+  // so a backgrounded tab doesn't burn the 10 seconds before the student can answer.
+  useEffect(() => {
+    if (!stillWatching) return;
+    let remaining = STILL_WATCHING_TIMEOUT_SECONDS;
+    setSwCountdown(remaining);
+    const iv = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      remaining -= 1;
+      if (remaining <= 0) {
+        clearInterval(iv);
+        endStillWatching(false);
+      } else {
+        setSwCountdown(remaining);
+      }
+    }, 1000);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stillWatching]);
 
   // Deep-link support (e.g. a Map-page "Watch the lesson" link with ?level=N): captured once
   // on mount, then handed to Swiper as `initialSlide` so it starts on the right slide from
@@ -180,6 +239,11 @@ export function ReelsPage() {
               onCompleted={handleCompleted}
               onNext={() => swiperRef.current?.slideNext()}
               hasNext={loopEnabled}
+              stillWatchingActive={stillWatching}
+              stillWatchingCountdown={swCountdown}
+              onConfirmStillWatching={confirmStillWatching}
+              onWatchSecond={reportWatchSecond}
+              registerActiveControls={registerActiveControls}
             />
           </SwiperSlide>
         ))}

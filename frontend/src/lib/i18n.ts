@@ -113,9 +113,9 @@ const en = {
     nextLesson: 'Next Lesson ↓',
     locked: 'Locked',
     stillWatchingTitle: 'Still watching? 👀',
-    stillWatchingBody: "This lesson has been replaying with no taps for a while. Let us know you're still here to keep earning XP for it!",
+    stillWatchingBody: "You've been watching Reels for 20 minutes. Tap below so we know you're still here — otherwise the last 20 minutes won't count toward your XP.",
     stillWatchingConfirm: "Yes, I'm still here!",
-    stillWatchingCountdown: 'This won’t count as watched in {n}s…',
+    stillWatchingCountdown: 'The last 20 minutes won’t count in {n}s…',
   },
   quiz: {
     submit: 'Submit Quiz ✅',
@@ -378,9 +378,9 @@ const ar: typeof en = {
     nextLesson: 'الدرس التالي ↓',
     locked: 'مقفل',
     stillWatchingTitle: 'هل ما زلت تشاهد؟ 👀',
-    stillWatchingBody: 'ظلّ هذا الدرس يُعاد تشغيله من تلقاء نفسه دون أي تفاعل لفترة. أخبرنا أنك ما زلت هنا لتستمر في كسب نقاط الخبرة!',
+    stillWatchingBody: 'لقد ظللت تشاهد المقاطع لمدة 20 دقيقة. اضغط في الأسفل لنعرف أنك ما زلت هنا — وإلا فلن تُحتسب آخر 20 دقيقة ضمن نقاط خبرتك.',
     stillWatchingConfirm: 'نعم، ما زلت هنا!',
-    stillWatchingCountdown: 'لن يُحتسب هذا كمشاهدة خلال {n} ثانية…',
+    stillWatchingCountdown: 'لن تُحتسب آخر 20 دقيقة خلال {n} ثانية…',
   },
   quiz: {
     submit: 'إرسال الإجابات ✅',
