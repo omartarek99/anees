@@ -616,11 +616,11 @@ export function CraftPage() {
     }
     function onMouseDown(e: MouseEvent) {
       if (!game.locked) return;
-      if (e.button === 0) tryPlace(); // left-click builds with the selected block
-      if (e.button === 2) game.mineHeld = true; // right-click (hold) digs
+      if (e.button === 0) game.mineHeld = true; // hold left-click to dig
+      if (e.button === 2) game.placeQueued = true; // right-click also builds (keyboard: G)
     }
     function onMouseUp(e: MouseEvent) {
-      if (e.button === 2) game.mineHeld = false;
+      if (e.button === 0) game.mineHeld = false;
     }
     function onContextMenu(e: Event) {
       e.preventDefault();
@@ -644,7 +644,8 @@ export function CraftPage() {
           setSelectedSlot(n);
         }
       }
-      if (e.code === 'KeyF') craftRef.current(); // craft the axe
+      if (e.code === 'KeyF') craftRef.current(); // F crafts the axe
+      if (e.code === 'KeyG') game.placeQueued = true; // G builds with the selected block
       if (e.code === 'Space') e.preventDefault();
     }
     function onKeyUp(e: KeyboardEvent) {
@@ -1129,18 +1130,21 @@ export function CraftPage() {
             )}
 
             {/* Pointer lock isn't available in this browser/context (some embedded frames and
-                security policies block it) — fall back to drag-to-look with on-screen dig/build
-                buttons instead of leaving the camera unable to turn. Keyboard WASD still moves. */}
+                security policies block it) — fall back to drag-to-look: drag anywhere to turn,
+                press-and-hold to dig, and use the G / F keys to build / craft. Keyboard WASD
+                still moves. */}
             {!showTouch && pointerLockUnavailable && (
               <>
-                <LookDragLayer gameRef={gameRef} />
+                <LookDragLayer gameRef={gameRef} digOnHold />
                 <div
                   style={{
                     position: 'absolute',
-                    top: 10,
+                    top: 52,
                     left: '50%',
                     transform: 'translateX(-50%)',
                     zIndex: 2,
+                    maxWidth: 'calc(100% - 24px)',
+                    textAlign: 'center',
                     background: 'rgba(24,35,56,.6)',
                     color: 'white',
                     fontSize: 12,
@@ -1151,12 +1155,6 @@ export function CraftPage() {
                   }}
                 >
                   {t('craft.dragToLookHint')}
-                </div>
-                <div style={{ position: 'absolute', right: 84, bottom: 68, zIndex: 3 }}>
-                  <TouchActionButton label="⛏" onDown={() => setMineHeld(gameRef, true)} onUp={() => setMineHeld(gameRef, false)} />
-                </div>
-                <div style={{ position: 'absolute', right: 14, bottom: 68, zIndex: 3 }}>
-                  <TouchActionButton label="🧱" onDown={() => queuePlace(gameRef)} onUp={() => {}} />
                 </div>
               </>
             )}
@@ -1268,13 +1266,19 @@ function queuePlace(ref: GameRefT) {
   if (ref.current) ref.current.placeQueued = true;
 }
 
-function LookDragLayer({ gameRef }: { gameRef: GameRefT }) {
-  const drag = useRef({ active: false, lastX: 0, lastY: 0 });
+function LookDragLayer({ gameRef, digOnHold = false }: { gameRef: GameRefT; digOnHold?: boolean }) {
+  const drag = useRef({ active: false, lastX: 0, lastY: 0, moved: 0 });
+  const setMine = (v: boolean) => {
+    if (digOnHold && gameRef.current) gameRef.current.mineHeld = v;
+  };
   return (
     <div
       style={{ position: 'absolute', inset: 0, zIndex: 1, touchAction: 'none' }}
+      onContextMenu={(e) => e.preventDefault()}
       onPointerDown={(e) => {
-        drag.current = { active: true, lastX: e.clientX, lastY: e.clientY };
+        drag.current = { active: true, lastX: e.clientX, lastY: e.clientY, moved: 0 };
+        // Press-and-hold (without dragging) digs at the crosshair; a look-drag cancels it below.
+        setMine(true);
       }}
       onPointerMove={(e) => {
         if (!drag.current.active || !gameRef.current) return;
@@ -1282,6 +1286,8 @@ function LookDragLayer({ gameRef }: { gameRef: GameRefT }) {
         const dy = e.clientY - drag.current.lastY;
         drag.current.lastX = e.clientX;
         drag.current.lastY = e.clientY;
+        drag.current.moved += Math.abs(dx) + Math.abs(dy);
+        if (drag.current.moved > 8) setMine(false); // it's a look-drag, not a dig
         const p = gameRef.current.player;
         p.yaw -= dx * 0.0055;
         p.pitch -= dy * 0.0055;
@@ -1289,9 +1295,11 @@ function LookDragLayer({ gameRef }: { gameRef: GameRefT }) {
       }}
       onPointerUp={() => {
         drag.current.active = false;
+        setMine(false);
       }}
       onPointerCancel={() => {
         drag.current.active = false;
+        setMine(false);
       }}
     />
   );
