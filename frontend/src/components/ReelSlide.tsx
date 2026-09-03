@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -74,6 +74,11 @@ export function ReelSlide({
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(() => 40 + ((data.levelNumber * 17) % 260));
   const [watchProgress, setWatchProgress] = useState(0); // 0-1, cosmetic top progress bar
+  const [captionExpanded, setCaptionExpanded] = useState(false);
+  // Whether the caption is long enough to be clipped in its collapsed (3-line) state — only
+  // then is the See more / See less toggle shown. Measured from the rendered element.
+  const [captionOverflows, setCaptionOverflows] = useState(false);
+  const captionRef = useRef<HTMLParagraphElement>(null);
 
   const pendingSecondsRef = useRef(0);
   const watchedTotalRef = useRef(0);
@@ -167,6 +172,24 @@ export function ReelSlide({
   }
 
   const captionPreview = useMemo(() => data.scriptText, [data.scriptText]);
+
+  // Scrolling away from a reel collapses its caption again, so it's back to the short form
+  // the next time the student lands on it.
+  useEffect(() => {
+    if (!isActive) setCaptionExpanded(false);
+  }, [isActive]);
+
+  // Re-measure whether the collapsed caption is actually clipped (so we know to show the
+  // toggle) whenever the text, language, or viewport changes. Skipped while expanded — the
+  // element isn't clamped then, so there'd be nothing to measure.
+  useLayoutEffect(() => {
+    const el = captionRef.current;
+    if (!el || captionExpanded) return;
+    const measure = () => setCaptionOverflows(el.scrollHeight - el.clientHeight > 2);
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [captionPreview, lang, captionExpanded]);
 
   return (
     <div
@@ -307,8 +330,9 @@ export function ReelSlide({
             </div>
           </div>
 
-          {/* bottom-left info block */}
-          <div style={{ position: 'absolute', insetInlineStart: 16, insetInlineEnd: 88, bottom: 20, zIndex: 3 }}>
+          {/* bottom info block — `right: 88` (physical, both text directions) keeps the caption
+              clear of the action rail on the right so they never overlap in Arabic/RTL either. */}
+          <div style={{ position: 'absolute', left: 16, right: 88, bottom: 20, zIndex: 3 }}>
             <span
               className="badge"
               style={{ background: 'rgba(255,255,255,0.18)', color: 'white', marginBottom: 8, backdropFilter: 'blur(6px)' }}
@@ -317,19 +341,45 @@ export function ReelSlide({
             </span>
             <h2 style={{ color: 'white', fontSize: 19, margin: '2px 0 6px', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
             <p
+              ref={captionRef}
+              className={captionExpanded ? 'no-scrollbar swiper-no-swiping swiper-no-mousewheel' : undefined}
               style={{
                 color: 'rgba(255,255,255,0.92)',
                 fontSize: 13.5,
                 lineHeight: 1.4,
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
+                margin: 0,
                 textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                ...(captionExpanded
+                  ? { maxHeight: '32vh', overflowY: 'auto', overscrollBehavior: 'contain' }
+                  : {
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }),
               }}
             >
               {captionPreview}
             </p>
+            {(captionOverflows || captionExpanded) && (
+              <button
+                type="button"
+                onClick={() => setCaptionExpanded((v) => !v)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  marginTop: 4,
+                  color: 'rgba(255,255,255,0.75)',
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                }}
+              >
+                {captionExpanded ? t('reels.seeLess') : t('reels.seeMore')}
+              </button>
+            )}
             {!data.videoUrl && (
               <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11.5, marginTop: 6 }}>{t('reels.videoComingSoon')}</p>
             )}
