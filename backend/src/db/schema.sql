@@ -176,6 +176,9 @@ CREATE TABLE IF NOT EXISTS craft_saves (
   player_x REAL NOT NULL,
   player_y REAL NOT NULL,
   player_z REAL NOT NULL DEFAULT 0,
+  version INTEGER NOT NULL DEFAULT 1,
+  hp INTEGER NOT NULL DEFAULT 20,
+  food INTEGER NOT NULL DEFAULT 20,
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

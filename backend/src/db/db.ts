@@ -23,6 +23,16 @@ const craftSaveCols = db.prepare(`PRAGMA table_info(craft_saves)`).all() as { na
 if (!craftSaveCols.some((c) => c.name === 'player_z')) {
   db.exec(`ALTER TABLE craft_saves ADD COLUMN player_z REAL NOT NULL DEFAULT 0`);
 }
+// Endless-world / survival update: save-format version + player health & hunger.
+if (!craftSaveCols.some((c) => c.name === 'version')) {
+  db.exec(`ALTER TABLE craft_saves ADD COLUMN version INTEGER NOT NULL DEFAULT 1`);
+}
+if (!craftSaveCols.some((c) => c.name === 'hp')) {
+  db.exec(`ALTER TABLE craft_saves ADD COLUMN hp INTEGER NOT NULL DEFAULT 20`);
+}
+if (!craftSaveCols.some((c) => c.name === 'food')) {
+  db.exec(`ALTER TABLE craft_saves ADD COLUMN food INTEGER NOT NULL DEFAULT 20`);
+}
 
 // Student/teacher accounts + student grade level, added after the initial users table.
 const userCols = db.prepare(`PRAGMA table_info(users)`).all() as { name: string }[];

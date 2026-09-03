@@ -885,6 +885,26 @@ svg {
   }
 }
 
+/* Craft "+" pop — a reward flourish when something is crafted in the Quarry. */
+@keyframes craftPop {
+  0% {
+    transform: translate(-50%, 0) scale(0.4);
+    opacity: 0;
+  }
+  18% {
+    transform: translate(-50%, -6px) scale(1.15);
+    opacity: 1;
+  }
+  40% {
+    transform: translate(-50%, -14px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -54px) scale(0.9);
+    opacity: 0;
+  }
+}
+
 @media (max-width: 720px) {
   :root {
     --sidebar-w: 64px;

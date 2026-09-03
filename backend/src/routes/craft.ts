@@ -26,12 +26,15 @@ craftRouter.get('/', requireAuth, (req, res) => {
   }
   res.json({
     save: {
+      version: row.version ?? 1,
       seed: row.seed,
       worldDiff,
       inventory: JSON.parse(row.inventory_json),
       playerX: row.player_x,
       playerY: row.player_y,
       playerZ: row.player_z,
+      hp: row.hp ?? 20,
+      food: row.food ?? 20,
     },
   });
 });
@@ -40,30 +43,36 @@ craftRouter.get('/', requireAuth, (req, res) => {
 // terrain, so even a heavily-dug world stays far under this — the cap just guards
 // against a malformed or abusive payload rather than reflecting a real play limit.
 const saveSchema = z.object({
+  version: z.number().int().min(1).max(9).optional(),
   seed: z.number().int(),
-  worldDiff: z.record(z.string(), z.number().int().min(0).max(8)).refine((d) => Object.keys(d).length <= 8000, {
+  worldDiff: z.record(z.string(), z.number().int().min(0).max(63)).refine((d) => Object.keys(d).length <= 40000, {
     message: 'World data too large.',
   }),
   inventory: z.record(z.string(), z.number().int().min(0).max(99999)),
   playerX: z.number(),
   playerY: z.number(),
   playerZ: z.number(),
+  hp: z.number().int().min(0).max(20).optional(),
+  food: z.number().int().min(0).max(20).optional(),
 });
 
 craftRouter.post('/save', requireAuth, requireCsrfHeader, validateBody(saveSchema), (req, res) => {
-  const { seed, worldDiff, inventory, playerX, playerY, playerZ } = req.body as z.infer<typeof saveSchema>;
+  const { version, seed, worldDiff, inventory, playerX, playerY, playerZ, hp, food } = req.body as z.infer<typeof saveSchema>;
   db.prepare(
-    `INSERT INTO craft_saves (user_id, seed, world_diff_json, inventory_json, player_x, player_y, player_z, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    `INSERT INTO craft_saves (user_id, version, seed, world_diff_json, inventory_json, player_x, player_y, player_z, hp, food, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
      ON CONFLICT(user_id) DO UPDATE SET
+       version = excluded.version,
        seed = excluded.seed,
        world_diff_json = excluded.world_diff_json,
        inventory_json = excluded.inventory_json,
        player_x = excluded.player_x,
        player_y = excluded.player_y,
        player_z = excluded.player_z,
+       hp = excluded.hp,
+       food = excluded.food,
        updated_at = datetime('now')`
-  ).run(req.userId!, seed, JSON.stringify(worldDiff), JSON.stringify(inventory), playerX, playerY, playerZ);
+  ).run(req.userId!, version ?? 1, seed, JSON.stringify(worldDiff), JSON.stringify(inventory), playerX, playerY, playerZ, hp ?? 20, food ?? 20);
   res.json({ ok: true });
 });
 
