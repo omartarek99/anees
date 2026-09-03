@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import * as THREE from 'three';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
@@ -108,12 +108,17 @@ export function CraftPage() {
   const puzzleOpenRef = useRef(false);
   const introOpenRef = useRef(false);
   const attemptLockRef = useRef<() => void>(() => {});
+  // Set to the latest `craftAxe` each render so the engine's key handler (bound once) can
+  // trigger crafting when F is pressed.
+  const craftRef = useRef<() => void>(() => {});
 
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState(false);
   const [introOpen, setIntroOpenState] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenBlocked, setFullscreenBlocked] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(0);
   const [inventory, setInventory] = useState<Record<string, number>>(emptyInventory);
   const [puzzle, setPuzzle] = useState<PuzzleModal | null>(null);
@@ -129,11 +134,57 @@ export function CraftPage() {
   function exitLock() {
     if (document.pointerLockElement) document.exitPointerLock();
   }
+  const fsElement = () =>
+    document.fullscreenElement ?? (document as unknown as { webkitFullscreenElement?: Element }).webkitFullscreenElement ?? null;
+  function exitFullscreen() {
+    const d = document as unknown as { exitFullscreen?: () => Promise<void>; webkitExitFullscreen?: () => void };
+    if (!fsElement()) return;
+    (d.exitFullscreen ?? d.webkitExitFullscreen)?.call(document);
+  }
+  /** Modals (`.modal-overlay`) are position:fixed and would be invisible/unreachable while the
+   * game canvas is the fullscreen element — drop out of fullscreen (and pointer lock) first. */
+  function suspendImmersion() {
+    exitLock();
+    exitFullscreen();
+  }
+  function toggleFullscreen() {
+    const el = wrapRef.current as
+      | (HTMLDivElement & { webkitRequestFullscreen?: () => Promise<void> | void })
+      | null;
+    if (!el) return;
+    if (fsElement()) {
+      exitFullscreen();
+      return;
+    }
+    const req = el.requestFullscreen ?? el.webkitRequestFullscreen;
+    try {
+      const p = req?.call(el);
+      // A rejected request is usually just a missing user gesture — transient, so ignore it
+      // rather than hiding the button (see `fullscreenBlocked`, driven off `fullscreenEnabled`).
+      if (p && typeof (p as Promise<void>).catch === 'function') (p as Promise<void>).catch(() => {});
+    } catch {
+      /* ignore */
+    }
+  }
   function setIntroOpen(v: boolean) {
     introOpenRef.current = v;
     setIntroOpenState(v);
-    if (v) exitLock();
+    if (v) suspendImmersion();
   }
+
+  // Keep `isFullscreen` in sync with the browser (covers Esc-to-exit and the webkit event).
+  // `fullscreenEnabled === false` means the context truly forbids fullscreen (e.g. an embedded
+  // frame) — only then hide the button; a rejected request is just a missing user gesture.
+  useEffect(() => {
+    setFullscreenBlocked(document.fullscreenEnabled === false);
+    const onChange = () => setIsFullscreen(!!fsElement());
+    document.addEventListener('fullscreenchange', onChange);
+    document.addEventListener('webkitfullscreenchange', onChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange);
+      document.removeEventListener('webkitfullscreenchange', onChange);
+    };
+  }, []);
 
   // ---- initial load ----
   useEffect(() => {
@@ -472,7 +523,7 @@ export function CraftPage() {
       game.mining = null;
       if (m.id === RUNE) {
         puzzleOpenRef.current = true;
-        exitLock();
+        suspendImmersion();
         void requestRunePuzzle(m.x, m.y, m.z);
         return;
       }
@@ -565,11 +616,11 @@ export function CraftPage() {
     }
     function onMouseDown(e: MouseEvent) {
       if (!game.locked) return;
-      if (e.button === 0) game.mineHeld = true;
-      if (e.button === 2) tryPlace();
+      if (e.button === 0) tryPlace(); // left-click builds with the selected block
+      if (e.button === 2) game.mineHeld = true; // right-click (hold) digs
     }
     function onMouseUp(e: MouseEvent) {
-      if (e.button === 0) game.mineHeld = false;
+      if (e.button === 2) game.mineHeld = false;
     }
     function onContextMenu(e: Event) {
       e.preventDefault();
@@ -593,6 +644,7 @@ export function CraftPage() {
           setSelectedSlot(n);
         }
       }
+      if (e.code === 'KeyF') craftRef.current(); // craft the axe
       if (e.code === 'Space') e.preventDefault();
     }
     function onKeyUp(e: KeyboardEvent) {
@@ -757,12 +809,15 @@ export function CraftPage() {
     const axeSlot = HOTBAR_ORDER.indexOf(AXE);
     if (axeSlot !== -1) selectSlot(axeSlot);
   }
+  // The engine's key handler is bound once; point this ref at the current craftAxe so pressing
+  // F (which fires while pointer-locked) can craft.
+  craftRef.current = craftAxe;
 
   async function openPracticePuzzle() {
     try {
       const data = await api.post<{ puzzleId: string; question: string; choices: number[]; xpReward: number }>('/craft/puzzle');
       puzzleOpenRef.current = true;
-      exitLock();
+      suspendImmersion();
       setPuzzle({ kind: 'practice', puzzleId: data.puzzleId, question: data.question, choices: data.choices, xpReward: data.xpReward, phase: 'asking' });
     } catch {
       /* transient network hiccup — user can just press the button again */
@@ -799,6 +854,127 @@ export function CraftPage() {
 
   const tileNameKey = (id: number) => TILE_INFO[id]?.nameKey ?? '';
 
+  const iconBtnStyle: CSSProperties = {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    border: '1px solid rgba(255,255,255,0.28)',
+    background: 'rgba(16,20,32,0.6)',
+    backdropFilter: 'blur(6px)',
+    WebkitBackdropFilter: 'blur(6px)',
+    color: '#fff',
+    fontSize: 15,
+    lineHeight: 1,
+    cursor: 'pointer',
+    display: 'grid',
+    placeItems: 'center',
+  };
+  const cornerPillStyle: CSSProperties = {
+    border: '1px solid rgba(255,255,255,0.28)',
+    background: 'rgba(16,20,32,0.6)',
+    backdropFilter: 'blur(6px)',
+    WebkitBackdropFilter: 'blur(6px)',
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 800,
+    padding: '6px 10px',
+    borderRadius: 999,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+  };
+
+  // The block/tool hotbar, overlaid on the bottom-centre of the game screen (Minecraft-style)
+  // so it stays visible in fullscreen. Pick a slot with number keys 1-9 or by clicking it.
+  const hotbar = (
+    <div
+      className="no-scrollbar"
+      style={{
+        position: 'absolute',
+        left: '50%',
+        bottom: 12,
+        transform: 'translateX(-50%)',
+        zIndex: 5,
+        display: 'flex',
+        gap: 4,
+        padding: 5,
+        maxWidth: 'calc(100% - 16px)',
+        overflowX: 'auto',
+        borderRadius: 12,
+        background: 'rgba(16,20,32,0.55)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        border: '1px solid rgba(255,255,255,0.18)',
+      }}
+    >
+      {HOTBAR_ORDER.map((id, i) => {
+        const selected = selectedSlot === i;
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => selectSlot(i)}
+            title={`${i + 1} · ${t(tileNameKey(id))}`}
+            style={{
+              position: 'relative',
+              flex: '0 0 auto',
+              width: 'clamp(40px, 9vw, 50px)',
+              height: 'clamp(40px, 9vw, 50px)',
+              borderRadius: 8,
+              border: selected ? '2px solid #fff' : '2px solid rgba(255,255,255,0.22)',
+              background: selected ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.07)',
+              boxShadow: selected ? '0 0 0 2px rgba(255,255,255,0.35)' : 'none',
+              cursor: 'pointer',
+              display: 'grid',
+              placeItems: 'center',
+              padding: 0,
+            }}
+          >
+            <span
+              style={{
+                position: 'absolute',
+                top: 1,
+                left: 3,
+                fontSize: 9,
+                fontWeight: 800,
+                color: 'rgba(255,255,255,0.85)',
+                textShadow: '0 1px 2px #000',
+              }}
+            >
+              {i + 1}
+            </span>
+            {id === AXE ? (
+              <span style={{ fontSize: 22, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.5))' }}>🪓</span>
+            ) : (
+              <span
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 4,
+                  background: SWATCH[id],
+                  boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.35)',
+                }}
+              />
+            )}
+            <span
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: 3,
+                fontSize: 10,
+                fontWeight: 800,
+                color: '#fff',
+                textShadow: '0 1px 2px #000',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {inventory[String(id)] ?? 0}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="stack">
       <Topbar title={t('craft.title')} subtitle={t('craft.subtitle')} />
@@ -815,17 +991,12 @@ export function CraftPage() {
       {ready && (
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <div className="flex-between" style={{ padding: '16px 18px 0', flexWrap: 'wrap', gap: 8 }}>
-            <span className="muted" style={{ fontSize: 13, fontWeight: 700 }}>
+            <span className="muted" style={{ fontSize: 13, fontWeight: 700, flex: '1 1 220px' }}>
               {showTouch ? t('craft.digHintTouch') : t('craft.moveHint')}
             </span>
-            <div className="flex gap-sm">
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setIntroOpen(true)}>
-                ❓ {t('craft.help')}
-              </button>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setConfirmOpen(true)}>
-                🔄 {t('craft.newWorld')}
-              </button>
-            </div>
+            <button type="button" className="btn btn-ghost btn-sm" style={{ flexShrink: 0 }} onClick={() => setConfirmOpen(true)}>
+              🔄 {t('craft.newWorld')}
+            </button>
           </div>
 
           <div
@@ -833,9 +1004,12 @@ export function CraftPage() {
             dir="ltr"
             style={{
               position: 'relative',
-              height: 'min(58vh, 480px)',
-              margin: '14px 18px',
-              borderRadius: 'var(--radius-md)',
+              // The UA `:fullscreen` rule forces width/height to fill the screen, but not
+              // margin/radius — zero those so there's no black gutter or rounded corner.
+              height: isFullscreen ? '100%' : 'min(58vh, 480px)',
+              margin: isFullscreen ? 0 : '14px 18px',
+              borderRadius: isFullscreen ? 0 : 'var(--radius-md)',
+              background: '#0b0b0f',
               overflow: 'hidden',
               boxShadow: 'var(--shadow-3d-sm)',
             }}
@@ -857,8 +1031,46 @@ export function CraftPage() {
                 border: '2px solid rgba(255,255,255,.85)',
                 boxShadow: '0 0 2px rgba(0,0,0,.6)',
                 pointerEvents: 'none',
+                zIndex: 5,
               }}
             />
+
+            {/* in-game hotbar (bottom-centre) */}
+            {hotbar}
+
+            {/* top-left: craft + practice-puzzle */}
+            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 5, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={craftAxe}
+                disabled={!canCraftAxe}
+                title={t('craft.craftAxeHint', { cost: AXE_RECIPE_WOOD_COST })}
+                style={{ ...cornerPillStyle, opacity: canCraftAxe ? 1 : 0.5, cursor: canCraftAxe ? 'pointer' : 'not-allowed' }}
+              >
+                🪓 {t('craft.craftAxeShort')}
+                {!showTouch && ' · F'}
+              </button>
+              <button type="button" onClick={openPracticePuzzle} style={{ ...cornerPillStyle, background: 'rgba(203,161,53,0.82)', color: '#1c1204' }}>
+                {t('craft.practicePuzzleButton')}
+              </button>
+            </div>
+
+            {/* top-right: help + fullscreen */}
+            <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 5, display: 'flex', gap: 6 }}>
+              <button type="button" onClick={() => setIntroOpen(true)} title={t('craft.help')} style={iconBtnStyle}>
+                ❓
+              </button>
+              {!fullscreenBlocked && (
+                <button
+                  type="button"
+                  onClick={toggleFullscreen}
+                  title={isFullscreen ? t('craft.exitFullscreen') : t('craft.fullscreen')}
+                  style={iconBtnStyle}
+                >
+                  {isFullscreen ? '✕' : '⛶'}
+                </button>
+              )}
+            </div>
 
             {!showTouch && !locked && !pointerLockUnavailable && (
               <div
@@ -866,6 +1078,7 @@ export function CraftPage() {
                 style={{
                   position: 'absolute',
                   inset: 0,
+                  zIndex: 4,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -892,7 +1105,8 @@ export function CraftPage() {
             {showTouch && (
               <>
                 <LookDragLayer gameRef={gameRef} />
-                <div style={{ position: 'absolute', left: 14, bottom: 14, zIndex: 2 }}>
+                {/* raised clear of the bottom-centre hotbar */}
+                <div style={{ position: 'absolute', left: 14, bottom: 68, zIndex: 3 }}>
                   <TouchJoystick
                     onChange={(x, y) => {
                       if (gameRef.current) {
@@ -902,13 +1116,13 @@ export function CraftPage() {
                     }}
                   />
                 </div>
-                <div style={{ position: 'absolute', right: 14, bottom: 84, zIndex: 2 }}>
+                <div style={{ position: 'absolute', right: 14, bottom: 138, zIndex: 3 }}>
                   <TouchActionButton label="⤒" onDown={() => setTouchFlag(gameRef, 'touchJump', true)} onUp={() => setTouchFlag(gameRef, 'touchJump', false)} />
                 </div>
-                <div style={{ position: 'absolute', right: 84, bottom: 14, zIndex: 2 }}>
+                <div style={{ position: 'absolute', right: 84, bottom: 68, zIndex: 3 }}>
                   <TouchActionButton label="⛏" onDown={() => setMineHeld(gameRef, true)} onUp={() => setMineHeld(gameRef, false)} />
                 </div>
-                <div style={{ position: 'absolute', right: 14, bottom: 14, zIndex: 2 }}>
+                <div style={{ position: 'absolute', right: 14, bottom: 68, zIndex: 3 }}>
                   <TouchActionButton label="🧱" onDown={() => queuePlace(gameRef)} onUp={() => {}} />
                 </div>
               </>
@@ -938,52 +1152,16 @@ export function CraftPage() {
                 >
                   {t('craft.dragToLookHint')}
                 </div>
-                <div style={{ position: 'absolute', right: 84, bottom: 14, zIndex: 2 }}>
+                <div style={{ position: 'absolute', right: 84, bottom: 68, zIndex: 3 }}>
                   <TouchActionButton label="⛏" onDown={() => setMineHeld(gameRef, true)} onUp={() => setMineHeld(gameRef, false)} />
                 </div>
-                <div style={{ position: 'absolute', right: 14, bottom: 14, zIndex: 2 }}>
+                <div style={{ position: 'absolute', right: 14, bottom: 68, zIndex: 3 }}>
                   <TouchActionButton label="🧱" onDown={() => queuePlace(gameRef)} onUp={() => {}} />
                 </div>
               </>
             )}
           </div>
 
-          <div className="pill-row" style={{ padding: '0 18px 18px', alignItems: 'center' }}>
-            {HOTBAR_ORDER.map((id, i) => (
-              <button
-                key={id}
-                type="button"
-                className={`category-pill stat-card-blue${selectedSlot === i ? ' selected' : ''}`}
-                style={{ width: 84 }}
-                onClick={() => selectSlot(i)}
-                title={t(tileNameKey(id))}
-              >
-                {id === AXE ? (
-                  <span className="category-pill-icon">🪓</span>
-                ) : (
-                  <span className="category-pill-icon" style={{ background: SWATCH[id] }} />
-                )}
-                <span style={{ fontSize: 11 }}>
-                  {t(tileNameKey(id))}
-                  <br />
-                  <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 800 }}>{inventory[String(id)] ?? 0}</span>
-                </span>
-              </button>
-            ))}
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              style={{ flexShrink: 0, marginInlineStart: 6 }}
-              onClick={craftAxe}
-              disabled={!canCraftAxe}
-              title={t('craft.craftAxeHint', { cost: AXE_RECIPE_WOOD_COST })}
-            >
-              {t('craft.craftAxeButton', { cost: AXE_RECIPE_WOOD_COST })}
-            </button>
-            <button type="button" className="btn btn-gold btn-sm" style={{ flexShrink: 0 }} onClick={openPracticePuzzle}>
-              {t('craft.practicePuzzleButton')}
-            </button>
-          </div>
         </div>
       )}
 
@@ -1001,6 +1179,7 @@ export function CraftPage() {
               <li>{showTouch ? t('craft.introBuildTouch') : t('craft.introBuild')}</li>
               <li>{t('craft.introAxe')}</li>
               <li>{t('craft.introRune')}</li>
+              {!fullscreenBlocked && <li>{t('craft.introFullscreen')}</li>}
             </ul>
             <button type="button" className="btn btn-primary" onClick={() => setIntroOpen(false)}>
               {t('craft.start')}
