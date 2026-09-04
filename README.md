@@ -4,7 +4,7 @@ A Qatari-themed Math & Science learning platform for 5th-grade students. Student
 
 ## Tech Stack
 
-- **Frontend**: React 18 + TypeScript + Vite, React Router, Swiper (reels feed), Framer Motion + anime.js (UI animation), Three.js (the Quarry mini-game)
+- **Frontend**: React 18 + TypeScript + Vite, React Router, Swiper (reels feed), Framer Motion (UI animation), Three.js (the Quarry mini-game)
 - **Backend**: Node.js + Express + TypeScript
 - **Database**: SQLite via Node's built-in `node:sqlite` module (no native compilation, no external DB server needed)
 - **Auth**: httpOnly session cookies, `bcryptjs` password hashing

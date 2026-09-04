@@ -40,8 +40,6 @@ export const TORCH = 25;
 export const SNOW = 26;
 export const WHEAT_CROP = 27;
 
-export const MAX_BLOCK = 27;
-
 /** Blocks a placement/mesh treats as see-through for neighbour face culling. */
 export const TRANSPARENT = new Set<number>([AIR, GLASS, TORCH, WHEAT_CROP]);
 /** Blocks the player can walk through. */

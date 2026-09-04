@@ -4,6 +4,7 @@ import { db } from '../db/db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { awardXp, WORKSHEET_XP_PER_CORRECT } from '../lib/xp.js';
+import { gradeAnswers } from '../lib/grading.js';
 
 export const worksheetsRouter = Router();
 
@@ -86,21 +87,7 @@ worksheetsRouter.post('/:id/submit', requireAuth, requireCsrfHeader, validateBod
   );
   const { answers } = req.body as { answers: { questionId: number; choiceIndex: number }[] };
 
-  let correctCount = 0;
-  const results = questions.map((q) => {
-    const answer = answers.find((a) => a.questionId === q.id);
-    const chosenIndex = answer ? answer.choiceIndex : -1;
-    const isCorrect = chosenIndex === q.correct_index;
-    if (isCorrect) correctCount += 1;
-    return {
-      questionId: q.id,
-      chosenIndex,
-      correctIndex: q.correct_index,
-      isCorrect,
-      explanation: q.explanation,
-      explanationAr: q.explanation_ar,
-    };
-  });
+  const { results, correctCount } = gradeAnswers(questions, answers);
 
   const xpPerCorrect = WORKSHEET_XP_PER_CORRECT[attempt.difficulty as 'easy' | 'medium' | 'hard'];
   const xpEarned = correctCount * xpPerCorrect;

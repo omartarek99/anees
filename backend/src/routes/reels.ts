@@ -4,6 +4,7 @@ import { db } from '../db/db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { awardXp, getPlayerLevel, WATCH_XP_PER_SECOND } from '../lib/xp.js';
+import { gradeAnswers } from '../lib/grading.js';
 
 export const reelsRouter = Router();
 
@@ -142,25 +143,8 @@ reelsRouter.post('/:reelId/submit', requireAuth, requireCsrfHeader, validateBody
   const questions = db.prepare(`SELECT * FROM reel_questions WHERE reel_id = ?`).all(reelId) as any[];
   const { answers } = req.body as { answers: { questionId: number; choiceIndex: number }[] };
 
-  let correctCount = 0;
-  let xpEarned = 0;
-  const results = questions.map((q) => {
-    const answer = answers.find((a) => a.questionId === q.id);
-    const chosenIndex = answer ? answer.choiceIndex : -1;
-    const isCorrect = chosenIndex === q.correct_index;
-    if (isCorrect) {
-      correctCount += 1;
-      xpEarned += q.xp_value;
-    }
-    return {
-      questionId: q.id,
-      chosenIndex,
-      correctIndex: q.correct_index,
-      isCorrect,
-      explanation: q.explanation,
-      explanationAr: q.explanation_ar,
-    };
-  });
+  const { results, correctCount } = gradeAnswers(questions, answers);
+  let xpEarned = results.reduce((sum, r, i) => sum + (r.isCorrect ? questions[i].xp_value : 0), 0);
 
   const total = questions.length;
   const scoreRatio = total > 0 ? correctCount / total : 0;

@@ -26,11 +26,3 @@ export function requireRole(role: 'student' | 'teacher') {
     next();
   };
 }
-
-/** Attaches req.userId if a valid session exists, but never blocks the request. */
-export function attachUserIfPresent(req: Request, _res: Response, next: NextFunction) {
-  const token = req.cookies?.[SESSION_COOKIE] as string | undefined;
-  const userId = getUserIdForToken(token);
-  if (userId) req.userId = userId;
-  next();
-}

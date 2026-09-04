@@ -268,12 +268,6 @@ export function blockDrop(blockId: number, rand: () => number): [number, number]
   }
 }
 
-/** Whether mining `blockId` needs a pickaxe to drop anything (kept lenient for kids: only the
- * hardest ores). Returns true if the drop should be suppressed for `toolId`. */
-export function dropBlockedByTool(_toolId: number | undefined, _blockId: number): boolean {
-  return false;
-}
-
 export const CONSUMABLE_HOTBAR: number[] = [
   BREAD,
   COOKED_PORK,
