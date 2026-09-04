@@ -1,44 +1,80 @@
 # Anees 🦅
 
-A Qatari-themed Math & Science learning platform for 5th-grade students. Students watch short lesson "reels" in a TikTok-style vertical swipe feed, answer quizzes to earn XP, climb a 50-level 2D adventure map, defeat Guardian bosses every 5 levels, generate difficulty-tiered practice worksheets, add friends, and message each other in a moderated, kid-safe chat. Fully bilingual (Arabic/English) with right-to-left layout.
+A Qatari-themed Math & Science learning platform for 5th-grade students. Students watch short lesson "reels" in a TikTok-style vertical swipe feed, answer quizzes to earn XP, climb a 50-level 2D adventure map, defeat Guardian bosses every 5 levels, generate difficulty-tiered practice worksheets, add friends, and dig/build/craft in a Minecraft-style survival mini-game (the Quarry). Teachers get a separate account type to post announcements/study material to the student news feed. Fully bilingual (Arabic/English) with right-to-left layout.
 
 ## Tech Stack
 
-- **Frontend**: React 18 + TypeScript + Vite, React Router, Framer Motion
+- **Frontend**: React 18 + TypeScript + Vite, React Router, Swiper (reels feed), Framer Motion + anime.js (UI animation), Three.js (the Quarry mini-game)
 - **Backend**: Node.js + Express + TypeScript
 - **Database**: SQLite via Node's built-in `node:sqlite` module (no native compilation, no external DB server needed)
 - **Auth**: httpOnly session cookies, `bcryptjs` password hashing
+- **`fastapi-backend/`**: a separate, optional Python (FastAPI + Supabase) service — see its own section below. Not required to run the main app.
 
-No external network calls happen at runtime (including "video" content — see Scope below), so the app works fully offline once dependencies are installed.
+No external network calls happen at runtime for the main app (including "video" content — see Scope below), so it works fully offline once dependencies are installed.
 
 ## Getting Started
 
-Requires Node.js 22.5+ (built-in `node:sqlite` support). Tested on Node 24.
+### Prerequisites
+
+- **Node.js 22.5+** (needed for the built-in `node:sqlite` module the backend uses). Tested on Node 24.
+- npm (comes with Node).
+- Python is **not** required unless you're also running the optional `fastapi-backend/` service (see below).
+
+### Install & run
 
 ```bash
 npm run install:all
 npm run dev
 ```
 
-This installs both the `backend/` and `frontend/` workspaces and starts:
-- Backend API on **http://localhost:4000** (auto-creates and seeds `backend/data/app.db` on first run)
+`install:all` installs both the `backend/` and `frontend/` workspaces (the root itself only adds `concurrently`, which drives `dev`). `npm run dev` then starts both at once:
+- Backend API on **http://localhost:4000** (auto-creates and seeds `backend/data/app.db` on first run — nothing to configure, no `.env` needed for the main app)
 - Frontend on **http://localhost:5173** (Vite dev server, proxies `/api` to the backend)
 
-Open **http://localhost:5173** and sign up a new student account to start playing. A handful of demo/seed students (Rashid, Khalid, Hamad, Abdulaziz, Nasser, Jassim) are pre-loaded so the Leaderboard and Friends features have something to show immediately — see "Seed data" below.
+Open **http://localhost:5173**.
 
-To reset all data (accounts, progress, messages), stop the servers and delete `backend/data/`; it will reseed automatically on the next `npm run dev`.
+> **Note:** `frontend/src/lib/dev-config.ts` has `DEV_BYPASS_LOGIN = true` by default, so a fresh run **skips the login screen** and auto-signs-in as the seeded `dev_student` account. Set it to `false` (or delete its usage in `auth-context.tsx`) to see the real login/signup flow instead.
+
+### Seed accounts
+
+A student and a teacher account are always seeded, so both account types are testable immediately:
+
+| Username | Password | Role |
+|---|---|---|
+| `dev_student` | `devpass123` | Student |
+| `dev_teacher` | `teachpass123` | Teacher |
+
+A handful of demo students (Rashid, Khalid, Hamad, Abdulaziz, Nasser, Jassim) are also pre-loaded so the Leaderboard and Friends features have something to show immediately.
+
+To reset all data (accounts, progress, everything), stop the servers and delete `backend/data/`; it reseeds automatically on the next `npm run dev`.
+
+### Optional: `fastapi-backend/` (Python + Supabase)
+
+A separate FastAPI service for AI-assisted reel generation (MoviePy) that publishes to Supabase Storage and a `reels` table. It's independent of the main app above — skip this unless you specifically need it.
+
+```bash
+cd fastapi-backend
+python -m venv .venv
+.venv\Scripts\activate          # Windows; macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env            # then fill in SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY
+uvicorn main:app --reload
+```
+
+Requires Python 3.10+ and your own Supabase project (URL + anon key + service role key, from Project Settings → API — see `fastapi-backend/.env.example`). `.env` is git-ignored; never commit real keys. Full details in `fastapi-backend/README.md`.
 
 ## Feature Map
 
 | Page | What it does |
 |---|---|
-| `/login`, `/signup` | Student authentication |
-| `/` | News & announcements homepage, filterable by subject |
-| `/reels` | TikTok-style vertical scroll feed — swipe/scroll through lessons, take each quiz inline, feed grows as new levels unlock |
-| `/map` | 50-level 2D adventure map with 5 themed zones and boss fights every 10 levels |
-| `/worksheets` | Generate easy/medium/hard practice worksheets per subject; XP scales with difficulty |
-| `/leaderboard` | Monthly top-XP students, medals for top 3 |
-| `/friends` | Search students, send/accept friend requests |
+| `/login`, `/signup` | Authentication — signup picks an account type (student or teacher); students also enter their grade |
+| `/` | News & announcements feed (filterable by subject) for students; teachers get a composer here instead to post announcements/study material |
+| `/reels` | TikTok-style vertical swipe feed (student-only) — watch each lesson, take its quiz inline, feed grows as new levels unlock |
+| `/map` | 50-level 2D adventure map (student-only) with 5 themed zones and boss fights every 10 levels |
+| `/craft` | The Quarry — a Minecraft-style survival mini-game (student-only): dig, gather ores, manage food/HP, build, and craft tools/items |
+| `/worksheets` | Generate easy/medium/hard practice worksheets per subject (student-only); XP scales with difficulty |
+| `/leaderboard` | Monthly top-XP students (student-only), medals for top 3 |
+| `/friends` | Search students, send/accept friend requests (student-only) |
 | `/profile` | XP, level, stats, avatar & display name editing |
 
 ## Content
@@ -60,33 +96,40 @@ To reset all data (accounts, progress, messages), stop the servers and delete `b
 - Passwords hashed with bcrypt; sessions are random tokens (only their hash is stored server-side, in a revocable `sessions` table) delivered via httpOnly, sameSite cookies.
 - A custom-header check (`X-Requested-With`) is required on every mutating request as CSRF protection.
 - Every API input is validated server-side with `zod`; all SQL is parameterized (no string-built queries).
-- Rate limiting on login/signup and on sending messages.
-- **Every chat message, username, and display name is run through a server-side moderation filter** (`backend/src/lib/moderation.ts`) before it's stored — never trust the client:
+- Rate limiting on login/signup.
+- **Every username, display name, and teacher news post is run through a server-side moderation filter** (`backend/src/lib/moderation.ts`) before it's stored — never trust the client:
   - Normalizes leetspeak (`4→a`, `3→e`, `1→i`, `0→o`, `$→s`, …) and repeated letters, then checks against an English + Arabic profanity block list using whole-word matching (so words like "class" are never falsely flagged).
-  - Also blocks messages that look like attempts to share emails, phone numbers, or other-app handles ("add me on…", "my whatsapp is…") — keeping contact inside the platform.
+  - Also blocks text that looks like an attempt to share emails, phone numbers, or other-app handles ("add me on…", "my whatsapp is…").
   - Blocked content is rejected outright and never written to the database.
-- Messaging is only possible between confirmed friends (checked server-side on every request, not just in the UI).
+- Role-based access control: students and teachers each get their own API and UI surface — a teacher account gets a 403 from the API (not just a hidden nav item) if it somehow reaches a student-only route, and vice versa.
 
 ## Known Scope Limits (by design)
 
 - Lesson videos are placeholders (see Content above).
 - Map levels 11–50 are visible but not yet content-authored.
-- Messaging uses polling (~4s) rather than WebSockets — simpler and reliable at this scale.
 - This is a local development app; no production deployment/hosting configuration is included.
 
 ## Project Structure
 
 ```
 backend/src/
-  db/          schema.sql, db.ts (init), seed.ts (all content)
+  db/          schema.sql, db.ts (init + migrations), seed.ts (all content)
   lib/         moderation.ts, xp.ts, session.ts, schemas.ts
-  middleware/  auth.ts, validate.ts, rateLimit.ts
-  routes/      auth, users, reels, map, worksheets, leaderboard, friends, messages, news
-  index.ts     Express app entry
+  middleware/  auth.ts (incl. requireRole), validate.ts, rateLimit.ts
+  routes/      auth, users, reels, map, worksheets, leaderboard, friends, craft, news
+  index.ts     Express app entry, student/teacher route gating
 
 frontend/src/
-  pages/       one file per route
-  components/  NavBar, Avatar, ReelSlide, QuizCard, QuizResults, BossFightModal, LevelUpToast, NewsCard, AuthShell, LanguageToggle
-  lib/         api.ts (fetch wrapper), auth-context.tsx, language-context.tsx, i18n.ts (dictionary + error translation)
-  styles/      theme.css (Qatari design tokens: maroon/gold/sand palette, geometric pattern, RTL-aware)
+  pages/       one file per route (incl. TeacherHomePage for the teacher role)
+  components/  Sidebar, Topbar, Avatar, ReelSlide, QuizCard, QuizResults, BossArena,
+               LevelUpToast, NewsCard, CraftMenu, AuthShell, LanguageToggle
+  lib/         api.ts (fetch wrapper), auth-context.tsx, language-context.tsx,
+               i18n.ts (dictionary + error translation), craftWorld/craftItems/
+               craftEntities/craftTextures.ts (the Quarry mini-game)
+  styles/      theme.css (design tokens, glassmorphism, RTL-aware)
+
+fastapi-backend/   optional Python service — see "Getting Started" above
+  main.py             FastAPI app + endpoints
+  supabase_client.py  Supabase client setup
+  reel_generator.py   MoviePy reel generation
 ```
