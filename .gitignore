@@ -22,6 +22,9 @@ fastapi-backend/assets/*.mp4
 .env.local
 .env.*.local
 
+# Claude Code agent worktrees (created/cleaned up by the harness)
+.claude/worktrees/
+
 # Editor/OS cruft
 .DS_Store
 Thumbs.db
