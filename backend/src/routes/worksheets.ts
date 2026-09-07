@@ -82,9 +82,13 @@ worksheetsRouter.post('/:id/submit', requireAuth, requireCsrfHeader, validateBod
   }
 
   const questionIds: number[] = JSON.parse(attempt.question_ids_json);
-  const questions = questionIds.map(
-    (id) => db.prepare(`SELECT * FROM worksheet_questions WHERE id = ?`).get(id) as any
-  );
+  // One batch query instead of one round trip per question — order isn't guaranteed by
+  // `IN (...)`, so re-map by id to keep the original worksheet order.
+  const rows = db
+    .prepare(`SELECT * FROM worksheet_questions WHERE id IN (${questionIds.map(() => '?').join(',')})`)
+    .all(...questionIds) as any[];
+  const rowById = new Map(rows.map((r) => [r.id, r]));
+  const questions = questionIds.map((id) => rowById.get(id)).filter((q): q is NonNullable<typeof q> => q !== undefined);
   const { answers } = req.body as { answers: { questionId: number; choiceIndex: number }[] };
 
   const { results, correctCount } = gradeAnswers(questions, answers);

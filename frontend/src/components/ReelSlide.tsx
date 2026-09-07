@@ -3,7 +3,6 @@ import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
-import { Avatar } from './Avatar';
 import { QuizCard, type QuizAnswer, type QuizQuestion } from './QuizCard';
 import { QuizResults, type ResultItem } from './QuizResults';
 import { LevelUpToast } from './LevelUpToast';
@@ -33,7 +32,7 @@ type SubmitResult = {
 
 type WatchResponse = { watchedSeconds: number; xpEarned: number; totalWatchXp: number };
 
-export type ReelSlideControls = { commit: () => void; discard: () => void };
+export type ReelSlideControls = { commit: () => void; discard: () => void; openQuiz: () => void };
 
 export function ReelSlide({
   data,
@@ -64,15 +63,13 @@ export function ReelSlide({
   registerActiveControls: (controls: ReelSlideControls | null) => void;
 }) {
   const { t, lang } = useLanguage();
-  const { user, refreshUser } = useAuth();
+  const { refreshUser } = useAuth();
   const [mode, setMode] = useState<'watch' | 'quiz' | 'results'>('watch');
   const [playing, setPlaying] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [levelUpValue, setLevelUpValue] = useState<number | null>(null);
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(() => 40 + ((data.levelNumber * 17) % 260));
   const [watchProgress, setWatchProgress] = useState(0); // 0-1, cosmetic top progress bar
   const [captionExpanded, setCaptionExpanded] = useState(false);
   // Whether the caption is long enough to be clipped in its collapsed (3-line) state — only
@@ -150,6 +147,7 @@ export function ReelSlide({
         watchedTotalRef.current = 0;
         setWatchProgress(0);
       },
+      openQuiz: () => setMode('quiz'),
     });
     return () => registerActiveControls(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -268,71 +266,10 @@ export function ReelSlide({
             }}
           />
 
-          {/* right action rail — physical right side, matching TikTok across languages */}
-          <div
-            style={{
-              position: 'absolute',
-              right: 10,
-              bottom: 110,
-              zIndex: 3,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 18,
-            }}
-          >
-            <Avatar avatarKey={user?.avatarKey ?? 'falcon'} size={44} />
-
-            <button
-              type="button"
-              onClick={() => {
-                setLiked((v) => !v);
-                setLikeCount((c) => c + (liked ? -1 : 1));
-              }}
-              style={{ background: 'none', border: 'none', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}
-            >
-              <span style={{ fontSize: 30, transform: liked ? 'scale(1.15)' : 'scale(1)', transition: 'transform 0.15s' }}>
-                {liked ? '❤️' : '🤍'}
-              </span>
-              <span style={{ fontSize: 12, fontWeight: 700, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>{likeCount}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMode('quiz')}
-              style={{ background: 'none', border: 'none', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer' }}
-            >
-              <span style={{ fontSize: 28 }}>📝</span>
-              <span style={{ fontSize: 12, fontWeight: 700, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>{data.questions.length}</span>
-            </button>
-
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-              <span style={{ fontSize: 26 }}>💎</span>
-              <span style={{ fontSize: 12, fontWeight: 700, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>{t('reels.xpTag')}</span>
-            </div>
-
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: 'linear-gradient(150deg, var(--maroon-light), var(--maroon-dark))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 18,
-                animation: playing ? 'spin 4s linear infinite' : 'none',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-                border: '2px solid rgba(255,255,255,0.25)',
-              }}
-            >
-              {data.subjectIcon}
-            </div>
-          </div>
-
-          {/* bottom info block — `right: 88` (physical, both text directions) keeps the caption
-              clear of the action rail on the right so they never overlap in Arabic/RTL either. */}
-          <div style={{ position: 'absolute', left: 16, right: 88, bottom: 20, zIndex: 3 }}>
+          {/* bottom info block — the like/quiz/XP action rail now lives outside the reel frame
+              (see ReelActionRail, rendered by ReelsPage), so this only needs to clear its own
+              padding, not reserved space for an overlay. */}
+          <div style={{ position: 'absolute', left: 16, right: 16, bottom: 20, zIndex: 3 }}>
             <span
               className="badge"
               style={{ background: 'rgba(255,255,255,0.18)', color: 'white', marginBottom: 8, backdropFilter: 'blur(6px)' }}

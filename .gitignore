@@ -25,6 +25,15 @@ fastapi-backend/assets/*.mp4
 # Claude Code agent worktrees (created/cleaned up by the harness)
 .claude/worktrees/
 
+# Personal Claude Code settings (hooks, permissions) — not meant to be shared; each
+# contributor gets their own via `npx impeccable install` or their own tool choices.
+.claude/settings.local.json
+# Impeccable's compiled engine binary — platform-specific (Windows here) and re-downloaded
+# by `npx impeccable install`; the skill's own markdown reference docs stay tracked.
+.claude/skills/*/scripts/bin/
+# Impeccable's local cache/config — regenerated automatically, not source.
+.impeccable/
+
 # Editor/OS cruft
 .DS_Store
 Thumbs.db

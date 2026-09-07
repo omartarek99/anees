@@ -14,6 +14,62 @@ function getProgress(userId: number, mapLevelId: number) {
     .get(userId, mapLevelId) as any;
 }
 
+// Returns every currently-playable reel (unlocked normal levels) in one response — the
+// frontend used to fetch /map, then fire one /reels/level/:n request per unlocked level in
+// parallel (N+1 round trips just to render the feed, and again every time a level completed).
+// This does the same join+filter /map already does, then gathers each level's reel/questions
+// in-process (still N small synchronous SQLite calls, but zero extra HTTP round trips).
+reelsRouter.get('/feed', requireAuth, (req, res) => {
+  const levels = db
+    .prepare(`SELECT * FROM map_levels WHERE kind = 'normal' AND status = 'ready' ORDER BY level_number`)
+    .all() as any[];
+  const progressRows = db.prepare(`SELECT * FROM user_level_progress WHERE user_id = ?`).all(req.userId!) as any[];
+  const progressByLevelId = new Map(progressRows.map((p) => [p.map_level_id, p]));
+
+  const feed = levels
+    .map((level) => {
+      const progress = progressByLevelId.get(level.id) ??
+        (level.level_number === 1 ? { status: 'available', stars: 0, best_score: 0 } : null);
+      if (!progress || progress.status === 'locked') return null;
+
+      const reel = db.prepare(`SELECT * FROM reels WHERE map_level_id = ? ORDER BY order_in_level LIMIT 1`).get(level.id) as any;
+      if (!reel) return null;
+      const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(reel.subject_id) as any;
+      const questions = db
+        .prepare(
+          `SELECT id, question_text, question_text_ar, choices_json, choices_json_ar, order_in_reel FROM reel_questions WHERE reel_id = ? ORDER BY order_in_reel`
+        )
+        .all(reel.id) as any[];
+
+      return {
+        comingSoon: false,
+        level: { levelNumber: level.level_number, title: level.title, titleAr: level.title_ar, kind: level.kind },
+        subject: { key: subject.key, name: subject.name, nameAr: subject.name_ar, icon: subject.icon },
+        reel: {
+          id: reel.id,
+          title: reel.title,
+          titleAr: reel.title_ar,
+          scriptText: reel.script_text,
+          scriptTextAr: reel.script_text_ar,
+          videoUrl: reel.video_url,
+          durationSec: reel.duration_sec,
+        },
+        questions: questions.map((q) => ({
+          id: q.id,
+          text: q.question_text,
+          textAr: q.question_text_ar,
+          choices: JSON.parse(q.choices_json),
+          choicesAr: JSON.parse(q.choices_json_ar),
+          order: q.order_in_reel,
+        })),
+        progress: { status: progress.status, stars: progress.stars, bestScore: progress.best_score },
+      };
+    })
+    .filter((d): d is NonNullable<typeof d> => d !== null);
+
+  res.json(feed);
+});
+
 reelsRouter.get('/level/:levelNumber', requireAuth, (req, res) => {
   const levelNumber = Number(req.params.levelNumber);
   const level = db.prepare(`SELECT * FROM map_levels WHERE level_number = ?`).get(levelNumber) as any;

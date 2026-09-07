@@ -3,6 +3,10 @@ import { AuthProvider, useAuth } from './lib/auth-context';
 import { LanguageProvider } from './lib/language-context';
 import { Sidebar } from './components/Sidebar';
 import { LanguageToggle } from './components/LanguageToggle';
+import { Footer } from './components/Footer';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { TermsPage } from './pages/TermsPage';
+import { CookiePolicyPage } from './pages/CookiePolicyPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { HomePage } from './pages/HomePage';
@@ -34,11 +38,15 @@ function ProtectedLayout() {
         <main className="app-main">
           <Outlet />
         </main>
+        <Footer />
       </div>
     </div>
   );
 }
 
+// Students still land straight on Reels right after signing in (see PublicOnlyLayout below) —
+// but "/" itself, and the sidebar's Home icon that points there, needs to be a real, distinct
+// homepage to navigate back to, not just another way to reach Reels.
 function RoleHome() {
   const { user } = useAuth();
   return user?.role === 'teacher' ? <TeacherHomePage /> : <HomePage />;
@@ -64,6 +72,7 @@ function PublicOnlyLayout() {
         <LanguageToggle floating />
       </div>
       <Outlet />
+      <Footer />
     </div>
   );
 }
@@ -74,6 +83,11 @@ export default function App() {
       <LanguageProvider>
         <AuthProvider>
           <Routes>
+            {/* Public regardless of auth state — a visitor should be able to read these before ever signing up. */}
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/cookies" element={<CookiePolicyPage />} />
+
             <Route element={<PublicOnlyLayout />}>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />

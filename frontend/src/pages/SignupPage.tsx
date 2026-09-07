@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth, type Role } from '../lib/auth-context';
 import { ApiError } from '../lib/api';
@@ -6,6 +7,23 @@ import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { AuthShell } from '../components/AuthShell';
 import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
+
+/** "By signing up you agree to our Terms and Privacy Policy" with the two names as real links —
+ * split on the {terms}/{privacy} placeholders since t() only returns plain text. */
+function SignupConsent() {
+  const { t } = useLanguage();
+  const [before, rest] = t('legal.signupConsent').split('{terms}');
+  const [middle, after] = rest.split('{privacy}');
+  return (
+    <p className="muted" style={{ fontSize: 12.5, marginTop: -6, marginBottom: 16 }}>
+      {before}
+      <Link to="/terms">{t('legal.terms')}</Link>
+      {middle}
+      <Link to="/privacy">{t('legal.privacy')}</Link>
+      {after}
+    </p>
+  );
+}
 
 export function SignupPage() {
   const { signup } = useAuth();
@@ -45,28 +63,47 @@ export function SignupPage() {
   return (
     <AuthShell title={t('auth.signupTitle')} subtitle={t('auth.signupSubtitle')}>
       <form onSubmit={handleSubmit}>
-        {error && <div className="form-error-banner">{error}</div>}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              className="form-error-banner"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+            >
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="field">
           <label>{t('auth.chooseHero')}</label>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {AVATAR_OPTIONS.map((key) => (
-              <button
-                type="button"
-                key={key}
-                onClick={() => setAvatarKey(key)}
-                title={avatarLabel(key, lang)}
-                style={{
-                  background: 'none',
-                  border: avatarKey === key ? '3px solid var(--maroon)' : '3px solid transparent',
-                  borderRadius: '50%',
-                  padding: 2,
-                  cursor: 'pointer',
-                }}
-              >
-                <Avatar avatarKey={key} size={44} />
-              </button>
-            ))}
+            {AVATAR_OPTIONS.map((key) => {
+              const chosen = avatarKey === key;
+              return (
+                <motion.button
+                  type="button"
+                  key={key}
+                  onClick={() => setAvatarKey(key)}
+                  title={avatarLabel(key, lang)}
+                  whileTap={{ scale: 0.9 }}
+                  animate={{ scale: chosen ? 1.12 : 1 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 16 }}
+                  style={{
+                    background: 'none',
+                    border: chosen ? '3px solid var(--maroon)' : '3px solid transparent',
+                    transition: 'border-color 0.2s ease',
+                    borderRadius: '50%',
+                    padding: 2,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Avatar avatarKey={key} size={44} />
+                </motion.button>
+              );
+            })}
           </div>
         </div>
 
@@ -96,23 +133,31 @@ export function SignupPage() {
           <label htmlFor="displayName">{t('auth.displayName')}</label>
           <input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required maxLength={40} />
         </div>
-        {role === 'student' && (
-          <div className="field">
-            <label htmlFor="grade">{t('auth.grade')}</label>
-            <input
-              id="grade"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={12}
-              placeholder={t('auth.gradePlaceholder')}
-              value={grade}
-              onChange={(e) => setGrade(e.target.value)}
-              required
-              title={t('auth.gradeHint')}
-            />
-          </div>
-        )}
+        <AnimatePresence>
+          {role === 'student' && (
+            <motion.div
+              className="field"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+            >
+              <label htmlFor="grade">{t('auth.grade')}</label>
+              <input
+                id="grade"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={12}
+                placeholder={t('auth.gradePlaceholder')}
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+                required
+                title={t('auth.gradeHint')}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="field">
           <label htmlFor="username">{t('auth.username')}</label>
           <input
@@ -139,6 +184,7 @@ export function SignupPage() {
             minLength={8}
           />
         </div>
+        <SignupConsent />
         <button className="btn btn-primary btn-block" type="submit" disabled={submitting}>
           {submitting ? t('auth.signingUp') : t('auth.signupButton')}
         </button>

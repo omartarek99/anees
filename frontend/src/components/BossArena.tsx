@@ -188,7 +188,9 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
 
   return (
     <div className="modal-overlay">
-      <div className="boss-arena-panel" onClick={(e) => e.stopPropagation()}>
+      {/* No Escape-to-close here on purpose: a boss fight is a required gameplay gate
+          (see reels.ts/map.ts), not a dismissable info panel. */}
+      <div className="boss-arena-panel" role="dialog" aria-modal="true" aria-label={detail ? pickText(lang, detail.level.title, detail.level.titleAr) : undefined} onClick={(e) => e.stopPropagation()}>
         {error && <div className="form-error-banner">{error}</div>}
 
         {!detail && !error && (

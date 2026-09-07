@@ -204,8 +204,10 @@ export function baseTileAt(seed: number, x: number, y: number, z: number): numbe
 
   const deep = y < h - 4;
   if (deep) {
-    // math-puzzle rune blocks — sprinkled through the stone, the Quarry's XP hook
-    if (y > 3 && y < h - 6 && hash3(seed + 99, x, y, z) > 0.9968) return RUNE;
+    // math-puzzle rune blocks — sprinkled through the stone, the Quarry's XP hook.
+    // ponytail: threshold was 0.9968 (~1 in 300 deep-stone blocks, rarer than any real ore);
+    // raised to ~1 in 65 so students hit a puzzle about as often as a coal vein.
+    if (y > 3 && y < h - 6 && hash3(seed + 99, x, y, z) > 0.985) return RUNE;
     const ore = oreAt(seed, x, y, z, y < 20);
     if (ore) return ore;
     return y < 6 ? DEEPSLATE : STONE;

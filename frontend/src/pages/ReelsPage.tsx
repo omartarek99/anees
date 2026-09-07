@@ -9,6 +9,12 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 import { ReelSlide, type ReelSlideData, type ReelSlideControls } from '../components/ReelSlide';
+import { ReelActionRail } from '../components/ReelActionRail';
+
+/** Fake-but-stable like counts (no backend "like" concept exists — this is cosmetic
+ * gamification only), seeded from the level number so the same reel always starts at the
+ * same count. */
+const initialLikeCount = (levelNumber: number) => 40 + ((levelNumber * 17) % 260);
 
 // The "are you still watching?" check fires once per 20 minutes of genuine watch time spent
 // on the Reels page (it only advances while a reel is actually playing in view, and resets
@@ -16,15 +22,6 @@ import { ReelSlide, type ReelSlideData, type ReelSlideControls } from '../compon
 // from that 20-minute stretch is dropped instead of counted toward XP.
 const STILL_WATCHING_INTERVAL_SECONDS = 20 * 60;
 const STILL_WATCHING_TIMEOUT_SECONDS = 10;
-
-type MapLevel = {
-  levelNumber: number;
-  title: string;
-  kind: 'normal' | 'boss';
-  status: 'ready' | 'coming_soon';
-  subject: { key: string; name: string; icon: string } | null;
-  progress: { status: 'locked' | 'available' | 'completed'; stars: number };
-};
 
 type ReelDetailResponse = {
   comingSoon: boolean;
@@ -36,8 +33,8 @@ type ReelDetailResponse = {
 };
 
 export function ReelsPage() {
-  const { refreshUser } = useAuth();
-  const { t, lang } = useLanguage();
+  const { user, refreshUser } = useAuth();
+  const { t, lang, dir } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const [rawDetails, setRawDetails] = useState<ReelDetailResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +42,16 @@ export function ReelsPage() {
   // null until Swiper reports a real slide-change event — see `initialIndex` fallback below.
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const swiperRef = useRef<SwiperClass | null>(null);
+
+  // Like state lives here (outside ReelSlide) keyed by reel id, since the action rail that
+  // displays/toggles it now renders once, outside the Swiper frame, rather than per-slide.
+  const [likes, setLikes] = useState<Record<number, { liked: boolean; count: number }>>({});
+  const toggleLike = useCallback((reelId: number, levelNumber: number) => {
+    setLikes((prev) => {
+      const cur = prev[reelId] ?? { liked: false, count: initialLikeCount(levelNumber) };
+      return { ...prev, [reelId]: { liked: !cur.liked, count: cur.count + (cur.liked ? -1 : 1) } };
+    });
+  }, []);
 
   // ---- page-level "are you still watching?" engagement check ----
   const [stillWatching, setStillWatching] = useState(false);
@@ -139,19 +146,10 @@ export function ReelsPage() {
     return index === -1 ? 0 : index;
   }, [slides, deepLinkLevel]);
 
-  async function fetchPlayableDetails(excludeLevels: Set<number> = new Set()): Promise<ReelDetailResponse[]> {
-    const mapData = await api.get<{ levels: MapLevel[] }>('/map');
-    const playable = mapData.levels.filter(
-      (l) => l.kind === 'normal' && l.status === 'ready' && l.progress.status !== 'locked' && !excludeLevels.has(l.levelNumber)
-    );
-    const details = await Promise.all(playable.map((l) => api.get<ReelDetailResponse>(`/reels/level/${l.levelNumber}`)));
-    return details.filter((d) => !d.comingSoon);
-  }
-
   const loadFeed = useCallback(async () => {
     setLoading(true);
     try {
-      setRawDetails(await fetchPlayableDetails());
+      setRawDetails(await api.get<ReelDetailResponse[]>('/reels/feed'));
       setError(null);
     } catch {
       setError(t('reels.loadError'));
@@ -175,17 +173,18 @@ export function ReelsPage() {
   async function handleCompleted() {
     await refreshUser();
     try {
-      const existing = new Set(rawDetails.map((d) => d.level.levelNumber));
-      const freshDetails = await fetchPlayableDetails(existing);
-      if (freshDetails.length > 0) setRawDetails((prev) => [...prev, ...freshDetails]);
-      // Sync completed/star state for the whole feed (covers the just-completed slide too).
-      const mapData = await api.get<{ levels: MapLevel[] }>('/map');
-      setRawDetails((prev) =>
-        prev.map((d) => {
-          const match = mapData.levels.find((l) => l.levelNumber === d.level.levelNumber);
-          return match ? { ...d, progress: { status: match.progress.status, stars: match.progress.stars } } : d;
-        })
-      );
+      // One request covers both jobs the old code needed two round trips for: fresh
+      // progress/stars on levels already in the feed, and any level the completion just
+      // unlocked. Existing entries keep their position (so the Swiper doesn't jump); newly
+      // unlocked ones are appended.
+      const feed = await api.get<ReelDetailResponse[]>('/reels/feed');
+      const byLevel = new Map(feed.map((d) => [d.level.levelNumber, d]));
+      setRawDetails((prev) => {
+        const refreshed = prev.map((d) => byLevel.get(d.level.levelNumber) ?? d);
+        const known = new Set(prev.map((d) => d.level.levelNumber));
+        const newlyUnlocked = feed.filter((d) => !known.has(d.level.levelNumber));
+        return [...refreshed, ...newlyUnlocked];
+      });
     } catch {
       // feed will resync on next visit
     }
@@ -203,51 +202,75 @@ export function ReelsPage() {
     return <div className="form-error-banner">{error}</div>;
   }
 
+  const activeSlide = slides[activeIndex ?? initialIndex] as ReelSlideData | undefined;
+  const activeLike = activeSlide ? likes[activeSlide.reelId] ?? { liked: false, count: initialLikeCount(activeSlide.levelNumber) } : null;
+
   return (
     <div>
       <div className="text-center muted" style={{ fontSize: 13, marginBottom: 10 }}>
         {t('reels.swipeHint')}
       </div>
-      <Swiper
-        direction="vertical"
-        loop={loopEnabled}
-        initialSlide={initialIndex}
-        modules={[Mousewheel]}
-        mousewheel={{ forceToAxis: true }}
-        // A reel never has to finish playing before the student can move on — swiping (or
-        // scrolling) to the next lesson is always available in watch mode; only the quiz/
-        // results overlays opt out via the swiper-no-swiping/-mousewheel classes above.
-        onSwiper={(swiper) => {
-          swiperRef.current = swiper;
-        }}
-        onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
-        style={{
-          height: 'calc(100vh - 160px)',
-          maxWidth: 460,
-          margin: '0 auto',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-lg)',
-          background: '#0b0b0f',
-          border: '1px solid rgba(255,255,255,0.08)',
-        }}
-      >
-        {slides.map((slide, i) => (
-          <SwiperSlide key={slide.reelId}>
-            <ReelSlide
-              data={slide}
-              isActive={i === (activeIndex ?? initialIndex)}
-              onCompleted={handleCompleted}
-              onNext={() => swiperRef.current?.slideNext()}
-              hasNext={loopEnabled}
-              stillWatchingActive={stillWatching}
-              stillWatchingCountdown={swCountdown}
-              onConfirmStillWatching={confirmStillWatching}
-              onWatchSecond={reportWatchSecond}
-              registerActiveControls={registerActiveControls}
-            />
-          </SwiperSlide>
-        ))}
-      </Swiper>
+      {/* `direction: ltr` here keeps the action rail on the physical right of the frame in both
+          languages (matching TikTok, which never mirrors its action rail for RTL) — the inner
+          wrapper resets back to the real page direction so the reel's own caption/badge/exit-
+          button logical-property layout still mirrors correctly for Arabic. */}
+      <div className="flex-center gap-md" style={{ alignItems: 'flex-end', direction: 'ltr' }}>
+        <div style={{ direction: dir, width: 'min(100%, 560px)' }}>
+        <Swiper
+          direction="vertical"
+          loop={loopEnabled}
+          initialSlide={initialIndex}
+          modules={[Mousewheel]}
+          mousewheel={{ forceToAxis: true }}
+          // A reel never has to finish playing before the student can move on — swiping (or
+          // scrolling) to the next lesson is always available in watch mode; only the quiz/
+          // results overlays opt out via the swiper-no-swiping/-mousewheel classes above.
+          onSwiper={(swiper) => {
+            swiperRef.current = swiper;
+          }}
+          onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
+          style={{
+            height: 'calc(100vh - 130px)',
+            width: '100%',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-lg)',
+            background: '#0b0b0f',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
+        >
+          {slides.map((slide, i) => (
+            <SwiperSlide key={slide.reelId}>
+              <ReelSlide
+                data={slide}
+                isActive={i === (activeIndex ?? initialIndex)}
+                onCompleted={handleCompleted}
+                onNext={() => swiperRef.current?.slideNext()}
+                hasNext={loopEnabled}
+                stillWatchingActive={stillWatching}
+                stillWatchingCountdown={swCountdown}
+                onConfirmStillWatching={confirmStillWatching}
+                onWatchSecond={reportWatchSecond}
+                registerActiveControls={registerActiveControls}
+              />
+            </SwiperSlide>
+          ))}
+        </Swiper>
+        </div>
+
+        {/* Action rail lives outside the reel frame (TikTok-desktop style), always reflecting
+            whichever slide is currently active. */}
+        {activeSlide && activeLike && (
+          <ReelActionRail
+            avatarKey={user?.avatarKey ?? 'falcon'}
+            liked={activeLike.liked}
+            likeCount={activeLike.count}
+            onToggleLike={() => toggleLike(activeSlide.reelId, activeSlide.levelNumber)}
+            questionCount={activeSlide.questions.length}
+            onOpenQuiz={() => activeControlsRef.current?.openQuiz()}
+            subjectIcon={activeSlide.subjectIcon}
+          />
+        )}
+      </div>
     </div>
   );
 }

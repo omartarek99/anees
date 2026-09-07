@@ -29,9 +29,9 @@ npm run dev
 
 `install:all` installs both the `backend/` and `frontend/` workspaces (the root itself only adds `concurrently`, which drives `dev`). `npm run dev` then starts both at once:
 - Backend API on **http://localhost:4000** (auto-creates and seeds `backend/data/app.db` on first run — nothing to configure, no `.env` needed for the main app)
-- Frontend on **http://localhost:5173** (Vite dev server, proxies `/api` to the backend)
+- Frontend on **http://localhost:5190** (Vite dev server, proxies `/api` to the backend)
 
-Open **http://localhost:5173**.
+Open **http://localhost:5190**.
 
 > **Note:** `frontend/src/lib/dev-config.ts` has `DEV_BYPASS_LOGIN = true` by default, so a fresh run **skips the login screen** and auto-signs-in as the seeded `dev_student` account. Set it to `false` (or delete its usage in `auth-context.tsx`) to see the real login/signup flow instead.
 

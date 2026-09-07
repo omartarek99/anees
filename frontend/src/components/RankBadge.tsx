@@ -21,7 +21,7 @@ export function RankBadge({ tier, size = 28, showName = true }: { tier: RankTier
 
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-      <svg width={size} height={size} viewBox="0 0 40 40" style={{ flexShrink: 0 }}>
+      <svg width={size} height={size} viewBox="0 0 40 40" style={{ flexShrink: 0 }} aria-hidden="true">
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor={tier.color} />

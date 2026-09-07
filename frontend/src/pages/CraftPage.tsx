@@ -4,6 +4,7 @@ import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
+import { useEscapeToClose } from '../lib/useEscapeToClose';
 import { Topbar } from '../components/Topbar';
 import { CraftMenu } from '../components/CraftMenu';
 import {
@@ -50,6 +51,11 @@ const JUMP_V = 8;
 const REACH = 5.3;
 const PLAYER_HW = 0.3;
 const PLAYER_HEIGHT = 1.75;
+// Auto-step a single block, like Minecraft's "auto-jump" — without this, walking up against
+// any one-block-tall ledge (very common in this terrain) collided solidly on every axis and
+// froze the player in place with no way to move at all, since a full step was needed to clear
+// it but no partial step ever could.
+const STEP_HEIGHT = 1.02;
 const EYE_HEIGHT = 1.6;
 const SAVE_INTERVAL_MS = 6000;
 const LOAD_RADIUS = 3; // chunks around the player kept meshed (endless streaming)
@@ -129,9 +135,10 @@ export function CraftPage() {
   const [saveError, setSaveError] = useState(false);
   const [introOpen, setIntroOpenState] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  useEscapeToClose(() => setIntroOpen(false), introOpen);
+  useEscapeToClose(() => setConfirmOpen(false), confirmOpen);
   const [menuOpen, setMenuOpenState] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [fullscreenBlocked, setFullscreenBlocked] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(0);
   const [craftPop, setCraftPop] = useState<{ n: number; label: string }>({ n: 0, label: '' });
   const [toast, setToast] = useState<{ n: number; text: string } | null>(null);
@@ -167,22 +174,48 @@ export function CraftPage() {
   function suspendImmersion() {
     exitLock();
     exitFullscreen();
+    // Also clears the CSS-only fallback below (a no-op if we were in real fullscreen already).
+    setIsFullscreen(false);
+  }
+  // Real fullscreen (document.requestFullscreen) can reject or silently no-op for reasons that
+  // have nothing to do with this app — permissions-policy in an embedding iframe, browser
+  // settings, etc. — and previously the button just did nothing when that happened, with zero
+  // feedback. `isFullscreen` now also drives a CSS-only "fill the viewport" fallback (see the
+  // wrapRef style below), so the button always visibly does something even if the real API is
+  // unavailable; when the real API does work, native fullscreen and this style are harmless
+  // together (both just mean "fill the screen").
+  function exitFullscreenMode() {
+    if (fsElement()) exitFullscreen();
+    setIsFullscreen(false);
   }
   function toggleFullscreen() {
-    const el = wrapRef.current as (HTMLDivElement & { webkitRequestFullscreen?: () => Promise<void> | void }) | null;
-    if (!el) return;
-    if (fsElement()) {
-      exitFullscreen();
+    if (isFullscreen) {
+      exitFullscreenMode();
       return;
     }
-    const req = el.requestFullscreen ?? el.webkitRequestFullscreen;
-    try {
-      const p = req?.call(el);
-      if (p && typeof (p as Promise<void>).catch === 'function') (p as Promise<void>).catch(() => {});
-    } catch {
-      /* ignore */
+    const el = wrapRef.current as (HTMLDivElement & { webkitRequestFullscreen?: () => Promise<void> | void }) | null;
+    const req = el?.requestFullscreen ?? el?.webkitRequestFullscreen;
+    if (!el || !req) {
+      setIsFullscreen(true); // no Fullscreen API at all — CSS fallback
+      return;
     }
+    try {
+      const p = req.call(el);
+      if (p && typeof (p as Promise<void>).catch === 'function') (p as Promise<void>).catch(() => setIsFullscreen(true));
+    } catch {
+      setIsFullscreen(true);
+    }
+    // Belt-and-suspenders: some environments (seen in embedded/automated browser contexts) leave
+    // the request's promise pending forever — never resolving, rejecting, or firing
+    // `fullscreenerror` — so neither of the above ever runs. If we still aren't fullscreen a
+    // moment later, assume it silently failed and fall back rather than leave the button inert.
+    window.setTimeout(() => {
+      if (!fsElement()) setIsFullscreen(true);
+    }, 350);
   }
+  // Escape always exits (never toggles back in) — safe even if the browser's own native
+  // fullscreen-exit-on-Escape and this listener both fire for the same keypress.
+  useEscapeToClose(exitFullscreenMode, isFullscreen);
   function setIntroOpen(v: boolean) {
     introOpenRef.current = v;
     setIntroOpenState(v);
@@ -197,13 +230,20 @@ export function CraftPage() {
   openMenuRef.current = () => setMenuOpen(true);
 
   useEffect(() => {
-    setFullscreenBlocked(document.fullscreenEnabled === false);
     const onChange = () => setIsFullscreen(!!fsElement());
+    // Legacy vendor path never returns a Promise, so a failed request has no rejection to
+    // .catch() — this event is that browser's only way to report it. Fall back to the CSS-only
+    // "fill the viewport" mode so the button still visibly works either way.
+    const onError = () => setIsFullscreen(true);
     document.addEventListener('fullscreenchange', onChange);
     document.addEventListener('webkitfullscreenchange', onChange);
+    document.addEventListener('fullscreenerror', onError);
+    document.addEventListener('webkitfullscreenerror', onError);
     return () => {
       document.removeEventListener('fullscreenchange', onChange);
       document.removeEventListener('webkitfullscreenchange', onChange);
+      document.removeEventListener('fullscreenerror', onError);
+      document.removeEventListener('webkitfullscreenerror', onError);
     };
   }, []);
 
@@ -479,6 +519,17 @@ export function CraftPage() {
       for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) if (solid(x, y, z)) return true;
       return false;
     }
+    /** Resolves one horizontal axis against collision, auto-stepping up a single block if moving
+     * flat is blocked but the same spot is clear one block higher — mutates `p.y` in that case.
+     * Returns whether the move is clear (caller still applies the x/z position itself). */
+    function tryMoveAxis(p: { y: number }, nx: number, nz: number): boolean {
+      if (!boxCollides(nx, p.y, nz)) return true;
+      if (!boxCollides(nx, p.y + STEP_HEIGHT, nz)) {
+        p.y += STEP_HEIGHT;
+        return true;
+      }
+      return false;
+    }
     function overlapsPlayerVoxel(vx: number, vy: number, vz: number): boolean {
       const p = game.player;
       return !(
@@ -530,9 +581,9 @@ export function CraftPage() {
       }
 
       const nx = p.x + velX * dt;
-      if (!boxCollides(nx, p.y, p.z)) p.x = nx;
+      if (tryMoveAxis(p, nx, p.z)) p.x = nx;
       const nz = p.z + velZ * dt;
-      if (!boxCollides(p.x, p.y, nz)) p.z = nz;
+      if (tryMoveAxis(p, p.x, nz)) p.z = nz;
 
       const wasGrounded = p.grounded;
       const ny = p.y + p.vy * dt;
@@ -1384,7 +1435,20 @@ export function CraftPage() {
       )}
 
       {ready && (
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div
+          style={{
+            // Deliberately not the shared `.card` class: it uses `backdrop-filter`, which (like
+            // `transform`) creates a containing block for `position: fixed` descendants — the
+            // fullscreen game area below relies on `position: fixed` resolving against the real
+            // viewport, not this box, so it can't sit inside anything that does that.
+            background: 'var(--glass-bg)',
+            border: '1px solid var(--glass-border)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-3d-md)',
+            padding: 0,
+            overflow: 'hidden',
+          }}
+        >
           <div className="flex-between" style={{ padding: '16px 18px 0', flexWrap: 'wrap', gap: 8 }}>
             <span className="muted" style={{ fontSize: 13, fontWeight: 700, flex: '1 1 220px' }}>
               {showTouch ? t('craft.digHintTouch') : t('craft.moveHint')}
@@ -1398,8 +1462,10 @@ export function CraftPage() {
             ref={wrapRef}
             dir="ltr"
             style={{
-              position: 'relative',
-              height: isFullscreen ? '100%' : 'min(58vh, 480px)',
+              position: isFullscreen ? 'fixed' : 'relative',
+              inset: isFullscreen ? 0 : undefined,
+              zIndex: isFullscreen ? 200 : undefined,
+              height: isFullscreen ? undefined : 'min(58vh, 480px)',
               margin: isFullscreen ? 0 : '14px 18px',
               borderRadius: isFullscreen ? 0 : 'var(--radius-md)',
               background: '#0b0b0f',
@@ -1512,11 +1578,15 @@ export function CraftPage() {
               <button type="button" onClick={() => setIntroOpen(true)} title={t('craft.help')} style={iconBtnStyle}>
                 ❓
               </button>
-              {!fullscreenBlocked && (
-                <button type="button" onClick={toggleFullscreen} title={isFullscreen ? t('craft.exitFullscreen') : t('craft.fullscreen')} style={iconBtnStyle}>
-                  {isFullscreen ? '✕' : '⛶'}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                title={isFullscreen ? t('craft.exitFullscreen') : t('craft.fullscreen')}
+                aria-label={isFullscreen ? t('craft.exitFullscreen') : t('craft.fullscreen')}
+                style={iconBtnStyle}
+              >
+                {isFullscreen ? '✕' : '⛶'}
+              </button>
             </div>
 
             {!showTouch && !locked && !pointerLockUnavailable && !menuOpen && (
@@ -1585,7 +1655,7 @@ export function CraftPage() {
 
       {introOpen && (
         <div className="modal-overlay" onClick={() => setIntroOpen(false)}>
-          <div className="modal-panel text-center" style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-panel text-center" role="dialog" aria-modal="true" aria-label={t('craft.introTitle')} style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: 20 }}>{t('craft.introTitle')}</h2>
             <p className="muted" style={{ marginBottom: 16 }}>
               {t('craft.introBody')}
@@ -1598,7 +1668,7 @@ export function CraftPage() {
               <li>{t('craft.introSurvive')}</li>
               <li>{t('craft.introAnimals')}</li>
               <li>{t('craft.introRune')}</li>
-              {!fullscreenBlocked && <li>{t('craft.introFullscreen')}</li>}
+              <li>{t('craft.introFullscreen')}</li>
             </ul>
             <button type="button" className="btn btn-primary" onClick={() => setIntroOpen(false)}>
               {t('craft.start')}
@@ -1609,7 +1679,7 @@ export function CraftPage() {
 
       {confirmOpen && (
         <div className="modal-overlay" onClick={() => setConfirmOpen(false)}>
-          <div className="modal-panel text-center" style={{ maxWidth: 400 }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-panel text-center" role="dialog" aria-modal="true" aria-label={t('craft.newWorldConfirmTitle')} style={{ maxWidth: 400 }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: 17 }}>{t('craft.newWorldConfirmTitle')}</h2>
             <p className="muted" style={{ marginBottom: 18 }}>
               {t('craft.newWorldConfirmBody')}

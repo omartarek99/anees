@@ -118,6 +118,8 @@ const en = {
     stillWatchingBody: "You've been watching Reels for 20 minutes. Tap below so we know you're still here — otherwise the last 20 minutes won't count toward your XP.",
     stillWatchingConfirm: "Yes, I'm still here!",
     stillWatchingCountdown: 'The last 20 minutes won’t count in {n}s…',
+    like: 'Like',
+    unlike: 'Unlike',
   },
   quiz: {
     submit: 'Submit Quiz ✅',
@@ -326,6 +328,14 @@ const en = {
     robot: 'Robot',
     explorer: 'Explorer',
   },
+  legal: {
+    privacy: 'Privacy Policy',
+    terms: 'Terms & Conditions',
+    cookies: 'Cookie Policy',
+    backToApp: '← Back',
+    lastUpdated: 'Last updated: {date}',
+    signupConsent: 'By creating an account you agree to our {terms} and {privacy}.',
+  },
 };
 
 const ar: typeof en = {
@@ -446,6 +456,8 @@ const ar: typeof en = {
     stillWatchingBody: 'لقد ظللت تشاهد المقاطع لمدة 20 دقيقة. اضغط في الأسفل لنعرف أنك ما زلت هنا — وإلا فلن تُحتسب آخر 20 دقيقة ضمن نقاط خبرتك.',
     stillWatchingConfirm: 'نعم، ما زلت هنا!',
     stillWatchingCountdown: 'لن تُحتسب آخر 20 دقيقة خلال {n} ثانية…',
+    like: 'إعجاب',
+    unlike: 'إلغاء الإعجاب',
   },
   quiz: {
     submit: 'إرسال الإجابات ✅',
@@ -653,6 +665,14 @@ const ar: typeof en = {
     athlete: 'الرياضي',
     robot: 'الروبوت',
     explorer: 'المستكشف',
+  },
+  legal: {
+    privacy: 'سياسة الخصوصية',
+    terms: 'الشروط والأحكام',
+    cookies: 'سياسة ملفات تعريف الارتباط',
+    backToApp: '← رجوع',
+    lastUpdated: 'آخر تحديث: {date}',
+    signupConsent: 'بإنشاء حساب، أنت توافق على {terms} و{privacy}.',
   },
 };
 

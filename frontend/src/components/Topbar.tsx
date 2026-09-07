@@ -43,8 +43,13 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
           <Link to="/profile" className="stat-pill" title={user.rankTier.name}>
             <RankBadge tier={user.rankTier} size={18} showName={false} />
           </Link>
-          <Link to="/friends" className="notif-bell" title={t('friends.tabRequests', { n: pendingRequests })}>
-            🔔
+          <Link
+            to="/friends"
+            className="notif-bell"
+            title={t('friends.tabRequests', { n: pendingRequests })}
+            aria-label={t('friends.tabRequests', { n: pendingRequests })}
+          >
+            <span aria-hidden="true">🔔</span>
             {pendingRequests > 0 && <span className="notif-dot" />}
           </Link>
         </div>

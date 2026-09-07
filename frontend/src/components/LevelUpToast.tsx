@@ -1,8 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/language-context';
+import { useEscapeToClose } from '../lib/useEscapeToClose';
 
 export function LevelUpToast({ newLevel, onDismiss }: { newLevel: number | null; onDismiss: () => void }) {
   const { t } = useLanguage();
+  useEscapeToClose(onDismiss, newLevel !== null);
   return (
     <AnimatePresence>
       {newLevel !== null && (
@@ -15,6 +17,9 @@ export function LevelUpToast({ newLevel, onDismiss }: { newLevel: number | null;
         >
           <motion.div
             className="text-center"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('levelUp.title')}
             initial={{ scale: 0.5, opacity: 0, rotate: -8 }}
             animate={{ scale: 1, opacity: 1, rotate: 0 }}
             exit={{ scale: 0.6, opacity: 0 }}

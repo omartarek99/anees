@@ -21,7 +21,7 @@ const app = express();
 // `npm run dev` script (backend + frontend via concurrently) may inject a generic
 // PORT meant for the frontend, which both child processes would otherwise inherit.
 const PORT = Number(process.env.BACKEND_PORT ?? 4000);
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173';
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5190';
 
 app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
 app.use(express.json({ limit: '100kb' }));

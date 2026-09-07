@@ -38,6 +38,7 @@ export function Sidebar() {
             to={link.to}
             end={link.end}
             title={t(link.key)}
+            aria-label={t(link.key)}
             className={({ isActive }) => `sidebar-icon-btn${isActive ? ' active' : ''}`}
           >
             <span aria-hidden>{link.icon}</span>
@@ -50,15 +51,21 @@ export function Sidebar() {
           type="button"
           className="sidebar-icon-btn"
           title={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
+          aria-label={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
           onClick={toggleLang}
         >
-          🌐
+          <span aria-hidden>🌐</span>
         </button>
-        <NavLink to="/profile" title={t('profile.editProfile')} className={({ isActive }) => `sidebar-icon-btn${isActive ? ' active' : ''}`}>
-          👤
+        <NavLink
+          to="/profile"
+          title={t('profile.editProfile')}
+          aria-label={t('profile.editProfile')}
+          className={({ isActive }) => `sidebar-icon-btn${isActive ? ' active' : ''}`}
+        >
+          <span aria-hidden>👤</span>
         </NavLink>
-        <button type="button" className="sidebar-icon-btn" title={t('nav.logout')} onClick={() => logout()}>
-          🚪
+        <button type="button" className="sidebar-icon-btn" title={t('nav.logout')} aria-label={t('nav.logout')} onClick={() => logout()}>
+          <span aria-hidden>🚪</span>
         </button>
       </div>
     </aside>
