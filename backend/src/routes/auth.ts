@@ -21,6 +21,7 @@ import {
   firebaseDeleteUser,
 } from '../lib/firebase.js';
 import { verifyQatarIdPhoto, type IdVerificationFailureReason } from '../lib/idVerification.js';
+import { FRONTEND_ORIGIN } from '../lib/config.js';
 
 export const authRouter = Router();
 
@@ -66,7 +67,6 @@ const cookieOptions = {
   maxAge: 30 * 24 * 60 * 60 * 1000,
 };
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173';
 const verifyEmailContinueUrl = `${FRONTEND_ORIGIN}/verify-email`;
 
 // Firebase's "wrong credentials" error varies by API version/config.
