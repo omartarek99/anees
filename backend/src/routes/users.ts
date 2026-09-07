@@ -88,7 +88,7 @@ usersRouter.get('/search', requireAuth, (req, res) => {
 usersRouter.get('/:username', requireAuth, (req, res) => {
   const user = db.prepare(`SELECT * FROM users WHERE lower(username) = lower(?)`).get(req.params.username);
   if (!user) {
-    res.status(404).json({ error: 'Student not found.' });
+    res.status(404).json({ error: 'User not found.' });
     return;
   }
   res.json({ profile: profileSummary(user) });

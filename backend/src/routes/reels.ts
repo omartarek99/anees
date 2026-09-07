@@ -8,16 +8,40 @@ import { gradeAnswers } from '../lib/grading.js';
 
 export const reelsRouter = Router();
 
-function getProgress(userId: number, mapLevelId: number) {
-  return db
+// Level 1 starts available for every account from the moment it exists, even before any
+// progress row has been written for it (matches GET /map's own fallback, backend/src/routes/map.ts)
+// -- this covers accounts created before the signup route seeded this row (or any other
+// gap), not just the happy path where the row already exists.
+function getProgress(userId: number, level: { id: number; level_number: number }): any {
+  const row = db
     .prepare(`SELECT * FROM user_level_progress WHERE user_id = ? AND map_level_id = ?`)
-    .get(userId, mapLevelId) as any;
+    .get(userId, level.id) as any;
+  if (row) return row;
+  if (level.level_number === 1) return { status: 'available', stars: 0, best_score: 0 };
+  return null;
 }
 
-// Returns every currently-playable reel (unlocked normal levels) in one response — the
-// frontend used to fetch /map, then fire one /reels/level/:n request per unlocked level in
-// parallel (N+1 round trips just to render the feed, and again every time a level completed).
-// This does the same join+filter /map already does, then gathers each level's reel/questions
+function loadQuestions(reelId: number) {
+  const questions = db
+    .prepare(
+      `SELECT id, question_text, question_text_ar, choices_json, choices_json_ar, order_in_reel FROM reel_questions WHERE reel_id = ? ORDER BY order_in_reel`
+    )
+    .all(reelId) as any[];
+  return questions.map((q) => ({
+    id: q.id,
+    text: q.question_text,
+    textAr: q.question_text_ar,
+    choices: JSON.parse(q.choices_json),
+    choicesAr: JSON.parse(q.choices_json_ar),
+    order: q.order_in_reel,
+  }));
+}
+
+// Returns every currently-playable reel (unlocked normal levels, plus any grade-based
+// teacher reels matching the caller's own grade) in one response — the frontend used to
+// fetch /map, then fire one /reels/level/:n request per unlocked level in parallel (N+1
+// round trips just to render the feed, and again every time a level completed). This does
+// the same join+filter /map already does, then gathers each level's reels/questions
 // in-process (still N small synchronous SQLite calls, but zero extra HTTP round trips).
 reelsRouter.get('/feed', requireAuth, (req, res) => {
   const levels = db
@@ -26,22 +50,24 @@ reelsRouter.get('/feed', requireAuth, (req, res) => {
   const progressRows = db.prepare(`SELECT * FROM user_level_progress WHERE user_id = ?`).all(req.userId!) as any[];
   const progressByLevelId = new Map(progressRows.map((p) => [p.map_level_id, p]));
 
-  const feed = levels
-    .map((level) => {
-      const progress = progressByLevelId.get(level.id) ??
-        (level.level_number === 1 ? { status: 'available', stars: 0, best_score: 0 } : null);
-      if (!progress || progress.status === 'locked') return null;
+  const feed: any[] = [];
 
-      const reel = db.prepare(`SELECT * FROM reels WHERE map_level_id = ? ORDER BY order_in_level LIMIT 1`).get(level.id) as any;
-      if (!reel) return null;
-      const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(reel.subject_id) as any;
-      const questions = db
-        .prepare(
-          `SELECT id, question_text, question_text_ar, choices_json, choices_json_ar, order_in_reel FROM reel_questions WHERE reel_id = ? ORDER BY order_in_reel`
-        )
-        .all(reel.id) as any[];
+  for (const level of levels) {
+    const progress = progressByLevelId.get(level.id) ??
+      (level.level_number === 1 ? { status: 'available', stars: 0, best_score: 0 } : null);
+    if (!progress || progress.status === 'locked') continue;
 
-      return {
+    // grade IS NULL excludes grade-based reels that happen to be parked on this level's
+    // id as a schema placeholder (see teacherReels.ts) -- those are appended separately
+    // below, not tied to any specific map level.
+    const reels = db
+      .prepare(`SELECT * FROM reels WHERE map_level_id = ? AND grade IS NULL ORDER BY order_in_level`)
+      .all(level.id) as any[];
+    if (reels.length === 0) continue;
+    const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(level.subject_id) as any;
+
+    for (const reel of reels) {
+      feed.push({
         comingSoon: false,
         level: { levelNumber: level.level_number, title: level.title, titleAr: level.title_ar, kind: level.kind },
         subject: { key: subject.key, name: subject.name, nameAr: subject.name_ar, icon: subject.icon },
@@ -53,19 +79,50 @@ reelsRouter.get('/feed', requireAuth, (req, res) => {
           scriptTextAr: reel.script_text_ar,
           videoUrl: reel.video_url,
           durationSec: reel.duration_sec,
+          questions: loadQuestions(reel.id),
         },
-        questions: questions.map((q) => ({
-          id: q.id,
-          text: q.question_text,
-          textAr: q.question_text_ar,
-          choices: JSON.parse(q.choices_json),
-          choicesAr: JSON.parse(q.choices_json_ar),
-          order: q.order_in_reel,
-        })),
         progress: { status: progress.status, stars: progress.stars, bestScore: progress.best_score },
-      };
-    })
-    .filter((d): d is NonNullable<typeof d> => d !== null);
+      });
+    }
+  }
+
+  // Grade-based teacher lessons, decoupled from the map/level system entirely -- every reel
+  // tagged with the caller's own grade, always available (nothing to unlock, no lock state).
+  // Teachers don't set a grade at signup, so grade-matching alone would show them nothing --
+  // a teacher also sees any grade-based lesson they authored themselves, so they can find
+  // and preview what they just published. Deduplicated by reel id since a teacher previewing
+  // their own reel could otherwise match both clauses.
+  const user = db.prepare(`SELECT grade FROM users WHERE id = ?`).get(req.userId!) as { grade: number | null };
+  const gradeReelsById = new Map<number, any>();
+  if (user?.grade) {
+    for (const reel of db.prepare(`SELECT * FROM reels WHERE grade = ? ORDER BY id`).all(user.grade) as any[]) {
+      gradeReelsById.set(reel.id, reel);
+    }
+  }
+  for (const reel of db
+    .prepare(`SELECT * FROM reels WHERE grade IS NOT NULL AND author_user_id = ? ORDER BY id`)
+    .all(req.userId!) as any[]) {
+    gradeReelsById.set(reel.id, reel);
+  }
+  for (const reel of gradeReelsById.values()) {
+    const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(reel.subject_id) as any;
+    feed.push({
+      comingSoon: false,
+      level: { levelNumber: -reel.id, title: 'Grade Lesson', titleAr: null, kind: 'normal' },
+      subject: { key: subject.key, name: subject.name, nameAr: subject.name_ar, icon: subject.icon },
+      reel: {
+        id: reel.id,
+        title: reel.title,
+        titleAr: reel.title_ar,
+        scriptText: reel.script_text,
+        scriptTextAr: reel.script_text_ar,
+        videoUrl: reel.video_url,
+        durationSec: reel.duration_sec,
+        questions: loadQuestions(reel.id),
+      },
+      progress: { status: 'available', stars: 0, bestScore: 0 },
+    });
+  }
 
   res.json(feed);
 });
@@ -81,29 +138,29 @@ reelsRouter.get('/level/:levelNumber', requireAuth, (req, res) => {
     res.json({ comingSoon: true, level: { levelNumber: level.level_number, title: level.title, titleAr: level.title_ar } });
     return;
   }
-  const progress = getProgress(req.userId!, level.id);
+  const progress = getProgress(req.userId!, level);
   if (!progress || progress.status === 'locked') {
     res.status(403).json({ error: 'This level is locked. Complete the previous level first.' });
     return;
   }
 
-  const reel = db.prepare(`SELECT * FROM reels WHERE map_level_id = ? ORDER BY order_in_level LIMIT 1`).get(level.id) as any;
-  if (!reel) {
+  // grade IS NULL excludes grade-based reels that happen to be parked on this level's id
+  // as a schema placeholder (see teacherReels.ts) -- those surface via GET /feed instead,
+  // not through any specific map level.
+  const reels = db
+    .prepare(`SELECT * FROM reels WHERE map_level_id = ? AND grade IS NULL ORDER BY order_in_level`)
+    .all(level.id) as any[];
+  if (reels.length === 0) {
     res.status(404).json({ error: 'No lesson found for this level.' });
     return;
   }
-  const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(reel.subject_id) as any;
-  const questions = db
-    .prepare(
-      `SELECT id, question_text, question_text_ar, choices_json, choices_json_ar, order_in_reel FROM reel_questions WHERE reel_id = ? ORDER BY order_in_reel`
-    )
-    .all(reel.id) as any[];
+  const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(level.subject_id) as any;
 
   res.json({
     comingSoon: false,
     level: { levelNumber: level.level_number, title: level.title, titleAr: level.title_ar, kind: level.kind },
     subject: { key: subject.key, name: subject.name, nameAr: subject.name_ar, icon: subject.icon },
-    reel: {
+    reels: reels.map((reel) => ({
       id: reel.id,
       title: reel.title,
       titleAr: reel.title_ar,
@@ -111,14 +168,8 @@ reelsRouter.get('/level/:levelNumber', requireAuth, (req, res) => {
       scriptTextAr: reel.script_text_ar,
       videoUrl: reel.video_url,
       durationSec: reel.duration_sec,
-    },
-    questions: questions.map((q) => ({
-      id: q.id,
-      text: q.question_text,
-      textAr: q.question_text_ar,
-      choices: JSON.parse(q.choices_json),
-      choicesAr: JSON.parse(q.choices_json_ar),
-      order: q.order_in_reel,
+      authorUserId: reel.author_user_id,
+      questions: loadQuestions(reel.id),
     })),
     progress: { status: progress.status, stars: progress.stars, bestScore: progress.best_score },
   });
@@ -138,11 +189,14 @@ reelsRouter.post('/:reelId/watch', requireAuth, requireCsrfHeader, validateBody(
     res.status(404).json({ error: 'Lesson not found.' });
     return;
   }
-  const level = db.prepare(`SELECT * FROM map_levels WHERE id = ?`).get(reel.map_level_id) as any;
-  const progress = getProgress(req.userId!, level.id);
-  if (!progress || progress.status === 'locked') {
-    res.status(403).json({ error: 'This level is locked.' });
-    return;
+  // Grade-based reels have no map level to lock behind -- always allowed.
+  if (!reel.grade) {
+    const level = db.prepare(`SELECT * FROM map_levels WHERE id = ?`).get(reel.map_level_id) as any;
+    const progress = getProgress(req.userId!, level);
+    if (!progress || progress.status === 'locked') {
+      res.status(403).json({ error: 'This level is locked.' });
+      return;
+    }
   }
 
   const { seconds } = req.body as { seconds: number };
@@ -189,9 +243,12 @@ reelsRouter.post('/:reelId/submit', requireAuth, requireCsrfHeader, validateBody
     res.status(404).json({ error: 'Lesson not found.' });
     return;
   }
-  const level = db.prepare(`SELECT * FROM map_levels WHERE id = ?`).get(reel.map_level_id) as any;
-  const progress = getProgress(req.userId!, level.id);
-  if (!progress || progress.status === 'locked') {
+
+  // Grade-based reels have no map level to lock behind or complete.
+  const isGradeReel = !!reel.grade;
+  const level = isGradeReel ? null : (db.prepare(`SELECT * FROM map_levels WHERE id = ?`).get(reel.map_level_id) as any);
+  const progress = isGradeReel ? null : getProgress(req.userId!, level);
+  if (!isGradeReel && (!progress || progress.status === 'locked')) {
     res.status(403).json({ error: 'This level is locked.' });
     return;
   }
@@ -205,27 +262,57 @@ reelsRouter.post('/:reelId/submit', requireAuth, requireCsrfHeader, validateBody
   const total = questions.length;
   const scoreRatio = total > 0 ? correctCount / total : 0;
   const stars = scoreRatio === 1 ? 3 : scoreRatio >= 0.75 ? 2 : scoreRatio >= 0.5 ? 1 : 0;
-  const nowStars = Math.max(stars, progress.stars ?? 0);
-  const bestScore = Math.max(correctCount, progress.best_score ?? 0);
 
-  // Quiz XP is only awarded the first time a level is completed — retaking it (e.g. while
-  // looping through the endless reels feed for review) still shows correct/wrong feedback
-  // and can improve stars, but can't be replayed for repeat XP.
-  const alreadyCompleted = progress.status === 'completed';
+  // Quiz XP is only awarded the first time a lesson is completed — retaking it (e.g.
+  // while looping through the endless reels feed for review) still shows correct/wrong
+  // feedback and can improve stars, but can't be replayed for repeat XP. Map-level
+  // reels track this via user_level_progress.status; grade-based reels (no level) use
+  // reel_watch_progress.quiz_completed instead.
+  const watchRow = isGradeReel
+    ? (db.prepare(`SELECT * FROM reel_watch_progress WHERE user_id = ? AND reel_id = ?`).get(req.userId!, reelId) as any)
+    : null;
+  const alreadyCompleted = isGradeReel ? !!watchRow?.quiz_completed : progress.status === 'completed';
   if (alreadyCompleted) xpEarned = 0;
 
   const levelBeforeXp = getPlayerLevel(req.userId!);
   if (xpEarned > 0) awardXp(req.userId!, xpEarned, 'reel_quiz');
 
+  if (isGradeReel) {
+    if (watchRow) {
+      db.prepare(`UPDATE reel_watch_progress SET quiz_completed = 1 WHERE id = ?`).run(watchRow.id);
+    } else {
+      db.prepare(`INSERT INTO reel_watch_progress (user_id, reel_id, quiz_completed) VALUES (?,?,1)`).run(req.userId!, reelId);
+    }
+    const levelAfterXpGrade = getPlayerLevel(req.userId!);
+    res.json({
+      results,
+      correctCount,
+      total,
+      xpEarned,
+      stars,
+      leveledUp: levelAfterXpGrade > levelBeforeXp,
+      newPlayerLevel: levelAfterXpGrade,
+    });
+    return;
+  }
+
+  const nowStars = Math.max(stars, progress.stars ?? 0);
+  const bestScore = Math.max(correctCount, progress.best_score ?? 0);
+
+  // Upsert, not a plain UPDATE: level 1 may not have a row yet for accounts predating
+  // signup's own progress-seeding (getProgress's virtual fallback covers reads, but
+  // writes still need a real row to land in).
   db.prepare(
-    `UPDATE user_level_progress SET status = 'completed', stars = ?, best_score = ?, completed_at = datetime('now')
-     WHERE user_id = ? AND map_level_id = ?`
-  ).run(nowStars, bestScore, req.userId!, level.id);
+    `INSERT INTO user_level_progress (user_id, map_level_id, status, stars, best_score, completed_at)
+     VALUES (?, ?, 'completed', ?, ?, datetime('now'))
+     ON CONFLICT(user_id, map_level_id) DO UPDATE SET
+       status = 'completed', stars = excluded.stars, best_score = excluded.best_score, completed_at = excluded.completed_at`
+  ).run(req.userId!, level.id, nowStars, bestScore);
 
   // Unlock the next map level (or boss) so the student can keep progressing.
   const nextLevel = db.prepare(`SELECT * FROM map_levels WHERE level_number = ?`).get(level.level_number + 1) as any;
   if (nextLevel) {
-    const existing = getProgress(req.userId!, nextLevel.id);
+    const existing = getProgress(req.userId!, nextLevel);
     if (!existing) {
       db.prepare(`INSERT INTO user_level_progress (user_id, map_level_id, status) VALUES (?,?,'available')`).run(
         req.userId!,

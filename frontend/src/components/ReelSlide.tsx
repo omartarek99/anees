@@ -37,6 +37,7 @@ export type ReelSlideControls = { commit: () => void; discard: () => void; openQ
 export function ReelSlide({
   data,
   isActive,
+  muted,
   onCompleted,
   onNext,
   hasNext,
@@ -48,6 +49,10 @@ export function ReelSlide({
 }: {
   data: ReelSlideData;
   isActive: boolean;
+  /** Page-level sound preference (see ReelsPage's action rail toggle). Every slide's video
+   * stays muted regardless while inactive -- only the one active slide can ever have sound,
+   * and even then only when the student has turned it on. */
+  muted: boolean;
   onCompleted: (result: SubmitResult) => void;
   onNext: () => void;
   hasNext: boolean;
@@ -214,7 +219,9 @@ export function ReelSlide({
 
       {/* level badge */}
       <div style={{ position: 'absolute', top: 14, insetInlineStart: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span className="badge badge-gold">{t('reels.level', { n: data.levelNumber })}</span>
+        <span className="badge badge-gold">
+          {data.levelNumber < 0 ? t('reels.bonusLesson') : t('reels.level', { n: data.levelNumber })}
+        </span>
         {data.completed && <span style={{ fontSize: 14 }}>{'⭐'.repeat(data.stars)}</span>}
       </div>
 
@@ -239,7 +246,14 @@ export function ReelSlide({
             }}
           >
             {data.videoUrl ? (
-              <video src={data.videoUrl} autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <video
+                src={data.videoUrl}
+                autoPlay
+                loop
+                muted={muted || !isActive}
+                playsInline
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             ) : (
               <div
                 style={{
@@ -320,9 +334,17 @@ export function ReelSlide({
             {!data.videoUrl && (
               <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11.5, marginTop: 6 }}>{t('reels.videoComingSoon')}</p>
             )}
-            <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setMode('quiz')}>
-              {t('reels.takeQuiz')}
-            </button>
+            {data.questions.length > 0 ? (
+              <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setMode('quiz')}>
+                {t('reels.takeQuiz')}
+              </button>
+            ) : (
+              hasNext && (
+                <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={onNext}>
+                  {t('reels.nextLesson')}
+                </button>
+              )
+            )}
           </div>
 
           {isActive && stillWatchingActive && (

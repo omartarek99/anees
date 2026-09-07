@@ -1,9 +1,10 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { seed } from './db/seed.js';
 import { apiLimiter } from './middleware/rateLimit.js';
-import { requireAuth, requireRole } from './middleware/auth.js';
+import { requireAuth } from './middleware/auth.js';
 import { authRouter } from './routes/auth.js';
 import { usersRouter } from './routes/users.js';
 import { reelsRouter } from './routes/reels.js';
@@ -13,6 +14,7 @@ import { leaderboardRouter } from './routes/leaderboard.js';
 import { friendsRouter } from './routes/friends.js';
 import { newsRouter } from './routes/news.js';
 import { craftRouter } from './routes/craft.js';
+import { teacherReelsRouter } from './routes/teacherReels.js';
 
 seed();
 
@@ -38,20 +40,24 @@ app.use('/api', apiLimiter);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
-// Student-only feature areas — a teacher account gets a 403 from the API even if it
-// somehow reaches these routes directly, matching the student-only UI/routing on the
-// frontend. News stays open to both roles (everyone reads announcements; only the
-// POST/DELETE routes inside newsRouter itself are teacher-gated).
-const studentOnly = [requireAuth, requireRole('student')];
+// Teacher and student accounts share the entire gameplay surface (reels, map,
+// worksheets, leaderboard, friends, craft) — a teacher account is a student account
+// plus extras (ID-verified signup, the reel composer below, and the news composer on
+// their home page), not a separate walled-off experience. News stays open to both
+// roles for reading; only its own POST/DELETE routes are teacher-gated internally.
+// `/api/teacher-reels` is the one truly teacher-only surface, gated per-route inside
+// its own router.
+const authenticated = [requireAuth];
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
-app.use('/api/reels', ...studentOnly, reelsRouter);
-app.use('/api/map', ...studentOnly, mapRouter);
-app.use('/api/worksheets', ...studentOnly, worksheetsRouter);
-app.use('/api/leaderboard', ...studentOnly, leaderboardRouter);
-app.use('/api/friends', ...studentOnly, friendsRouter);
+app.use('/api/reels', ...authenticated, reelsRouter);
+app.use('/api/map', ...authenticated, mapRouter);
+app.use('/api/worksheets', ...authenticated, worksheetsRouter);
+app.use('/api/leaderboard', ...authenticated, leaderboardRouter);
+app.use('/api/friends', ...authenticated, friendsRouter);
 app.use('/api/news', newsRouter);
-app.use('/api/craft', ...studentOnly, craftRouter);
+app.use('/api/craft', ...authenticated, craftRouter);
+app.use('/api/teacher-reels', teacherReelsRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found.' });

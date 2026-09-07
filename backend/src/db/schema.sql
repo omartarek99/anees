@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
   is_seed INTEGER NOT NULL DEFAULT 0,
   role TEXT NOT NULL CHECK (role IN ('student','teacher')) DEFAULT 'student',
   grade INTEGER,
+  email_verified INTEGER NOT NULL DEFAULT 0,
+  id_document_path TEXT,
+  firebase_uid TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -65,7 +68,15 @@ CREATE TABLE IF NOT EXISTS reels (
   script_text_ar TEXT NOT NULL DEFAULT '',
   video_url TEXT,
   duration_sec INTEGER NOT NULL DEFAULT 45,
-  order_in_level INTEGER NOT NULL DEFAULT 1
+  order_in_level INTEGER NOT NULL DEFAULT 1,
+  -- NULL for seeded/AI-generated content; set to the authoring teacher's user id for
+  -- reels created through the teacher reel composer.
+  author_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  -- Set only for teacher-authored grade-based lessons (1-12), decoupled from the map
+  -- level system -- when set, map_level_id/subject_id above are a harmless placeholder
+  -- (see backend/src/routes/teacherReels.ts) never read for these rows; the student
+  -- feed matches them by grade instead (backend/src/routes/reels.ts GET /grade).
+  grade INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS reel_questions (
@@ -139,6 +150,10 @@ CREATE TABLE IF NOT EXISTS reel_watch_progress (
   reel_id INTEGER NOT NULL REFERENCES reels(id) ON DELETE CASCADE,
   watched_seconds INTEGER NOT NULL DEFAULT 0,
   xp_awarded INTEGER NOT NULL DEFAULT 0,
+  -- Quiz-completion marker for grade-based reels only (map-level reels track this via
+  -- user_level_progress.status instead) -- prevents repeat-XP farming on a reel with no
+  -- level to gate it.
+  quiz_completed INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(user_id, reel_id)
 );

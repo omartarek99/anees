@@ -26,7 +26,7 @@ function SignupConsent() {
 }
 
 export function SignupPage() {
-  const { signup } = useAuth();
+  const { signup, resendVerification } = useAuth();
   const { t, lang } = useLanguage();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -35,15 +35,20 @@ export function SignupPage() {
   const [avatarKey, setAvatarKey] = useState('falcon');
   const [role, setRole] = useState<Role>('student');
   const [grade, setGrade] = useState('');
+  const [idDocument, setIdDocument] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [pendingIdToken, setPendingIdToken] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      await signup({
+      const result = await signup({
         username,
         email,
         password,
@@ -51,13 +56,50 @@ export function SignupPage() {
         avatarKey,
         role,
         grade: role === 'student' ? Number(grade) : undefined,
+        idDocument: role === 'teacher' ? idDocument ?? undefined : undefined,
       });
+      setPendingEmail(result.email);
+      setPendingIdToken(result.idToken);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
       setError(translateApiError(lang, message));
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleResend() {
+    if (!pendingIdToken) return;
+    setResending(true);
+    setResent(false);
+    try {
+      await resendVerification(pendingIdToken);
+      setResent(true);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
+      setError(translateApiError(lang, message));
+    } finally {
+      setResending(false);
+    }
+  }
+
+  if (pendingEmail) {
+    return (
+      <AuthShell title={t('auth.checkYourEmailTitle')} subtitle={t('auth.checkYourEmailBody', { email: pendingEmail })}>
+        {error && <div className="form-error-banner">{error}</div>}
+        <button className="btn btn-secondary btn-block" type="button" onClick={handleResend} disabled={resending}>
+          {resending ? t('auth.resending') : t('auth.resendVerification')}
+        </button>
+        {resent && (
+          <p className="text-center muted" style={{ marginTop: 12 }}>
+            {t('auth.resendSent')}
+          </p>
+        )}
+        <p className="text-center muted" style={{ marginTop: 18 }}>
+          <Link to="/login">{t('auth.backToLogin')}</Link>
+        </p>
+      </AuthShell>
+    );
   }
 
   return (
@@ -155,6 +197,26 @@ export function SignupPage() {
                 required
                 title={t('auth.gradeHint')}
               />
+            </motion.div>
+          )}
+          {role === 'teacher' && (
+            <motion.div
+              className="field"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+            >
+              <label htmlFor="idDocument">{t('auth.teacherIdLabel')}</label>
+              <input
+                id="idDocument"
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={(e) => setIdDocument(e.target.files?.[0] ?? null)}
+                required
+                title={t('auth.teacherIdHint')}
+              />
+              <small className="muted">{t('auth.teacherIdHint')}</small>
             </motion.div>
           )}
         </AnimatePresence>

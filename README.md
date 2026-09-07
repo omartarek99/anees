@@ -7,10 +7,10 @@ A Qatari-themed Math & Science learning platform for 5th-grade students. Student
 - **Frontend**: React 18 + TypeScript + Vite, React Router, Swiper (reels feed), Framer Motion (UI animation), Three.js (the Quarry mini-game)
 - **Backend**: Node.js + Express + TypeScript
 - **Database**: SQLite via Node's built-in `node:sqlite` module (no native compilation, no external DB server needed)
-- **Auth**: httpOnly session cookies, `bcryptjs` password hashing
+- **Auth**: httpOnly session cookies (accounts/sessions owned by our own backend); Firebase Authentication verifies email/password and sends the confirmation email for new signups
 - **`fastapi-backend/`**: a separate, optional Python (FastAPI + Supabase) service — see its own section below. Not required to run the main app.
 
-No external network calls happen at runtime for the main app (including "video" content — see Scope below), so it works fully offline once dependencies are installed.
+No external network calls happen at runtime for the main app (including "video" content — see Scope below) **except signup and login for real accounts**, which reach Firebase to verify credentials/send the email confirmation link (see "Signup verification" below) — everything else (seed-account login, reels, map, worksheets, craft, etc.) works fully offline once dependencies are installed.
 
 ## Getting Started
 
@@ -47,6 +47,68 @@ A student and a teacher account are always seeded, so both account types are tes
 A handful of demo students (Rashid, Khalid, Hamad, Abdulaziz, Nasser, Jassim) are also pre-loaded so the Leaderboard and Friends features have something to show immediately.
 
 To reset all data (accounts, progress, everything), stop the servers and delete `backend/data/`; it reseeds automatically on the next `npm run dev`.
+
+### Signup verification (Firebase + Supabase)
+
+New student/teacher signups (not the seeded accounts above, which are pre-verified)
+must click a confirmation link before they can log in, and new **teacher** signups must
+also attach a Qatar ID, which is automatically checked before the account is created —
+see "Automated teacher ID check" below. Email/password and verification are handled by
+**Firebase Authentication**; the teacher ID document is stored in **Supabase** Storage
+(the same project `fastapi-backend/` uses).
+
+1. In the Firebase console for your project → **Authentication → Sign-in method** →
+   enable the **Email/Password** provider.
+2. Project Settings (gear icon) → **General** tab → copy the **Web API Key**.
+3. Copy `backend/.env.example` to `backend/.env` and fill in `FIREBASE_API_KEY` with
+   that value, plus `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (Project Settings →
+   API in the Supabase dashboard) for the teacher ID upload. The service role key is
+   only used server-side — never expose it to the frontend.
+4. In Supabase, under **Storage**, create a new bucket named `teacher-id-documents` and
+   leave **"Public bucket" unchecked** — ID photos are sensitive and must stay private.
+   No RLS policies are needed since the backend only ever accesses it with the service
+   role key (which bypasses RLS).
+
+Nothing else to configure — `localhost` is authorized in every Firebase project by
+default, and Firebase's default verification email template needs no SMTP setup.
+
+Without `backend/.env` filled in, the rest of the app (seed accounts, reels, map,
+worksheets, craft, etc.) still runs with zero config as before — only signup fails,
+with "We couldn't send the verification email" (students) or "We couldn't upload your
+ID" (teachers).
+
+**Teacher ID review:** a teacher's uploaded ID is stored privately in the
+`teacher-id-documents` bucket (path shown in `users.id_document_path`) purely for you,
+the app owner, to review manually from the Supabase dashboard if you want a second look
+— there's no in-app admin/approval screen. A teacher account works normally (once their
+email is verified) as long as it passed the automated check below.
+
+**Automated teacher ID check:** signup runs the uploaded photo through local OCR
+(`tesseract.js`, no external service, no account/cost) and rejects the signup outright
+unless it can find the word "Qatar" on the card and a plausible date of birth showing
+the person is 23 or older — the oldest date found on the card is treated as the date of
+birth (a QID shows issue/expiry/DOB dates, and DOB is reliably the oldest of the three).
+This is a **best-effort heuristic, not real document verification** — a blurry, rotated,
+or low-light photo of a genuine, valid ID can be incorrectly rejected; ask the teacher to
+retry with a clearer, well-lit photo of the whole card. Only JPG/PNG are accepted (no
+PDF) since OCR needs a plain image. The first ID upload after a fresh install downloads
+`tesseract.js`'s English OCR language data (a few MB, one-time, then cached).
+
+### Dev utility: deleting a test account
+
+While testing signup, `backend/scripts/delete-user.ts` fully removes one account by
+email — the local DB row, its Supabase-stored ID document (if any), and the Firebase
+Auth user — so the same username/email is free to sign up with again:
+
+```bash
+npm run admin:delete-user --prefix backend -- someone@example.com
+```
+
+Needs a Firebase service account key at `backend/secrets/firebase-service-account.json`
+(Firebase Console → Project Settings → Service Accounts → Generate new private key).
+This grants full admin access to the Firebase project — the path is gitignored; never
+commit it. Without it, the script still cleans up the local DB row and Storage file, and
+just skips the Firebase side.
 
 ### Optional: `fastapi-backend/` (Python + Supabase)
 
@@ -93,7 +155,7 @@ Requires Python 3.10+ and your own Supabase project (URL + anon key + service ro
 
 ## Security & Content Safety
 
-- Passwords hashed with bcrypt; sessions are random tokens (only their hash is stored server-side, in a revocable `sessions` table) delivered via httpOnly, sameSite cookies.
+- Real accounts' passwords are managed entirely by Firebase Authentication (never stored locally); the seeded demo accounts (which predate Firebase) still use a local bcrypt hash. Sessions are random tokens (only their hash is stored server-side, in a revocable `sessions` table) delivered via httpOnly, sameSite cookies.
 - A custom-header check (`X-Requested-With`) is required on every mutating request as CSRF protection.
 - Every API input is validated server-side with `zod`; all SQL is parameterized (no string-built queries).
 - Rate limiting on login/signup.

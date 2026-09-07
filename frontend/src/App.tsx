@@ -9,6 +9,7 @@ import { TermsPage } from './pages/TermsPage';
 import { CookiePolicyPage } from './pages/CookiePolicyPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
+import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { HomePage } from './pages/HomePage';
 import { TeacherHomePage } from './pages/TeacherHomePage';
 import { ReelsPage } from './pages/ReelsPage';
@@ -18,6 +19,7 @@ import { WorksheetsPage } from './pages/WorksheetsPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { FriendsPage } from './pages/FriendsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { TeacherReelsPage } from './pages/TeacherReelsPage';
 
 function FullScreenLoader() {
   return (
@@ -52,12 +54,15 @@ function RoleHome() {
   return user?.role === 'teacher' ? <TeacherHomePage /> : <HomePage />;
 }
 
-/** Gates the wrapped routes to student accounts only — a signed-in teacher who navigates
- * (or deep-links) here is bounced back to Home, matching the student-only APIs behind these
- * pages so a teacher account never sees student material through the UI either. */
-function StudentOnly() {
+/** Gates the wrapped routes to teacher accounts only — a signed-in student who
+ * navigates here is bounced back to Home. Reels/Map/Craft/Worksheets/Leaderboard/
+ * Friends have no equivalent guard: teachers share the full gameplay surface with
+ * students (matching the backend, which no longer role-gates those routes either) —
+ * a teacher account is a student account plus a few extras, not a separate walled-off
+ * experience. */
+function TeacherOnly() {
   const { user } = useAuth();
-  if (user?.role !== 'student') return <Navigate to="/" replace />;
+  if (user?.role !== 'teacher') return <Navigate to="/" replace />;
   return <Outlet />;
 }
 
@@ -91,17 +96,19 @@ export default function App() {
             <Route element={<PublicOnlyLayout />}>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
             </Route>
 
             <Route element={<ProtectedLayout />}>
               <Route path="/" element={<RoleHome />} />
-              <Route element={<StudentOnly />}>
-                <Route path="/reels" element={<ReelsPage />} />
-                <Route path="/map" element={<MapPage />} />
-                <Route path="/craft" element={<CraftPage />} />
-                <Route path="/worksheets" element={<WorksheetsPage />} />
-                <Route path="/leaderboard" element={<LeaderboardPage />} />
-                <Route path="/friends" element={<FriendsPage />} />
+              <Route path="/reels" element={<ReelsPage />} />
+              <Route path="/map" element={<MapPage />} />
+              <Route path="/craft" element={<CraftPage />} />
+              <Route path="/worksheets" element={<WorksheetsPage />} />
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/friends" element={<FriendsPage />} />
+              <Route element={<TeacherOnly />}>
+                <Route path="/teacher/reels" element={<TeacherReelsPage />} />
               </Route>
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile/:username" element={<ProfilePage />} />

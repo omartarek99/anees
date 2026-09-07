@@ -58,7 +58,7 @@ friendsRouter.post('/request', requireAuth, requireCsrfHeader, validateBody(requ
   const { toUsername } = req.body as { toUsername: string };
   const target = db.prepare(`SELECT * FROM users WHERE lower(username) = lower(?)`).get(toUsername) as any;
   if (!target) {
-    res.status(404).json({ error: 'No student found with that username.' });
+    res.status(404).json({ error: 'No user found with that username.' });
     return;
   }
   if (target.id === req.userId!) {
@@ -66,7 +66,7 @@ friendsRouter.post('/request', requireAuth, requireCsrfHeader, validateBody(requ
     return;
   }
   if (areFriends(req.userId!, target.id)) {
-    res.status(409).json({ error: 'You are already friends with this student.' });
+    res.status(409).json({ error: 'You are already friends with this user.' });
     return;
   }
   const existingPending = db
@@ -76,7 +76,7 @@ friendsRouter.post('/request', requireAuth, requireCsrfHeader, validateBody(requ
     )
     .get(req.userId!, target.id, target.id, req.userId!);
   if (existingPending) {
-    res.status(409).json({ error: 'A friend request is already pending with this student.' });
+    res.status(409).json({ error: 'A friend request is already pending with this user.' });
     return;
   }
 

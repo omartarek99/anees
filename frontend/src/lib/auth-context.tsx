@@ -29,10 +29,13 @@ type AuthContextValue = {
     avatarKey: string;
     role: Role;
     grade?: number;
-  }) => Promise<void>;
+    idDocument?: File;
+  }) => Promise<{ email: string; idToken: string }>;
   login: (input: { username: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  verifyEmail: (oobCode: string) => Promise<void>;
+  resendVerification: (idToken: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -79,8 +82,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signup: AuthContextValue['signup'] = async (input) => {
-    const data = await api.post<{ user: User }>('/auth/signup', input);
-    setUser(data.user);
+    const formData = new FormData();
+    formData.append('username', input.username);
+    formData.append('email', input.email);
+    formData.append('password', input.password);
+    formData.append('displayName', input.displayName);
+    formData.append('avatarKey', input.avatarKey);
+    formData.append('role', input.role);
+    if (input.grade !== undefined) formData.append('grade', String(input.grade));
+    if (input.idDocument) formData.append('idDocument', input.idDocument);
+
+    const data = await api.postForm<{ pendingVerification: true; email: string; idToken: string }>(
+      '/auth/signup',
+      formData
+    );
+    return { email: data.email, idToken: data.idToken };
   };
 
   const login: AuthContextValue['login'] = async (input) => {
@@ -93,8 +109,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const verifyEmail: AuthContextValue['verifyEmail'] = async (oobCode) => {
+    const data = await api.post<{ user: User }>('/auth/verify-email', { oobCode });
+    setUser(data.user);
+  };
+
+  const resendVerification: AuthContextValue['resendVerification'] = async (idToken) => {
+    await api.post('/auth/resend-verification', { idToken });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signup, login, logout, refreshUser }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider
+      value={{ user, loading, signup, login, logout, refreshUser, verifyEmail, resendVerification }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 }
 

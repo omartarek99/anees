@@ -23,12 +23,23 @@ const initialLikeCount = (levelNumber: number) => 40 + ((levelNumber * 17) % 260
 const STILL_WATCHING_INTERVAL_SECONDS = 20 * 60;
 const STILL_WATCHING_TIMEOUT_SECONDS = 10;
 
-type ReelDetailResponse = {
+// One flattened entry per reel, exactly as GET /reels/feed returns it — a level can have
+// several reels (the seeded lesson plus any teacher ones), and grade-based teacher reels
+// (no map level at all) arrive with a synthetic negative `level.levelNumber` (see
+// backend/src/routes/reels.ts) so they can never collide with a real level's entries.
+type FlatReelEntry = {
   comingSoon: boolean;
   level: { levelNumber: number; title: string; titleAr?: string | null; kind: string };
   subject: { key: string; name: string; nameAr?: string | null; icon: string };
-  reel: { id: number; title: string; titleAr?: string | null; scriptText: string; scriptTextAr?: string | null; videoUrl: string | null };
-  questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null; order: number }[];
+  reel: {
+    id: number;
+    title: string;
+    titleAr?: string | null;
+    scriptText: string;
+    scriptTextAr?: string | null;
+    videoUrl: string | null;
+    questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null; order: number }[];
+  };
   progress: { status: 'locked' | 'available' | 'completed'; stars: number };
 };
 
@@ -36,7 +47,7 @@ export function ReelsPage() {
   const { user, refreshUser } = useAuth();
   const { t, lang, dir } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [rawDetails, setRawDetails] = useState<ReelDetailResponse[]>([]);
+  const [rawDetails, setRawDetails] = useState<FlatReelEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // null until Swiper reports a real slide-change event — see `initialIndex` fallback below.
@@ -52,6 +63,12 @@ export function ReelsPage() {
       return { ...prev, [reelId]: { liked: !cur.liked, count: cur.count + (cur.liked ? -1 : 1) } };
     });
   }, []);
+
+  // Sound preference persists across swipes (TikTok-style) rather than resetting per slide.
+  // Starts muted -- browsers require that for <video autoPlay> to work without a user gesture;
+  // the action rail's speaker button is the first real gesture that can turn it on.
+  const [muted, setMuted] = useState(true);
+  const toggleMute = useCallback(() => setMuted((m) => !m), []);
 
   // ---- page-level "are you still watching?" engagement check ----
   const [stillWatching, setStillWatching] = useState(false);
@@ -123,7 +140,7 @@ export function ReelsPage() {
         videoUrl: detail.reel.videoUrl,
         subjectIcon: detail.subject.icon,
         subjectName: pickText(lang, detail.subject.name, detail.subject.nameAr),
-        questions: [...detail.questions]
+        questions: [...detail.reel.questions]
           .sort((a, b) => a.order - b.order)
           .map((q) => ({
             id: q.id,
@@ -149,7 +166,7 @@ export function ReelsPage() {
   const loadFeed = useCallback(async () => {
     setLoading(true);
     try {
-      setRawDetails(await api.get<ReelDetailResponse[]>('/reels/feed'));
+      setRawDetails(await api.get<FlatReelEntry[]>('/reels/feed'));
       setError(null);
     } catch {
       setError(t('reels.loadError'));
@@ -174,15 +191,16 @@ export function ReelsPage() {
     await refreshUser();
     try {
       // One request covers both jobs the old code needed two round trips for: fresh
-      // progress/stars on levels already in the feed, and any level the completion just
+      // progress/stars on reels already in the feed, and any reel the completion just
       // unlocked. Existing entries keep their position (so the Swiper doesn't jump); newly
-      // unlocked ones are appended.
-      const feed = await api.get<ReelDetailResponse[]>('/reels/feed');
-      const byLevel = new Map(feed.map((d) => [d.level.levelNumber, d]));
+      // unlocked ones are appended. Keyed by reel id, not level number -- a level can now
+      // hold several reels (the seeded lesson plus any teacher ones).
+      const feed = await api.get<FlatReelEntry[]>('/reels/feed');
+      const byReelId = new Map(feed.map((d) => [d.reel.id, d]));
       setRawDetails((prev) => {
-        const refreshed = prev.map((d) => byLevel.get(d.level.levelNumber) ?? d);
-        const known = new Set(prev.map((d) => d.level.levelNumber));
-        const newlyUnlocked = feed.filter((d) => !known.has(d.level.levelNumber));
+        const refreshed = prev.map((d) => byReelId.get(d.reel.id) ?? d);
+        const known = new Set(prev.map((d) => d.reel.id));
+        const newlyUnlocked = feed.filter((d) => !known.has(d.reel.id));
         return [...refreshed, ...newlyUnlocked];
       });
     } catch {
@@ -243,6 +261,7 @@ export function ReelsPage() {
               <ReelSlide
                 data={slide}
                 isActive={i === (activeIndex ?? initialIndex)}
+                muted={muted}
                 onCompleted={handleCompleted}
                 onNext={() => swiperRef.current?.slideNext()}
                 hasNext={loopEnabled}
@@ -268,6 +287,8 @@ export function ReelsPage() {
             questionCount={activeSlide.questions.length}
             onOpenQuiz={() => activeControlsRef.current?.openQuiz()}
             subjectIcon={activeSlide.subjectIcon}
+            muted={muted}
+            onToggleMute={toggleMute}
           />
         )}
       </div>

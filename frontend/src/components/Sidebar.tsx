@@ -6,10 +6,10 @@ type SidebarLink = { to: string; key: string; icon: string; end?: boolean };
 
 const HOME_LINK: SidebarLink = { to: '/', key: 'nav.home', icon: '🏠', end: true };
 
-// Student-only pages — kept out of a teacher's nav entirely so the "no overlap between
-// account types" rule holds in the UI too, not just at the API layer (see requireRole in
-// backend/src/index.ts).
-const STUDENT_LINKS: SidebarLink[] = [
+// The full gameplay surface — shared by both account types (see backend/src/index.ts,
+// which no longer role-gates these routes either). A teacher account is a student
+// account plus a few extras, not a separate walled-off experience.
+const GAME_LINKS: SidebarLink[] = [
   { to: '/reels', key: 'nav.reels', icon: '🎬' },
   { to: '/map', key: 'nav.map', icon: '🗺️' },
   { to: '/craft', key: 'nav.craft', icon: '🏗️' },
@@ -18,12 +18,15 @@ const STUDENT_LINKS: SidebarLink[] = [
   { to: '/friends', key: 'nav.friends', icon: '🧑‍🤝‍🧑' },
 ];
 
+// Teacher-only extra, on top of the shared game links above.
+const TEACHER_LINKS: SidebarLink[] = [{ to: '/teacher/reels', key: 'nav.myReels', icon: '🎥' }];
+
 export function Sidebar() {
   const { user, logout } = useAuth();
   const { t, lang, toggleLang } = useLanguage();
   if (!user) return null;
 
-  const links = user.role === 'teacher' ? [HOME_LINK] : [HOME_LINK, ...STUDENT_LINKS];
+  const links = user.role === 'teacher' ? [HOME_LINK, ...GAME_LINKS, ...TEACHER_LINKS] : [HOME_LINK, ...GAME_LINKS];
 
   return (
     <aside className="sidebar">

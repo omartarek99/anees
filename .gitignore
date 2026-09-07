@@ -34,6 +34,13 @@ fastapi-backend/assets/*.mp4
 # Impeccable's local cache/config — regenerated automatically, not source.
 .impeccable/
 
+# Firebase/GCP service account keys — full admin credentials, never commit
+*service-account*.json
+backend/secrets/
+
+# tesseract.js OCR language data — downloaded/cached on first ID-verification run
+backend/*.traineddata
+
 # Editor/OS cruft
 .DS_Store
 Thumbs.db

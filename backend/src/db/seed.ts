@@ -45,13 +45,36 @@ function ensureDevTeacher() {
   if (exists) return;
   const passwordHash = bcrypt.hashSync('teachpass123', 10);
   db.prepare(
-    `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade) VALUES (?,?,?,?,?,?,?,?,?)`
-  ).run('dev_teacher', 'dev_teacher@anees.local', passwordHash, 'Dev Teacher', 'explorer', 0, 0, 'teacher', null);
+    `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?)`
+  ).run('dev_teacher', 'dev_teacher@anees.local', passwordHash, 'Dev Teacher', 'explorer', 0, 0, 'teacher', null, 1);
   console.log('[seed] Added dev_teacher account to existing database.');
+}
+
+/** The seed accounts never go through Supabase signup, so on a database created before
+ * `email_verified` existed they'd default to unverified and get locked out of login.
+ * Idempotent, runs on every boot (like ensureDevTeacher above) so already-seeded
+ * databases pick this up too, not just brand-new ones. */
+function ensureSeedAccountsVerified() {
+  db.prepare(`UPDATE users SET email_verified = 1 WHERE username IN ('dev_student', 'dev_teacher')`).run();
+}
+
+/** Teachers play through the map exactly like students now, so dev_teacher needs the
+ * same level-1-unlocked starting state dev_student gets. Idempotent and safe to call
+ * before level 1 necessarily exists yet (no-ops until it does), so it can run both on
+ * the already-seeded fast path below and again after a fresh seed populates levels. */
+function ensureDevTeacherProgress() {
+  const teacher = db.prepare(`SELECT id FROM users WHERE username = 'dev_teacher'`).get() as { id: number } | undefined;
+  const level1 = db.prepare(`SELECT id FROM map_levels WHERE level_number = 1`).get() as { id: number } | undefined;
+  if (!teacher || !level1) return;
+  db.prepare(
+    `INSERT OR IGNORE INTO user_level_progress (user_id, map_level_id, status) VALUES (?,?,'available')`
+  ).run(teacher.id, level1.id);
 }
 
 export function seed() {
   ensureDevTeacher();
+  ensureSeedAccountsVerified();
+  ensureDevTeacherProgress();
   const subjectCount = (db.prepare('SELECT COUNT(*) as c FROM subjects').get() as { c: number }).c;
   if (subjectCount > 0) return; // already seeded
 
@@ -640,7 +663,7 @@ export function seed() {
   // Dev bypass account (real seeded account backing frontend dev-config.ts)
   // ---------------------------------------------------------------------
   const insertUser = db.prepare(
-    `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade) VALUES (?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?)`
   );
   const insertProgress = db.prepare(
     `INSERT INTO user_level_progress (user_id, map_level_id, status) VALUES (?,?,?)`
@@ -649,7 +672,7 @@ export function seed() {
 
   const devPasswordHash = bcrypt.hashSync('devpass123', 10);
   const devUserId = Number(
-    insertUser.run('dev_student', 'dev_student@anees.local', devPasswordHash, 'Dev Student', 'falcon', 0, 0, 'student', 5).lastInsertRowid
+    insertUser.run('dev_student', 'dev_student@anees.local', devPasswordHash, 'Dev Student', 'falcon', 0, 0, 'student', 5, 1).lastInsertRowid
   );
   insertProgress.run(devUserId, levelIds.get(1)!, 'available');
   // dev_teacher is created by ensureDevTeacher() above (runs on every boot, not just first-seed).
@@ -671,10 +694,14 @@ export function seed() {
     const randomPassword = crypto.randomBytes(24).toString('hex');
     const hash = bcrypt.hashSync(randomPassword, 10);
     const userId = Number(
-      insertUser.run(s.username, `${s.username}@anees.local`, hash, s.displayName, s.avatar, s.xp, 1, 'student', 5).lastInsertRowid
+      insertUser.run(s.username, `${s.username}@anees.local`, hash, s.displayName, s.avatar, s.xp, 1, 'student', 5, 1).lastInsertRowid
     );
     insertXpEvent.run(userId, s.xp, 'seed_bootstrap', toSqlite(now));
   }
+
+  // Level 1 didn't exist yet when ensureDevTeacherProgress() ran at the top of this
+  // function on a brand-new database -- now that it's been created above, try again.
+  ensureDevTeacherProgress();
 
   console.log('[seed] Database seeded: subjects, 50 map levels, 10 boss fights, reels, worksheets, news, dev + demo accounts.');
 }

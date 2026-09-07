@@ -12,6 +12,8 @@ export function ReelActionRail({
   questionCount,
   onOpenQuiz,
   subjectIcon,
+  muted,
+  onToggleMute,
 }: {
   avatarKey: string;
   liked: boolean;
@@ -20,6 +22,8 @@ export function ReelActionRail({
   questionCount: number;
   onOpenQuiz: () => void;
   subjectIcon: string;
+  muted: boolean;
+  onToggleMute: () => void;
 }) {
   const { t } = useLanguage();
   return (
@@ -31,6 +35,12 @@ export function ReelActionRail({
           {liked ? '❤️' : '🤍'}
         </span>
         <span className="reel-rail-count">{likeCount}</span>
+      </button>
+
+      <button type="button" className="reel-rail-btn" onClick={onToggleMute} aria-label={t(muted ? 'reels.unmute' : 'reels.mute')}>
+        <span className="notif-bell" style={{ fontSize: 20 }}>
+          {muted ? '🔇' : '🔊'}
+        </span>
       </button>
 
       <button type="button" className="reel-rail-btn" onClick={onOpenQuiz} aria-label={t('reels.takeQuiz')}>

@@ -60,7 +60,12 @@ const CONTACT_SOLICIT_PATTERN =
 
 export type ModerationResult = { allowed: true } | { allowed: false; reason: string };
 
-export function moderateText(raw: string): ModerationResult {
+/** Profanity/slur blocklist check only -- no email/phone/contact-solicit heuristics.
+ * Those exist to stop chat participants exchanging off-platform contact info, which
+ * doesn't apply to authored content like lesson text or quiz questions -- and the phone
+ * pattern in particular false-positives on ordinary arithmetic ("100 - 37" reads as a
+ * phone-shaped digit run). Use this for any educational content a teacher authors. */
+export function moderateContent(raw: string): ModerationResult {
   if (!raw || !raw.trim()) {
     return { allowed: false, reason: 'Message cannot be empty.' };
   }
@@ -79,6 +84,13 @@ export function moderateText(raw: string): ModerationResult {
       return { allowed: false, reason: "Let's keep our chat kind and safe! Try rephrasing your message. 🦅" };
     }
   }
+
+  return { allowed: true };
+}
+
+export function moderateText(raw: string): ModerationResult {
+  const contentCheck = moderateContent(raw);
+  if (!contentCheck.allowed) return contentCheck;
 
   if (EMAIL_PATTERN.test(raw)) {
     return { allowed: false, reason: "For your safety, you can't share email addresses in chat. Let's keep it inside Anees! 🛡️" };
