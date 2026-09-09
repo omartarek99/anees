@@ -15,6 +15,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [rawError, setRawError] = useState<string | null>(null);
+  const [bannedUntil, setBannedUntil] = useState<string | null>(null);
   const [unverifiedIdToken, setUnverifiedIdToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
@@ -24,6 +25,7 @@ export function LoginPage() {
     e.preventDefault();
     setError(null);
     setRawError(null);
+    setBannedUntil(null);
     setUnverifiedIdToken(null);
     setResent(false);
     setSubmitting(true);
@@ -34,8 +36,9 @@ export function LoginPage() {
       setError(translateApiError(lang, message));
       setRawError(message);
       if (err instanceof ApiError && err.status === 403) {
-        const idToken = (err.body as { idToken?: string } | null)?.idToken;
-        if (idToken) setUnverifiedIdToken(idToken);
+        const body = err.body as { idToken?: string; bannedUntil?: string } | null;
+        if (body?.idToken) setUnverifiedIdToken(body.idToken);
+        if (body?.bannedUntil) setBannedUntil(body.bannedUntil);
       }
     } finally {
       setSubmitting(false);
@@ -60,7 +63,12 @@ export function LoginPage() {
   return (
     <AuthShell title={t('auth.loginTitle')} subtitle={t('auth.loginSubtitle')}>
       <form onSubmit={handleSubmit}>
-        {error && <div className="form-error-banner">{error}</div>}
+        {error && (
+          <div className="form-error-banner">
+            {error}
+            {bannedUntil && ` (${new Date(bannedUntil).toLocaleString(lang === 'ar' ? 'ar' : 'en-US')})`}
+          </div>
+        )}
         {rawError === UNVERIFIED_ERROR && unverifiedIdToken && (
           <div className="field">
             <button className="btn btn-secondary btn-block" type="button" onClick={handleResend} disabled={resending}>

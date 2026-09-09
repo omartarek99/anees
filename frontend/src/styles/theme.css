@@ -1,9 +1,16 @@
 :root {
-  /* Primary brand (was maroon) — now deep teal, matching the reference dashboard */
-  --maroon-dark: #113f39;
-  --maroon: #1b6f63;
-  --maroon-light: #3f9587;
-  --maroon-pale: #dcf0ea;
+  /* Lets native form controls (scrollbars, date pickers, etc.) opt into the browser's own
+     dark rendering to match, without waiting on our own CSS for them. */
+  color-scheme: light;
+
+  /* Primary brand — true Qatari maroon (matches the <meta theme-color> and the logo's reds;
+     a prior "liquid-glass" pass had drifted this to teal while keeping the --maroon name,
+     which no longer matched the brand anywhere else). Deepened/richened for more contrast
+     and gradient depth than the original flat maroon. */
+  --maroon-dark: #4a0e24;
+  --maroon: #8a1538;
+  --maroon-light: #c22954;
+  --maroon-pale: #fbe7ec;
 
   /* Secondary accent (XP / coins) */
   --gold: #f0a83a;
@@ -11,10 +18,11 @@
   /* ponytail: darkened from #a9701c — WCAG AA contrast fix (was 3.13:1 as badge text on --gold-light) */
   --gold-dark: #7a4e10;
 
-  /* Neutral surfaces */
-  --sand: #eef1f8;
-  --sand-light: #eef1f7;
-  --sand-dark: #d8deec;
+  /* Neutral surfaces — warmed from a cool blue-gray to a warm ivory/taupe so it harmonizes
+     with the maroon+gold brand pair instead of fighting it. */
+  --sand: #f7f1ec;
+  --sand-light: #f9f5f1;
+  --sand-dark: #e3d5cb;
 
   --ink: #182338;
   /* ponytail: darkened from #6b7590 — WCAG AA contrast fix (was 4.06:1 on light surfaces, now 4.5+) */
@@ -52,12 +60,26 @@
   --shadow-md: 0 8px 24px rgba(20, 30, 60, 0.1);
   --shadow-lg: 0 16px 40px rgba(20, 30, 60, 0.16);
 
-  /* Glassmorphism + 3D depth tokens */
-  --glass-bg: rgba(255, 255, 255, 0.5);
+  /* Glassmorphism + 3D depth tokens.
+     --glass-bg (the .card background) is a soft diagonal wash rather than flat white --
+     it's the one glass tone used for big content surfaces, so it carries the "creative
+     inside color" the small chrome elements below don't need. */
+  --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.58) 0%, rgba(255, 232, 238, 0.4) 100%);
   --glass-bg-strong: rgba(255, 255, 255, 0.68);
   --glass-border: rgba(255, 255, 255, 0.65);
   --glass-blur: blur(18px) saturate(180%);
   --glass-blur-sm: blur(10px) saturate(160%);
+
+  /* Small "light chip" surfaces (icon circles, form inputs, hover washes) that were
+     hardcoded to white -- pulled into tokens so dark mode can turn them into light-on-dark
+     tints instead of staying jarringly bright on a dark page. */
+  --surface-chip: rgba(255, 255, 255, 0.75);
+  --surface-input: rgba(255, 255, 255, 0.7);
+  --surface-hover: rgba(255, 255, 255, 0.55);
+  --surface-row: rgba(238, 241, 248, 0.55);
+  --podium-bg: repeating-conic-gradient(from 0deg, rgba(251, 248, 240, 0.75) 0deg 4deg, rgba(244, 239, 226, 0.75) 4deg 8deg);
+  --surface-panel: rgba(245, 247, 251, 0.78);
+  --surface-panel-strong: rgba(245, 247, 251, 0.86);
 
   /* "Liquid glass" upgrade for the persistent nav chrome (sidebar/topbar) and cards.
      --glass-blur-lg is the "how frosted" knob — tune the blur px here.
@@ -85,6 +107,84 @@
   --sidebar-w: 88px;
 
   --pattern-light: none;
+
+  --body-bg-color: #f5efe8;
+  --body-bg-image: radial-gradient(circle at 12% 18%, rgba(138, 21, 56, 0.16), transparent 42%),
+    radial-gradient(circle at 88% 12%, rgba(240, 168, 58, 0.26), transparent 42%),
+    radial-gradient(circle at 80% 88%, rgba(194, 41, 84, 0.14), transparent 46%),
+    radial-gradient(circle at 15% 92%, rgba(251, 219, 158, 0.4), transparent 42%);
+}
+
+/* ================= Dark mode =================
+   Toggled by ThemeProvider (lib/theme-context.tsx), which sets <html data-theme="dark">
+   both on explicit user choice and, on a visitor's first-ever visit (no stored preference
+   yet), from the OS's prefers-color-scheme -- so this single selector covers both cases and
+   there's no separate CSS media-query copy of the palette to keep in sync.
+   Every color-role token gets a genuine dark-safe redesign rather than a flat invert: pale
+   badge/pastel surfaces become dark tinted washes, and any brand color that was only tuned
+   for contrast against a light card (--maroon, --success, --danger) is brightened a step so
+   it still reads as text/icons on dark glass. Spacing, radius, and font tokens are
+   theme-independent and intentionally not repeated here. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --maroon-dark: #6a1029;
+  --maroon: #d43e6b;
+  --maroon-light: #f0729a;
+  --maroon-pale: rgba(212, 62, 107, 0.18);
+
+  --sand: #241a20;
+  --sand-light: #2c2027;
+  --sand-dark: #4a3540;
+
+  --ink: #f3ecec;
+  --ink-soft: #b8a8ae;
+
+  --success: #3ecb82;
+  --success-light: rgba(62, 203, 130, 0.16);
+  --danger: #f2717d;
+  --danger-light: rgba(242, 113, 125, 0.16);
+  --info: #6fa3f5;
+
+  --pastel-blue: rgba(219, 230, 248, 0.82);
+  --pastel-yellow: rgba(251, 238, 198, 0.82);
+  --pastel-pink: rgba(249, 217, 222, 0.82);
+  --pastel-green: rgba(220, 241, 224, 0.82);
+  --pastel-purple: rgba(228, 224, 251, 0.82);
+
+  --glass-bg: linear-gradient(135deg, rgba(45, 24, 30, 0.7) 0%, rgba(30, 16, 20, 0.55) 100%);
+  --glass-bg-strong: rgba(35, 20, 25, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-bg-nav: rgba(18, 10, 13, 0.84);
+  --glass-sheen: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.02) 30%,
+    rgba(255, 255, 255, 0) 55%,
+    rgba(255, 255, 255, 0.03) 82%,
+    rgba(255, 255, 255, 0.07) 100%
+  );
+
+  --surface-chip: rgba(255, 255, 255, 0.1);
+  --surface-input: rgba(255, 255, 255, 0.06);
+  --surface-hover: rgba(255, 255, 255, 0.1);
+  --surface-row: rgba(255, 255, 255, 0.06);
+  --podium-bg: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.05) 0deg 4deg, rgba(255, 255, 255, 0.02) 4deg 8deg);
+  --surface-panel: rgba(28, 16, 20, 0.88);
+  --surface-panel-strong: rgba(24, 14, 17, 0.92);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --shadow-3d-sm: 0 2px 6px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --shadow-3d-md: 0 10px 28px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --shadow-3d-lg: 0 24px 60px rgba(0, 0, 0, 0.6), 0 6px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  --body-bg-color: #130a0d;
+  --body-bg-image: radial-gradient(circle at 12% 18%, rgba(212, 62, 107, 0.24), transparent 42%),
+    radial-gradient(circle at 88% 12%, rgba(240, 168, 58, 0.16), transparent 42%),
+    radial-gradient(circle at 80% 88%, rgba(212, 62, 107, 0.14), transparent 46%),
+    radial-gradient(circle at 15% 92%, rgba(106, 16, 41, 0.4), transparent 42%);
 }
 
 * {
@@ -101,12 +201,11 @@ body {
   margin: 0;
   font-family: var(--font-body);
   color: var(--ink);
-  background-color: #e7ecf6;
-  background-image: radial-gradient(circle at 12% 18%, rgba(27, 111, 99, 0.22), transparent 42%), radial-gradient(circle at 88% 12%,
-        rgba(240, 168, 58, 0.22), transparent 42%), radial-gradient(circle at 80% 88%, rgba(249, 217, 222, 0.55), transparent 46%),
-    radial-gradient(circle at 15% 92%, rgba(219, 230, 248, 0.65), transparent 42%);
+  background-color: var(--body-bg-color);
+  background-image: var(--body-bg-image);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1,
@@ -193,6 +292,11 @@ svg {
   margin-bottom: 28px;
   flex-shrink: 0;
   box-shadow: var(--shadow-3d-sm);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+.sidebar-logo:hover {
+  transform: scale(1.08) rotate(-4deg);
+  box-shadow: var(--shadow-3d-md);
 }
 
 .sidebar-nav {
@@ -216,16 +320,17 @@ svg {
   justify-content: center;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .sidebar-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.6);
-  transform: translateY(-1px);
+  background: var(--surface-hover);
+  color: var(--maroon);
+  transform: translateY(-2px) scale(1.05);
 }
 .sidebar-icon-btn.active {
   background: linear-gradient(150deg, var(--maroon-light), var(--maroon));
   color: white;
-  box-shadow: 0 4px 12px rgba(27, 111, 99, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(138, 21, 56, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .sidebar-bottom {
@@ -298,6 +403,12 @@ svg {
   text-decoration: none;
   color: var(--ink);
   flex-shrink: 0;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease, color 0.18s ease;
+}
+.notif-bell:hover {
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: var(--shadow-3d-md);
+  color: var(--maroon);
 }
 .notif-dot {
   position: absolute;
@@ -320,6 +431,13 @@ svg {
   border: none;
   padding: 0;
   cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.reel-rail-btn:hover {
+  transform: scale(1.12);
+}
+.reel-rail-btn:active {
+  transform: scale(0.94);
 }
 .reel-rail-count {
   font-size: 12px;
@@ -339,24 +457,37 @@ svg {
   font-weight: 700;
   font-size: 15px;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+  /* A gentle overshoot-then-settle reads as "responsive" rather than "linear" — used across
+     every interactive primitive below for a consistent, more modern feel. */
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease, opacity 0.12s ease,
+    background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
   min-height: 46px;
 }
-.btn:active {
-  transform: translateY(1px) scale(0.98);
+.btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.97);
 }
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
+/* Keyboard-focus ring, not a mouse-click ring (:focus-visible skips the latter) — every
+   interactive primitive in this file shares the same ring treatment for consistency. */
+.btn:focus-visible,
+.sidebar-icon-btn:focus-visible,
+.category-pill:focus-visible,
+.notif-bell:focus-visible,
+a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--white), 0 0 0 6px var(--maroon-light);
+}
 .btn-primary {
   background: linear-gradient(150deg, var(--maroon-light), var(--maroon));
   color: var(--white);
-  box-shadow: 0 4px 12px rgba(27, 111, 99, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(138, 21, 56, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 6px 18px rgba(27, 111, 99, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(138, 21, 56, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px) scale(1.02);
 }
 .btn-gold {
   background: linear-gradient(150deg, var(--gold-light), var(--gold));
@@ -364,7 +495,8 @@ svg {
   box-shadow: 0 4px 12px rgba(240, 168, 58, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 .btn-gold:hover:not(:disabled) {
-  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(240, 168, 58, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transform: translateY(-2px) scale(1.02);
 }
 .btn-secondary {
   background: var(--glass-bg-strong);
@@ -374,12 +506,17 @@ svg {
   border: 2px solid var(--maroon);
   box-shadow: var(--shadow-3d-sm);
 }
+.btn-secondary:hover:not(:disabled) {
+  background: var(--maroon-pale);
+  box-shadow: var(--shadow-3d-md);
+  transform: translateY(-2px);
+}
 .btn-ghost {
   background: transparent;
   color: var(--maroon);
 }
 .btn-ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--surface-hover);
 }
 .btn-block {
   width: 100%;
@@ -393,6 +530,10 @@ svg {
   background: linear-gradient(150deg, #f0747f, var(--danger));
   color: var(--white);
   box-shadow: 0 4px 12px rgba(224, 82, 95, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.btn-danger:hover:not(:disabled) {
+  box-shadow: 0 8px 20px rgba(224, 82, 95, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px) scale(1.02);
 }
 
 /* ---------------- Cards ---------------- */
@@ -420,10 +561,10 @@ svg {
   pointer-events: none;
 }
 .card-hover {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
 }
 .card-hover:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px) scale(1.01);
   box-shadow: var(--shadow-3d-lg);
 }
 
@@ -434,7 +575,7 @@ svg {
   padding: 20px;
   min-height: 118px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--glass-border);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
   backdrop-filter: blur(14px) saturate(160%);
   box-shadow: var(--shadow-3d-sm);
@@ -446,7 +587,7 @@ svg {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.75);
+  background: var(--surface-chip);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   box-shadow: var(--shadow-3d-sm);
@@ -513,11 +654,14 @@ svg {
   -webkit-backdrop-filter: var(--glass-blur-sm);
   backdrop-filter: var(--glass-blur-sm);
   box-shadow: var(--shadow-3d-sm);
-  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.18s ease, box-shadow 0.18s ease;
 }
 .category-pill:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.03);
   box-shadow: var(--shadow-3d-md);
+}
+.category-pill:active {
+  transform: translateY(-1px) scale(0.98);
 }
 .category-pill.selected {
   border-color: currentColor;
@@ -531,7 +675,7 @@ svg {
   align-items: center;
   justify-content: center;
   font-size: 19px;
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--surface-chip);
   box-shadow: var(--shadow-3d-sm);
 }
 
@@ -542,8 +686,8 @@ svg {
   gap: 14px;
   padding: 14px 16px;
   border-radius: var(--radius-md);
-  background: rgba(238, 241, 248, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: var(--surface-row);
+  border: 1px solid var(--glass-border);
   -webkit-backdrop-filter: var(--glass-blur-sm);
   backdrop-filter: var(--glass-blur-sm);
   box-shadow: var(--shadow-3d-sm);
@@ -552,7 +696,7 @@ svg {
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--surface-chip);
   box-shadow: var(--shadow-3d-sm);
   display: flex;
   align-items: center;
@@ -561,7 +705,7 @@ svg {
   flex-shrink: 0;
 }
 .list-row-dark {
-  background: rgba(27, 111, 99, 0.72);
+  background: rgba(138, 21, 56, 0.72);
   border-color: rgba(255, 255, 255, 0.3);
   color: white;
 }
@@ -605,8 +749,8 @@ svg {
   padding: 28px 12px 0;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  background: repeating-conic-gradient(from 0deg, rgba(251, 248, 240, 0.75) 0deg 4deg, rgba(244, 239, 226, 0.75) 4deg 8deg);
+  border: 1px solid var(--glass-border);
+  background: var(--podium-bg);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   box-shadow: var(--shadow-3d-md);
@@ -622,7 +766,7 @@ svg {
 .podium-avatar-ring {
   border-radius: 50%;
   padding: 3px;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--surface-chip);
   box-shadow: var(--shadow-3d-sm);
 }
 .podium-block {
@@ -671,16 +815,18 @@ svg {
   border-radius: var(--radius-sm);
   border: 2px solid var(--sand-dark);
   font-size: 15px;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--surface-input);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   color: var(--ink);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
   outline: none;
   border-color: var(--maroon);
+  box-shadow: 0 0 0 4px rgba(138, 21, 56, 0.14);
 }
 .field-error {
   color: var(--danger);
@@ -763,7 +909,7 @@ svg {
   z-index: 100;
 }
 .modal-panel {
-  background: rgba(245, 247, 251, 0.78);
+  background: var(--surface-panel);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid var(--glass-border);
@@ -798,7 +944,7 @@ svg {
 
 /* ---------------- Boss Arena ---------------- */
 .boss-arena-panel {
-  background: rgba(245, 247, 251, 0.86);
+  background: var(--surface-panel-strong);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid var(--glass-border);
@@ -937,9 +1083,12 @@ svg {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 4px solid var(--sand-dark);
-  border-top-color: var(--maroon);
-  animation: spin 0.8s linear infinite;
+  /* Two-tone conic sweep instead of a flat ring -- reads as a smoother, more modern loader
+     than a single-color border-top trick while still being a single animated element. */
+  background: conic-gradient(from 0deg, var(--maroon-light), var(--gold) 50%, transparent 75%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  animation: spin 0.9s linear infinite;
   margin: 0 auto;
 }
 @keyframes spin {

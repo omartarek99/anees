@@ -25,6 +25,9 @@ export const emailSchema = z.string().trim().email('Please enter a valid email a
 export const avatarKeySchema = z.enum(AVATAR_KEYS);
 
 export const roleSchema = z.enum(['student', 'teacher']);
+// Wider than roleSchema on purpose -- that one gates public signup (nobody can sign
+// themselves up as an admin), this one gates the admin panel's own role-change action.
+export const adminRoleSchema = z.enum(['student', 'teacher', 'admin']);
 // z.coerce because signup now arrives as multipart/form-data (for the teacher ID file),
 // where every field -- including this one -- comes across as a string.
 export const gradeSchema = z.coerce.number().int().min(1).max(12);
@@ -60,6 +63,34 @@ export const resendVerificationSchema = z.object({
 export const updateProfileSchema = z.object({
   displayName: displayNameSchema.optional(),
   avatarKey: avatarKeySchema.optional(),
+});
+
+export const adminSetRoleSchema = z.object({
+  role: adminRoleSchema,
+});
+
+export const adminSetActiveSchema = z.object({
+  isActive: z.boolean(),
+});
+
+export const adminSetWarningSchema = z.object({
+  // An empty string clears the warning the same as null does -- the admin panel's textarea
+  // has no clean way to submit "null" itself.
+  message: z
+    .string()
+    .trim()
+    .max(500, 'Warning message is too long.')
+    .nullable()
+    .transform((v) => (v && v.length > 0 ? v : null)),
+});
+
+export const adminSetBanSchema = z.object({
+  // null lifts the ban immediately; otherwise an ISO datetime in the future.
+  bannedUntil: z.string().datetime().nullable(),
+});
+
+export const adminSetXpSchema = z.object({
+  totalXp: z.number().int().min(0).max(1_000_000),
 });
 
 const choiceSchema = z.string().trim().min(1).max(120);

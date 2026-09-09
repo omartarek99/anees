@@ -21,6 +21,7 @@ import {
   firebaseDeleteUser,
 } from '../lib/firebase.js';
 import { verifyQatarIdPhoto, type IdVerificationFailureReason } from '../lib/idVerification.js';
+import { isCurrentlyBanned } from '../lib/accountStatus.js';
 import { FRONTEND_ORIGIN } from '../lib/config.js';
 
 export const authRouter = Router();
@@ -84,6 +85,7 @@ function publicUser(user: any) {
     role: user.role,
     grade: user.grade,
     createdAt: user.created_at,
+    warningMessage: user.warning_message ?? null,
   };
 }
 
@@ -209,6 +211,16 @@ authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSche
     return;
   }
 
+  if (!user.is_active) {
+    res.status(403).json({ error: 'This account has been deactivated. Contact an administrator.' });
+    return;
+  }
+
+  if (isCurrentlyBanned(user.banned_until)) {
+    res.status(403).json({ error: 'This account is temporarily suspended.', bannedUntil: user.banned_until });
+    return;
+  }
+
   if (!user.firebase_uid) {
     // Seed/legacy account — untouched bcrypt check, keeps the zero-config demo working.
     const ok = bcrypt.compareSync(password, user.password_hash);
@@ -328,5 +340,13 @@ authRouter.get('/me', requireAuth, (req, res) => {
     res.status(404).json({ error: 'User not found.' });
     return;
   }
+  res.json({ user: publicUser(user) });
+});
+
+// The account owner clears their own warning once they've seen it (e.g. dismissing the
+// in-app banner) -- an admin can also clear it directly from the admin panel.
+authRouter.post('/dismiss-warning', requireAuth, requireCsrfHeader, (req, res) => {
+  db.prepare(`UPDATE users SET warning_message = NULL, warning_issued_at = NULL WHERE id = ?`).run(req.userId!);
+  const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!);
   res.json({ user: publicUser(user) });
 });

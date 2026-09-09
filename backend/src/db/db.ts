@@ -71,6 +71,89 @@ db.exec(
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid) WHERE firebase_uid IS NOT NULL`
 );
 
+// Admin role support: SQLite can't relax an existing CHECK constraint (here, role IN
+// ('student','teacher')) via ALTER TABLE -- the only way to widen it on a database that
+// already has the old constraint is a full table rebuild. Detected by checking the stored
+// constraint text directly rather than a version counter, matching this file's existing
+// column-presence-based migration style. A brand-new database already gets the wider
+// constraint (and is_active) straight from schema.sql above, so this only fires once per
+// pre-existing database.
+const usersTableSql = (
+  db.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'`).get() as { sql: string }
+).sql;
+if (!usersTableSql.includes(`'admin'`)) {
+  // With foreign_keys still ON (set at the top of this file), DROP TABLE performs an
+  // *implicit DELETE FROM users first* per SQLite's own foreign-key documentation -- which
+  // would fire every ON DELETE CASCADE that references users(id) (sessions, progress,
+  // friends, ...) and wipe the whole app's data. SQLite's own documented procedure for a
+  // table rebuild is to disable foreign key enforcement for its duration, then re-enable
+  // and verify nothing was left dangling.
+  db.exec('PRAGMA foreign_keys = OFF');
+  db.exec('BEGIN TRANSACTION');
+  try {
+    // Self-healing: if a previous attempt at this exact migration was interrupted (e.g. the
+    // dev server restarting mid-transaction) it can leave a stray, half-populated users_new
+    // table from a run that never reached COMMIT. Clearing it first makes this safe to retry
+    // rather than failing forever on "table users_new already exists".
+    db.exec('DROP TABLE IF EXISTS users_new');
+    db.exec(`
+      CREATE TABLE users_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE,
+        email TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        display_name TEXT NOT NULL,
+        avatar_key TEXT NOT NULL DEFAULT 'falcon',
+        total_xp INTEGER NOT NULL DEFAULT 0,
+        is_seed INTEGER NOT NULL DEFAULT 0,
+        role TEXT NOT NULL CHECK (role IN ('student','teacher','admin')) DEFAULT 'student',
+        grade INTEGER,
+        email_verified INTEGER NOT NULL DEFAULT 0,
+        id_document_path TEXT,
+        firebase_uid TEXT,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      INSERT INTO users_new (
+        id, username, email, password_hash, display_name, avatar_key, total_xp, is_seed,
+        role, grade, email_verified, id_document_path, firebase_uid, created_at
+      )
+      SELECT
+        id, username, email, password_hash, display_name, avatar_key, total_xp, is_seed,
+        role, grade, email_verified, id_document_path, firebase_uid, created_at
+      FROM users;
+      DROP TABLE users;
+      ALTER TABLE users_new RENAME TO users;
+    `);
+    // The old table (and its indexes) is gone along with it -- recreate this one.
+    db.exec(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid) WHERE firebase_uid IS NOT NULL`
+    );
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  } finally {
+    db.exec('PRAGMA foreign_keys = ON');
+  }
+  const danglingRows = db.prepare('PRAGMA foreign_key_check').all();
+  if (danglingRows.length > 0) {
+    throw new Error(`users table rebuild left dangling foreign keys: ${JSON.stringify(danglingRows)}`);
+  }
+}
+
+// Admin-issued warnings and timed bans, added after the initial users table. Plain
+// nullable columns (no CHECK constraint), so a simple ADD COLUMN is enough -- no rebuild
+// needed like the role/is_active change above.
+const userColsForModeration = db.prepare(`PRAGMA table_info(users)`).all() as { name: string }[];
+if (!userColsForModeration.some((c) => c.name === 'warning_message')) {
+  db.exec(`ALTER TABLE users ADD COLUMN warning_message TEXT`);
+  db.exec(`ALTER TABLE users ADD COLUMN warning_issued_at TEXT`);
+}
+if (!userColsForModeration.some((c) => c.name === 'banned_until')) {
+  db.exec(`ALTER TABLE users ADD COLUMN banned_until TEXT`);
+}
+
 // Teacher-authored announcements, added after the initial news_posts table.
 const newsCols = db.prepare(`PRAGMA table_info(news_posts)`).all() as { name: string }[];
 if (!newsCols.some((c) => c.name === 'author_user_id')) {

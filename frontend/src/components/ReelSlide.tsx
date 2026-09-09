@@ -32,7 +32,13 @@ type SubmitResult = {
 
 type WatchResponse = { watchedSeconds: number; xpEarned: number; totalWatchXp: number };
 
-export type ReelSlideControls = { commit: () => void; discard: () => void; openQuiz: () => void };
+export type ReelSlideControls = { openQuiz: () => void };
+
+// After the active reel has looped this many times, assume the student may have wandered
+// off (a real video, not the old page-wide 20-minute cumulative timer) and check in --
+// short lesson clips looping 3x is a much more meaningful "have they actually left" signal
+// than a long cross-reel timer would be.
+const STILL_WATCHING_LOOP_THRESHOLD = 3;
 
 export function ReelSlide({
   data,
@@ -41,10 +47,6 @@ export function ReelSlide({
   onCompleted,
   onNext,
   hasNext,
-  stillWatchingActive,
-  stillWatchingCountdown,
-  onConfirmStillWatching,
-  onWatchSecond,
   registerActiveControls,
 }: {
   data: ReelSlideData;
@@ -56,15 +58,8 @@ export function ReelSlide({
   onCompleted: (result: SubmitResult) => void;
   onNext: () => void;
   hasNext: boolean;
-  /** The page-level "still watching?" prompt is currently up (see ReelsPage). While true, this
-   * slide pauses watch-time accrual and shows the prompt overlay if it's the active slide. */
-  stillWatchingActive: boolean;
-  stillWatchingCountdown: number;
-  onConfirmStillWatching: () => void;
-  /** Called once per genuinely-watched second so the page can run the 20-minute check. */
-  onWatchSecond: () => void;
-  /** While this slide is the active one, hand the page a way to commit (flush to the server)
-   * or discard this reel's un-flushed watch seconds. */
+  /** While this slide is the active one, hand the page a way to open its quiz from the
+   * external action rail (see ReelActionRail, rendered by ReelsPage). */
   registerActiveControls: (controls: ReelSlideControls | null) => void;
 }) {
   const { t, lang } = useLanguage();
@@ -75,23 +70,26 @@ export function ReelSlide({
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [levelUpValue, setLevelUpValue] = useState<number | null>(null);
-  const [watchProgress, setWatchProgress] = useState(0); // 0-1, cosmetic top progress bar
+  const [watchProgress, setWatchProgress] = useState(0); // 0-1, real playback position of the video itself
   const [captionExpanded, setCaptionExpanded] = useState(false);
   // Whether the caption is long enough to be clipped in its collapsed (3-line) state — only
   // then is the See more / See less toggle shown. Measured from the rendered element.
   const [captionOverflows, setCaptionOverflows] = useState(false);
   const captionRef = useRef<HTMLParagraphElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // This reel's own "are you still watching?" check -- local to this slide (not shared
+  // across the feed) since it's driven by how many times *this* video has looped. No
+  // auto-dismiss timer -- it waits for an explicit tap, however long that takes.
+  const [stillWatching, setStillWatching] = useState(false);
+  const loopCountRef = useRef(0);
 
   const pendingSecondsRef = useRef(0);
-  const watchedTotalRef = useRef(0);
-  const durationEstimate = 60; // reels don't carry a client-side duration yet; used only for the cosmetic bar
 
   // Latest values readable synchronously from inside the 1s tick / effect cleanups, which
   // otherwise only see the props from when they were set up (a stale closure).
-  const stillWatchingActiveRef = useRef(stillWatchingActive);
-  stillWatchingActiveRef.current = stillWatchingActive;
-  const onWatchSecondRef = useRef(onWatchSecond);
-  onWatchSecondRef.current = onWatchSecond;
+  const stillWatchingRef = useRef(stillWatching);
+  stillWatchingRef.current = stillWatching;
   const flushRef = useRef<() => void>(() => {});
 
   async function flushWatchTime() {
@@ -109,51 +107,70 @@ export function ReelSlide({
 
   // Real watch-time tracking: only ticks while this slide is the one actually in view, still
   // in "watch" mode, and the tab is visible — so scrolled-past or backgrounded slides can't
-  // accrue XP. The reel itself keeps looping indefinitely (native <video loop>, or the
-  // cosmetic timer wrapping back to 0 below) — nothing here ever advances to the next slide;
-  // only the student scrolling does that.
+  // accrue XP.
   useEffect(() => {
     if (!isActive || mode !== 'watch') return;
     setPlaying(true);
     const tick = setInterval(() => {
-      if (stillWatchingActiveRef.current) return; // paused, waiting on the page's "still watching?" prompt
+      if (stillWatchingRef.current) return; // paused, waiting on this reel's own "still watching?" prompt
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       pendingSecondsRef.current += 1;
-      watchedTotalRef.current += 1;
-      if (watchedTotalRef.current >= durationEstimate) watchedTotalRef.current = 0; // loop the cosmetic bar
-      setWatchProgress(watchedTotalRef.current / durationEstimate);
-      onWatchSecondRef.current();
     }, 1000);
     return () => {
       clearInterval(tick);
       // Scrolling to another reel / opening the quiz / navigating away are all "I'm really
-      // here" signals — commit what was watched. The one exception: the page-level "still
-      // watching?" prompt is up and unanswered, in which case the page's discard path clears
-      // this pending stretch instead.
-      if (!stillWatchingActiveRef.current) flushRef.current();
+      // here" signals — commit what was watched. The one exception: this reel's own "still
+      // watching?" prompt is up and unanswered (no auto-timeout -- it waits for a real tap),
+      // in which case that stretch is left pending rather than rewarded unconfirmed.
+      if (!stillWatchingRef.current) flushRef.current();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, mode]);
 
   // Pause the "playing" visuals while the prompt is up; resume once it's answered.
   useEffect(() => {
-    setPlaying(!stillWatchingActive && isActive && mode === 'watch');
+    setPlaying(!stillWatching && isActive && mode === 'watch');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stillWatchingActive]);
+  }, [stillWatching]);
 
-  // While this is the active slide, let the page commit or discard this reel's watch seconds
-  // when the student answers (or ignores) the 20-minute check.
+  function confirmStillWatching() {
+    setStillWatching(false);
+    loopCountRef.current = 0;
+    flushRef.current();
+    videoRef.current?.play().catch(() => {});
+  }
+
+  // The video has no `loop` attribute -- looping is driven manually here so the count is
+  // observable. Every completed loop restarts playback immediately; every
+  // STILL_WATCHING_LOOP_THRESHOLD-th loop instead pauses on the last frame and asks first.
+  // Only the active slide counts loops or prompts -- inactive slides (Swiper keeps
+  // neighbors mounted) just keep quietly looping in the background.
+  function handleVideoEnded() {
+    if (!isActive) {
+      videoRef.current?.play().catch(() => {});
+      return;
+    }
+    loopCountRef.current += 1;
+    if (loopCountRef.current >= STILL_WATCHING_LOOP_THRESHOLD) {
+      setStillWatching(true);
+      return;
+    }
+    videoRef.current?.play().catch(() => {});
+  }
+
+  // Real top-bar timer, driven by the video's own currentTime/duration instead of a fixed
+  // cosmetic estimate.
+  function handleTimeUpdate(e: React.SyntheticEvent<HTMLVideoElement>) {
+    const v = e.currentTarget;
+    if (v.duration && !Number.isNaN(v.duration)) {
+      setWatchProgress(v.currentTime / v.duration);
+    }
+  }
+
+  // While this is the active slide, let the external action rail open this reel's quiz.
   useEffect(() => {
     if (!isActive) return;
-    registerActiveControls({
-      commit: () => flushRef.current(),
-      discard: () => {
-        pendingSecondsRef.current = 0;
-        watchedTotalRef.current = 0;
-        setWatchProgress(0);
-      },
-      openQuiz: () => setMode('quiz'),
-    });
+    registerActiveControls({ openQuiz: () => setMode('quiz') });
     return () => registerActiveControls(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive]);
@@ -238,20 +255,29 @@ export function ReelSlide({
               justifyContent: 'center',
             }}
             onClick={() => {
-              if (stillWatchingActiveRef.current) {
-                onConfirmStillWatching();
+              if (stillWatchingRef.current) {
+                confirmStillWatching();
                 return;
               }
-              setPlaying((p) => !p);
+              setPlaying((p) => {
+                const next = !p;
+                if (videoRef.current) {
+                  if (next) videoRef.current.play().catch(() => {});
+                  else videoRef.current.pause();
+                }
+                return next;
+              });
             }}
           >
             {data.videoUrl ? (
               <video
+                ref={videoRef}
                 src={data.videoUrl}
                 autoPlay
-                loop
                 muted={muted || !isActive}
                 playsInline
+                onEnded={handleVideoEnded}
+                onTimeUpdate={handleTimeUpdate}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             ) : (
@@ -347,7 +373,7 @@ export function ReelSlide({
             )}
           </div>
 
-          {isActive && stillWatchingActive && (
+          {isActive && stillWatching && (
             <div
               className="swiper-no-swiping swiper-no-mousewheel"
               style={{
@@ -370,12 +396,9 @@ export function ReelSlide({
               <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13.5, maxWidth: 260, margin: 0 }}>
                 {t('reels.stillWatchingBody')}
               </p>
-              <button className="btn btn-primary" onClick={onConfirmStillWatching}>
+              <button className="btn btn-primary" onClick={confirmStillWatching}>
                 {t('reels.stillWatchingConfirm')}
               </button>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, margin: 0 }}>
-                {t('reels.stillWatchingCountdown', { n: stillWatchingCountdown })}
-              </p>
             </div>
           )}
         </div>

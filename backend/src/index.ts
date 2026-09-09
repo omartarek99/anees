@@ -15,6 +15,7 @@ import { friendsRouter } from './routes/friends.js';
 import { newsRouter } from './routes/news.js';
 import { craftRouter } from './routes/craft.js';
 import { teacherReelsRouter } from './routes/teacherReels.js';
+import { adminRouter } from './routes/admin.js';
 import { FRONTEND_ORIGIN } from './lib/config.js';
 
 seed();
@@ -58,6 +59,7 @@ app.use('/api/friends', ...authenticated, friendsRouter);
 app.use('/api/news', newsRouter);
 app.use('/api/craft', ...authenticated, craftRouter);
 app.use('/api/teacher-reels', teacherReelsRouter);
+app.use('/api/admin', adminRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found.' });

@@ -9,11 +9,21 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_key TEXT NOT NULL DEFAULT 'falcon',
   total_xp INTEGER NOT NULL DEFAULT 0,
   is_seed INTEGER NOT NULL DEFAULT 0,
-  role TEXT NOT NULL CHECK (role IN ('student','teacher')) DEFAULT 'student',
+  role TEXT NOT NULL CHECK (role IN ('student','teacher','admin')) DEFAULT 'student',
   grade INTEGER,
   email_verified INTEGER NOT NULL DEFAULT 0,
   id_document_path TEXT,
   firebase_uid TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  -- Admin-issued warning shown once to the account, then cleared when they dismiss it (or
+  -- an admin clears it directly). NULL means no active warning.
+  warning_message TEXT,
+  warning_issued_at TEXT,
+  -- Timed suspension, separate from is_active (which is a manual, indefinite toggle) --
+  -- NULL or a past timestamp means not banned; a future timestamp blocks login/access
+  -- until then and lifts itself automatically (checked live against datetime('now'), no
+  -- background job needed).
+  banned_until TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

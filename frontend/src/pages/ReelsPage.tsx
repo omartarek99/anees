@@ -16,13 +16,6 @@ import { ReelActionRail } from '../components/ReelActionRail';
  * same count. */
 const initialLikeCount = (levelNumber: number) => 40 + ((levelNumber * 17) % 260);
 
-// The "are you still watching?" check fires once per 20 minutes of genuine watch time spent
-// on the Reels page (it only advances while a reel is actually playing in view, and resets
-// when the student leaves the page). If they don't confirm within 10 seconds, the watch time
-// from that 20-minute stretch is dropped instead of counted toward XP.
-const STILL_WATCHING_INTERVAL_SECONDS = 20 * 60;
-const STILL_WATCHING_TIMEOUT_SECONDS = 10;
-
 // One flattened entry per reel, exactly as GET /reels/feed returns it — a level can have
 // several reels (the seeded lesson plus any teacher ones), and grade-based teacher reels
 // (no map level at all) arrive with a synthetic negative `level.levelNumber` (see
@@ -70,57 +63,14 @@ export function ReelsPage() {
   const [muted, setMuted] = useState(true);
   const toggleMute = useCallback(() => setMuted((m) => !m), []);
 
-  // ---- page-level "are you still watching?" engagement check ----
-  const [stillWatching, setStillWatching] = useState(false);
-  const [swCountdown, setSwCountdown] = useState(STILL_WATCHING_TIMEOUT_SECONDS);
-  const engagedSecondsRef = useRef(0);
-  const stillWatchingRef = useRef(false);
-  // Controls for whichever ReelSlide is currently active — lets us flush or drop its
-  // un-committed watch seconds when the prompt is answered or ignored.
+  // Controls for whichever ReelSlide is currently active — lets the external action rail
+  // open that slide's quiz (each slide's own "are you still watching?" check, driven by its
+  // own loop count, is otherwise fully self-contained -- see ReelSlide).
   const activeControlsRef = useRef<ReelSlideControls | null>(null);
 
   const registerActiveControls = useCallback((controls: ReelSlideControls | null) => {
     activeControlsRef.current = controls;
   }, []);
-
-  // Called once per genuinely-watched second by the active slide.
-  const reportWatchSecond = useCallback(() => {
-    if (stillWatchingRef.current) return;
-    engagedSecondsRef.current += 1;
-    if (engagedSecondsRef.current >= STILL_WATCHING_INTERVAL_SECONDS) {
-      stillWatchingRef.current = true;
-      setStillWatching(true);
-    }
-  }, []);
-
-  function endStillWatching(counts: boolean) {
-    engagedSecondsRef.current = 0;
-    stillWatchingRef.current = false;
-    if (counts) activeControlsRef.current?.commit();
-    else activeControlsRef.current?.discard();
-    setStillWatching(false);
-  }
-  const confirmStillWatching = () => endStillWatching(true);
-
-  // Auto-dismiss-as-"not watching" countdown, Netflix-style — paused while the tab is hidden
-  // so a backgrounded tab doesn't burn the 10 seconds before the student can answer.
-  useEffect(() => {
-    if (!stillWatching) return;
-    let remaining = STILL_WATCHING_TIMEOUT_SECONDS;
-    setSwCountdown(remaining);
-    const iv = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
-      remaining -= 1;
-      if (remaining <= 0) {
-        clearInterval(iv);
-        endStillWatching(false);
-      } else {
-        setSwCountdown(remaining);
-      }
-    }, 1000);
-    return () => clearInterval(iv);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stillWatching]);
 
   // Deep-link support (e.g. a Map-page "Watch the lesson" link with ?level=N): captured once
   // on mount, then handed to Swiper as `initialSlide` so it starts on the right slide from
@@ -224,16 +174,34 @@ export function ReelsPage() {
   const activeLike = activeSlide ? likes[activeSlide.reelId] ?? { liked: false, count: initialLikeCount(activeSlide.levelNumber) } : null;
 
   return (
-    <div>
-      <div className="text-center muted" style={{ fontSize: 13, marginBottom: 10 }}>
-        {t('reels.swipeHint')}
-      </div>
+    // Cancels .app-main's own padding (20px/24px/96px) so this page -- and only this page --
+    // gets to use the full viewport height for the frame below, TikTok-style, instead of
+    // sitting in a shorter box with a lot of dead space above and below it.
+    <div style={{ margin: '-20px -24px -96px' }}>
       {/* `direction: ltr` here keeps the action rail on the physical right of the frame in both
           languages (matching TikTok, which never mirrors its action rail for RTL) — the inner
           wrapper resets back to the real page direction so the reel's own caption/badge/exit-
           button logical-property layout still mirrors correctly for Arabic. */}
-      <div className="flex-center gap-md" style={{ alignItems: 'flex-end', direction: 'ltr' }}>
-        <div style={{ direction: dir, width: 'min(100%, 560px)' }}>
+      <div className="flex-center gap-md" style={{ height: '100vh', direction: 'ltr' }}>
+        <div style={{ direction: dir, width: 'min(100%, 560px)', height: '100%', position: 'relative' }}>
+        {/* Floating overlay instead of a block above the frame -- doesn't eat into the
+            frame's own height budget. */}
+        <div
+          className="text-center"
+          style={{
+            position: 'absolute',
+            top: 10,
+            insetInlineStart: 0,
+            insetInlineEnd: 0,
+            zIndex: 2,
+            fontSize: 12.5,
+            color: 'rgba(255,255,255,0.75)',
+            textShadow: '0 1px 4px rgba(0,0,0,0.5)',
+            pointerEvents: 'none',
+          }}
+        >
+          {t('reels.swipeHint')}
+        </div>
         <Swiper
           direction="vertical"
           loop={loopEnabled}
@@ -248,12 +216,9 @@ export function ReelsPage() {
           }}
           onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
           style={{
-            height: 'calc(100vh - 130px)',
+            height: '100%',
             width: '100%',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-lg)',
             background: '#0b0b0f',
-            border: '1px solid rgba(255,255,255,0.08)',
           }}
         >
           {slides.map((slide, i) => (
@@ -265,10 +230,6 @@ export function ReelsPage() {
                 onCompleted={handleCompleted}
                 onNext={() => swiperRef.current?.slideNext()}
                 hasNext={loopEnabled}
-                stillWatchingActive={stillWatching}
-                stillWatchingCountdown={swCountdown}
-                onConfirmStillWatching={confirmStillWatching}
-                onWatchSecond={reportWatchSecond}
                 registerActiveControls={registerActiveControls}
               />
             </SwiperSlide>

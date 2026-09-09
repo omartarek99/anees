@@ -7,22 +7,21 @@ import { requireCsrfHeader, validateBody } from '../middleware/validate.js';
 import { moderateContent } from '../lib/moderation.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { teacherReelSchema } from '../lib/schemas.js';
+import { compressVideo } from '../lib/videoCompression.js';
+import { VIDEO_BUCKET, VIDEO_PATH_PREFIX, deleteReelVideoIfAny } from '../lib/reelVideo.js';
 
 export const teacherReelsRouter = Router();
 
-const VIDEO_BUCKET = 'videos';
-const VIDEO_PATH_PREFIX = 'teacher-reels/';
-const VIDEO_MIME_TO_EXT: Record<string, string> = {
-  'video/mp4': 'mp4',
-  'video/webm': 'webm',
-  'video/quicktime': 'mov',
-};
+// Accepted upload containers -- compression (see videoCompression.ts) always re-encodes to
+// mp4 before storage regardless of which of these the teacher uploaded, so no extension
+// mapping is needed here, just membership.
+const ACCEPTED_VIDEO_MIME_TYPES = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
 
 const videoUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype in VIDEO_MIME_TO_EXT) cb(null, true);
+    if (ACCEPTED_VIDEO_MIME_TYPES.has(file.mimetype)) cb(null, true);
     else cb(new Error('INVALID_VIDEO_TYPE'));
   },
 }).single('video');
@@ -69,15 +68,6 @@ function getOwnReel(id: number, userId: number) {
   const reel = db.prepare(`SELECT * FROM reels WHERE id = ?`).get(id) as any;
   if (!reel || reel.author_user_id !== userId) return null;
   return reel;
-}
-
-async function deleteVideoIfOwned(videoUrl: string | null) {
-  if (!supabaseAdmin || !videoUrl) return;
-  const marker = `/${VIDEO_BUCKET}/${VIDEO_PATH_PREFIX}`;
-  const idx = videoUrl.indexOf(marker);
-  if (idx === -1) return;
-  const path = videoUrl.slice(idx + `/${VIDEO_BUCKET}/`.length);
-  await supabaseAdmin.storage.from(VIDEO_BUCKET).remove([path]);
 }
 
 teacherReelsRouter.get('/options', requireAuth, requireRole('teacher'), (_req, res) => {
@@ -291,11 +281,21 @@ teacherReelsRouter.post(
       return;
     }
 
-    const ext = VIDEO_MIME_TO_EXT[video.mimetype];
-    const path = `${VIDEO_PATH_PREFIX}${reel.id}-${Date.now()}.${ext}`;
+    let compressed: Buffer;
+    try {
+      compressed = await compressVideo(video.buffer);
+    } catch (err) {
+      console.error('Video compression failed:', err instanceof Error ? err.message : err);
+      res.status(500).json({ error: "We couldn't process the video. Please try a different file." });
+      return;
+    }
+
+    // Compression always outputs mp4 (see videoCompression.ts) regardless of the original
+    // container, so the stored file's extension/content-type reflect that, not the upload.
+    const path = `${VIDEO_PATH_PREFIX}${reel.id}-${Date.now()}.mp4`;
     const { error: uploadError } = await supabaseAdmin.storage
       .from(VIDEO_BUCKET)
-      .upload(path, video.buffer, { contentType: video.mimetype });
+      .upload(path, compressed, { contentType: 'video/mp4' });
     if (uploadError) {
       console.error('Video upload failed:', uploadError.message);
       res.status(500).json({ error: "We couldn't upload the video. Please try again." });
@@ -304,7 +304,7 @@ teacherReelsRouter.post(
 
     const { data: publicUrlData } = supabaseAdmin.storage.from(VIDEO_BUCKET).getPublicUrl(path);
 
-    await deleteVideoIfOwned(reel.video_url);
+    await deleteReelVideoIfAny(reel.video_url);
     db.prepare(`UPDATE reels SET video_url = ? WHERE id = ?`).run(publicUrlData.publicUrl, reel.id);
 
     res.json({ videoUrl: publicUrlData.publicUrl });
@@ -317,7 +317,7 @@ teacherReelsRouter.delete('/:id', requireAuth, requireRole('teacher'), requireCs
     res.status(404).json({ error: 'Not found.' });
     return;
   }
-  await deleteVideoIfOwned(reel.video_url);
+  await deleteReelVideoIfAny(reel.video_url);
   db.prepare(`DELETE FROM reels WHERE id = ?`).run(reel.id);
   res.json({ ok: true });
 });

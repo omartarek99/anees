@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
+import { useTheme } from '../lib/theme-context';
 
 type SidebarLink = { to: string; key: string; icon: string; end?: boolean };
 
@@ -21,12 +22,22 @@ const GAME_LINKS: SidebarLink[] = [
 // Teacher-only extra, on top of the shared game links above.
 const TEACHER_LINKS: SidebarLink[] = [{ to: '/teacher/reels', key: 'nav.myReels', icon: '🎥' }];
 
+// Admin is a pure account-management role, not a gameplay one -- it gets its own single
+// link (which doubles as its landing page) instead of the shared game surface.
+const ADMIN_LINKS: SidebarLink[] = [{ to: '/admin', key: 'nav.admin', icon: '🛡️' }];
+
 export function Sidebar() {
   const { user, logout } = useAuth();
   const { t, lang, toggleLang } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   if (!user) return null;
 
-  const links = user.role === 'teacher' ? [HOME_LINK, ...GAME_LINKS, ...TEACHER_LINKS] : [HOME_LINK, ...GAME_LINKS];
+  const links =
+    user.role === 'admin'
+      ? ADMIN_LINKS
+      : user.role === 'teacher'
+        ? [HOME_LINK, ...GAME_LINKS, ...TEACHER_LINKS]
+        : [HOME_LINK, ...GAME_LINKS];
 
   return (
     <aside className="sidebar">
@@ -50,6 +61,15 @@ export function Sidebar() {
       </nav>
 
       <div className="sidebar-bottom">
+        <button
+          type="button"
+          className="sidebar-icon-btn"
+          title={theme === 'dark' ? t('common.switchToLight') : t('common.switchToDark')}
+          aria-label={theme === 'dark' ? t('common.switchToLight') : t('common.switchToDark')}
+          onClick={toggleTheme}
+        >
+          <span aria-hidden>{theme === 'dark' ? '☀️' : '🌙'}</span>
+        </button>
         <button
           type="button"
           className="sidebar-icon-btn"

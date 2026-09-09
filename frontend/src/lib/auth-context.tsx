@@ -3,7 +3,7 @@ import { api, ApiError } from './api';
 import { DEV_BYPASS_LOGIN, DEV_ACCOUNT } from './dev-config';
 import type { RankTier } from '../components/RankBadge';
 
-export type Role = 'student' | 'teacher';
+export type Role = 'student' | 'teacher' | 'admin';
 
 export type User = {
   id: number;
@@ -16,6 +16,7 @@ export type User = {
   role: Role;
   grade: number | null;
   createdAt: string;
+  warningMessage: string | null;
 };
 
 type AuthContextValue = {
@@ -36,6 +37,7 @@ type AuthContextValue = {
   refreshUser: () => Promise<void>;
   verifyEmail: (oobCode: string) => Promise<void>;
   resendVerification: (idToken: string) => Promise<void>;
+  dismissWarning: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -118,9 +120,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await api.post('/auth/resend-verification', { idToken });
   };
 
+  const dismissWarning = async () => {
+    const data = await api.post<{ user: User }>('/auth/dismiss-warning');
+    setUser(data.user);
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, signup, login, logout, refreshUser, verifyEmail, resendVerification }}
+      value={{ user, loading, signup, login, logout, refreshUser, verifyEmail, resendVerification, dismissWarning }}
     >
       {children}
     </AuthContext.Provider>

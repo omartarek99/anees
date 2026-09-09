@@ -50,12 +50,28 @@ function ensureDevTeacher() {
   console.log('[seed] Added dev_teacher account to existing database.');
 }
 
+/** Ensures a dev admin test account exists, mirroring ensureDevTeacher above -- runs on
+ * every boot so an already-seeded database picks it up too, not just a brand-new one.
+ * Admin accounts are never created through public signup (see roleSchema vs
+ * adminRoleSchema in lib/schemas.ts); this is the only way one exists until an admin
+ * promotes a real account through the admin panel. Admin is a pure account-management
+ * role, not a gameplay one, so unlike dev_teacher it gets no map-level progress seeded. */
+function ensureDevAdmin() {
+  const exists = db.prepare(`SELECT id FROM users WHERE username = 'dev_admin'`).get();
+  if (exists) return;
+  const passwordHash = bcrypt.hashSync('adminpass123', 10);
+  db.prepare(
+    `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?)`
+  ).run('dev_admin', 'dev_admin@anees.local', passwordHash, 'Dev Admin', 'robot', 0, 0, 'admin', null, 1);
+  console.log('[seed] Added dev_admin account to existing database.');
+}
+
 /** The seed accounts never go through Supabase signup, so on a database created before
  * `email_verified` existed they'd default to unverified and get locked out of login.
  * Idempotent, runs on every boot (like ensureDevTeacher above) so already-seeded
  * databases pick this up too, not just brand-new ones. */
 function ensureSeedAccountsVerified() {
-  db.prepare(`UPDATE users SET email_verified = 1 WHERE username IN ('dev_student', 'dev_teacher')`).run();
+  db.prepare(`UPDATE users SET email_verified = 1 WHERE username IN ('dev_student', 'dev_teacher', 'dev_admin')`).run();
 }
 
 /** Teachers play through the map exactly like students now, so dev_teacher needs the
@@ -73,6 +89,7 @@ function ensureDevTeacherProgress() {
 
 export function seed() {
   ensureDevTeacher();
+  ensureDevAdmin();
   ensureSeedAccountsVerified();
   ensureDevTeacherProgress();
   const subjectCount = (db.prepare('SELECT COUNT(*) as c FROM subjects').get() as { c: number }).c;
