@@ -335,16 +335,21 @@ svg {
 
 /* ---------------- Quick menu (floating bottom-right settings) ---------------- */
 /* Physical `right`, always -- stays in the same bottom-right spot regardless of
-   language, never flipping for RTL. */
+   language, never flipping for RTL. `direction: ltr` keeps the panel opening to the
+   physical LEFT of the button in both languages too (row layout, DOM order panel-then-
+   button) -- same trick ReelsPage's action rail uses for its own physical-side chrome.
+   The panel itself gets a real `dir` attribute in JSX so its own text/icons still read
+   in the actual page direction. */
 .quick-menu {
   position: fixed;
   bottom: 20px;
   right: 20px;
   z-index: 50;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: flex-end;
   gap: 10px;
+  direction: ltr;
 }
 
 .quick-menu-btn {

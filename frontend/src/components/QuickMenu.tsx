@@ -6,9 +6,12 @@ import { useTheme } from '../lib/theme-context';
 
 /** Floating bottom-corner settings menu — the single place profile/language/theme/logout
  * live now (moved out of the sidebar, see Sidebar.tsx). Fixed to the same bottom-right
- * spot always; only its popup panel opens/closes, the button itself never moves. */
+ * spot always; only its popup panel opens/closes, the button itself never moves. The
+ * panel opens to the physical left of the button in both languages (see the `direction:
+ * ltr` override in theme.css, same trick ReelsPage's action rail uses) -- the panel's own
+ * content still reads in the real page direction via the `dir` passed down here. */
 export function QuickMenu() {
-  const { t, toggleLang } = useLanguage();
+  const { t, dir, toggleLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { logout } = useAuth();
   const [open, setOpen] = useState(false);
@@ -35,7 +38,7 @@ export function QuickMenu() {
   return (
     <div className="quick-menu" ref={rootRef}>
       {open && (
-        <div className="quick-menu-panel" role="menu">
+        <div className="quick-menu-panel" role="menu" dir={dir}>
           <NavLink to="/profile" className="quick-menu-item" role="menuitem" onClick={() => setOpen(false)}>
             <span className="quick-menu-icon" aria-hidden>
               👤
