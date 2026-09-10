@@ -16,8 +16,30 @@ export function avatarLabel(key: string, lang: Lang = 'en'): string {
   return translate(lang, `avatars.${validKey}`);
 }
 
-export function Avatar({ avatarKey, size = 48 }: { avatarKey: string; size?: number }) {
+// `photoUrl`, when set, shows an uploaded profile photo instead of the stylized emoji
+// avatar -- same circular frame/border/shadow either way, so it drops in anywhere an
+// Avatar already renders (profile page, reel author credit, ...) without new layout.
+export function Avatar({ avatarKey, size = 48, photoUrl }: { avatarKey: string; size?: number; photoUrl?: string | null }) {
   const cfg = AVATAR_MAP[avatarKey] ?? AVATAR_MAP.falcon;
+  const shadow = `0 ${Math.max(3, size * 0.08)}px ${Math.max(6, size * 0.16)}px rgba(20,30,60,0.3), inset 0 ${Math.max(1, size * 0.05)}px ${Math.max(2, size * 0.08)}px rgba(255,255,255,0.45), inset 0 -${Math.max(1, size * 0.05)}px ${Math.max(3, size * 0.1)}px rgba(0,0,0,0.2)`;
+  if (photoUrl) {
+    return (
+      <img
+        src={photoUrl}
+        alt=""
+        aria-hidden
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          objectFit: 'cover',
+          border: '2px solid var(--gold)',
+          flexShrink: 0,
+          boxShadow: shadow,
+        }}
+      />
+    );
+  }
   return (
     <div
       style={{
@@ -31,7 +53,7 @@ export function Avatar({ avatarKey, size = 48 }: { avatarKey: string; size?: num
         fontSize: size * 0.55,
         border: '2px solid var(--gold)',
         flexShrink: 0,
-        boxShadow: `0 ${Math.max(3, size * 0.08)}px ${Math.max(6, size * 0.16)}px rgba(20,30,60,0.3), inset 0 ${Math.max(1, size * 0.05)}px ${Math.max(2, size * 0.08)}px rgba(255,255,255,0.45), inset 0 -${Math.max(1, size * 0.05)}px ${Math.max(3, size * 0.1)}px rgba(0,0,0,0.2)`,
+        boxShadow: shadow,
       }}
       aria-hidden
     >

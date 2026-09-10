@@ -24,6 +24,11 @@ CREATE TABLE IF NOT EXISTS users (
   -- until then and lifts itself automatically (checked live against datetime('now'), no
   -- background job needed).
   banned_until TEXT,
+  -- Public "about me" text, shown on the profile page (own and others').
+  bio TEXT NOT NULL DEFAULT '',
+  -- Uploaded profile photo (Supabase Storage public URL), overriding the stylized
+  -- avatar_key icon wherever an avatar is shown. NULL until the user uploads one.
+  avatar_url TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

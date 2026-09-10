@@ -22,6 +22,9 @@ export const displayNameSchema = z
 
 export const emailSchema = z.string().trim().email('Please enter a valid email address.').max(120);
 
+// Allowed to be blank (clears the bio) -- only max-length is enforced.
+export const bioSchema = z.string().trim().max(300, 'Bio must be at most 300 characters.');
+
 export const avatarKeySchema = z.enum(AVATAR_KEYS);
 
 export const roleSchema = z.enum(['student', 'teacher']);
@@ -63,6 +66,7 @@ export const resendVerificationSchema = z.object({
 export const updateProfileSchema = z.object({
   displayName: displayNameSchema.optional(),
   avatarKey: avatarKeySchema.optional(),
+  bio: bioSchema.optional(),
 });
 
 export const adminSetRoleSchema = z.object({

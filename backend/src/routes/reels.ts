@@ -21,13 +21,13 @@ function getProgress(userId: number, level: { id: number; level_number: number }
   return null;
 }
 
-function loadAuthor(userId: number | null): { displayName: string; avatarKey: string } | null {
+function loadAuthor(userId: number | null): { displayName: string; avatarKey: string; avatarUrl: string | null } | null {
   if (!userId) return null;
-  const row = db.prepare(`SELECT display_name, avatar_key FROM users WHERE id = ?`).get(userId) as
-    | { display_name: string; avatar_key: string }
+  const row = db.prepare(`SELECT display_name, avatar_key, avatar_url FROM users WHERE id = ?`).get(userId) as
+    | { display_name: string; avatar_key: string; avatar_url: string | null }
     | undefined;
   if (!row) return null;
-  return { displayName: row.display_name, avatarKey: row.avatar_key };
+  return { displayName: row.display_name, avatarKey: row.avatar_key, avatarUrl: row.avatar_url };
 }
 
 function loadQuestions(reelId: number) {

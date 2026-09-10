@@ -1,17 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
-import { translateApiError } from '../lib/i18n';
+import { pickText, translateApiError } from '../lib/i18n';
 import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
+
+type TeacherVideo = {
+  id: number;
+  title: string;
+  titleAr?: string | null;
+  videoUrl: string;
+  grade: number | null;
+  subject: { key: string; name: string; nameAr?: string | null; icon: string };
+};
 
 type Profile = {
   username: string;
   displayName: string;
   avatarKey: string;
+  avatarUrl: string | null;
+  role: 'student' | 'teacher' | 'admin';
+  bio: string;
   totalXp: number;
   playerLevel: number;
   rankTier: RankTier;
@@ -19,6 +31,9 @@ type Profile = {
   bossesDefeated: number;
   worksheetsCompleted: number;
   joinedAt: string;
+  // Only present (and only ever populated) for teacher profiles -- their authored,
+  // published reels, shown as a portfolio any signed-in viewer can browse.
+  videos?: TeacherVideo[];
 };
 
 const STAT_COLORS = ['stat-card-blue', 'stat-card-yellow', 'stat-card-green', 'stat-card-pink'];
@@ -43,8 +58,12 @@ export function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
+  const [editingBio, setEditingBio] = useState(false);
+  const [bioDraft, setBioDraft] = useState('');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
     const path = isOwnProfile ? '/users/me' : `/users/${username}`;
@@ -53,6 +72,7 @@ export function ProfilePage() {
       .then((d) => {
         setProfile(d.profile);
         setNameDraft(d.profile.displayName);
+        setBioDraft(d.profile.bio);
       })
       .catch((err) => setError(err instanceof ApiError ? translateApiError(lang, err.message) : err.message));
   }
@@ -85,6 +105,37 @@ export function ProfilePage() {
     }
   }
 
+  async function saveBio() {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const data = await api.patch<{ profile: Profile }>('/users/me', { bio: bioDraft.trim() });
+      setProfile(data.profile);
+      setEditingBio(false);
+    } catch (err) {
+      setSaveError(err instanceof ApiError ? translateApiError(lang, err.message) : t('common.genericError'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function uploadPhoto(file: File) {
+    setSaveError(null);
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const data = await api.postForm<{ profile: Profile }>('/users/me/avatar', formData);
+      setProfile(data.profile);
+      await refreshUser();
+    } catch (err) {
+      setSaveError(err instanceof ApiError ? translateApiError(lang, err.message) : t('common.genericError'));
+    } finally {
+      setUploadingPhoto(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
+  }
+
   if (error) return <div className="form-error-banner">{error}</div>;
   if (!profile) {
     return (
@@ -101,7 +152,7 @@ export function ProfilePage() {
       <Topbar title={profile.displayName} subtitle={`@${profile.username} · ${t('profile.joined', { date: joinedDate })}`} />
 
       <div className="card flex gap-md" style={{ alignItems: 'center' }}>
-        <Avatar avatarKey={profile.avatarKey} size={72} />
+        <Avatar avatarKey={profile.avatarKey} photoUrl={profile.avatarUrl} size={72} />
         <div className="stack" style={{ gap: 8, flex: 1 }}>
           <span className="badge badge-gold" style={{ fontSize: 15, width: 'fit-content' }}>
             {t('profile.levelXp', { level: profile.playerLevel, xp: profile.totalXp })}
@@ -132,6 +183,34 @@ export function ProfilePage() {
         <StatCard icon="📝" label={t('profile.worksheetsDone')} value={profile.worksheetsCompleted} color={STAT_COLORS[2]} />
         <StatCard icon="⭐" label={t('profile.totalXp')} value={profile.totalXp} color={STAT_COLORS[3]} />
       </div>
+
+      <div className="card stack" style={{ gap: 6 }}>
+        <h3 style={{ fontSize: 16 }}>{t('profile.bio')}</h3>
+        <p className={profile.bio ? undefined : 'muted'} style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+          {profile.bio || t('profile.noBioYet')}
+        </p>
+      </div>
+
+      {profile.role === 'teacher' && (
+        <div className="card stack">
+          <h3 style={{ fontSize: 16 }}>{t('profile.videos')}</h3>
+          {!profile.videos || profile.videos.length === 0 ? (
+            <p className="muted">{t('profile.noVideosYet')}</p>
+          ) : (
+            <div className="grid-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+              {profile.videos.map((video) => (
+                <div key={video.id} className="card stack" style={{ gap: 8, padding: 12 }}>
+                  <video src={video.videoUrl} controls playsInline style={{ width: '100%', borderRadius: 'var(--radius-sm)', aspectRatio: '9 / 16', objectFit: 'cover', background: '#0b0b0f' }} />
+                  <span className="badge" style={{ width: 'fit-content', fontSize: 12 }}>
+                    {video.subject.icon} {pickText(lang, video.subject.name, video.subject.nameAr)}
+                  </span>
+                  <strong style={{ fontSize: 14 }}>{pickText(lang, video.title, video.titleAr)}</strong>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {isOwnProfile && (
         <div className="card stack">
@@ -167,7 +246,56 @@ export function ProfilePage() {
           </div>
 
           <div className="field">
+            <label>{t('profile.bio')}</label>
+            {editingBio ? (
+              <div className="stack" style={{ gap: 6 }}>
+                <textarea value={bioDraft} onChange={(e) => setBioDraft(e.target.value)} maxLength={300} rows={4} placeholder={t('profile.bioPlaceholder')} />
+                <div className="flex gap-sm">
+                  <button className="btn btn-primary btn-sm" onClick={saveBio} disabled={saving}>
+                    {t('common.save')}
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => {
+                      setEditingBio(false);
+                      setBioDraft(profile.bio);
+                    }}
+                  >
+                    {t('common.cancel')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-between" style={{ alignItems: 'flex-start' }}>
+                <span style={{ whiteSpace: 'pre-wrap' }}>{profile.bio || t('profile.noBioYet')}</span>
+                <button className="btn btn-secondary btn-sm" onClick={() => setEditingBio(true)}>
+                  {t('common.change')}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="field">
             <label>{t('profile.avatar')}</label>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadPhoto(file);
+              }}
+            />
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              style={{ width: 'fit-content', marginBottom: 10 }}
+              onClick={() => photoInputRef.current?.click()}
+              disabled={uploadingPhoto}
+            >
+              {uploadingPhoto ? t('profile.uploadingPhoto') : t('profile.changePhoto')}
+            </button>
             <div className="flex gap-md" style={{ flexWrap: 'wrap' }}>
               {AVATAR_OPTIONS.map((key) => (
                 <button
@@ -177,7 +305,7 @@ export function ProfilePage() {
                   className="badge-circle-wrap"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
-                  <div style={{ borderRadius: '50%', border: profile.avatarKey === key ? '3px solid var(--maroon)' : '3px solid transparent', padding: 2 }}>
+                  <div style={{ borderRadius: '50%', border: profile.avatarKey === key && !profile.avatarUrl ? '3px solid var(--maroon)' : '3px solid transparent', padding: 2 }}>
                     <Avatar avatarKey={key} size={48} />
                   </div>
                   <span className="badge-circle-label">{avatarLabel(key, lang)}</span>

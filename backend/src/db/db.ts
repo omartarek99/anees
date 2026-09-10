@@ -153,6 +153,14 @@ if (!userColsForModeration.some((c) => c.name === 'warning_message')) {
 if (!userColsForModeration.some((c) => c.name === 'banned_until')) {
   db.exec(`ALTER TABLE users ADD COLUMN banned_until TEXT`);
 }
+// Public bio text + uploaded profile photo, added after the initial users table. Plain
+// columns (no CHECK constraint), so a simple ADD COLUMN is enough -- no rebuild needed.
+if (!userColsForModeration.some((c) => c.name === 'bio')) {
+  db.exec(`ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''`);
+}
+if (!userColsForModeration.some((c) => c.name === 'avatar_url')) {
+  db.exec(`ALTER TABLE users ADD COLUMN avatar_url TEXT`);
+}
 
 // Teacher-authored announcements, added after the initial news_posts table.
 const newsCols = db.prepare(`PRAGMA table_info(news_posts)`).all() as { name: string }[];
