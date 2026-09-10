@@ -32,6 +32,7 @@ const en = {
     dismiss: 'Dismiss',
     switchToDark: 'Switch to dark mode',
     switchToLight: 'Switch to light mode',
+    menu: 'Menu',
   },
   warning: {
     title: 'A Message From the Anees Team',
@@ -482,6 +483,7 @@ const ar: typeof en = {
     dismiss: 'إغلاق',
     switchToDark: 'التبديل إلى الوضع الداكن',
     switchToLight: 'التبديل إلى الوضع الفاتح',
+    menu: 'القائمة',
   },
   warning: {
     title: 'رسالة من فريق أنيس',

@@ -1,7 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
-import { useTheme } from '../lib/theme-context';
 
 type SidebarLink = { to: string; key: string; icon: string; end?: boolean };
 
@@ -28,8 +27,7 @@ const ADMIN_LINKS: SidebarLink[] = [{ to: '/admin', key: 'nav.admin', icon: '�
 
 export function Sidebar() {
   const { user, logout } = useAuth();
-  const { t, lang, toggleLang } = useLanguage();
-  const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   if (!user) return null;
 
   const links =
@@ -61,32 +59,6 @@ export function Sidebar() {
       </nav>
 
       <div className="sidebar-bottom">
-        <button
-          type="button"
-          className="sidebar-icon-btn"
-          title={theme === 'dark' ? t('common.switchToLight') : t('common.switchToDark')}
-          aria-label={theme === 'dark' ? t('common.switchToLight') : t('common.switchToDark')}
-          onClick={toggleTheme}
-        >
-          <span aria-hidden>{theme === 'dark' ? '☀️' : '🌙'}</span>
-        </button>
-        <button
-          type="button"
-          className="sidebar-icon-btn"
-          title={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
-          aria-label={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
-          onClick={toggleLang}
-        >
-          <span aria-hidden>🌐</span>
-        </button>
-        <NavLink
-          to="/profile"
-          title={t('profile.editProfile')}
-          aria-label={t('profile.editProfile')}
-          className={({ isActive }) => `sidebar-icon-btn${isActive ? ' active' : ''}`}
-        >
-          <span aria-hidden>👤</span>
-        </NavLink>
         <button type="button" className="sidebar-icon-btn" title={t('nav.logout')} aria-label={t('nav.logout')} onClick={() => logout()}>
           <span aria-hidden>🚪</span>
         </button>
