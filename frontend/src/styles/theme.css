@@ -333,13 +333,14 @@ svg {
   box-shadow: 0 4px 12px rgba(138, 21, 56, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-/* ---------------- Quick menu (floating bottom-right settings) ---------------- */
-/* Physical `right`, not a logical inset -- like a chat bubble or FAB, this stays in the
-   same visual corner regardless of language direction rather than flipping for RTL. */
+/* ---------------- Quick menu (floating bottom-corner settings) ---------------- */
+/* Logical inset, not a physical side -- stays position: fixed (never scrolls, never
+   drifts) but opens on the left in Arabic and the right in English, following reading
+   direction like the rest of this app's nav chrome. */
 .quick-menu {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  inset-inline-end: 20px;
   z-index: 50;
   display: flex;
   flex-direction: column;
