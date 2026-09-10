@@ -6,7 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { LanguageToggle } from './components/LanguageToggle';
 import { ThemeToggle } from './components/ThemeToggle';
 import { Footer } from './components/Footer';
-import { WarningBanner } from './components/WarningBanner';
+import { WarningModal } from './components/WarningModal';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsPage } from './pages/TermsPage';
 import { CookiePolicyPage } from './pages/CookiePolicyPage';
@@ -48,7 +48,7 @@ function ProtectedLayout() {
       <Sidebar />
       <div className="app-content-col">
         <main className="app-main">
-          <WarningBanner />
+          <WarningModal />
           <Outlet />
         </main>
         {!hideFooter && <Footer />}
