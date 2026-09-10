@@ -94,6 +94,11 @@ see "Automated teacher ID check" below. Email/password and verification are hand
 5. Optionally set `FRONTEND_ORIGIN` in `backend/.env` if your frontend runs somewhere
    other than `http://localhost:5190` (see `backend/src/lib/config.ts`) — it's used both
    for the CORS allow-list and the link embedded in verification emails.
+6. Optionally set `GEMINI_API_KEY` in `backend/.env` (from
+   [Google AI Studio](https://aistudio.google.com/) → Get API key) to enable the
+   "Auto-generate Questions" button in the teacher reel composer — see
+   [below](#teacher-authored-reels--video-pipeline). Without it, that one button returns
+   a clear error; everything else is unaffected.
 
 Nothing else to configure — `localhost` is authorized in every Firebase project by
 default, and Firebase's default verification email template needs no SMTP setup.
@@ -192,6 +197,8 @@ Every uploaded video goes through the same pipeline before it's ever stored or s
 1. **Signature check** — the file's actual bytes are inspected (the same magic-number technique real file-type–detection libraries use), so a file that isn't really a video can't be stored under a spoofed `Content-Type`, no matter what the browser claims it is.
 2. **Compression** — re-encoded server-side to H.264/AAC MP4, capped at 720px on the longer side and CRF 28, via the bundled ffmpeg binary. Typical uploads shrink dramatically with no visible quality loss at the size they're actually displayed.
 3. **Storage** — uploaded to the public `videos` Supabase Storage bucket, replacing any previous video for that reel (the old file is cleaned up automatically).
+
+**Auto-generate quiz questions** — writing a lesson script and clicking "🪄 Auto-generate Questions" sends the script (plus subject and grade) to Google Gemini, which returns a bilingual set of grounded multiple-choice questions straight into the editable question list. The teacher reviews and edits before saving; nothing is written to the database until then, and the AI output is re-validated through the exact same schema as manually-entered questions. A dedicated rate limit (15 requests / 15 minutes per IP) bounds cost exposure on this external-API-backed endpoint. Requires `GEMINI_API_KEY` in `backend/.env` (see `.env.example`) — without it, the button returns a clear error and manual question entry is unaffected.
 
 ## Admin Dashboard
 

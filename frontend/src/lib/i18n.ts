@@ -34,7 +34,7 @@ const en = {
     switchToLight: 'Switch to light mode',
   },
   warning: {
-    bannerTitle: 'A message from the Anees team:',
+    title: 'A Message From the Anees Team',
   },
   auth: {
     heroTitle: 'Anees',
@@ -114,6 +114,9 @@ const en = {
     currentVideo: 'This lesson already has a video — choose a file to replace it.',
     questionsTitle: 'Quiz Questions',
     questionsOptionalHint: 'Optional — you can save a lesson with no quiz at all.',
+    generateQuestionsButton: '🪄 Auto-generate Questions',
+    generatingQuestions: 'Generating…',
+    generateQuestionsHint: 'Write the lesson script and pick a subject and grade first, then generate a starter set of questions from it — review and edit before saving.',
     questionNumber: 'Question {number}',
     removeQuestion: 'Remove',
     addQuestion: '+ Add Question',
@@ -480,7 +483,7 @@ const ar: typeof en = {
     switchToLight: 'التبديل إلى الوضع الفاتح',
   },
   warning: {
-    bannerTitle: 'رسالة من فريق أنيس:',
+    title: 'رسالة من فريق أنيس',
   },
   auth: {
     heroTitle: 'أنيس',
@@ -560,6 +563,9 @@ const ar: typeof en = {
     currentVideo: 'يحتوي هذا الدرس بالفعل على فيديو — اختر ملفًا لاستبداله.',
     questionsTitle: 'أسئلة الاختبار',
     questionsOptionalHint: 'اختياري — يمكنك حفظ الدرس بدون أي اختبار.',
+    generateQuestionsButton: '🪄 إنشاء أسئلة تلقائيًا',
+    generatingQuestions: 'جارٍ الإنشاء…',
+    generateQuestionsHint: 'اكتب نص الدرس واختر المادة والصف أولاً، ثم أنشئ مجموعة أسئلة مبدئية منه — راجعها وعدّلها قبل الحفظ.',
     questionNumber: 'السؤال {number}',
     removeQuestion: 'إزالة',
     addQuestion: '+ إضافة سؤال',
@@ -972,6 +978,8 @@ const apiErrorMap: Record<string, string> = {
     'يرجى تحميل فيديو صالح (MP4 أو WebM أو MOV، بحجم أقل من 100 ميغابايت).',
   "We couldn't upload the video. Please try again.": 'تعذّر تحميل الفيديو. يرجى المحاولة مرة أخرى.',
   "We couldn't process the video. Please try a different file.": 'تعذّر معالجة الفيديو. يرجى تجربة ملف آخر.',
+  "We couldn't generate questions right now. Please try again or add them manually.":
+    'تعذّر إنشاء الأسئلة حاليًا. يرجى المحاولة مرة أخرى أو إضافتها يدويًا.',
   'This account has been deactivated.': 'تم إيقاف هذا الحساب.',
   'This account has been deactivated. Contact an administrator.': 'تم إيقاف هذا الحساب. يرجى التواصل مع مسؤول النظام.',
   "You can't deactivate your own account.": 'لا يمكنك إيقاف حسابك الخاص.',

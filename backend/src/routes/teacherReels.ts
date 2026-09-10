@@ -4,11 +4,14 @@ import multer from 'multer';
 import { db } from '../db/db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { requireCsrfHeader, validateBody } from '../middleware/validate.js';
+import { z } from 'zod';
 import { moderateContent } from '../lib/moderation.js';
 import { supabaseAdmin } from '../lib/supabase.js';
-import { teacherReelSchema } from '../lib/schemas.js';
+import { teacherReelSchema, teacherReelQuestionSchema, generateQuestionsSchema } from '../lib/schemas.js';
 import { compressVideo } from '../lib/videoCompression.js';
 import { VIDEO_BUCKET, VIDEO_PATH_PREFIX, deleteReelVideoIfAny } from '../lib/reelVideo.js';
+import { generateQuizQuestions } from '../lib/gemini.js';
+import { aiGenerationLimiter } from '../middleware/rateLimit.js';
 
 export const teacherReelsRouter = Router();
 
@@ -78,6 +81,60 @@ teacherReelsRouter.get('/options', requireAuth, requireRole('teacher'), (_req, r
     grades: Array.from({ length: 12 }, (_, i) => i + 1),
   });
 });
+
+// Auto-generates quiz questions from the lesson script the teacher has already written --
+// grounded in that script (not general knowledge), bilingual, matching the exact shape a
+// manually-written question would have. Doesn't touch the DB or require a reel to exist yet
+// -- the teacher reviews/edits the result in the composer before ever saving anything, same
+// as a manually-typed question would be.
+teacherReelsRouter.post(
+  '/generate-questions',
+  requireAuth,
+  requireRole('teacher'),
+  requireCsrfHeader,
+  aiGenerationLimiter,
+  validateBody(generateQuestionsSchema),
+  async (req, res) => {
+    const body = req.body as import('zod').infer<typeof generateQuestionsSchema>;
+
+    const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(body.subjectId) as any;
+    if (!subject) {
+      res.status(400).json({ error: 'Invalid subject.' });
+      return;
+    }
+
+    const result = await generateQuizQuestions({
+      scriptText: body.scriptText,
+      scriptTextAr: body.scriptTextAr,
+      subjectName: subject.name,
+      grade: body.grade,
+      count: body.count,
+    });
+
+    if (!result.ok) {
+      console.error('Gemini question generation failed:', result.error);
+      res.status(502).json({ error: "We couldn't generate questions right now. Please try again or add them manually." });
+      return;
+    }
+
+    const parsed = z.array(teacherReelQuestionSchema).min(1).max(10).safeParse(result.data);
+    if (!parsed.success) {
+      console.error('Gemini response failed validation:', parsed.error.flatten());
+      res.status(502).json({ error: "We couldn't generate questions right now. Please try again or add them manually." });
+      return;
+    }
+
+    // The model can occasionally point correctIndex outside 0-3 despite the schema/prompt --
+    // drop any question that isn't actually usable rather than surface a broken quiz item.
+    const usable = parsed.data.filter((q) => q.correctIndex >= 0 && q.correctIndex <= 3);
+    if (usable.length === 0) {
+      res.status(502).json({ error: "We couldn't generate questions right now. Please try again or add them manually." });
+      return;
+    }
+
+    res.json({ questions: usable });
+  }
+);
 
 teacherReelsRouter.get('/', requireAuth, requireRole('teacher'), (req, res) => {
   const rows = db

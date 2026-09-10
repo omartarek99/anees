@@ -59,6 +59,7 @@ export function TeacherReelsPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [generatingQuestions, setGeneratingQuestions] = useState(false);
 
   function loadOptions() {
     api
@@ -174,6 +175,52 @@ export function TeacherReelsPage() {
   function addQuestion() {
     if (questions.length >= 10) return;
     setQuestions((prev) => [...prev, emptyQuestion()]);
+  }
+
+  async function handleGenerateQuestions() {
+    setFormError(null);
+    setGeneratingQuestions(true);
+    try {
+      const data = await api.post<{
+        questions: {
+          questionText: string;
+          questionTextAr: string;
+          choices: string[];
+          choicesAr: string[];
+          correctIndex: number;
+          explanation: string;
+          explanationAr: string;
+        }[];
+      }>('/teacher-reels/generate-questions', {
+        scriptText,
+        scriptTextAr,
+        subjectId: Number(subjectId),
+        grade: Number(grade),
+        count: Math.min(4, 10 - questions.length),
+      });
+      setQuestions((prev) => [
+        ...prev,
+        ...data.questions.map((q) => ({
+          questionText: q.questionText,
+          questionTextAr: q.questionTextAr || '',
+          choices: [q.choices[0], q.choices[1], q.choices[2], q.choices[3]] as [string, string, string, string],
+          choicesAr: [q.choicesAr?.[0] || '', q.choicesAr?.[1] || '', q.choicesAr?.[2] || '', q.choicesAr?.[3] || ''] as [
+            string,
+            string,
+            string,
+            string,
+          ],
+          correctIndex: q.correctIndex,
+          explanation: q.explanation,
+          explanationAr: q.explanationAr || '',
+        })),
+      ]);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
+      setFormError(translateApiError(lang, message));
+    } finally {
+      setGeneratingQuestions(false);
+    }
   }
 
   function removeQuestion(index: number) {
@@ -305,8 +352,21 @@ export function TeacherReelsPage() {
             )}
           </div>
 
-          <h4 style={{ fontSize: 14, marginTop: 16, marginBottom: 4 }}>{t('teacherReels.questionsTitle')}</h4>
-          <p className="muted" style={{ fontSize: 13, marginTop: 0, marginBottom: 8 }}>{t('teacherReels.questionsOptionalHint')}</p>
+          <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
+            <div>
+              <h4 style={{ fontSize: 14, marginBottom: 4 }}>{t('teacherReels.questionsTitle')}</h4>
+              <p className="muted" style={{ fontSize: 13, margin: 0 }}>{t('teacherReels.questionsOptionalHint')}</p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-gold btn-sm"
+              disabled={generatingQuestions || questions.length >= 10 || scriptText.trim().length < 10 || !subjectId || !grade}
+              title={t('teacherReels.generateQuestionsHint')}
+              onClick={handleGenerateQuestions}
+            >
+              {generatingQuestions ? t('teacherReels.generatingQuestions') : t('teacherReels.generateQuestionsButton')}
+            </button>
+          </div>
           {questions.map((q, qi) => (
             <div className="card" key={qi} style={{ marginBottom: 12, background: 'var(--surface-2, rgba(0,0,0,0.03))' }}>
               <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center' }}>

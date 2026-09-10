@@ -105,6 +105,14 @@ export const teacherReelQuestionSchema = z.object({
   explanationAr: z.string().trim().max(500).optional().default(''),
 });
 
+export const generateQuestionsSchema = z.object({
+  scriptText: z.string().trim().min(10, 'Write the lesson script first.').max(2000),
+  scriptTextAr: z.string().trim().max(2000).optional().default(''),
+  subjectId: z.number().int(),
+  grade: z.coerce.number().int().min(1).max(12),
+  count: z.coerce.number().int().min(1).max(10).optional().default(4),
+});
+
 export const teacherReelSchema = z.object({
   subjectId: z.number().int(),
   grade: z.coerce.number().int().min(1).max(12),
