@@ -186,11 +186,13 @@ Deactivating or suspending an account takes effect **immediately** — every aut
 | Friends | `/friends` | Student & teacher — search accounts, send/accept friend requests |
 | My Reels | `/teacher/reels` | Teacher only — create/edit/delete your own video lessons |
 | Admin Dashboard | `/admin` | Admin only — manage every account and moderate every teacher video |
-| Profile | `/profile` | Everyone — XP, level, stats, avatar & display name editing |
+| Profile | `/profile`, `/profile/:username` | Everyone — XP, level, stats, bio, photo & display name editing on your own; view anyone else's (teachers' profiles also list their published videos) |
 
 ## Teacher-Authored Reels & Video Pipeline
 
 Teachers can create their own lesson reels from `/teacher/reels`, each tagged to a **subject and a grade (1–12)** — decoupled from the 50-level map entirely, so a teacher isn't limited to the curriculum's existing level slots. A student sees any reel matching their own grade folded straight into their normal Reels feed, alongside the curriculum's own lessons. Quiz questions are optional — a reel can be video/script-only.
+
+Every teacher's profile page (`/profile/:username`, open to any signed-in viewer) also lists their published reels as a portfolio, alongside their bio — so a student can look up a teacher and see what they've taught before watching.
 
 Every uploaded video goes through the same pipeline before it's ever stored or shown to a student:
 
