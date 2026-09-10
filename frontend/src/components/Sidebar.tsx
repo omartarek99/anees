@@ -30,11 +30,13 @@ export function Sidebar() {
   const { t } = useLanguage();
   if (!user) return null;
 
+  // Teacher's "create video" link sits right after Reels, not at the end of the list --
+  // it's the natural companion to the icon students use to watch reels.
   const links =
     user.role === 'admin'
       ? ADMIN_LINKS
       : user.role === 'teacher'
-        ? [HOME_LINK, ...GAME_LINKS, ...TEACHER_LINKS]
+        ? [HOME_LINK, GAME_LINKS[0], ...TEACHER_LINKS, ...GAME_LINKS.slice(1)]
         : [HOME_LINK, ...GAME_LINKS];
 
   return (
