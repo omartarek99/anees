@@ -30,6 +30,7 @@ type FlatReelEntry = {
     scriptText: string;
     scriptTextAr?: string | null;
     videoUrl: string | null;
+    author: { displayName: string; avatarKey: string } | null;
     questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null; order: number }[];
   };
   progress: { status: 'locked' | 'available' | 'completed'; stars: number };
@@ -89,6 +90,7 @@ export function ReelsPage() {
         videoUrl: detail.reel.videoUrl,
         subjectIcon: detail.subject.icon,
         subjectName: pickText(lang, detail.subject.name, detail.subject.nameAr),
+        author: detail.reel.author,
         questions: [...detail.reel.questions]
           .sort((a, b) => a.order - b.order)
           .map((q) => ({

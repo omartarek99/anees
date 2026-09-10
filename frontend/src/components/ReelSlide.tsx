@@ -6,6 +6,7 @@ import { translateApiError } from '../lib/i18n';
 import { QuizCard, type QuizAnswer, type QuizQuestion } from './QuizCard';
 import { QuizResults, type ResultItem } from './QuizResults';
 import { LevelUpToast } from './LevelUpToast';
+import { Avatar } from './Avatar';
 
 export type ReelSlideData = {
   levelNumber: number;
@@ -15,6 +16,9 @@ export type ReelSlideData = {
   videoUrl: string | null;
   subjectIcon: string;
   subjectName: string;
+  // Only set for teacher-authored reels (null for seeded curriculum content, which has
+  // no single author to credit).
+  author: { displayName: string; avatarKey: string } | null;
   questions: QuizQuestion[];
   completed: boolean;
   stars: number;
@@ -317,6 +321,14 @@ export function ReelSlide({
               {data.subjectIcon} {data.subjectName}
             </span>
             <h2 style={{ color: 'white', fontSize: 19, margin: '2px 0 6px', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
+            {data.author && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <Avatar avatarKey={data.author.avatarKey} size={22} />
+                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12.5, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                  {t('reels.lessonBy', { name: data.author.displayName })}
+                </span>
+              </div>
+            )}
             <p
               ref={captionRef}
               className={captionExpanded ? 'no-scrollbar swiper-no-swiping swiper-no-mousewheel' : undefined}

@@ -21,6 +21,15 @@ function getProgress(userId: number, level: { id: number; level_number: number }
   return null;
 }
 
+function loadAuthor(userId: number | null): { displayName: string; avatarKey: string } | null {
+  if (!userId) return null;
+  const row = db.prepare(`SELECT display_name, avatar_key FROM users WHERE id = ?`).get(userId) as
+    | { display_name: string; avatar_key: string }
+    | undefined;
+  if (!row) return null;
+  return { displayName: row.display_name, avatarKey: row.avatar_key };
+}
+
 function loadQuestions(reelId: number) {
   const questions = db
     .prepare(
@@ -79,6 +88,7 @@ reelsRouter.get('/feed', requireAuth, (req, res) => {
           scriptTextAr: reel.script_text_ar,
           videoUrl: reel.video_url,
           durationSec: reel.duration_sec,
+          author: loadAuthor(reel.author_user_id),
           questions: loadQuestions(reel.id),
         },
         progress: { status: progress.status, stars: progress.stars, bestScore: progress.best_score },
@@ -118,6 +128,7 @@ reelsRouter.get('/feed', requireAuth, (req, res) => {
         scriptTextAr: reel.script_text_ar,
         videoUrl: reel.video_url,
         durationSec: reel.duration_sec,
+        author: loadAuthor(reel.author_user_id),
         questions: loadQuestions(reel.id),
       },
       progress: { status: 'available', stars: 0, bestScore: 0 },
@@ -168,7 +179,7 @@ reelsRouter.get('/level/:levelNumber', requireAuth, (req, res) => {
       scriptTextAr: reel.script_text_ar,
       videoUrl: reel.video_url,
       durationSec: reel.duration_sec,
-      authorUserId: reel.author_user_id,
+      author: loadAuthor(reel.author_user_id),
       questions: loadQuestions(reel.id),
     })),
     progress: { status: progress.status, stars: progress.stars, bestScore: progress.best_score },
