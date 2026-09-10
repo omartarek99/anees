@@ -30,7 +30,7 @@ type FlatReelEntry = {
     scriptText: string;
     scriptTextAr?: string | null;
     videoUrl: string | null;
-    author: { displayName: string; avatarKey: string; avatarUrl: string | null } | null;
+    author: { username: string; displayName: string; avatarKey: string; avatarUrl: string | null } | null;
     questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null; order: number }[];
   };
   progress: { status: 'locked' | 'available' | 'completed'; stars: number };

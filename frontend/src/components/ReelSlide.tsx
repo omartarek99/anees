@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -18,7 +19,7 @@ export type ReelSlideData = {
   subjectName: string;
   // Only set for teacher-authored reels (null for seeded curriculum content, which has
   // no single author to credit).
-  author: { displayName: string; avatarKey: string; avatarUrl: string | null } | null;
+  author: { username: string; displayName: string; avatarKey: string; avatarUrl: string | null } | null;
   questions: QuizQuestion[];
   completed: boolean;
   stars: number;
@@ -322,12 +323,15 @@ export function ReelSlide({
             </span>
             <h2 style={{ color: 'white', fontSize: 19, margin: '2px 0 6px', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
             {data.author && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+              <Link
+                to={`/profile/${data.author.username}`}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, width: 'fit-content', textDecoration: 'none' }}
+              >
                 <Avatar avatarKey={data.author.avatarKey} photoUrl={data.author.avatarUrl} size={22} />
-                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12.5, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12.5, textShadow: '0 1px 3px rgba(0,0,0,0.5)', textDecoration: 'underline' }}>
                   {t('reels.lessonBy', { name: data.author.displayName })}
                 </span>
-              </div>
+              </Link>
             )}
             <p
               ref={captionRef}
