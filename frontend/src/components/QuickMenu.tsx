@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useTheme } from '../lib/theme-context';
 
-/** Floating bottom-corner settings menu — the single place profile/language/theme live
- * now that the sidebar's bottom section only holds logout (see Sidebar.tsx). */
+/** Floating bottom-corner settings menu — the single place profile/language/theme/logout
+ * live now (moved out of the sidebar, see Sidebar.tsx). Fixed to the same bottom-right
+ * spot always; only its popup panel opens/closes, the button itself never moves. */
 export function QuickMenu() {
   const { t, toggleLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -66,6 +69,20 @@ export function QuickMenu() {
               {theme === 'dark' ? '☀️' : '🌙'}
             </span>
             {themeLabel}
+          </button>
+          <button
+            type="button"
+            className="quick-menu-item"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              logout();
+            }}
+          >
+            <span className="quick-menu-icon" aria-hidden>
+              🚪
+            </span>
+            {t('nav.logout')}
           </button>
         </div>
       )}

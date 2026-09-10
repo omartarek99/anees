@@ -333,15 +333,6 @@ svg {
   box-shadow: 0 4px 12px rgba(138, 21, 56, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-.sidebar-bottom {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  margin-top: auto;
-  padding-top: 12px;
-}
-
 /* ---------------- Quick menu (floating bottom-right settings) ---------------- */
 /* Physical `right`, not a logical inset -- like a chat bubble or FAB, this stays in the
    same visual corner regardless of language direction rather than flipping for RTL. */

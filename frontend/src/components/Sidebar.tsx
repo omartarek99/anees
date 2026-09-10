@@ -26,7 +26,7 @@ const TEACHER_LINKS: SidebarLink[] = [{ to: '/teacher/reels', key: 'nav.myReels'
 const ADMIN_LINKS: SidebarLink[] = [{ to: '/admin', key: 'nav.admin', icon: '🛡️' }];
 
 export function Sidebar() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { t } = useLanguage();
   if (!user) return null;
 
@@ -59,12 +59,6 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
-
-      <div className="sidebar-bottom">
-        <button type="button" className="sidebar-icon-btn" title={t('nav.logout')} aria-label={t('nav.logout')} onClick={() => logout()}>
-          <span aria-hidden>🚪</span>
-        </button>
-      </div>
     </aside>
   );
 }
