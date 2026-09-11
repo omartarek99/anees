@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
-import { RiVideoFill, RiMapFill, RiHome2Line } from '@remixicon/react';
+import { RiVideoFill, RiMapFill, RiHome2Line, RiGamepadLine } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useTheme } from '../lib/theme-context';
@@ -18,7 +18,7 @@ const HOME_LINK: SidebarLink = { to: '/', key: 'nav.home', icon: <RiHome2Line si
 const GAME_LINKS: SidebarLink[] = [
   { to: '/reels', key: 'nav.reels', icon: <RiVideoFill size={20} /> },
   { to: '/map', key: 'nav.map', icon: <RiMapFill size={20} /> },
-  { to: '/craft', key: 'nav.craft', icon: '🏗️' },
+  { to: '/craft', key: 'nav.craft', icon: <RiGamepadLine size={20} /> },
   { to: '/worksheets', key: 'nav.worksheets', icon: '📝' },
   { to: '/leaderboard', key: 'nav.leaderboard', icon: '🏆' },
   { to: '/friends', key: 'nav.friends', icon: '🧑‍🤝‍🧑' },

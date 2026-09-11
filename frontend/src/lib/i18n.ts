@@ -277,7 +277,7 @@ const en = {
     zoneFalcon: "Falcon's Peak",
   },
   craft: {
-    title: "🏗️ The Builder's Quarry",
+    title: "The Builder's Quarry",
     subtitle: 'Explore an endless world — mine ores, craft tools, food and potions, and solve rune puzzles for bonus XP.',
     moveHint: 'Click to look · WASD move · Space jump · hold left-click to dig · G to use / build / eat · F for the crafting menu · 1–9 pick a slot',
     digHintTouch: 'Drag to look · joystick to move · ⛏ dig · ✋ use / build / eat · 🧰 crafting · tap a slot to pick it',
@@ -755,7 +755,7 @@ const ar: typeof en = {
     zoneFalcon: 'قمة الصقر',
   },
   craft: {
-    title: '🏗️ محجر البنّائين',
+    title: 'محجر البنّائين',
     subtitle: 'استكشف عالمًا لا نهائيًا — نقّب عن المعادن، اصنع الأدوات والطعام والجرعات، وحلّ ألغاز الرموز لنقاط خبرة إضافية.',
     moveHint: 'اضغط للنظر · WASD للحركة · مسافة للقفز · اضغط مطولاً بالزر الأيسر للحفر · G للاستخدام / البناء / الأكل · F لقائمة الصناعة · 1–9 لاختيار خانة',
     digHintTouch: 'اسحب للنظر · العصا للحركة · ⛏ للحفر · ✋ للاستخدام / البناء / الأكل · 🧰 للصناعة · انقر خانة لاختيارها',
