@@ -184,3 +184,8 @@ const reelWatchCols = db.prepare(`PRAGMA table_info(reel_watch_progress)`).all()
 if (!reelWatchCols.some((c) => c.name === 'quiz_completed')) {
   db.exec(`ALTER TABLE reel_watch_progress ADD COLUMN quiz_completed INTEGER NOT NULL DEFAULT 0`);
 }
+// Per-reel "ever scored >=50%" marker -- map-level reels require this on every reel in a
+// level before the next level unlocks (see routes/reels.ts POST /:reelId/submit).
+if (!reelWatchCols.some((c) => c.name === 'passed_quiz')) {
+  db.exec(`ALTER TABLE reel_watch_progress ADD COLUMN passed_quiz INTEGER NOT NULL DEFAULT 0`);
+}
