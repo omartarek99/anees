@@ -13,6 +13,7 @@ import { deleteUserById } from '../lib/deleteUser.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
 import { deleteReelVideoIfAny } from '../lib/reelVideo.js';
 import { decrypt } from '../lib/encryption.js';
+import { WATCH_XP_PER_SECOND } from '../lib/xp.js';
 
 import type { Response } from 'express';
 
@@ -289,6 +290,79 @@ adminRouter.get('/reports/watch-time', (req, res) => {
   });
 });
 
+// Monthly watch-time trend -- reel_watch_progress only ever stores each (user, reel)
+// pair's running total plus a single "last touched" timestamp, so it can't say how much
+// was watched *in a given month*. xp_events can: every heartbeat that credits watch time
+// (routes/reels.ts POST /:reelId/watch) logs its own 'reel_watch' row with a real
+// timestamp, and since that XP accrues at the fixed WATCH_XP_PER_SECOND rate, summing it
+// per month and dividing back out gives real historical seconds-watched with no new
+// tracking table.
+function trailingMonthKeys(count: number): string[] {
+  const start = new Date();
+  start.setUTCDate(1);
+  const keys: string[] = [];
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() - i, 1));
+    keys.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`);
+  }
+  return keys;
+}
+
+// Matches PAGE_SIZE -- the per-student chart is a visual summary, not a replacement for
+// the full paginated table above, so it caps at the same "one page" size rather than
+// growing its own pagination.
+const MONTHLY_STUDENT_CAP = PAGE_SIZE;
+
+adminRouter.get('/reports/watch-time/monthly', (req, res) => {
+  const gradeParam = typeof req.query.grade === 'string' ? Number(req.query.grade) : NaN;
+  const monthsParam = Number(req.query.months);
+  const monthCount = Number.isInteger(monthsParam) ? Math.min(12, Math.max(1, monthsParam)) : 6;
+  const months = trailingMonthKeys(monthCount);
+
+  const clauses: string[] = [`u.is_seed = 0`, `u.role = 'student'`, `xe.reason = 'reel_watch'`, `xe.created_at >= ?`];
+  const params: (string | number)[] = [`${months[0]}-01 00:00:00`];
+  if (Number.isInteger(gradeParam)) {
+    clauses.push(`u.grade = ?`);
+    params.push(gradeParam);
+  }
+
+  const rows = db
+    .prepare(
+      `SELECT u.id, u.username, u.display_name as displayName, u.grade,
+              strftime('%Y-%m', xe.created_at) as month, SUM(xe.amount) as xp
+       FROM xp_events xe
+       JOIN users u ON u.id = xe.user_id
+       WHERE ${clauses.join(' AND ')}
+       GROUP BY u.id, month`
+    )
+    .all(...params) as { id: number; username: string; displayName: string; grade: number | null; month: string; xp: number }[];
+
+  const totalsBySecond = new Array(months.length).fill(0);
+  const students = new Map<number, { userId: number; username: string; displayName: string; grade: number | null; monthly: number[] }>();
+
+  for (const row of rows) {
+    const monthIndex = months.indexOf(row.month);
+    if (monthIndex === -1) continue;
+    const seconds = Math.round(row.xp / WATCH_XP_PER_SECOND);
+    totalsBySecond[monthIndex] += seconds;
+    if (!students.has(row.id)) {
+      students.set(row.id, { userId: row.id, username: row.username, displayName: row.displayName, grade: row.grade, monthly: new Array(months.length).fill(0) });
+    }
+    students.get(row.id)!.monthly[monthIndex] = seconds;
+  }
+
+  const ranked = [...students.values()].sort(
+    (a, b) => b.monthly.reduce((s, n) => s + n, 0) - a.monthly.reduce((s, n) => s + n, 0)
+  );
+
+  res.json({
+    months,
+    totalsBySecond,
+    students: ranked.slice(0, MONTHLY_STUDENT_CAP),
+    studentCount: ranked.length,
+  });
+});
+
 // First-party pageview analytics (see routes/analytics.ts / schema.sql) -- top paths and a
 // daily total for the last 30 days. Intentionally just that: this is a usage-visibility
 // count, not a marketing-analytics product, so it doesn't grow into referrers/devices/funnels.
@@ -311,5 +385,18 @@ adminRouter.get('/analytics/summary', (_req, res) => {
 
   const totalViews = daily.reduce((sum, d) => sum + d.views, 0);
 
-  res.json({ topPaths, daily, totalViews });
+  // Every reel quiz a real (non-seed) account has ever submitted at least once --
+  // quiz_completed is sticky regardless of score (see schema.sql), so this counts attempts
+  // solved, not just passed ones.
+  const quizzesSolved = (
+    db
+      .prepare(
+        `SELECT COUNT(*) as c FROM reel_watch_progress rwp
+         JOIN users u ON u.id = rwp.user_id
+         WHERE rwp.quiz_completed = 1 AND u.is_seed = 0`
+      )
+      .get() as { c: number }
+  ).c;
+
+  res.json({ topPaths, daily, totalViews, quizzesSolved });
 });
