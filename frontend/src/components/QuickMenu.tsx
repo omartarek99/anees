@@ -4,14 +4,13 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useTheme } from '../lib/theme-context';
 
-/** Floating bottom-corner settings menu — the single place profile/language/theme/logout
- * live now (moved out of the sidebar, see Sidebar.tsx). Fixed to the same bottom-right
- * spot always; only its popup panel opens/closes, the button itself never moves. The
- * panel opens to the physical left of the button in both languages (see the `direction:
- * ltr` override in theme.css, same trick ReelsPage's action rail uses) -- the panel's own
- * content still reads in the real page direction via the `dir` passed down here. */
+/** Floating settings menu, anchored on the same side as the sidebar ("icon bar") --
+ * left in English, right in Arabic (see `inset-inline-start` in theme.css). The button
+ * is always the first flex child next to that anchored edge, so it never shifts when the
+ * panel opens; the panel is the second child, always extending toward the middle of the
+ * screen (never off the edge) and reading in whichever direction the page already is. */
 export function QuickMenu() {
-  const { t, dir, toggleLang } = useLanguage();
+  const { t, toggleLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { logout } = useAuth();
   const [open, setOpen] = useState(false);
@@ -37,8 +36,18 @@ export function QuickMenu() {
 
   return (
     <div className="quick-menu" ref={rootRef}>
+      <button
+        type="button"
+        className="quick-menu-btn"
+        aria-label={t('common.menu')}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span aria-hidden>☰</span>
+      </button>
       {open && (
-        <div className="quick-menu-panel" role="menu" dir={dir}>
+        <div className="quick-menu-panel" role="menu">
           <NavLink to="/profile" className="quick-menu-item" role="menuitem" onClick={() => setOpen(false)}>
             <span className="quick-menu-icon" aria-hidden>
               👤
@@ -89,16 +98,6 @@ export function QuickMenu() {
           </button>
         </div>
       )}
-      <button
-        type="button"
-        className="quick-menu-btn"
-        aria-label={t('common.menu')}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span aria-hidden>☰</span>
-      </button>
     </div>
   );
 }
