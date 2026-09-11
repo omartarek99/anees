@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
-import { RiVideoFill, RiMapFill, RiHome2Line, RiGamepadLine, RiFilePaper2Line } from '@remixicon/react';
+import { RiVideoFill, RiMapFill, RiHome2Line, RiGamepadLine, RiFilePaper2Line, RiMoonLine } from '@remixicon/react';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import PeopleIcon from '@mui/icons-material/People';
 import { useAuth } from '../lib/auth-context';
@@ -75,7 +75,7 @@ export function Sidebar() {
           aria-label={theme === 'dark' ? t('common.switchToLight') : t('common.switchToDark')}
           onClick={toggleTheme}
         >
-          <span aria-hidden>{theme === 'dark' ? '☀️' : '🌙'}</span>
+          <span aria-hidden>{theme === 'dark' ? '☀️' : <RiMoonLine size={20} />}</span>
         </button>
         <button
           type="button"
