@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { RiCalculatorLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -202,7 +203,8 @@ export function ProfilePage() {
                 <div key={video.id} className="card stack" style={{ gap: 8, padding: 12 }}>
                   <video src={video.videoUrl} controls playsInline style={{ width: '100%', borderRadius: 'var(--radius-sm)', aspectRatio: '9 / 16', objectFit: 'cover', background: '#0b0b0f' }} />
                   <span className="badge" style={{ width: 'fit-content', fontSize: 12 }}>
-                    {video.subject.icon} {pickText(lang, video.subject.name, video.subject.nameAr)}
+                    {video.subject.key === 'math' ? <RiCalculatorLine size={13} /> : video.subject.icon}{' '}
+                    {pickText(lang, video.subject.name, video.subject.nameAr)}
                   </span>
                   <strong style={{ fontSize: 14 }}>{pickText(lang, video.title, video.titleAr)}</strong>
                 </div>

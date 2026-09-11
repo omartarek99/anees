@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { RiCalculatorLine } from '@remixicon/react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -27,9 +28,9 @@ export function HomePage() {
   const [filter, setFilter] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const FILTERS: { key: string; label: string; icon: string; color: string }[] = [
+  const FILTERS: { key: string; label: string; icon: ReactNode; color: string }[] = [
     { key: '', label: t('home.filterAll'), icon: '🦅', color: 'stat-card-purple' },
-    { key: 'math', label: t('home.filterMath'), icon: '🧮', color: 'stat-card-blue' },
+    { key: 'math', label: t('home.filterMath'), icon: <RiCalculatorLine size={19} />, color: 'stat-card-blue' },
     { key: 'science', label: t('home.filterScience'), icon: '🔬', color: 'stat-card-green' },
   ];
 

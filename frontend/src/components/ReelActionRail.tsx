@@ -1,4 +1,4 @@
-import { RiPokerHeartsFill, RiPokerHeartsLine, RiVolumeMuteFill, RiVolumeUpFill, RiFileLine } from '@remixicon/react';
+import { RiPokerHeartsFill, RiPokerHeartsLine, RiVolumeMuteFill, RiVolumeUpFill, RiFileLine, RiCalculatorLine } from '@remixicon/react';
 import { useLanguage } from '../lib/language-context';
 import { Avatar } from './Avatar';
 
@@ -16,6 +16,7 @@ export function ReelActionRail({
   questionCount,
   onOpenQuiz,
   subjectIcon,
+  subjectKey,
   muted,
   onToggleMute,
 }: {
@@ -26,6 +27,7 @@ export function ReelActionRail({
   questionCount: number;
   onOpenQuiz: () => void;
   subjectIcon: string;
+  subjectKey: string;
   muted: boolean;
   onToggleMute: () => void;
 }) {
@@ -70,7 +72,7 @@ export function ReelActionRail({
       </div>
 
       <span className="notif-bell" aria-hidden style={{ fontSize: 18 }}>
-        {subjectIcon}
+        {subjectKey === 'math' ? <RiCalculatorLine size={18} /> : subjectIcon}
       </span>
     </div>
   );

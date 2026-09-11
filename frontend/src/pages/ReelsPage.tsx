@@ -89,6 +89,7 @@ export function ReelsPage() {
         scriptText: pickText(lang, detail.reel.scriptText, detail.reel.scriptTextAr),
         videoUrl: detail.reel.videoUrl,
         subjectIcon: detail.subject.icon,
+        subjectKey: detail.subject.key,
         subjectName: pickText(lang, detail.subject.name, detail.subject.nameAr),
         author: detail.reel.author,
         questions: [...detail.reel.questions]
@@ -249,6 +250,7 @@ export function ReelsPage() {
             questionCount={activeSlide.questions.length}
             onOpenQuiz={() => activeControlsRef.current?.openQuiz()}
             subjectIcon={activeSlide.subjectIcon}
+            subjectKey={activeSlide.subjectKey}
             muted={muted}
             onToggleMute={toggleMute}
           />

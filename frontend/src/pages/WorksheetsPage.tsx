@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { RiCalculatorLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -97,7 +98,7 @@ export function WorksheetsPage() {
                 className={`category-pill stat-card-blue${subject === 'math' ? ' selected' : ''}`}
                 onClick={() => setSubject('math')}
               >
-                <span className="category-pill-icon">🧮</span>
+                <span className="category-pill-icon"><RiCalculatorLine size={19} /></span>
                 {t('worksheets.math')}
               </button>
               <button
@@ -144,6 +145,7 @@ export function WorksheetsPage() {
         <div className="stack">
           <div className="flex-between">
             <h2 style={{ fontSize: 18 }}>
+              {subject === 'math' && <RiCalculatorLine size={16} style={{ verticalAlign: -3, marginInlineEnd: 4 }} />}
               {subject === 'math' ? t('worksheets.math') : t('worksheets.science')} —{' '}
               {t(`worksheets.${difficulty}`)}
             </h2>

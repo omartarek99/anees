@@ -1,3 +1,4 @@
+import { RiCalculatorLine } from '@remixicon/react';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 
@@ -34,6 +35,7 @@ export function NewsCard({ post, onDelete }: { post: NewsPost; onDelete?: (id: n
           <div className="flex gap-sm" style={{ alignItems: 'center' }}>
             {post.subject && (
               <span className={`badge ${post.subject === 'math' ? 'badge-maroon' : 'badge-gold'}`}>
+                {post.subject === 'math' && <RiCalculatorLine size={12} />}
                 {post.subject === 'math' ? t('home.filterMath') : t('home.filterScience')}
               </span>
             )}

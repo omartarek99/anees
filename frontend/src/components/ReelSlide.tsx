@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { RiCalculatorLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -16,6 +17,7 @@ export type ReelSlideData = {
   scriptText: string;
   videoUrl: string | null;
   subjectIcon: string;
+  subjectKey: string;
   subjectName: string;
   // Only set for teacher-authored reels (null for seeded curriculum content, which has
   // no single author to credit).
@@ -301,7 +303,7 @@ export function ReelSlide({
                   filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.5))',
                 }}
               >
-                {data.subjectIcon}
+                {data.subjectKey === 'math' ? <RiCalculatorLine size={72} /> : data.subjectIcon}
               </div>
             )}
           </div>
@@ -327,7 +329,7 @@ export function ReelSlide({
               className="badge"
               style={{ background: 'rgba(255,255,255,0.18)', color: 'white', marginBottom: 8, backdropFilter: 'blur(6px)' }}
             >
-              {data.subjectIcon} {data.subjectName}
+              {data.subjectKey === 'math' ? <RiCalculatorLine size={13} /> : data.subjectIcon} {data.subjectName}
             </span>
             <h2 style={{ color: 'white', fontSize: 19, margin: '2px 0 6px', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
             {data.author && (
