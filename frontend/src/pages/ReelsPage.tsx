@@ -11,10 +11,9 @@ import { pickText } from '../lib/i18n';
 import { ReelSlide, type ReelSlideData, type ReelSlideControls } from '../components/ReelSlide';
 import { ReelActionRail } from '../components/ReelActionRail';
 
-/** Fake-but-stable like counts (no backend "like" concept exists — this is cosmetic
- * gamification only), seeded from the level number so the same reel always starts at the
- * same count. */
-const initialLikeCount = (levelNumber: number) => 40 + ((levelNumber * 17) % 260);
+/** No backend "like" concept exists -- likes are cosmetic, session-local gamification
+ * only, so every reel (new upload or existing) always starts at 0. */
+const initialLikeCount = () => 0;
 
 // One flattened entry per reel, exactly as GET /reels/feed returns it — a level can have
 // several reels (the seeded lesson plus any teacher ones), and grade-based teacher reels
@@ -31,6 +30,7 @@ type FlatReelEntry = {
     scriptText: string;
     scriptTextAr?: string | null;
     videoUrl: string | null;
+    author: { username: string; displayName: string; avatarKey: string; avatarUrl: string | null } | null;
     questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null; order: number }[];
   };
   progress: { status: 'locked' | 'available' | 'completed'; stars: number };
@@ -50,9 +50,9 @@ export function ReelsPage() {
   // Like state lives here (outside ReelSlide) keyed by reel id, since the action rail that
   // displays/toggles it now renders once, outside the Swiper frame, rather than per-slide.
   const [likes, setLikes] = useState<Record<number, { liked: boolean; count: number }>>({});
-  const toggleLike = useCallback((reelId: number, levelNumber: number) => {
+  const toggleLike = useCallback((reelId: number) => {
     setLikes((prev) => {
-      const cur = prev[reelId] ?? { liked: false, count: initialLikeCount(levelNumber) };
+      const cur = prev[reelId] ?? { liked: false, count: initialLikeCount() };
       return { ...prev, [reelId]: { liked: !cur.liked, count: cur.count + (cur.liked ? -1 : 1) } };
     });
   }, []);
@@ -90,6 +90,7 @@ export function ReelsPage() {
         videoUrl: detail.reel.videoUrl,
         subjectIcon: detail.subject.icon,
         subjectName: pickText(lang, detail.subject.name, detail.subject.nameAr),
+        author: detail.reel.author,
         questions: [...detail.reel.questions]
           .sort((a, b) => a.order - b.order)
           .map((q) => ({
@@ -171,7 +172,7 @@ export function ReelsPage() {
   }
 
   const activeSlide = slides[activeIndex ?? initialIndex] as ReelSlideData | undefined;
-  const activeLike = activeSlide ? likes[activeSlide.reelId] ?? { liked: false, count: initialLikeCount(activeSlide.levelNumber) } : null;
+  const activeLike = activeSlide ? likes[activeSlide.reelId] ?? { liked: false, count: initialLikeCount() } : null;
 
   return (
     // Cancels .app-main's own padding (20px/24px/96px) so this page -- and only this page --
@@ -244,7 +245,7 @@ export function ReelsPage() {
             avatarKey={user?.avatarKey ?? 'falcon'}
             liked={activeLike.liked}
             likeCount={activeLike.count}
-            onToggleLike={() => toggleLike(activeSlide.reelId, activeSlide.levelNumber)}
+            onToggleLike={() => toggleLike(activeSlide.reelId)}
             questionCount={activeSlide.questions.length}
             onOpenQuiz={() => activeControlsRef.current?.openQuiz()}
             subjectIcon={activeSlide.subjectIcon}

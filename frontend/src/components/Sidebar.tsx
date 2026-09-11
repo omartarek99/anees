@@ -1,11 +1,10 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
-import { RiVideoFill, RiMapFill, RiHome2Line, RiGamepadLine, RiFilePaper2Line, RiMoonLine, RiSunLine, RiEnglishInput, RiTranslate2, RiUserFill, RiLogoutBoxRLine, RiLogoutBoxLine } from '@remixicon/react';
+import { RiVideoFill, RiMapFill, RiHome2Line, RiGamepadLine, RiFilePaper2Line } from '@remixicon/react';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import PeopleIcon from '@mui/icons-material/People';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
-import { useTheme } from '../lib/theme-context';
 
 // Emoji for most nav icons (unchanged), or a component for the ones swapped for a real
 // icon -- `currentColor` means it automatically follows .sidebar-icon-btn's own color,
@@ -34,16 +33,17 @@ const TEACHER_LINKS: SidebarLink[] = [{ to: '/teacher/reels', key: 'nav.myReels'
 const ADMIN_LINKS: SidebarLink[] = [{ to: '/admin', key: 'nav.admin', icon: '🛡️' }];
 
 export function Sidebar() {
-  const { user, logout } = useAuth();
-  const { t, lang, toggleLang } = useLanguage();
-  const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
+  const { t } = useLanguage();
   if (!user) return null;
 
+  // Teacher's "create video" link sits right after Reels, not at the end of the list --
+  // it's the natural companion to the icon students use to watch reels.
   const links =
     user.role === 'admin'
       ? ADMIN_LINKS
       : user.role === 'teacher'
-        ? [HOME_LINK, ...GAME_LINKS, ...TEACHER_LINKS]
+        ? [HOME_LINK, GAME_LINKS[0], ...TEACHER_LINKS, ...GAME_LINKS.slice(1)]
         : [HOME_LINK, ...GAME_LINKS];
 
   return (
@@ -66,38 +66,6 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
-
-      <div className="sidebar-bottom">
-        <button
-          type="button"
-          className="sidebar-icon-btn"
-          title={theme === 'dark' ? t('common.switchToLight') : t('common.switchToDark')}
-          aria-label={theme === 'dark' ? t('common.switchToLight') : t('common.switchToDark')}
-          onClick={toggleTheme}
-        >
-          <span aria-hidden>{theme === 'dark' ? <RiSunLine size={20} /> : <RiMoonLine size={20} />}</span>
-        </button>
-        <button
-          type="button"
-          className="sidebar-icon-btn"
-          title={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
-          aria-label={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
-          onClick={toggleLang}
-        >
-          <span aria-hidden>{lang === 'ar' ? <RiEnglishInput size={20} /> : <RiTranslate2 size={20} />}</span>
-        </button>
-        <NavLink
-          to="/profile"
-          title={t('profile.editProfile')}
-          aria-label={t('profile.editProfile')}
-          className={({ isActive }) => `sidebar-icon-btn${isActive ? ' active' : ''}`}
-        >
-          <span aria-hidden><RiUserFill size={20} /></span>
-        </NavLink>
-        <button type="button" className="sidebar-icon-btn" title={t('nav.logout')} aria-label={t('nav.logout')} onClick={() => logout()}>
-          <span aria-hidden>{lang === 'ar' ? <RiLogoutBoxRLine size={20} /> : <RiLogoutBoxLine size={20} />}</span>
-        </button>
-      </div>
     </aside>
   );
 }

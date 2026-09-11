@@ -154,6 +154,14 @@ if (!userColsForModeration.some((c) => c.name === 'warning_message')) {
 if (!userColsForModeration.some((c) => c.name === 'banned_until')) {
   db.exec(`ALTER TABLE users ADD COLUMN banned_until TEXT`);
 }
+// Public bio text + uploaded profile photo, added after the initial users table. Plain
+// columns (no CHECK constraint), so a simple ADD COLUMN is enough -- no rebuild needed.
+if (!userColsForModeration.some((c) => c.name === 'bio')) {
+  db.exec(`ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''`);
+}
+if (!userColsForModeration.some((c) => c.name === 'avatar_url')) {
+  db.exec(`ALTER TABLE users ADD COLUMN avatar_url TEXT`);
+}
 
 // Email encryption at rest: `email_hash` (schema.sql) is nullable like firebase_uid above,
 // for the same reason -- SQLite's ALTER TABLE can't attach UNIQUE inline, so it's enforced
@@ -210,4 +218,9 @@ if (!reelCols.some((c) => c.name === 'grade')) {
 const reelWatchCols = db.prepare(`PRAGMA table_info(reel_watch_progress)`).all() as { name: string }[];
 if (!reelWatchCols.some((c) => c.name === 'quiz_completed')) {
   db.exec(`ALTER TABLE reel_watch_progress ADD COLUMN quiz_completed INTEGER NOT NULL DEFAULT 0`);
+}
+// Per-reel "ever scored >=50%" marker -- map-level reels require this on every reel in a
+// level before the next level unlocks (see routes/reels.ts POST /:reelId/submit).
+if (!reelWatchCols.some((c) => c.name === 'passed_quiz')) {
+  db.exec(`ALTER TABLE reel_watch_progress ADD COLUMN passed_quiz INTEGER NOT NULL DEFAULT 0`);
 }

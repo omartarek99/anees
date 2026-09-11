@@ -21,6 +21,17 @@ function getProgress(userId: number, level: { id: number; level_number: number }
   return null;
 }
 
+function loadAuthor(
+  userId: number | null
+): { username: string; displayName: string; avatarKey: string; avatarUrl: string | null } | null {
+  if (!userId) return null;
+  const row = db.prepare(`SELECT username, display_name, avatar_key, avatar_url FROM users WHERE id = ?`).get(userId) as
+    | { username: string; display_name: string; avatar_key: string; avatar_url: string | null }
+    | undefined;
+  if (!row) return null;
+  return { username: row.username, displayName: row.display_name, avatarKey: row.avatar_key, avatarUrl: row.avatar_url };
+}
+
 function loadQuestions(reelId: number) {
   const questions = db
     .prepare(
@@ -79,6 +90,7 @@ reelsRouter.get('/feed', requireAuth, (req, res) => {
           scriptTextAr: reel.script_text_ar,
           videoUrl: reel.video_url,
           durationSec: reel.duration_sec,
+          author: loadAuthor(reel.author_user_id),
           questions: loadQuestions(reel.id),
         },
         progress: { status: progress.status, stars: progress.stars, bestScore: progress.best_score },
@@ -118,6 +130,7 @@ reelsRouter.get('/feed', requireAuth, (req, res) => {
         scriptTextAr: reel.script_text_ar,
         videoUrl: reel.video_url,
         durationSec: reel.duration_sec,
+        author: loadAuthor(reel.author_user_id),
         questions: loadQuestions(reel.id),
       },
       progress: { status: 'available', stars: 0, bestScore: 0 },
@@ -168,7 +181,7 @@ reelsRouter.get('/level/:levelNumber', requireAuth, (req, res) => {
       scriptTextAr: reel.script_text_ar,
       videoUrl: reel.video_url,
       durationSec: reel.duration_sec,
-      authorUserId: reel.author_user_id,
+      author: loadAuthor(reel.author_user_id),
       questions: loadQuestions(reel.id),
     })),
     progress: { status: progress.status, stars: progress.stars, bestScore: progress.best_score },
@@ -286,27 +299,35 @@ reelsRouter.post('/:reelId/submit', requireAuth, requireCsrfHeader, validateBody
   const total = questions.length;
   const scoreRatio = total > 0 ? correctCount / total : 0;
   const stars = scoreRatio === 1 ? 3 : scoreRatio >= 0.75 ? 2 : scoreRatio >= 0.5 ? 1 : 0;
+  const passedThisAttempt = scoreRatio >= 0.5;
 
-  // Quiz XP is only awarded the first time a lesson is completed — retaking it (e.g.
-  // while looping through the endless reels feed for review) still shows correct/wrong
-  // feedback and can improve stars, but can't be replayed for repeat XP. Map-level
-  // reels track this via user_level_progress.status; grade-based reels (no level) use
-  // reel_watch_progress.quiz_completed instead.
-  const watchRow = isGradeReel
-    ? (db.prepare(`SELECT * FROM reel_watch_progress WHERE user_id = ? AND reel_id = ?`).get(req.userId!, reelId) as any)
-    : null;
-  const alreadyCompleted = isGradeReel ? !!watchRow?.quiz_completed : progress.status === 'completed';
-  if (alreadyCompleted) xpEarned = 0;
+  // Quiz XP is only awarded the first time THIS REEL's quiz is submitted -- retaking it
+  // (e.g. while looping through the endless reels feed for review, or retrying to reach
+  // the 50% needed to advance) still shows correct/wrong feedback and can improve
+  // stars/pass status, but can't be replayed for repeat XP. Tracked per reel (not per
+  // level) via reel_watch_progress so a level with several reels still pays out once per
+  // reel, and so a never-passed reel can't be resubmitted forever for free XP.
+  const watchRow = db.prepare(`SELECT * FROM reel_watch_progress WHERE user_id = ? AND reel_id = ?`).get(req.userId!, reelId) as any;
+  const alreadyAttempted = !!watchRow?.quiz_completed;
+  if (alreadyAttempted) xpEarned = 0;
 
   const levelBeforeXp = getPlayerLevel(req.userId!);
   if (xpEarned > 0) awardXp(req.userId!, xpEarned, 'reel_quiz');
 
+  // passed_quiz is sticky -- once a reel has been passed at >=50%, a later poor retry
+  // (e.g. reviewing the lesson again) never revokes that.
+  const passedQuiz = passedThisAttempt || !!watchRow?.passed_quiz;
+  if (watchRow) {
+    db.prepare(`UPDATE reel_watch_progress SET quiz_completed = 1, passed_quiz = ? WHERE id = ?`).run(passedQuiz ? 1 : 0, watchRow.id);
+  } else {
+    db.prepare(`INSERT INTO reel_watch_progress (user_id, reel_id, quiz_completed, passed_quiz) VALUES (?,?,1,?)`).run(
+      req.userId!,
+      reelId,
+      passedQuiz ? 1 : 0
+    );
+  }
+
   if (isGradeReel) {
-    if (watchRow) {
-      db.prepare(`UPDATE reel_watch_progress SET quiz_completed = 1 WHERE id = ?`).run(watchRow.id);
-    } else {
-      db.prepare(`INSERT INTO reel_watch_progress (user_id, reel_id, quiz_completed) VALUES (?,?,1)`).run(req.userId!, reelId);
-    }
     const levelAfterXpGrade = getPlayerLevel(req.userId!);
     res.json({
       results,
@@ -323,27 +344,54 @@ reelsRouter.post('/:reelId/submit', requireAuth, requireCsrfHeader, validateBody
   const nowStars = Math.max(stars, progress.stars ?? 0);
   const bestScore = Math.max(correctCount, progress.best_score ?? 0);
 
+  // The next level only unlocks once every one of THIS level's reels has been passed at
+  // >=50% at least once (usually just this one reel, but a level can have several) --
+  // not merely attempted. Sticky: a level already completed stays completed even if a
+  // later review attempt on one of its reels scores under 50%.
+  const levelReelIds = (db.prepare(`SELECT id FROM reels WHERE map_level_id = ? AND grade IS NULL`).all(level.id) as { id: number }[]).map(
+    (r) => r.id
+  );
+  const passedReelCount = levelReelIds.length
+    ? (
+        db
+          .prepare(
+            `SELECT COUNT(*) as c FROM reel_watch_progress WHERE user_id = ? AND passed_quiz = 1 AND reel_id IN (${levelReelIds
+              .map(() => '?')
+              .join(',')})`
+          )
+          .get(req.userId!, ...levelReelIds) as { c: number }
+      ).c
+    : 0;
+  const levelFullyPassed = progress.status === 'completed' || passedReelCount >= levelReelIds.length;
+  const newStatus = levelFullyPassed ? 'completed' : 'available';
+
   // Upsert, not a plain UPDATE: level 1 may not have a row yet for accounts predating
   // signup's own progress-seeding (getProgress's virtual fallback covers reads, but
-  // writes still need a real row to land in).
+  // writes still need a real row to land in). completed_at only ever moves forward to
+  // "now" when the level is newly/still fully passed -- never cleared by an under-50%
+  // review attempt.
   db.prepare(
     `INSERT INTO user_level_progress (user_id, map_level_id, status, stars, best_score, completed_at)
-     VALUES (?, ?, 'completed', ?, ?, datetime('now'))
+     VALUES (?, ?, ?, ?, ?, CASE WHEN ? THEN datetime('now') ELSE NULL END)
      ON CONFLICT(user_id, map_level_id) DO UPDATE SET
-       status = 'completed', stars = excluded.stars, best_score = excluded.best_score, completed_at = excluded.completed_at`
-  ).run(req.userId!, level.id, nowStars, bestScore);
+       status = excluded.status, stars = excluded.stars, best_score = excluded.best_score,
+       completed_at = CASE WHEN ? THEN datetime('now') ELSE user_level_progress.completed_at END`
+  ).run(req.userId!, level.id, newStatus, nowStars, bestScore, levelFullyPassed ? 1 : 0, levelFullyPassed ? 1 : 0);
 
-  // Unlock the next map level (or boss) so the student can keep progressing.
-  const nextLevel = db.prepare(`SELECT * FROM map_levels WHERE level_number = ?`).get(level.level_number + 1) as any;
-  if (nextLevel) {
-    const existing = getProgress(req.userId!, nextLevel);
-    if (!existing) {
-      db.prepare(`INSERT INTO user_level_progress (user_id, map_level_id, status) VALUES (?,?,'available')`).run(
-        req.userId!,
-        nextLevel.id
-      );
-    } else if (existing.status === 'locked') {
-      db.prepare(`UPDATE user_level_progress SET status = 'available' WHERE id = ?`).run(existing.id);
+  // Unlock the next map level (or boss) only once this level is fully passed -- so a
+  // student can't skip ahead by scoring under 50% on every reel.
+  if (levelFullyPassed) {
+    const nextLevel = db.prepare(`SELECT * FROM map_levels WHERE level_number = ?`).get(level.level_number + 1) as any;
+    if (nextLevel) {
+      const existing = getProgress(req.userId!, nextLevel);
+      if (!existing) {
+        db.prepare(`INSERT INTO user_level_progress (user_id, map_level_id, status) VALUES (?,?,'available')`).run(
+          req.userId!,
+          nextLevel.id
+        );
+      } else if (existing.status === 'locked') {
+        db.prepare(`UPDATE user_level_progress SET status = 'available' WHERE id = ?`).run(existing.id);
+      }
     }
   }
 

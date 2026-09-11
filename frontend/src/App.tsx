@@ -7,6 +7,7 @@ import { trackPageview } from './lib/analytics';
 import { Sidebar } from './components/Sidebar';
 import { LanguageToggle } from './components/LanguageToggle';
 import { ThemeToggle } from './components/ThemeToggle';
+import { QuickMenu } from './components/QuickMenu';
 import { Footer } from './components/Footer';
 import { WarningModal } from './components/WarningModal';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
@@ -64,6 +65,7 @@ function ProtectedLayout() {
         </main>
         {!hideFooter && <Footer />}
       </div>
+      <QuickMenu />
     </div>
   );
 }

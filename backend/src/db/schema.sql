@@ -27,6 +27,11 @@ CREATE TABLE IF NOT EXISTS users (
   -- until then and lifts itself automatically (checked live against datetime('now'), no
   -- background job needed).
   banned_until TEXT,
+  -- Public "about me" text, shown on the profile page (own and others').
+  bio TEXT NOT NULL DEFAULT '',
+  -- Uploaded profile photo (Supabase Storage public URL), overriding the stylized
+  -- avatar_key icon wherever an avatar is shown. NULL until the user uploads one.
+  avatar_url TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -163,10 +168,13 @@ CREATE TABLE IF NOT EXISTS reel_watch_progress (
   reel_id INTEGER NOT NULL REFERENCES reels(id) ON DELETE CASCADE,
   watched_seconds INTEGER NOT NULL DEFAULT 0,
   xp_awarded INTEGER NOT NULL DEFAULT 0,
-  -- Quiz-completion marker for grade-based reels only (map-level reels track this via
-  -- user_level_progress.status instead) -- prevents repeat-XP farming on a reel with no
-  -- level to gate it.
+  -- Has this reel's quiz been submitted at least once -- prevents repeat-XP farming on
+  -- retries, for every reel (grade-based and map-level alike).
   quiz_completed INTEGER NOT NULL DEFAULT 0,
+  -- Has this reel's quiz ever been passed with a score >=50% -- map-level reels require
+  -- this on EVERY reel belonging to a level before the next level unlocks (see
+  -- routes/reels.ts POST /:reelId/submit). Sticky like quiz_completed: sticks once true.
+  passed_quiz INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(user_id, reel_id)
 );
