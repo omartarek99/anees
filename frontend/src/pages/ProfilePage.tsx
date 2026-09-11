@@ -37,7 +37,12 @@ type Profile = {
   videos?: TeacherVideo[];
 };
 
-const STAT_COLORS = ['stat-card-blue', 'stat-card-yellow', 'stat-card-green', 'stat-card-pink'];
+const STAT_COLORS = ['stat-card-yellow', 'stat-card-green'];
+
+// Rank progress ring (replaces the old linear xp-bar) -- radius/circumference are shared
+// between the track and fill circles so the fill's dash math stays in one place.
+const RING_R = 34;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_R;
 
 function StatCard({ icon, label, value, color }: { icon: string; label: string; value: number | string; color: string }) {
   return (
@@ -152,37 +157,60 @@ export function ProfilePage() {
     <div className="stack">
       <Topbar title={profile.displayName} subtitle={`@${profile.username} · ${t('profile.joined', { date: joinedDate })}`} />
 
-      <div className="card flex gap-md" style={{ alignItems: 'center' }}>
+      <div className="card flex gap-md" style={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <Avatar avatarKey={profile.avatarKey} photoUrl={profile.avatarUrl} size={72} />
-        <div className="stack" style={{ gap: 8, flex: 1 }}>
-          <span className="badge badge-gold" style={{ fontSize: 15, width: 'fit-content' }}>
-            {t('profile.levelXp', { level: profile.playerLevel, xp: profile.totalXp })}
-          </span>
-          <RankBadge tier={profile.rankTier} size={36} />
-          {profile.rankTier.nextMinXp !== null && (
-            <div style={{ maxWidth: 220 }}>
-              <div className="xp-bar-track">
-                <div
-                  className="xp-bar-fill"
-                  style={{
-                    width: `${Math.round(profile.rankTier.progress * 100)}%`,
-                    background: `linear-gradient(90deg, ${profile.rankTier.color}, ${profile.rankTier.colorDark})`,
-                  }}
-                />
-              </div>
-              <p className="muted" style={{ fontSize: 11, marginTop: 3 }}>
+
+        <div className="flex gap-md" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', width: 84, height: 84, flexShrink: 0 }}>
+            <svg width={84} height={84} viewBox="0 0 84 84" style={{ transform: 'rotate(-90deg)' }}>
+              <circle cx={42} cy={42} r={RING_R} fill="none" stroke="var(--sand-dark)" strokeWidth={8} />
+              <circle
+                cx={42}
+                cy={42}
+                r={RING_R}
+                fill="none"
+                stroke={profile.rankTier.color}
+                strokeWidth={8}
+                strokeLinecap="round"
+                strokeDasharray={RING_CIRCUMFERENCE}
+                strokeDashoffset={RING_CIRCUMFERENCE * (1 - (profile.rankTier.nextMinXp === null ? 1 : profile.rankTier.progress))}
+              />
+            </svg>
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <span style={{ fontSize: 22, fontWeight: 800, lineHeight: 1 }}>{profile.playerLevel}</span>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, color: 'var(--ink-soft)' }}>{t('common.level').toUpperCase()}</span>
+            </div>
+          </div>
+
+          <div className="stack" style={{ gap: 4 }}>
+            <RankBadge tier={profile.rankTier} size={26} />
+            <span style={{ fontSize: 13, fontWeight: 700 }}>
+              ⭐ {profile.totalXp} {t('profile.totalXp')}
+            </span>
+            <span style={{ fontSize: 13, fontWeight: 700 }}>
+              📚 {profile.levelsCompleted} {t('profile.levelsCompleted')}
+            </span>
+            {profile.rankTier.nextMinXp !== null && (
+              <p className="muted" style={{ fontSize: 11, margin: 0 }}>
                 {t('profile.nextTierXp', { xp: profile.rankTier.nextMinXp - profile.totalXp })}
               </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       <div className="grid-cards">
-        <StatCard icon="📚" label={t('profile.levelsCompleted')} value={profile.levelsCompleted} color={STAT_COLORS[0]} />
-        <StatCard icon="🐉" label={t('profile.bossesDefeated')} value={profile.bossesDefeated} color={STAT_COLORS[1]} />
-        <StatCard icon="📝" label={t('profile.worksheetsDone')} value={profile.worksheetsCompleted} color={STAT_COLORS[2]} />
-        <StatCard icon="⭐" label={t('profile.totalXp')} value={profile.totalXp} color={STAT_COLORS[3]} />
+        <StatCard icon="🐉" label={t('profile.bossesDefeated')} value={profile.bossesDefeated} color={STAT_COLORS[0]} />
+        <StatCard icon="📝" label={t('profile.worksheetsDone')} value={profile.worksheetsCompleted} color={STAT_COLORS[1]} />
       </div>
 
       <div className="card stack" style={{ gap: 6 }}>

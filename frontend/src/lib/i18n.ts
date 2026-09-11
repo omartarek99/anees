@@ -455,7 +455,6 @@ const en = {
   },
   profile: {
     joined: 'Joined {date}',
-    levelXp: 'Level {level} · {xp} XP',
     levelsCompleted: 'Levels Completed',
     bossesDefeated: 'Bosses Defeated',
     worksheetsDone: 'Worksheets Done',
@@ -951,7 +950,6 @@ const ar: typeof en = {
   },
   profile: {
     joined: 'انضم في {date}',
-    levelXp: 'المستوى {level} · {xp} نقطة',
     levelsCompleted: 'المستويات المكتملة',
     bossesDefeated: 'الحرّاس المهزومون',
     worksheetsDone: 'أوراق العمل المنجزة',

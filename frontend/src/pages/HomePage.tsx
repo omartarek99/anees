@@ -1,38 +1,16 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { RiCalculatorLine, RiAtomLine } from '@remixicon/react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
-import { NewsCard } from '../components/NewsCard';
 import { Topbar } from '../components/Topbar';
-
-type NewsPost = {
-  id: number;
-  title: string;
-  titleAr?: string | null;
-  body: string;
-  bodyAr?: string | null;
-  icon: string;
-  subject: string | null;
-  publishedAt: string;
-};
 
 type Profile = { levelsCompleted: number; totalXp: number; playerLevel: number };
 
 export function HomePage() {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const [posts, setPosts] = useState<NewsPost[] | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [filter, setFilter] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  const FILTERS: { key: string; label: string; icon: ReactNode; color: string }[] = [
-    { key: '', label: t('home.filterAll'), icon: '🦅', color: 'stat-card-purple' },
-    { key: 'math', label: t('home.filterMath'), icon: <RiCalculatorLine size={19} />, color: 'stat-card-blue' },
-    { key: 'science', label: t('home.filterScience'), icon: <RiAtomLine size={19} />, color: 'stat-card-green' },
-  ];
 
   useEffect(() => {
     api
@@ -40,23 +18,6 @@ export function HomePage() {
       .then((d) => setProfile(d.profile))
       .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    setPosts(null);
-    api
-      .get<{ posts: NewsPost[] }>(`/news${filter ? `?subject=${filter}` : ''}`)
-      .then((data) => {
-        if (!cancelled) setPosts(data.posts);
-      })
-      .catch(() => {
-        if (!cancelled) setError(t('home.loadError'));
-      });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
 
   return (
     <div className="stack">
@@ -96,43 +57,6 @@ export function HomePage() {
         <Link to="/craft" className="btn btn-gold">
           {t('home.openCraft')}
         </Link>
-      </div>
-
-      <div className="card">
-        <h3 style={{ fontSize: 16, marginBottom: 12 }}>{t('home.filterAll')}</h3>
-        <div className="pill-row">
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              className={`category-pill ${f.color}${filter === f.key ? ' selected' : ''}`}
-              onClick={() => setFilter(f.key)}
-            >
-              <span className="category-pill-icon">{f.icon}</span>
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {error && <div className="form-error-banner">{error}</div>}
-
-      {!posts && !error && (
-        <div className="empty-state">
-          <div className="spinner" />
-        </div>
-      )}
-
-      {posts && posts.length === 0 && (
-        <div className="empty-state">
-          <div style={{ fontSize: 40 }}>📭</div>
-          <p>{t('home.empty')}</p>
-        </div>
-      )}
-
-      <div className="stack" style={{ gap: 10 }}>
-        {posts?.map((post) => (
-          <NewsCard key={post.id} post={post} />
-        ))}
       </div>
     </div>
   );
