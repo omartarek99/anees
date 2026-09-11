@@ -400,7 +400,7 @@ const en = {
     finalStrike: 'Final Strike! ⚔️',
   },
   worksheets: {
-    title: '📝 Worksheet Generator',
+    title: 'Worksheet Generator',
     subtitle: 'Pick a subject and difficulty to generate practice questions and earn XP.',
     subject: 'Subject',
     math: '🧮 Math',
@@ -878,7 +878,7 @@ const ar: typeof en = {
     finalStrike: 'الضربة الأخيرة! ⚔️',
   },
   worksheets: {
-    title: '📝 مولّد أوراق العمل',
+    title: 'مولّد أوراق العمل',
     subtitle: 'اختر المادة ومستوى الصعوبة لإنشاء أسئلة تدريبية وكسب نقاط الخبرة.',
     subject: 'المادة',
     math: '🧮 الرياضيات',
