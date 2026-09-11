@@ -1,4 +1,4 @@
-import { RiPokerHeartsFill, RiVolumeMuteFill, RiVolumeUpFill } from '@remixicon/react';
+import { RiPokerHeartsFill, RiPokerHeartsLine, RiVolumeMuteFill, RiVolumeUpFill, RiFileLine } from '@remixicon/react';
 import { useLanguage } from '../lib/language-context';
 import { Avatar } from './Avatar';
 
@@ -44,7 +44,7 @@ export function ReelActionRail({
             transition: 'transform 0.15s',
           }}
         >
-          {liked ? <RiPokerHeartsFill size={22} /> : '🤍'}
+          {liked ? <RiPokerHeartsFill size={22} /> : <RiPokerHeartsLine size={22} />}
         </span>
         <span className="reel-rail-count">{likeCount}</span>
       </button>
@@ -57,7 +57,7 @@ export function ReelActionRail({
 
       <button type="button" className="reel-rail-btn" onClick={onOpenQuiz} aria-label={t('reels.takeQuiz')}>
         <span className="notif-bell" style={{ fontSize: 19 }}>
-          📝
+          <RiFileLine size={19} />
         </span>
         <span className="reel-rail-count">{questionCount}</span>
       </button>

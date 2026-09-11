@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { RiNotification3Fill } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { api } from '../lib/api';
@@ -48,7 +49,9 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
           title={t('friends.tabRequests', { n: pendingRequests })}
           aria-label={t('friends.tabRequests', { n: pendingRequests })}
         >
-          <span aria-hidden="true">🔔</span>
+          <span aria-hidden="true">
+            <RiNotification3Fill size={17} />
+          </span>
           {pendingRequests > 0 && <span className="notif-dot" />}
         </Link>
       </div>
