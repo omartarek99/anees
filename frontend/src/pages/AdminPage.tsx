@@ -7,9 +7,9 @@ import { AdminUserRow, type AdminUser } from '../components/AdminUserRow';
 import { AdminVideosPanel } from '../components/AdminVideosPanel';
 import { AdminReportsPanel } from '../components/AdminReportsPanel';
 import { Pagination } from '../components/Pagination';
+import { GradeFilterSelect, type GradeFilter } from '../components/GradeFilterSelect';
 
 type RoleFilter = 'all' | Role;
-type GradeFilter = 'all' | '5' | '8';
 type Tab = 'users' | 'videos' | 'reports';
 
 function AdminUsersPanel() {
@@ -76,11 +76,7 @@ function AdminUsersPanel() {
           </select>
         </div>
         <div className="field" style={{ flex: 1, minWidth: 160 }}>
-          <select value={gradeFilter} onChange={(e) => setGradeFilter(e.target.value as GradeFilter)} aria-label={t('admin.gradeFilterAll')}>
-            <option value="all">{t('admin.gradeFilterAll')}</option>
-            <option value="5">{t('admin.gradeFilter5')}</option>
-            <option value="8">{t('admin.gradeFilter8')}</option>
-          </select>
+          <GradeFilterSelect value={gradeFilter} onChange={setGradeFilter} />
         </div>
       </div>
 

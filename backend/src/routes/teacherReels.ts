@@ -263,6 +263,25 @@ function resolvePlaceholderLevel(subjectId: number) {
     .get(subjectId) as any;
 }
 
+type TeacherReelBody = import('zod').infer<typeof teacherReelSchema>;
+
+/** Shared by POST / and PATCH /:id -- both need the same moderation check and
+ * subject-derived placeholder-level lookup before touching the DB; only what happens next
+ * (INSERT vs UPDATE) actually differs between them. Sends the appropriate error response
+ * itself on failure so callers just need `if (!placeholderLevel) return;`. */
+function validateReelBody(res: Response, body: TeacherReelBody) {
+  if (!moderateReelContent(body)) {
+    res.status(400).json({ error: 'Please keep your lesson content appropriate.' });
+    return null;
+  }
+  const placeholderLevel = resolvePlaceholderLevel(body.subjectId);
+  if (!placeholderLevel) {
+    res.status(400).json({ error: 'Invalid subject.' });
+    return null;
+  }
+  return placeholderLevel;
+}
+
 teacherReelsRouter.post(
   '/',
   requireAuth,
@@ -270,18 +289,10 @@ teacherReelsRouter.post(
   requireCsrfHeader,
   validateBody(teacherReelSchema),
   (req, res) => {
-    const body = req.body as import('zod').infer<typeof teacherReelSchema>;
+    const body = req.body as TeacherReelBody;
 
-    if (!moderateReelContent(body)) {
-      res.status(400).json({ error: 'Please keep your lesson content appropriate.' });
-      return;
-    }
-
-    const placeholderLevel = resolvePlaceholderLevel(body.subjectId);
-    if (!placeholderLevel) {
-      res.status(400).json({ error: 'Invalid subject.' });
-      return;
-    }
+    const placeholderLevel = validateReelBody(res, body);
+    if (!placeholderLevel) return;
 
     const reelId = Number(
       db
@@ -320,17 +331,9 @@ teacherReelsRouter.patch(
       return;
     }
 
-    const body = req.body as import('zod').infer<typeof teacherReelSchema>;
-    if (!moderateReelContent(body)) {
-      res.status(400).json({ error: 'Please keep your lesson content appropriate.' });
-      return;
-    }
-
-    const placeholderLevel = resolvePlaceholderLevel(body.subjectId);
-    if (!placeholderLevel) {
-      res.status(400).json({ error: 'Invalid subject.' });
-      return;
-    }
+    const body = req.body as TeacherReelBody;
+    const placeholderLevel = validateReelBody(res, body);
+    if (!placeholderLevel) return;
 
     db.prepare(
       `UPDATE reels SET subject_id = ?, map_level_id = ?, grade = ?, title = ?, title_ar = ?, script_text = ?, script_text_ar = ?, duration_sec = ? WHERE id = ?`

@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { formatWatchTime } from '../lib/format';
 import { Pagination } from './Pagination';
+import { GradeFilterSelect, type GradeFilter } from './GradeFilterSelect';
 
 type WatchTimeStudent = {
   userId: number;
@@ -13,8 +14,6 @@ type WatchTimeStudent = {
   totalWatchXp: number;
   reelsWatched: number;
 };
-
-type GradeFilter = 'all' | '5' | '8';
 
 type AnalyticsSummary = {
   topPaths: { path: string; views: number }[];
@@ -48,18 +47,13 @@ function WatchTimeReport() {
       <p className="muted" style={{ fontSize: 13, marginTop: 0, marginBottom: 12 }}>{t('admin.watchTimeSubtitle')}</p>
 
       <div className="field" style={{ maxWidth: 220 }}>
-        <select
+        <GradeFilterSelect
           value={gradeFilter}
-          onChange={(e) => {
-            setGradeFilter(e.target.value as GradeFilter);
+          onChange={(value) => {
+            setGradeFilter(value);
             setPage(1);
           }}
-          aria-label={t('admin.gradeFilterAll')}
-        >
-          <option value="all">{t('admin.gradeFilterAll')}</option>
-          <option value="5">{t('admin.gradeFilter5')}</option>
-          <option value="8">{t('admin.gradeFilter8')}</option>
-        </select>
+        />
       </div>
 
       {!students && (

@@ -14,11 +14,35 @@ import { isCurrentlyBanned } from '../lib/accountStatus.js';
 import { deleteReelVideoIfAny } from '../lib/reelVideo.js';
 import { decrypt } from '../lib/encryption.js';
 
+import type { Response } from 'express';
+
 export const adminRouter = Router();
 
 adminRouter.use(requireAuth, requireRole('admin'));
 
 const PAGE_SIZE = 20;
+
+/** Clamps a requested page number against how many pages actually exist. Shared by every
+ * paginated list here (`/users`, `/reports/watch-time`) so "page 1 of however-many" can't
+ * drift between them -- e.g. a stray off-by-one wouldn't be free to happen twice. */
+function clampPage(requestedPage: number, total: number) {
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  return { page: Math.min(Math.max(1, requestedPage), totalPages), totalPages };
+}
+
+/** Every PATCH /users/:id/* route below is the same shape once you strip the specific
+ * column/value: run an UPDATE, 404 if nothing matched, otherwise re-SELECT and respond with
+ * the fresh adminUser(). Only the self-block message and the UPDATE statement itself differ
+ * between routes, so those are the only things each caller still supplies. */
+function applyUserUpdate(res: Response, targetId: number, runUpdate: () => { changes: number | bigint }) {
+  const result = runUpdate();
+  if (result.changes === 0) {
+    res.status(404).json({ error: 'User not found.' });
+    return;
+  }
+  const row = db.prepare(`SELECT * FROM users WHERE id = ?`).get(targetId);
+  res.json({ user: adminUser(row) });
+}
 
 function adminUser(row: any) {
   return {
@@ -77,10 +101,10 @@ adminRouter.get('/users', (req, res) => {
   }
 
   const total = users.length;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const pageUsers = users.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const { page: page_, totalPages } = clampPage(page, total);
+  const pageUsers = users.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE);
 
-  res.json({ users: pageUsers, total, page: Math.min(page, totalPages), totalPages, pageSize: PAGE_SIZE });
+  res.json({ users: pageUsers, total, page: page_, totalPages, pageSize: PAGE_SIZE });
 });
 
 adminRouter.patch('/users/:id/active', requireCsrfHeader, validateBody(adminSetActiveSchema), (req, res) => {
@@ -90,13 +114,7 @@ adminRouter.patch('/users/:id/active', requireCsrfHeader, validateBody(adminSetA
     return;
   }
   const { isActive } = req.body as { isActive: boolean };
-  const result = db.prepare(`UPDATE users SET is_active = ? WHERE id = ?`).run(isActive ? 1 : 0, targetId);
-  if (result.changes === 0) {
-    res.status(404).json({ error: 'User not found.' });
-    return;
-  }
-  const row = db.prepare(`SELECT * FROM users WHERE id = ?`).get(targetId);
-  res.json({ user: adminUser(row) });
+  applyUserUpdate(res, targetId, () => db.prepare(`UPDATE users SET is_active = ? WHERE id = ?`).run(isActive ? 1 : 0, targetId));
 });
 
 adminRouter.patch('/users/:id/role', requireCsrfHeader, validateBody(adminSetRoleSchema), (req, res) => {
@@ -106,13 +124,7 @@ adminRouter.patch('/users/:id/role', requireCsrfHeader, validateBody(adminSetRol
     return;
   }
   const { role } = req.body as { role: 'student' | 'teacher' | 'admin' };
-  const result = db.prepare(`UPDATE users SET role = ? WHERE id = ?`).run(role, targetId);
-  if (result.changes === 0) {
-    res.status(404).json({ error: 'User not found.' });
-    return;
-  }
-  const row = db.prepare(`SELECT * FROM users WHERE id = ?`).get(targetId);
-  res.json({ user: adminUser(row) });
+  applyUserUpdate(res, targetId, () => db.prepare(`UPDATE users SET role = ? WHERE id = ?`).run(role, targetId));
 });
 
 adminRouter.delete('/users/:id', requireCsrfHeader, async (req, res) => {
@@ -135,17 +147,11 @@ adminRouter.delete('/users/:id', requireCsrfHeader, async (req, res) => {
 adminRouter.patch('/users/:id/warning', requireCsrfHeader, validateBody(adminSetWarningSchema), (req, res) => {
   const targetId = Number(req.params.id);
   const { message } = req.body as { message: string | null };
-  const result = db
-    .prepare(
-      `UPDATE users SET warning_message = ?, warning_issued_at = ? WHERE id = ?`
-    )
-    .run(message, message ? new Date().toISOString() : null, targetId);
-  if (result.changes === 0) {
-    res.status(404).json({ error: 'User not found.' });
-    return;
-  }
-  const row = db.prepare(`SELECT * FROM users WHERE id = ?`).get(targetId);
-  res.json({ user: adminUser(row) });
+  applyUserUpdate(res, targetId, () =>
+    db
+      .prepare(`UPDATE users SET warning_message = ?, warning_issued_at = ? WHERE id = ?`)
+      .run(message, message ? new Date().toISOString() : null, targetId)
+  );
 });
 
 // Timed suspension -- bannedUntil: null lifts it immediately, otherwise an ISO datetime in
@@ -158,13 +164,7 @@ adminRouter.patch('/users/:id/ban', requireCsrfHeader, validateBody(adminSetBanS
     return;
   }
   const { bannedUntil } = req.body as { bannedUntil: string | null };
-  const result = db.prepare(`UPDATE users SET banned_until = ? WHERE id = ?`).run(bannedUntil, targetId);
-  if (result.changes === 0) {
-    res.status(404).json({ error: 'User not found.' });
-    return;
-  }
-  const row = db.prepare(`SELECT * FROM users WHERE id = ?`).get(targetId);
-  res.json({ user: adminUser(row) });
+  applyUserUpdate(res, targetId, () => db.prepare(`UPDATE users SET banned_until = ? WHERE id = ?`).run(bannedUntil, targetId));
 });
 
 adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSchema), (req, res) => {
@@ -174,13 +174,7 @@ adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSch
     return;
   }
   const { totalXp } = req.body as { totalXp: number };
-  const result = db.prepare(`UPDATE users SET total_xp = ? WHERE id = ?`).run(totalXp, targetId);
-  if (result.changes === 0) {
-    res.status(404).json({ error: 'User not found.' });
-    return;
-  }
-  const row = db.prepare(`SELECT * FROM users WHERE id = ?`).get(targetId);
-  res.json({ user: adminUser(row) });
+  applyUserUpdate(res, targetId, () => db.prepare(`UPDATE users SET total_xp = ? WHERE id = ?`).run(totalXp, targetId));
 });
 
 // ---------------------------------------------------------------------------------------
@@ -261,8 +255,7 @@ adminRouter.get('/reports/watch-time', (req, res) => {
   const total = (
     db.prepare(`SELECT COUNT(*) as c FROM users u WHERE ${clauses.join(' AND ')}`).get(...params) as { c: number }
   ).c;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const page_ = Math.min(page, totalPages);
+  const { page: page_, totalPages } = clampPage(page, total);
 
   const rows = db
     .prepare(
