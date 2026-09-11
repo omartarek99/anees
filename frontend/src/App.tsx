@@ -102,6 +102,15 @@ function AdminOnly() {
   return <Outlet />;
 }
 
+// Admin has no XP/level/rank of its own -- its account exists purely to manage other
+// accounts, so its own profile page (reachable from QuickMenu) forwards straight to the
+// user list it actually wants, same as RoleHome does for "/".
+function ProfileHome() {
+  const { user } = useAuth();
+  if (user?.role === 'admin') return <Navigate to="/admin" replace />;
+  return <ProfilePage />;
+}
+
 function PublicOnlyLayout() {
   const { user, loading } = useAuth();
   if (loading) return <FullScreenLoader />;
@@ -153,7 +162,7 @@ export default function App() {
                 <Route element={<AdminOnly />}>
                   <Route path="/admin" element={<AdminPage />} />
                 </Route>
-                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/profile" element={<ProfileHome />} />
                 <Route path="/profile/:username" element={<ProfilePage />} />
               </Route>
 

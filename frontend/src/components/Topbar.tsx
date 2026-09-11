@@ -34,15 +34,19 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
         {subtitle && <p className="topbar-subtitle">{subtitle}</p>}
       </div>
       <div className="flex gap-sm" style={{ alignItems: 'center' }}>
-        <span className="stat-pill" style={{ color: 'var(--pastel-blue-ink)' }}>
-          💎 {user.totalXp}
-        </span>
-        <span className="stat-pill" style={{ color: 'var(--gold-dark)' }}>
-          🏅 {user.playerLevel}
-        </span>
-        <Link to="/profile" className="stat-pill" title={user.rankTier.name}>
-          <RankBadge tier={user.rankTier} size={18} showName={false} />
-        </Link>
+        {user.role !== 'admin' && (
+          <>
+            <span className="stat-pill" style={{ color: 'var(--pastel-blue-ink)' }}>
+              💎 {user.totalXp}
+            </span>
+            <span className="stat-pill" style={{ color: 'var(--gold-dark)' }}>
+              🏅 {user.playerLevel}
+            </span>
+            <Link to="/profile" className="stat-pill" title={user.rankTier.name}>
+              <RankBadge tier={user.rankTier} size={18} showName={false} />
+            </Link>
+          </>
+        )}
         <Link
           to="/friends"
           className="notif-bell"
