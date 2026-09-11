@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { RiCalculatorLine } from '@remixicon/react';
+import { RiCalculatorLine, RiAtomLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -303,7 +303,13 @@ export function ReelSlide({
                   filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.5))',
                 }}
               >
-                {data.subjectKey === 'math' ? <RiCalculatorLine size={72} /> : data.subjectIcon}
+                {data.subjectKey === 'math' ? (
+                  <RiCalculatorLine size={72} />
+                ) : data.subjectKey === 'science' ? (
+                  <RiAtomLine size={72} />
+                ) : (
+                  data.subjectIcon
+                )}
               </div>
             )}
           </div>
@@ -329,7 +335,14 @@ export function ReelSlide({
               className="badge"
               style={{ background: 'rgba(255,255,255,0.18)', color: 'white', marginBottom: 8, backdropFilter: 'blur(6px)' }}
             >
-              {data.subjectKey === 'math' ? <RiCalculatorLine size={13} /> : data.subjectIcon} {data.subjectName}
+              {data.subjectKey === 'math' ? (
+                <RiCalculatorLine size={13} />
+              ) : data.subjectKey === 'science' ? (
+                <RiAtomLine size={13} />
+              ) : (
+                data.subjectIcon
+              )}{' '}
+              {data.subjectName}
             </span>
             <h2 style={{ color: 'white', fontSize: 19, margin: '2px 0 6px', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
             {data.author && (

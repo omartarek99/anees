@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RiCalculatorLine } from '@remixicon/react';
+import { RiCalculatorLine, RiAtomLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -105,7 +105,7 @@ export function WorksheetsPage() {
                 className={`category-pill stat-card-green${subject === 'science' ? ' selected' : ''}`}
                 onClick={() => setSubject('science')}
               >
-                <span className="category-pill-icon">🔬</span>
+                <span className="category-pill-icon"><RiAtomLine size={19} /></span>
                 {t('worksheets.science')}
               </button>
             </div>
@@ -145,7 +145,11 @@ export function WorksheetsPage() {
         <div className="stack">
           <div className="flex-between">
             <h2 style={{ fontSize: 18 }}>
-              {subject === 'math' && <RiCalculatorLine size={16} style={{ verticalAlign: -3, marginInlineEnd: 4 }} />}
+              {subject === 'math' ? (
+                <RiCalculatorLine size={16} style={{ verticalAlign: -3, marginInlineEnd: 4 }} />
+              ) : (
+                <RiAtomLine size={16} style={{ verticalAlign: -3, marginInlineEnd: 4 }} />
+              )}
               {subject === 'math' ? t('worksheets.math') : t('worksheets.science')} —{' '}
               {t(`worksheets.${difficulty}`)}
             </h2>

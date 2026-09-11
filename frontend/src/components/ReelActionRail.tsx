@@ -1,4 +1,4 @@
-import { RiPokerHeartsFill, RiPokerHeartsLine, RiVolumeMuteFill, RiVolumeUpFill, RiFileLine, RiCalculatorLine } from '@remixicon/react';
+import { RiPokerHeartsFill, RiPokerHeartsLine, RiVolumeMuteFill, RiVolumeUpFill, RiFileLine, RiCalculatorLine, RiAtomLine } from '@remixicon/react';
 import { useLanguage } from '../lib/language-context';
 import { Avatar } from './Avatar';
 
@@ -72,7 +72,7 @@ export function ReelActionRail({
       </div>
 
       <span className="notif-bell" aria-hidden style={{ fontSize: 18 }}>
-        {subjectKey === 'math' ? <RiCalculatorLine size={18} /> : subjectIcon}
+        {subjectKey === 'math' ? <RiCalculatorLine size={18} /> : subjectKey === 'science' ? <RiAtomLine size={18} /> : subjectIcon}
       </span>
     </div>
   );
