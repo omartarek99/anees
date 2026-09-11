@@ -267,7 +267,7 @@ const en = {
     button: 'Awesome! 🚀',
   },
   map: {
-    title: '🗺️ The Adventure Map',
+    title: 'The Adventure Map',
     subtitle: '50 levels across the land of Qatar. Defeat a Guardian boss every 5 levels to keep climbing!',
     loadError: 'Could not load the map right now.',
     zoneDesert: 'Desert Oasis',
@@ -745,7 +745,7 @@ const ar: typeof en = {
     button: 'رائع! 🚀',
   },
   map: {
-    title: '🗺️ خريطة المغامرة',
+    title: 'خريطة المغامرة',
     subtitle: '٥٠ مستوى عبر أرجاء قطر. اهزم الحارس كل ٥ مستويات لمواصلة التقدم!',
     loadError: 'تعذّر تحميل الخريطة حاليًا.',
     zoneDesert: 'واحة الصحراء',
