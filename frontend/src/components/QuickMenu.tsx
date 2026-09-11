@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { RiMoonLine, RiSunLine, RiEnglishInput, RiTranslate2 } from '@remixicon/react';
+import { RiMoonLine, RiSunLine, RiEnglishInput, RiTranslate2, RiUserFill, RiLogoutBoxRLine, RiLogoutBoxLine } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useTheme } from '../lib/theme-context';
@@ -51,7 +51,7 @@ export function QuickMenu() {
         <div className="quick-menu-panel" role="menu">
           <NavLink to="/profile" className="quick-menu-item" role="menuitem" onClick={() => setOpen(false)}>
             <span className="quick-menu-icon" aria-hidden>
-              👤
+              <RiUserFill size={17} />
             </span>
             {t('profile.editProfile')}
           </NavLink>
@@ -93,7 +93,7 @@ export function QuickMenu() {
             }}
           >
             <span className="quick-menu-icon" aria-hidden>
-              🚪
+              {lang === 'ar' ? <RiLogoutBoxRLine size={17} /> : <RiLogoutBoxLine size={17} />}
             </span>
             {t('nav.logout')}
           </button>
