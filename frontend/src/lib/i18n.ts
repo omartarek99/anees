@@ -423,7 +423,7 @@ const en = {
     yourRanking: 'Your Ranking',
   },
   friends: {
-    title: '🧑‍🤝‍🧑 Friends',
+    title: 'Friends',
     subtitle: 'Add friends and challenge each other on the leaderboard!',
     tabFriends: 'My Friends ({n})',
     tabRequests: 'Requests ({n})',
@@ -901,7 +901,7 @@ const ar: typeof en = {
     yourRanking: 'ترتيبك',
   },
   friends: {
-    title: '🧑‍🤝‍🧑 الأصدقاء',
+    title: 'الأصدقاء',
     subtitle: 'أضف أصدقاء وتنافسوا معًا في قائمة المتصدرين!',
     tabFriends: 'أصدقائي ({n})',
     tabRequests: 'الطلبات ({n})',
