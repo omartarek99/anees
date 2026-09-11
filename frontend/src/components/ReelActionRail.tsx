@@ -1,3 +1,4 @@
+import { RiPokerHeartsFill } from '@remixicon/react';
 import { useLanguage } from '../lib/language-context';
 import { Avatar } from './Avatar';
 
@@ -34,8 +35,16 @@ export function ReelActionRail({
       <Avatar avatarKey={avatarKey} size={48} />
 
       <button type="button" className="reel-rail-btn" onClick={onToggleLike} aria-label={t(liked ? 'reels.unlike' : 'reels.like')}>
-        <span className="notif-bell" style={{ fontSize: 22, transform: liked ? 'scale(1.1)' : 'scale(1)', transition: 'transform 0.15s' }}>
-          {liked ? '❤️' : '🤍'}
+        <span
+          className="notif-bell"
+          style={{
+            fontSize: 22,
+            color: liked ? 'var(--danger)' : undefined,
+            transform: liked ? 'scale(1.1)' : 'scale(1)',
+            transition: 'transform 0.15s',
+          }}
+        >
+          {liked ? <RiPokerHeartsFill size={22} /> : '🤍'}
         </span>
         <span className="reel-rail-count">{likeCount}</span>
       </button>
