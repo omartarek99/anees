@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
-import { RiVideoFill, RiMapFill, RiHome2Line, RiGamepadLine, RiFilePaper2Line, RiMoonLine, RiSunLine, RiEnglishInput, RiTranslate2, RiUserFill } from '@remixicon/react';
+import { RiVideoFill, RiMapFill, RiHome2Line, RiGamepadLine, RiFilePaper2Line, RiMoonLine, RiSunLine, RiEnglishInput, RiTranslate2, RiUserFill, RiLogoutBoxRLine } from '@remixicon/react';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import PeopleIcon from '@mui/icons-material/People';
 import { useAuth } from '../lib/auth-context';
@@ -95,7 +95,7 @@ export function Sidebar() {
           <span aria-hidden><RiUserFill size={20} /></span>
         </NavLink>
         <button type="button" className="sidebar-icon-btn" title={t('nav.logout')} aria-label={t('nav.logout')} onClick={() => logout()}>
-          <span aria-hidden>🚪</span>
+          <span aria-hidden>{lang === 'ar' ? <RiLogoutBoxRLine size={20} /> : '🚪'}</span>
         </button>
       </div>
     </aside>
