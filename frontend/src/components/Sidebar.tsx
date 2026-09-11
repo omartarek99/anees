@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
-import { RiVideoFill, RiMapFill, RiHome2Line, RiGamepadLine, RiFilePaper2Line, RiMoonLine, RiSunLine, RiEnglishInput } from '@remixicon/react';
+import { RiVideoFill, RiMapFill, RiHome2Line, RiGamepadLine, RiFilePaper2Line, RiMoonLine, RiSunLine, RiEnglishInput, RiTranslate2 } from '@remixicon/react';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import PeopleIcon from '@mui/icons-material/People';
 import { useAuth } from '../lib/auth-context';
@@ -84,7 +84,7 @@ export function Sidebar() {
           aria-label={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
           onClick={toggleLang}
         >
-          <span aria-hidden>{lang === 'ar' ? <RiEnglishInput size={20} /> : '🌐'}</span>
+          <span aria-hidden>{lang === 'ar' ? <RiEnglishInput size={20} /> : <RiTranslate2 size={20} />}</span>
         </button>
         <NavLink
           to="/profile"
