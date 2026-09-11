@@ -1,4 +1,4 @@
-import { RiPokerHeartsFill, RiVolumeMuteFill } from '@remixicon/react';
+import { RiPokerHeartsFill, RiVolumeMuteFill, RiVolumeUpFill } from '@remixicon/react';
 import { useLanguage } from '../lib/language-context';
 import { Avatar } from './Avatar';
 
@@ -51,7 +51,7 @@ export function ReelActionRail({
 
       <button type="button" className="reel-rail-btn" onClick={onToggleMute} aria-label={t(muted ? 'reels.unmute' : 'reels.mute')}>
         <span className="notif-bell" style={{ fontSize: 20 }}>
-          {muted ? <RiVolumeMuteFill size={20} /> : '🔊'}
+          {muted ? <RiVolumeMuteFill size={20} /> : <RiVolumeUpFill size={20} />}
         </span>
       </button>
 
