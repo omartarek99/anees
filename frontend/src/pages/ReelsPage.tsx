@@ -183,7 +183,7 @@ export function ReelsPage() {
           languages (matching TikTok, which never mirrors its action rail for RTL) — the inner
           wrapper resets back to the real page direction so the reel's own caption/badge/exit-
           button logical-property layout still mirrors correctly for Arabic. */}
-      <div className="flex-center gap-md" style={{ height: '100vh', direction: 'ltr' }}>
+      <div className="reels-frame-row flex-center gap-md" style={{ height: '100vh', direction: 'ltr' }}>
         <div style={{ direction: dir, width: 'min(100%, 560px)', height: '100%', position: 'relative' }}>
         {/* Floating overlay instead of a block above the frame -- doesn't eat into the
             frame's own height budget. */}

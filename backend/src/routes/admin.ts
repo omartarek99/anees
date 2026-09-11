@@ -12,16 +12,19 @@ import {
 import { deleteUserById } from '../lib/deleteUser.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
 import { deleteReelVideoIfAny } from '../lib/reelVideo.js';
+import { decrypt } from '../lib/encryption.js';
 
 export const adminRouter = Router();
 
 adminRouter.use(requireAuth, requireRole('admin'));
 
+const PAGE_SIZE = 20;
+
 function adminUser(row: any) {
   return {
     id: row.id,
     username: row.username,
-    email: row.email,
+    email: decrypt(row.email),
     displayName: row.display_name,
     role: row.role,
     grade: row.grade,
@@ -36,32 +39,48 @@ function adminUser(row: any) {
   };
 }
 
-// Search/filter is done in SQL rather than fetched-then-filtered client-side -- this list
-// is expected to grow with every signup, and there's no reason to ship the whole table to
-// the browser just to narrow it down there.
+// Role/grade filtering (and the is_seed exclusion) stay in SQL -- cheap, indexed-enough
+// filters on a list that grows with every signup. Free-text search can't: `email` is
+// encrypted at rest (lib/encryption.ts), so it can't be LIKE-matched in SQL without
+// decrypting every row first anyway. At this app's realistic scale (an school's worth of
+// accounts, not millions) decrypting the already role/grade-narrowed rows and filtering in
+// JS costs microseconds -- not worth a searchable-encryption scheme for that.
 adminRouter.get('/users', (req, res) => {
-  const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+  const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
   const role = typeof req.query.role === 'string' ? req.query.role : '';
+  const gradeParam = typeof req.query.grade === 'string' ? Number(req.query.grade) : NaN;
+  const page = Math.max(1, Number(req.query.page) || 1);
 
   // is_seed=1 marks the auto-generated leaderboard-filler accounts (seed.ts) -- they can't
   // even log in (see /login's own is_seed check), so there's nothing for an admin to manage
   // on them; leaving them out keeps this list to real accounts only.
   const clauses: string[] = [`is_seed = 0`];
   const params: (string | number)[] = [];
-  if (search) {
-    clauses.push(`(username LIKE ? OR email LIKE ? OR display_name LIKE ?)`);
-    const like = `%${search}%`;
-    params.push(like, like, like);
-  }
   if (role === 'student' || role === 'teacher' || role === 'admin') {
     clauses.push(`role = ?`);
     params.push(role);
+  }
+  if (Number.isInteger(gradeParam)) {
+    clauses.push(`grade = ?`);
+    params.push(gradeParam);
   }
 
   const rows = db
     .prepare(`SELECT * FROM users WHERE ${clauses.join(' AND ')} ORDER BY created_at DESC`)
     .all(...params) as any[];
-  res.json({ users: rows.map(adminUser) });
+
+  let users = rows.map(adminUser);
+  if (search) {
+    users = users.filter(
+      (u) => u.username.toLowerCase().includes(search) || u.email.toLowerCase().includes(search) || u.displayName.toLowerCase().includes(search)
+    );
+  }
+
+  const total = users.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pageUsers = users.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  res.json({ users: pageUsers, total, page: Math.min(page, totalPages), totalPages, pageSize: PAGE_SIZE });
 });
 
 adminRouter.patch('/users/:id/active', requireCsrfHeader, validateBody(adminSetActiveSchema), (req, res) => {
@@ -220,4 +239,84 @@ adminRouter.delete('/reels/:id', requireCsrfHeader, async (req, res) => {
   // reel_questions and reel_watch_progress both cascade on reels(id) -- see schema.sql.
   db.prepare(`DELETE FROM reels WHERE id = ?`).run(reel.id);
   res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------------------
+// Watch-time report -- per-student totals across every reel, real numbers straight from
+// reel_watch_progress (the same table routes/reels.ts's own anti-manipulation check
+// protects, see its comment), not a separate log an admin has to trust blindly.
+// ---------------------------------------------------------------------------------------
+
+adminRouter.get('/reports/watch-time', (req, res) => {
+  const gradeParam = typeof req.query.grade === 'string' ? Number(req.query.grade) : NaN;
+  const page = Math.max(1, Number(req.query.page) || 1);
+
+  const clauses: string[] = [`u.is_seed = 0`, `u.role = 'student'`];
+  const params: (string | number)[] = [];
+  if (Number.isInteger(gradeParam)) {
+    clauses.push(`u.grade = ?`);
+    params.push(gradeParam);
+  }
+
+  const total = (
+    db.prepare(`SELECT COUNT(*) as c FROM users u WHERE ${clauses.join(' AND ')}`).get(...params) as { c: number }
+  ).c;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page_ = Math.min(page, totalPages);
+
+  const rows = db
+    .prepare(
+      `SELECT u.id, u.username, u.display_name, u.grade,
+              COALESCE(SUM(rwp.watched_seconds), 0) as total_watched_seconds,
+              COALESCE(SUM(rwp.xp_awarded), 0) as total_watch_xp,
+              COUNT(DISTINCT rwp.reel_id) as reels_watched
+       FROM users u
+       LEFT JOIN reel_watch_progress rwp ON rwp.user_id = u.id
+       WHERE ${clauses.join(' AND ')}
+       GROUP BY u.id
+       ORDER BY total_watched_seconds DESC
+       LIMIT ? OFFSET ?`
+    )
+    .all(...params, PAGE_SIZE, (page_ - 1) * PAGE_SIZE) as any[];
+
+  res.json({
+    students: rows.map((r) => ({
+      userId: r.id,
+      username: r.username,
+      displayName: r.display_name,
+      grade: r.grade,
+      totalWatchedSeconds: Math.round(r.total_watched_seconds),
+      totalWatchXp: r.total_watch_xp,
+      reelsWatched: r.reels_watched,
+    })),
+    total,
+    page: page_,
+    totalPages,
+    pageSize: PAGE_SIZE,
+  });
+});
+
+// First-party pageview analytics (see routes/analytics.ts / schema.sql) -- top paths and a
+// daily total for the last 30 days. Intentionally just that: this is a usage-visibility
+// count, not a marketing-analytics product, so it doesn't grow into referrers/devices/funnels.
+adminRouter.get('/analytics/summary', (_req, res) => {
+  const topPaths = db
+    .prepare(
+      `SELECT path, COUNT(*) as views FROM page_views
+       WHERE created_at >= datetime('now', '-30 days')
+       GROUP BY path ORDER BY views DESC LIMIT 20`
+    )
+    .all() as { path: string; views: number }[];
+
+  const daily = db
+    .prepare(
+      `SELECT date(created_at) as day, COUNT(*) as views FROM page_views
+       WHERE created_at >= datetime('now', '-30 days')
+       GROUP BY day ORDER BY day ASC`
+    )
+    .all() as { day: string; views: number }[];
+
+  const totalViews = daily.reduce((sum, d) => sum + d.views, 0);
+
+  res.json({ topPaths, daily, totalViews });
 });

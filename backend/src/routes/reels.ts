@@ -188,13 +188,29 @@ reelsRouter.get('/level/:levelNumber', requireAuth, (req, res) => {
   });
 });
 
+// Matches ReelSlide.tsx's flush cadence (a heartbeat roughly every WATCH_HEARTBEAT_SECONDS
+// while a reel is actively in view, see its own comment) plus slack for request latency and
+// the tail-end flush on scroll-away/unmount -- not a round number chosen for looks.
+const MAX_SECONDS_PER_CALL = 15;
+// Same slack, applied to the *elapsed-time* check below -- see its comment.
+const ELAPSED_TIME_SLACK_SECONDS = 5;
+
 const watchSchema = z.object({
-  seconds: z.number().min(0).max(300),
+  seconds: z.number().min(0).max(MAX_SECONDS_PER_CALL),
 });
 
 // Reports a batch of genuine watch-time seconds (sent periodically by the player while a
 // reel is actively in view). XP accrues at WATCH_XP_PER_SECOND, capped at the reel's own
 // duration so nobody can farm XP by leaving a tab open past the lesson's length.
+//
+// The client self-reports `seconds` -- a hand-crafted request (real cookie/CSRF header,
+// forged body) could otherwise claim MAX_SECONDS_PER_CALL repeatedly with no real waiting,
+// draining a reel's whole watch-XP allotment in one instant, then doing it again for every
+// other reel. The one thing a forged request can't fake is *when* the server received it:
+// crediting a call for at most the real wall-clock time elapsed since the previous credited
+// call (`updated_at`, small slack for latency) means spamming requests doesn't help --
+// two calls a second apart can jointly credit at most ~1 second of watch time, no matter
+// what `seconds` either one claims.
 reelsRouter.post('/:reelId/watch', requireAuth, requireCsrfHeader, validateBody(watchSchema), (req, res) => {
   const reelId = Number(req.params.reelId);
   const reel = db.prepare(`SELECT * FROM reels WHERE id = ?`).get(reelId) as any;
@@ -212,7 +228,7 @@ reelsRouter.post('/:reelId/watch', requireAuth, requireCsrfHeader, validateBody(
     }
   }
 
-  const { seconds } = req.body as { seconds: number };
+  const { seconds: reportedSeconds } = req.body as { seconds: number };
   const durationCap = reel.duration_sec as number;
 
   const existing = db
@@ -221,7 +237,15 @@ reelsRouter.post('/:reelId/watch', requireAuth, requireCsrfHeader, validateBody(
   const priorWatched = existing?.watched_seconds ?? 0;
   const priorXp = existing?.xp_awarded ?? 0;
 
-  const newWatched = Math.min(durationCap, priorWatched + Math.max(0, seconds));
+  // No prior row means this is the first credited call for this (user, reel) pair -- there's
+  // no earlier timestamp to measure real elapsed time against yet, so it falls back to the
+  // per-call cap alone (still MAX_SECONDS_PER_CALL, not the old 300s ceiling).
+  const elapsedCap = existing
+    ? Math.max(0, (Date.now() - new Date(`${existing.updated_at}Z`).getTime()) / 1000) + ELAPSED_TIME_SLACK_SECONDS
+    : MAX_SECONDS_PER_CALL;
+  const seconds = Math.max(0, Math.min(reportedSeconds, elapsedCap));
+
+  const newWatched = Math.min(durationCap, priorWatched + seconds);
   const newXpTotal = Math.floor(newWatched * WATCH_XP_PER_SECOND);
   const xpDelta = Math.max(0, newXpTotal - priorXp);
 

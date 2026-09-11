@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { RiMoonLine, RiSunLine, RiEnglishInput, RiTranslate2 } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useTheme } from '../lib/theme-context';
@@ -10,7 +11,7 @@ import { useTheme } from '../lib/theme-context';
  * panel opens; the panel is the second child, always extending toward the middle of the
  * screen (never off the edge) and reading in whichever direction the page already is. */
 export function QuickMenu() {
-  const { t, toggleLang } = useLanguage();
+  const { t, lang, toggleLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { logout } = useAuth();
   const [open, setOpen] = useState(false);
@@ -64,7 +65,7 @@ export function QuickMenu() {
             }}
           >
             <span className="quick-menu-icon" aria-hidden>
-              🌐
+              {lang === 'ar' ? <RiEnglishInput size={17} /> : <RiTranslate2 size={17} />}
             </span>
             {t('common.language')}
           </button>
@@ -78,7 +79,7 @@ export function QuickMenu() {
             }}
           >
             <span className="quick-menu-icon" aria-hidden>
-              {theme === 'dark' ? '☀️' : '🌙'}
+              {theme === 'dark' ? <RiSunLine size={17} /> : <RiMoonLine size={17} />}
             </span>
             {themeLabel}
           </button>

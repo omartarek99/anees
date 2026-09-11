@@ -16,6 +16,7 @@ import { newsRouter } from './routes/news.js';
 import { craftRouter } from './routes/craft.js';
 import { teacherReelsRouter } from './routes/teacherReels.js';
 import { adminRouter } from './routes/admin.js';
+import { analyticsRouter } from './routes/analytics.js';
 import { FRONTEND_ORIGIN } from './lib/config.js';
 
 seed();
@@ -30,10 +31,32 @@ app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
 
+const isProd = process.env.NODE_ENV === 'production';
+
+// Force HTTPS in production only -- a plain-HTTP redirect on localhost dev (no TLS cert
+// exists there) would just break `npm run dev` for every contributor. In production this
+// assumes a reverse proxy terminates TLS and forwards `X-Forwarded-Proto` (the standard
+// setup for e.g. a Node app behind nginx/Render/Fly/Heroku); `req.secure` alone only sees
+// the proxy's own local HTTP connection to this process, not what the browser used.
+if (isProd) {
+  app.set('trust proxy', 1);
+  app.use((req, res, next) => {
+    if (req.secure || req.get('x-forwarded-proto') === 'https') {
+      next();
+      return;
+    }
+    res.redirect(308, `https://${req.get('host')}${req.originalUrl}`);
+  });
+}
+
 app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'no-referrer');
+  // Tells browsers to only ever talk to this host over HTTPS for the next year, including
+  // subdomains -- only meaningful (and only sent) once the site is actually served over
+  // HTTPS, so a browser can't be told to upgrade a connection that doesn't exist yet.
+  if (isProd) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   next();
 });
 
@@ -60,6 +83,7 @@ app.use('/api/news', newsRouter);
 app.use('/api/craft', ...authenticated, craftRouter);
 app.use('/api/teacher-reels', teacherReelsRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/analytics', analyticsRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found.' });

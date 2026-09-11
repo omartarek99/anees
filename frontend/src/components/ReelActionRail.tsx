@@ -1,9 +1,12 @@
 import { useLanguage } from '../lib/language-context';
 import { Avatar } from './Avatar';
 
-/** TikTok-desktop-style action rail: sits OUTSIDE the reel frame (not overlaid on the video),
- * always reflecting whichever reel is currently active. Rendered once by ReelsPage, as a sibling
- * of the Swiper frame, not per-slide. */
+/** TikTok-desktop-style action rail: sits OUTSIDE the reel frame (not overlaid on the video)
+ * on desktop, always reflecting whichever reel is currently active. Rendered once by
+ * ReelsPage, as a sibling of the Swiper frame, not per-slide. Below the mobile breakpoint
+ * (theme.css) it switches to a real overlay on top of the frame instead -- there isn't
+ * enough width for a video and a whole extra icon column side by side on a phone screen,
+ * and that's exactly how TikTok's own mobile app places it too. */
 export function ReelActionRail({
   avatarKey,
   liked,
@@ -27,7 +30,7 @@ export function ReelActionRail({
 }) {
   const { t } = useLanguage();
   return (
-    <div className="flex-col flex-center gap-lg" style={{ paddingBottom: 28 }}>
+    <div className="reel-action-rail flex-col flex-center gap-lg" style={{ paddingBottom: 28 }}>
       <Avatar avatarKey={avatarKey} size={48} />
 
       <button type="button" className="reel-rail-btn" onClick={onToggleLike} aria-label={t(liked ? 'reels.unlike' : 'reels.like')}>

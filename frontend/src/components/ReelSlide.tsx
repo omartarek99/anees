@@ -45,6 +45,13 @@ export type ReelSlideControls = { openQuiz: () => void };
 // than a long cross-reel timer would be.
 const STILL_WATCHING_LOOP_THRESHOLD = 3;
 
+// How often to flush accumulated watch time to the server while a reel stays active, instead
+// of only on scroll-away/unmount. The backend's own anti-manipulation check (routes/reels.ts)
+// caps how much a single call can credit to roughly the real wall-clock time since the last
+// one -- flushing this often is what keeps a long, legitimately-watched reel from losing XP
+// to that cap instead of just closing the loophole it exists for.
+const WATCH_FLUSH_INTERVAL_SECONDS = 10;
+
 export function ReelSlide({
   data,
   isActive,
@@ -120,6 +127,7 @@ export function ReelSlide({
       if (stillWatchingRef.current) return; // paused, waiting on this reel's own "still watching?" prompt
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       pendingSecondsRef.current += 1;
+      if (pendingSecondsRef.current >= WATCH_FLUSH_INTERVAL_SECONDS) flushRef.current();
     }, 1000);
     return () => {
       clearInterval(tick);

@@ -1,21 +1,28 @@
+import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
+import { RiVideoFill, RiMapFill, RiHome2Line, RiGamepadLine, RiFilePaper2Line } from '@remixicon/react';
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
+import PeopleIcon from '@mui/icons-material/People';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 
-type SidebarLink = { to: string; key: string; icon: string; end?: boolean };
+// Emoji for most nav icons (unchanged), or a component for the ones swapped for a real
+// icon -- `currentColor` means it automatically follows .sidebar-icon-btn's own color,
+// including its .active state, with no extra wiring.
+type SidebarLink = { to: string; key: string; icon: string | ReactNode; end?: boolean };
 
-const HOME_LINK: SidebarLink = { to: '/', key: 'nav.home', icon: '🏠', end: true };
+const HOME_LINK: SidebarLink = { to: '/', key: 'nav.home', icon: <RiHome2Line size={20} />, end: true };
 
 // The full gameplay surface — shared by both account types (see backend/src/index.ts,
 // which no longer role-gates these routes either). A teacher account is a student
 // account plus a few extras, not a separate walled-off experience.
 const GAME_LINKS: SidebarLink[] = [
-  { to: '/reels', key: 'nav.reels', icon: '🎬' },
-  { to: '/map', key: 'nav.map', icon: '🗺️' },
-  { to: '/craft', key: 'nav.craft', icon: '🏗️' },
-  { to: '/worksheets', key: 'nav.worksheets', icon: '📝' },
-  { to: '/leaderboard', key: 'nav.leaderboard', icon: '🏆' },
-  { to: '/friends', key: 'nav.friends', icon: '🧑‍🤝‍🧑' },
+  { to: '/reels', key: 'nav.reels', icon: <RiVideoFill size={20} /> },
+  { to: '/map', key: 'nav.map', icon: <RiMapFill size={20} /> },
+  { to: '/craft', key: 'nav.craft', icon: <RiGamepadLine size={20} /> },
+  { to: '/worksheets', key: 'nav.worksheets', icon: <RiFilePaper2Line size={20} /> },
+  { to: '/leaderboard', key: 'nav.leaderboard', icon: <LeaderboardIcon style={{ fontSize: 20 }} /> },
+  { to: '/friends', key: 'nav.friends', icon: <PeopleIcon style={{ fontSize: 20 }} /> },
 ];
 
 // Teacher-only extra, on top of the shared game links above.
