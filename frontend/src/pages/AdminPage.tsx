@@ -5,27 +5,37 @@ import { useLanguage } from '../lib/language-context';
 import { Topbar } from '../components/Topbar';
 import { AdminUserRow, type AdminUser } from '../components/AdminUserRow';
 import { AdminVideosPanel } from '../components/AdminVideosPanel';
+import { AdminReportsPanel } from '../components/AdminReportsPanel';
+import { Pagination } from '../components/Pagination';
 
 type RoleFilter = 'all' | Role;
-type Tab = 'users' | 'videos';
+type GradeFilter = 'all' | '5' | '8';
+type Tab = 'users' | 'videos' | 'reports';
 
 function AdminUsersPanel() {
   const { user: me } = useAuth();
   const { t } = useLanguage();
   const [users, setUsers] = useState<AdminUser[] | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
+  // Grades 5 and 8 are this platform's two active cohorts -- a dedicated tab for each keeps
+  // the (potentially large) student list glanceable instead of one long mixed-grade page.
+  const [gradeFilter, setGradeFilter] = useState<GradeFilter>('all');
+  const [page, setPage] = useState(1);
 
   function loadUsers() {
     const params = new URLSearchParams();
     if (search.trim()) params.set('search', search.trim());
     if (roleFilter !== 'all') params.set('role', roleFilter);
-    const qs = params.toString();
+    if (gradeFilter !== 'all') params.set('grade', gradeFilter);
+    params.set('page', String(page));
     api
-      .get<{ users: AdminUser[] }>(`/admin/users${qs ? `?${qs}` : ''}`)
+      .get<{ users: AdminUser[]; totalPages: number }>(`/admin/users?${params.toString()}`)
       .then((data) => {
         setUsers(data.users);
+        setTotalPages(data.totalPages);
         setLoadError(null);
       })
       .catch(() => setLoadError(t('admin.loadError')));
@@ -36,7 +46,14 @@ function AdminUsersPanel() {
     const id = setTimeout(loadUsers, 300);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, roleFilter]);
+  }, [search, roleFilter, gradeFilter, page]);
+
+  // Any filter change invalidates the current page number -- jump back to page 1 rather
+  // than risk landing past the end of a now-smaller filtered result.
+  useEffect(() => {
+    setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, roleFilter, gradeFilter]);
 
   return (
     <div className="card">
@@ -56,6 +73,13 @@ function AdminUsersPanel() {
             <option value="student">{t('admin.roleFilterStudent')}</option>
             <option value="teacher">{t('admin.roleFilterTeacher')}</option>
             <option value="admin">{t('admin.roleFilterAdmin')}</option>
+          </select>
+        </div>
+        <div className="field" style={{ flex: 1, minWidth: 160 }}>
+          <select value={gradeFilter} onChange={(e) => setGradeFilter(e.target.value as GradeFilter)} aria-label={t('admin.gradeFilterAll')}>
+            <option value="all">{t('admin.gradeFilterAll')}</option>
+            <option value="5">{t('admin.gradeFilter5')}</option>
+            <option value="8">{t('admin.gradeFilter8')}</option>
           </select>
         </div>
       </div>
@@ -79,6 +103,8 @@ function AdminUsersPanel() {
           />
         ))}
       </div>
+
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </div>
   );
 }
@@ -98,9 +124,14 @@ export function AdminPage() {
         <button type="button" className={`btn ${tab === 'videos' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTab('videos')}>
           {t('admin.tabVideos')}
         </button>
+        <button type="button" className={`btn ${tab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTab('reports')}>
+          {t('admin.tabReports')}
+        </button>
       </div>
 
-      {tab === 'users' ? <AdminUsersPanel /> : <AdminVideosPanel />}
+      {tab === 'users' && <AdminUsersPanel />}
+      {tab === 'videos' && <AdminVideosPanel />}
+      {tab === 'reports' && <AdminReportsPanel />}
     </div>
   );
 }

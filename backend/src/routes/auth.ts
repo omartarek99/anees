@@ -23,6 +23,7 @@ import {
 import { verifyQatarIdPhoto, type IdVerificationFailureReason } from '../lib/idVerification.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
 import { FRONTEND_ORIGIN } from '../lib/config.js';
+import { encrypt, decrypt, hashForLookup } from '../lib/encryption.js';
 
 export const authRouter = Router();
 
@@ -73,6 +74,10 @@ const verifyEmailContinueUrl = `${FRONTEND_ORIGIN}/verify-email`;
 // Firebase's "wrong credentials" error varies by API version/config.
 const WRONG_CREDENTIALS_ERRORS = new Set(['EMAIL_NOT_FOUND', 'INVALID_PASSWORD', 'INVALID_LOGIN_CREDENTIALS']);
 
+// See its one use in /login below -- a fixed hash to burn bcrypt time against when no
+// account exists at all, so that path can't be timed apart from a real wrong-password check.
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync('anees-timing-safety-placeholder', 10);
+
 function publicUser(user: any) {
   return {
     id: user.id,
@@ -122,8 +127,8 @@ authRouter.post(
     }
 
     const existing = db
-      .prepare(`SELECT id FROM users WHERE lower(username) = lower(?) OR lower(email) = lower(?)`)
-      .get(username, email);
+      .prepare(`SELECT id FROM users WHERE lower(username) = lower(?) OR email_hash = ?`)
+      .get(username, hashForLookup(email));
     if (existing) {
       res.status(409).json({ error: 'That username or email is already taken.' });
       return;
@@ -144,9 +149,19 @@ authRouter.post(
     const userId = Number(
       db
         .prepare(
-          `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp, role, grade, firebase_uid) VALUES (?,?,?,?,?,0,?,?,?)`
+          `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, role, grade, firebase_uid) VALUES (?,?,?,?,?,?,0,?,?,?)`
         )
-        .run(username, email, '', displayName, avatarKey, role, role === 'student' ? grade ?? null : null, localId)
+        .run(
+          username,
+          encrypt(email),
+          hashForLookup(email),
+          '',
+          displayName,
+          avatarKey,
+          role,
+          role === 'student' ? grade ?? null : null,
+          localId
+        )
         .lastInsertRowid
     );
 
@@ -207,6 +222,14 @@ authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSche
   const user = db.prepare(`SELECT * FROM users WHERE lower(username) = lower(?)`).get(username) as any;
 
   if (!user || user.is_seed) {
+    // Same generic message as a real wrong-password rejection below, and -- unlike a plain
+    // early return -- the same rough response time: skipping bcrypt entirely for a
+    // nonexistent username would let an attacker distinguish "no such account" from "wrong
+    // password" purely by how fast the response came back, quietly reintroducing username
+    // enumeration despite the identical error text. DUMMY_PASSWORD_HASH is precomputed once
+    // at module load (bcrypt.compareSync itself does the expensive part) purely to burn
+    // roughly the same time as the real compare on the path below.
+    bcrypt.compareSync(password, DUMMY_PASSWORD_HASH);
     res.status(401).json({ error: 'Incorrect username or password.' });
     return;
   }
@@ -238,7 +261,7 @@ authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSche
     return;
   }
 
-  const signInResult = await firebaseSignIn(user.email, password);
+  const signInResult = await firebaseSignIn(decrypt(user.email), password);
   if (!signInResult.ok) {
     if (WRONG_CREDENTIALS_ERRORS.has(signInResult.error)) {
       res.status(401).json({ error: 'Incorrect username or password.' });
@@ -282,8 +305,8 @@ authRouter.post(
     }
 
     const user = db
-      .prepare(`SELECT * FROM users WHERE lower(email) = lower(?)`)
-      .get(confirmResult.data.email) as any;
+      .prepare(`SELECT * FROM users WHERE email_hash = ?`)
+      .get(hashForLookup(confirmResult.data.email)) as any;
     if (!user) {
       res.status(404).json({ error: 'Account not found.' });
       return;

@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { encrypt, decrypt, hashForLookup } from '../lib/encryption.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.resolve(__dirname, '../../data');
@@ -153,6 +154,40 @@ if (!userColsForModeration.some((c) => c.name === 'warning_message')) {
 if (!userColsForModeration.some((c) => c.name === 'banned_until')) {
   db.exec(`ALTER TABLE users ADD COLUMN banned_until TEXT`);
 }
+
+// Email encryption at rest: `email_hash` (schema.sql) is nullable like firebase_uid above,
+// for the same reason -- SQLite's ALTER TABLE can't attach UNIQUE inline, so it's enforced
+// by the separate index below instead. A pre-existing database won't have the column yet.
+if (!db.prepare(`PRAGMA table_info(users)`).all().some((c: any) => c.name === 'email_hash')) {
+  db.exec(`ALTER TABLE users ADD COLUMN email_hash TEXT`);
+}
+// Backfill: every row without email_hash yet needs its `email` value both hashed (for
+// lookups) and, if it's still plaintext from before this feature existed, encrypted in
+// place. Detected structurally (matches encrypt()'s `iv:authTag:ciphertext` hex format)
+// rather than by a migration-version flag, so this is safe to re-run if a previous attempt
+// was interrupted partway (e.g. the dev server restarting mid-loop) without double-encrypting
+// a row that already got converted but crashed before its email_hash was written.
+const ENCRYPTED_FORMAT = /^[0-9a-f]{24}:[0-9a-f]{32}:[0-9a-f]+$/i;
+const unmigrated = db.prepare(`SELECT id, email FROM users WHERE email_hash IS NULL`).all() as {
+  id: number;
+  email: string;
+}[];
+if (unmigrated.length > 0) {
+  const update = db.prepare(`UPDATE users SET email = ?, email_hash = ? WHERE id = ?`);
+  db.exec('BEGIN TRANSACTION');
+  try {
+    for (const row of unmigrated) {
+      const plaintext = ENCRYPTED_FORMAT.test(row.email) ? decrypt(row.email) : row.email;
+      update.run(ENCRYPTED_FORMAT.test(row.email) ? row.email : encrypt(plaintext), hashForLookup(plaintext), row.id);
+    }
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+  console.log(`[db] Encrypted email for ${unmigrated.length} existing user(s).`);
+}
+db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_hash ON users(email_hash)`);
 
 // Teacher-authored announcements, added after the initial news_posts table.
 const newsCols = db.prepare(`PRAGMA table_info(news_posts)`).all() as { name: string }[];

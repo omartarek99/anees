@@ -162,6 +162,43 @@ teacherReelsRouter.get('/', requireAuth, requireRole('teacher'), (req, res) => {
   });
 });
 
+// Registered before GET /:id on purpose -- Express matches routes in order, and "reports"
+// would otherwise be captured by :id (Number("reports") is NaN, getOwnReel(NaN, ...) just
+// 404s, so it'd fail rather than crash, but it'd never reach this handler at all).
+//
+// Per-lesson watch stats for this teacher's own reels only -- real numbers straight from
+// reel_watch_progress (the same table routes/reels.ts's anti-manipulation check protects),
+// not a separate log to trust blindly. A teacher only ever sees their own content's
+// engagement here, never another teacher's or the platform-wide total (that's the admin
+// report at GET /admin/reports/watch-time).
+teacherReelsRouter.get('/reports/watch-time', requireAuth, requireRole('teacher'), (req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT r.id, r.title, r.title_ar, r.grade,
+              COUNT(DISTINCT rwp.user_id) as watchers,
+              COALESCE(SUM(rwp.watched_seconds), 0) as total_watched_seconds,
+              COALESCE(AVG(rwp.watched_seconds), 0) as avg_watched_seconds
+       FROM reels r
+       LEFT JOIN reel_watch_progress rwp ON rwp.reel_id = r.id
+       WHERE r.author_user_id = ?
+       GROUP BY r.id
+       ORDER BY r.id DESC`
+    )
+    .all(req.userId!) as any[];
+
+  res.json({
+    reels: rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      titleAr: r.title_ar,
+      grade: r.grade,
+      watchers: r.watchers,
+      totalWatchedSeconds: Math.round(r.total_watched_seconds),
+      avgWatchedSeconds: Math.round(r.avg_watched_seconds),
+    })),
+  });
+});
+
 teacherReelsRouter.get('/:id', requireAuth, requireRole('teacher'), (req, res) => {
   const reel = getOwnReel(Number(req.params.id), req.userId!);
   if (!reel) {

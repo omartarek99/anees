@@ -36,6 +36,10 @@ export function SignupPage() {
   const [role, setRole] = useState<Role>('student');
   const [grade, setGrade] = useState('');
   const [idDocument, setIdDocument] = useState<File | null>(null);
+  // Honeypot -- real students never see or fill this (positioned off-screen below), so a
+  // non-empty value here means a bot filled every field it found. See schemas.ts's
+  // matching `website` check for what happens if it isn't blank.
+  const [website, setWebsite] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
@@ -57,6 +61,7 @@ export function SignupPage() {
         role,
         grade: role === 'student' ? Number(grade) : undefined,
         idDocument: role === 'teacher' ? idDocument ?? undefined : undefined,
+        website,
       });
       setPendingEmail(result.email);
       setPendingIdToken(result.idToken);
@@ -245,6 +250,13 @@ export function SignupPage() {
             required
             minLength={8}
           />
+        </div>
+        {/* Honeypot -- invisible and unreachable by keyboard/AT for a real person (off-screen,
+            not display:none, since some bots specifically skip display:none fields), but a
+            generic bot filling every input it finds fills this too. */}
+        <div style={{ position: 'absolute', left: -9999, width: 1, height: 1, overflow: 'hidden' }} aria-hidden="true">
+          <label htmlFor="website">Website</label>
+          <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
         </div>
         <SignupConsent />
         <button className="btn btn-primary btn-block" type="submit" disabled={submitting}>

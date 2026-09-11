@@ -2,7 +2,53 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError, pickText } from '../lib/i18n';
+import { formatWatchTime } from '../lib/format';
 import { Topbar } from '../components/Topbar';
+
+type WatchStats = {
+  id: number;
+  title: string;
+  titleAr: string | null;
+  grade: number;
+  watchers: number;
+  totalWatchedSeconds: number;
+  avgWatchedSeconds: number;
+};
+
+function TeacherWatchReport() {
+  const { t, lang } = useLanguage();
+  const [stats, setStats] = useState<WatchStats[] | null>(null);
+
+  useEffect(() => {
+    api
+      .get<{ reels: WatchStats[] }>('/teacher-reels/reports/watch-time')
+      .then((data) => setStats(data.reels))
+      .catch(() => setStats([]));
+  }, []);
+
+  if (!stats) return null;
+
+  return (
+    <div className="card">
+      <h3 style={{ fontSize: 16, marginBottom: 12 }}>{t('teacherReels.watchReportTitle')}</h3>
+      {stats.length === 0 && <p className="muted">{t('teacherReels.watchReportEmpty')}</p>}
+      <div className="stack" style={{ gap: 10 }}>
+        {stats.map((r) => (
+          <div key={r.id} className="card">
+            <strong>{pickText(lang, r.title, r.titleAr)}</strong>
+            <p className="muted" style={{ margin: '4px 0 0', fontSize: 13 }}>
+              {t('teacherReels.watchReportWatchers', { n: String(r.watchers) })}
+              {' · '}
+              {t('teacherReels.watchReportTotal', { time: formatWatchTime(r.totalWatchedSeconds) })}
+              {' · '}
+              {t('teacherReels.watchReportAvg', { time: formatWatchTime(r.avgWatchedSeconds) })}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 type SubjectOption = { id: number; key: string; name: string; nameAr?: string | null; icon: string };
 
@@ -495,6 +541,8 @@ export function TeacherReelsPage() {
           ))}
         </div>
       </div>
+
+      <TeacherWatchReport />
     </div>
   );
 }

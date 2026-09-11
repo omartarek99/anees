@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import { db } from './db.js';
+import { encrypt, hashForLookup } from '../lib/encryption.js';
 
 type Q = {
   text: string;
@@ -44,9 +45,10 @@ function ensureDevTeacher() {
   const exists = db.prepare(`SELECT id FROM users WHERE username = 'dev_teacher'`).get();
   if (exists) return;
   const passwordHash = bcrypt.hashSync('teachpass123', 10);
+  const email = 'dev_teacher@anees.local';
   db.prepare(
-    `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?)`
-  ).run('dev_teacher', 'dev_teacher@anees.local', passwordHash, 'Dev Teacher', 'explorer', 0, 0, 'teacher', null, 1);
+    `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+  ).run('dev_teacher', encrypt(email), hashForLookup(email), passwordHash, 'Dev Teacher', 'explorer', 0, 0, 'teacher', null, 1);
   console.log('[seed] Added dev_teacher account to existing database.');
 }
 
@@ -60,9 +62,10 @@ function ensureDevAdmin() {
   const exists = db.prepare(`SELECT id FROM users WHERE username = 'dev_admin'`).get();
   if (exists) return;
   const passwordHash = bcrypt.hashSync('adminpass123', 10);
+  const email = 'dev_admin@anees.local';
   db.prepare(
-    `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?)`
-  ).run('dev_admin', 'dev_admin@anees.local', passwordHash, 'Dev Admin', 'robot', 0, 0, 'admin', null, 1);
+    `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+  ).run('dev_admin', encrypt(email), hashForLookup(email), passwordHash, 'Dev Admin', 'robot', 0, 0, 'admin', null, 1);
   console.log('[seed] Added dev_admin account to existing database.');
 }
 
@@ -680,7 +683,7 @@ export function seed() {
   // Dev bypass account (real seeded account backing frontend dev-config.ts)
   // ---------------------------------------------------------------------
   const insertUser = db.prepare(
-    `INSERT INTO users (username, email, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
   );
   const insertProgress = db.prepare(
     `INSERT INTO user_level_progress (user_id, map_level_id, status) VALUES (?,?,?)`
@@ -688,8 +691,21 @@ export function seed() {
   const insertXpEvent = db.prepare(`INSERT INTO xp_events (user_id, amount, reason, created_at) VALUES (?,?,?,?)`);
 
   const devPasswordHash = bcrypt.hashSync('devpass123', 10);
+  const devEmail = 'dev_student@anees.local';
   const devUserId = Number(
-    insertUser.run('dev_student', 'dev_student@anees.local', devPasswordHash, 'Dev Student', 'falcon', 0, 0, 'student', 5, 1).lastInsertRowid
+    insertUser.run(
+      'dev_student',
+      encrypt(devEmail),
+      hashForLookup(devEmail),
+      devPasswordHash,
+      'Dev Student',
+      'falcon',
+      0,
+      0,
+      'student',
+      5,
+      1
+    ).lastInsertRowid
   );
   insertProgress.run(devUserId, levelIds.get(1)!, 'available');
   // dev_teacher is created by ensureDevTeacher() above (runs on every boot, not just first-seed).
@@ -710,8 +726,21 @@ export function seed() {
   for (const s of demoStudents) {
     const randomPassword = crypto.randomBytes(24).toString('hex');
     const hash = bcrypt.hashSync(randomPassword, 10);
+    const demoEmail = `${s.username}@anees.local`;
     const userId = Number(
-      insertUser.run(s.username, `${s.username}@anees.local`, hash, s.displayName, s.avatar, s.xp, 1, 'student', 5, 1).lastInsertRowid
+      insertUser.run(
+        s.username,
+        encrypt(demoEmail),
+        hashForLookup(demoEmail),
+        hash,
+        s.displayName,
+        s.avatar,
+        s.xp,
+        1,
+        'student',
+        5,
+        1
+      ).lastInsertRowid
     );
     insertXpEvent.run(userId, s.xp, 'seed_bootstrap', toSqlite(now));
   }

@@ -31,6 +31,8 @@ type AuthContextValue = {
     role: Role;
     grade?: number;
     idDocument?: File;
+    /** Honeypot -- see SignupPage.tsx. Always '' from a real submission. */
+    website?: string;
   }) => Promise<{ email: string; idToken: string }>;
   login: (input: { username: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
@@ -93,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     formData.append('role', input.role);
     if (input.grade !== undefined) formData.append('grade', String(input.grade));
     if (input.idDocument) formData.append('idDocument', input.idDocument);
+    formData.append('website', input.website ?? '');
 
     const data = await api.postForm<{ pendingVerification: true; email: string; idToken: string }>(
       '/auth/signup',

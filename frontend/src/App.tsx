@@ -1,12 +1,15 @@
+import { useEffect } from 'react';
 import { Navigate, Route, BrowserRouter, Routes, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth-context';
 import { LanguageProvider } from './lib/language-context';
 import { ThemeProvider } from './lib/theme-context';
+import { trackPageview } from './lib/analytics';
 import { Sidebar } from './components/Sidebar';
 import { LanguageToggle } from './components/LanguageToggle';
 import { ThemeToggle } from './components/ThemeToggle';
 import { Footer } from './components/Footer';
 import { WarningModal } from './components/WarningModal';
+import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsPage } from './pages/TermsPage';
 import { CookiePolicyPage } from './pages/CookiePolicyPage';
@@ -24,6 +27,14 @@ import { FriendsPage } from './pages/FriendsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { TeacherReelsPage } from './pages/TeacherReelsPage';
 import { AdminPage } from './pages/AdminPage';
+
+function PageviewTracker() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    trackPageview(pathname);
+  }, [pathname]);
+  return null;
+}
 
 function FullScreenLoader() {
   return (
@@ -113,6 +124,7 @@ export default function App() {
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
+            <PageviewTracker />
             <Routes>
               {/* Public regardless of auth state — a visitor should be able to read these before ever signing up. */}
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
@@ -145,6 +157,7 @@ export default function App() {
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            <CookieConsentBanner />
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>

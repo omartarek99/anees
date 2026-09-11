@@ -895,6 +895,38 @@ a:focus-visible {
   transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ---------------- Cookie consent ---------------- */
+.cookie-consent-banner {
+  position: fixed;
+  inset-inline: 16px;
+  bottom: 16px;
+  z-index: 90; /* below .modal-overlay (100) -- a real modal (e.g. an admin-issued warning) should still win */
+  max-width: 720px;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--surface-panel);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3d-lg);
+  padding: 16px 20px;
+  animation: cookie-consent-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes cookie-consent-in {
+  from {
+    transform: translateY(80px);
+    opacity: 0;
+  }
+}
+.cookie-consent-banner p {
+  flex: 1;
+  min-width: 220px;
+}
+
 /* ---------------- Modal ---------------- */
 .modal-overlay {
   position: fixed;
@@ -1136,5 +1168,37 @@ a:focus-visible {
   .topbar {
     padding-left: 12px;
     padding-right: 12px;
+  }
+
+  /* Reels: not enough width on a phone for the video frame and a whole separate icon
+     column side by side (see ReelActionRail.tsx's comment) -- overlay the rail on top of
+     the frame instead, bottom-end corner, matching TikTok's own actual mobile app. */
+  .reels-frame-row {
+    position: relative;
+  }
+  .reel-action-rail {
+    position: absolute;
+    inset-inline-end: 10px;
+    /* Anchored above center, not bottom: the caption below the video is real, often-long
+       text (not TikTok's thin one-line overlay), so its top edge moves depending on how
+       much there is -- a fixed bottom offset would collide with it on a longer lesson. */
+    top: 38%;
+    transform: translateY(-50%);
+    z-index: 3;
+    padding-bottom: 0 !important;
+    gap: 14px !important;
+  }
+  /* The bare subject-icon dot (not a button, just the last child) duplicates the subject
+     pill already shown in the caption below -- redundant here, and it's the item most
+     likely to end up overlapping that caption once the rail's own height is accounted for. */
+  .reel-action-rail > .notif-bell {
+    display: none;
+  }
+  .reel-action-rail .reel-rail-count {
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  }
+  .reel-action-rail .notif-bell {
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
   }
 }

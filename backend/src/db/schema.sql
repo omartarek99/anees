@@ -3,7 +3,10 @@
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
-  email TEXT NOT NULL UNIQUE,
+  -- Encrypted at rest (AES-256-GCM, see lib/encryption.ts) -- never queried directly.
+  -- email_hash below is the deterministic lookup key uniqueness/matching actually use.
+  email TEXT NOT NULL,
+  email_hash TEXT,
   password_hash TEXT NOT NULL,
   display_name TEXT NOT NULL,
   avatar_key TEXT NOT NULL DEFAULT 'falcon',
@@ -207,6 +210,19 @@ CREATE TABLE IF NOT EXISTS craft_saves (
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- First-party pageview analytics -- deliberately not a third-party script (Google
+-- Analytics etc.): this is a children's platform, and sending student usage data to an
+-- external tracker raises real privacy/COPPA-adjacent concerns for no benefit an
+-- in-house count doesn't already cover. No user linkage on purpose (see routes/analytics.ts)
+-- -- a path and a timestamp is enough to answer "what's used, when", nothing to consent-gate
+-- beyond the existing cookie/privacy notice.
+CREATE TABLE IF NOT EXISTS page_views (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  path TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_page_views_created ON page_views(created_at);
 CREATE INDEX IF NOT EXISTS idx_xp_events_user_time ON xp_events(user_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_progress_user ON user_level_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash);

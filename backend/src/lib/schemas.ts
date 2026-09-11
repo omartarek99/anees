@@ -41,6 +41,11 @@ export const signupSchema = z
     avatarKey: avatarKeySchema,
     role: roleSchema,
     grade: gradeSchema.optional(),
+    // Honeypot: a field real students never see or fill (hidden off-screen in the signup
+    // form, see AuthShell.tsx) but a generic form-filling bot often does. Left blank by a
+    // human, so anything else here fails the same way any other invalid field would --
+    // no separate "you're a bot" response that would tip off a bot script either way.
+    website: z.string().max(0, 'Please leave this field blank.').optional().default(''),
   })
   .refine((data) => data.role !== 'student' || data.grade !== undefined, {
     message: 'Please enter your grade.',

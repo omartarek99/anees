@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { db } from '../db/db.js';
 import { supabaseAdmin } from './supabase.js';
+import { decrypt, hashForLookup } from './encryption.js';
 
 const SERVICE_ACCOUNT_PATH = process.env.FIREBASE_SERVICE_ACCOUNT_PATH ?? './secrets/firebase-service-account.json';
 
@@ -48,13 +49,13 @@ async function deleteUserRow(user: any): Promise<DeleteUserResult> {
   }
 
   db.prepare(`DELETE FROM users WHERE id = ?`).run(user.id);
-  const firebase = await deleteFirebaseUser(user.email);
+  const firebase = await deleteFirebaseUser(decrypt(user.email));
 
   return { found: true, username: user.username, storage, firebase };
 }
 
 export async function deleteUserByEmail(email: string): Promise<DeleteUserResult> {
-  const user = db.prepare(`SELECT * FROM users WHERE lower(email) = lower(?)`).get(email) as any;
+  const user = db.prepare(`SELECT * FROM users WHERE email_hash = ?`).get(hashForLookup(email)) as any;
   if (!user) return { found: false };
   return deleteUserRow(user);
 }
