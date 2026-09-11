@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
-import { RiVideoFill, RiMapFill } from '@remixicon/react';
+import { RiVideoFill, RiMapFill, RiHome2Line } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useTheme } from '../lib/theme-context';
@@ -10,7 +10,7 @@ import { useTheme } from '../lib/theme-context';
 // including its .active state, with no extra wiring.
 type SidebarLink = { to: string; key: string; icon: string | ReactNode; end?: boolean };
 
-const HOME_LINK: SidebarLink = { to: '/', key: 'nav.home', icon: '🏠', end: true };
+const HOME_LINK: SidebarLink = { to: '/', key: 'nav.home', icon: <RiHome2Line size={20} />, end: true };
 
 // The full gameplay surface — shared by both account types (see backend/src/index.ts,
 // which no longer role-gates these routes either). A teacher account is a student
