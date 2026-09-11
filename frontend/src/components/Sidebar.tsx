@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import { RiVideoFill, RiMapFill, RiHome2Line, RiGamepadLine, RiFilePaper2Line } from '@remixicon/react';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
+import PeopleIcon from '@mui/icons-material/People';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useTheme } from '../lib/theme-context';
@@ -22,7 +23,7 @@ const GAME_LINKS: SidebarLink[] = [
   { to: '/craft', key: 'nav.craft', icon: <RiGamepadLine size={20} /> },
   { to: '/worksheets', key: 'nav.worksheets', icon: <RiFilePaper2Line size={20} /> },
   { to: '/leaderboard', key: 'nav.leaderboard', icon: <LeaderboardIcon style={{ fontSize: 20 }} /> },
-  { to: '/friends', key: 'nav.friends', icon: '🧑‍🤝‍🧑' },
+  { to: '/friends', key: 'nav.friends', icon: <PeopleIcon style={{ fontSize: 20 }} /> },
 ];
 
 // Teacher-only extra, on top of the shared game links above.
