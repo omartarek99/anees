@@ -13,7 +13,6 @@ import { deleteUserById } from '../lib/deleteUser.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
 import { deleteReelVideoIfAny } from '../lib/reelVideo.js';
 import { decrypt } from '../lib/encryption.js';
-import { WATCH_XP_PER_SECOND } from '../lib/xp.js';
 
 import type { Response } from 'express';
 
@@ -292,11 +291,9 @@ adminRouter.get('/reports/watch-time', (req, res) => {
 
 // Monthly watch-time trend -- reel_watch_progress only ever stores each (user, reel)
 // pair's running total plus a single "last touched" timestamp, so it can't say how much
-// was watched *in a given month*. xp_events can: every heartbeat that credits watch time
-// (routes/reels.ts POST /:reelId/watch) logs its own 'reel_watch' row with a real
-// timestamp, and since that XP accrues at the fixed WATCH_XP_PER_SECOND rate, summing it
-// per month and dividing back out gives real historical seconds-watched with no new
-// tracking table.
+// was watched *in a given month*. reel_watch_seconds_events can: every credited heartbeat
+// (routes/reels.ts POST /:reelId/watch) logs its own real-seconds row with a real
+// timestamp, independent of how watch points are tiered/awarded.
 function trailingMonthKeys(count: number): string[] {
   const start = new Date();
   start.setUTCDate(1);
@@ -319,7 +316,7 @@ adminRouter.get('/reports/watch-time/monthly', (req, res) => {
   const monthCount = Number.isInteger(monthsParam) ? Math.min(12, Math.max(1, monthsParam)) : 6;
   const months = trailingMonthKeys(monthCount);
 
-  const clauses: string[] = [`u.is_seed = 0`, `u.role = 'student'`, `xe.reason = 'reel_watch'`, `xe.created_at >= ?`];
+  const clauses: string[] = [`u.is_seed = 0`, `u.role = 'student'`, `ev.created_at >= ?`];
   const params: (string | number)[] = [`${months[0]}-01 00:00:00`];
   if (Number.isInteger(gradeParam)) {
     clauses.push(`u.grade = ?`);
@@ -329,13 +326,13 @@ adminRouter.get('/reports/watch-time/monthly', (req, res) => {
   const rows = db
     .prepare(
       `SELECT u.id, u.username, u.display_name as displayName, u.grade,
-              strftime('%Y-%m', xe.created_at) as month, SUM(xe.amount) as xp
-       FROM xp_events xe
-       JOIN users u ON u.id = xe.user_id
+              strftime('%Y-%m', ev.created_at) as month, SUM(ev.seconds) as seconds
+       FROM reel_watch_seconds_events ev
+       JOIN users u ON u.id = ev.user_id
        WHERE ${clauses.join(' AND ')}
        GROUP BY u.id, month`
     )
-    .all(...params) as { id: number; username: string; displayName: string; grade: number | null; month: string; xp: number }[];
+    .all(...params) as { id: number; username: string; displayName: string; grade: number | null; month: string; seconds: number }[];
 
   const totalsBySecond = new Array(months.length).fill(0);
   const students = new Map<number, { userId: number; username: string; displayName: string; grade: number | null; monthly: number[] }>();
@@ -343,7 +340,7 @@ adminRouter.get('/reports/watch-time/monthly', (req, res) => {
   for (const row of rows) {
     const monthIndex = months.indexOf(row.month);
     if (monthIndex === -1) continue;
-    const seconds = Math.round(row.xp / WATCH_XP_PER_SECOND);
+    const seconds = Math.round(row.seconds);
     totalsBySecond[monthIndex] += seconds;
     if (!students.has(row.id)) {
       students.set(row.id, { userId: row.id, username: row.username, displayName: row.displayName, grade: row.grade, monthly: new Array(months.length).fill(0) });

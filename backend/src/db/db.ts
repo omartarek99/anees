@@ -224,3 +224,11 @@ if (!reelWatchCols.some((c) => c.name === 'quiz_completed')) {
 if (!reelWatchCols.some((c) => c.name === 'passed_quiz')) {
   db.exec(`ALTER TABLE reel_watch_progress ADD COLUMN passed_quiz INTEGER NOT NULL DEFAULT 0`);
 }
+// Per-watch-through point tiers (replacing continuous per-second watch XP) -- progress
+// within the CURRENT loop only, so a fresh rewatch can earn the half/full tier again.
+if (!reelWatchCols.some((c) => c.name === 'loop_watched_seconds')) {
+  db.exec(`ALTER TABLE reel_watch_progress ADD COLUMN loop_watched_seconds REAL NOT NULL DEFAULT 0`);
+}
+if (!reelWatchCols.some((c) => c.name === 'current_loop_tier')) {
+  db.exec(`ALTER TABLE reel_watch_progress ADD COLUMN current_loop_tier INTEGER NOT NULL DEFAULT 0`);
+}

@@ -9,9 +9,19 @@ export const WORKSHEET_XP_PER_CORRECT: Record<'easy' | 'medium' | 'hard', number
 export const BOSS_DEFEAT_XP_BONUS = 300;
 export const BOSS_PASS_RATIO = 0.7;
 
-// Reels award a small amount of XP for genuine watch time, on top of the quiz XP — capped at
-// the reel's own duration so leaving a tab open can't be farmed for endless XP.
-export const WATCH_XP_PER_SECOND = 0.2; // 1 XP per 5 seconds watched
+// Reels award flat points per watch-through, not continuous per-second XP -- reaching the
+// halfway mark of a reel pays VIDEO_HALF_WATCH_POINTS, finishing it pays
+// VIDEO_FULL_WATCH_POINTS instead (not both -- the fuller tier supersedes the half tier for
+// that same watch-through). Repeatable: looping/rewatching the same reel again pays out
+// again on each fresh watch-through (see routes/reels.ts POST /:reelId/watch).
+export const VIDEO_HALF_WATCH_POINTS = 1;
+export const VIDEO_FULL_WATCH_POINTS = 2;
+
+// Quiz points are flat per submission (every submission, not just the first -- see
+// routes/reels.ts POST /:reelId/submit), based only on pass/fail at the 50% line, not on
+// exactly how many questions were right.
+export const QUIZ_PASS_POINTS = 3;
+export const QUIZ_FAIL_POINTS = 1;
 
 // Rune puzzles in the Builder's Quarry scale with the student's total XP so far —
 // same difficulty ladder feel as worksheets, but keyed off overall progress rather

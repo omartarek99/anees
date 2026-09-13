@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '../db/db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
-import { awardXp, getPlayerLevel, WATCH_XP_PER_SECOND } from '../lib/xp.js';
+import { awardXp, getPlayerLevel, VIDEO_HALF_WATCH_POINTS, VIDEO_FULL_WATCH_POINTS, QUIZ_PASS_POINTS, QUIZ_FAIL_POINTS } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
 
 export const reelsRouter = Router();
@@ -200,17 +200,18 @@ const watchSchema = z.object({
 });
 
 // Reports a batch of genuine watch-time seconds (sent periodically by the player while a
-// reel is actively in view). XP accrues at WATCH_XP_PER_SECOND, capped at the reel's own
-// duration so nobody can farm XP by leaving a tab open past the lesson's length.
+// reel is actively in view). Points are flat per watch-through, not continuous per second:
+// reaching the halfway mark of THIS watch-through pays VIDEO_HALF_WATCH_POINTS, finishing it
+// pays VIDEO_FULL_WATCH_POINTS instead (not on top of the half tier already paid this same
+// watch-through) -- then rolls over so a fresh rewatch/loop earns again.
 //
 // The client self-reports `seconds` -- a hand-crafted request (real cookie/CSRF header,
 // forged body) could otherwise claim MAX_SECONDS_PER_CALL repeatedly with no real waiting,
-// draining a reel's whole watch-XP allotment in one instant, then doing it again for every
-// other reel. The one thing a forged request can't fake is *when* the server received it:
-// crediting a call for at most the real wall-clock time elapsed since the previous credited
-// call (`updated_at`, small slack for latency) means spamming requests doesn't help --
-// two calls a second apart can jointly credit at most ~1 second of watch time, no matter
-// what `seconds` either one claims.
+// draining every reel's watch-point tiers in one instant. The one thing a forged request
+// can't fake is *when* the server received it: crediting a call for at most the real
+// wall-clock time elapsed since the previous credited call (`updated_at`, small slack for
+// latency) means spamming requests doesn't help -- two calls a second apart can jointly
+// credit at most ~1 second of watch time, no matter what `seconds` either one claims.
 reelsRouter.post('/:reelId/watch', requireAuth, requireCsrfHeader, validateBody(watchSchema), (req, res) => {
   const reelId = Number(req.params.reelId);
   const reel = db.prepare(`SELECT * FROM reels WHERE id = ?`).get(reelId) as any;
@@ -229,13 +230,11 @@ reelsRouter.post('/:reelId/watch', requireAuth, requireCsrfHeader, validateBody(
   }
 
   const { seconds: reportedSeconds } = req.body as { seconds: number };
-  const durationCap = reel.duration_sec as number;
+  const durationCap = Math.max(1, reel.duration_sec as number);
 
   const existing = db
     .prepare(`SELECT * FROM reel_watch_progress WHERE user_id = ? AND reel_id = ?`)
     .get(req.userId!, reelId) as any;
-  const priorWatched = existing?.watched_seconds ?? 0;
-  const priorXp = existing?.xp_awarded ?? 0;
 
   // No prior row means this is the first credited call for this (user, reel) pair -- there's
   // no earlier timestamp to measure real elapsed time against yet, so it falls back to the
@@ -245,28 +244,48 @@ reelsRouter.post('/:reelId/watch', requireAuth, requireCsrfHeader, validateBody(
     : MAX_SECONDS_PER_CALL;
   const seconds = Math.max(0, Math.min(reportedSeconds, elapsedCap));
 
-  const newWatched = Math.min(durationCap, priorWatched + seconds);
-  const newXpTotal = Math.floor(newWatched * WATCH_XP_PER_SECOND);
-  const xpDelta = Math.max(0, newXpTotal - priorXp);
+  const priorTotalWatched = existing?.watched_seconds ?? 0;
+  const priorPoints = existing?.xp_awarded ?? 0;
+  let loopWatched = (existing?.loop_watched_seconds ?? 0) + seconds;
+  let loopTier = existing?.current_loop_tier ?? 0;
+  let pointsDelta = 0;
 
-  if (existing) {
-    db.prepare(`UPDATE reel_watch_progress SET watched_seconds = ?, xp_awarded = ?, updated_at = datetime('now') WHERE id = ?`).run(
-      newWatched,
-      priorXp + xpDelta,
-      existing.id
-    );
-  } else {
-    db.prepare(`INSERT INTO reel_watch_progress (user_id, reel_id, watched_seconds, xp_awarded) VALUES (?,?,?,?)`).run(
-      req.userId!,
-      reelId,
-      newWatched,
-      xpDelta
-    );
+  // A single call can span more than one full watch-through (e.g. a short reel, or a big
+  // elapsed-time slack) -- the loop pays each completed watch-through its own full tier.
+  while (loopWatched >= durationCap) {
+    pointsDelta += VIDEO_FULL_WATCH_POINTS - loopTier * VIDEO_HALF_WATCH_POINTS;
+    loopWatched -= durationCap;
+    loopTier = 0;
+  }
+  if (loopTier === 0 && loopWatched >= durationCap / 2) {
+    pointsDelta += VIDEO_HALF_WATCH_POINTS;
+    loopTier = 1;
   }
 
-  if (xpDelta > 0) awardXp(req.userId!, xpDelta, 'reel_watch');
+  const newTotalWatched = priorTotalWatched + seconds;
+  if (existing) {
+    db.prepare(
+      `UPDATE reel_watch_progress
+       SET watched_seconds = ?, xp_awarded = ?, loop_watched_seconds = ?, current_loop_tier = ?, updated_at = datetime('now')
+       WHERE id = ?`
+    ).run(newTotalWatched, priorPoints + pointsDelta, loopWatched, loopTier, existing.id);
+  } else {
+    db.prepare(
+      `INSERT INTO reel_watch_progress (user_id, reel_id, watched_seconds, xp_awarded, loop_watched_seconds, current_loop_tier)
+       VALUES (?,?,?,?,?,?)`
+    ).run(req.userId!, reelId, newTotalWatched, pointsDelta, loopWatched, loopTier);
+  }
 
-  res.json({ watchedSeconds: newWatched, xpEarned: xpDelta, totalWatchXp: priorXp + xpDelta });
+  // Timestamped log purely for the admin monthly watch-time chart (routes/admin.ts) --
+  // reel_watch_progress only ever stores a running total, which can't say how much was
+  // watched *in a given month*.
+  if (seconds > 0) {
+    db.prepare(`INSERT INTO reel_watch_seconds_events (user_id, seconds) VALUES (?,?)`).run(req.userId!, seconds);
+  }
+
+  if (pointsDelta > 0) awardXp(req.userId!, pointsDelta, 'reel_watch');
+
+  res.json({ watchedSeconds: newTotalWatched, xpEarned: pointsDelta, totalWatchXp: priorPoints + pointsDelta });
 });
 
 const submitSchema = z.object({
@@ -294,25 +313,24 @@ reelsRouter.post('/:reelId/submit', requireAuth, requireCsrfHeader, validateBody
   const { answers } = req.body as { answers: { questionId: number; choiceIndex: number }[] };
 
   const { results, correctCount } = gradeAnswers(questions, answers);
-  let xpEarned = results.reduce((sum, r, i) => sum + (r.isCorrect ? questions[i].xp_value : 0), 0);
 
   const total = questions.length;
   const scoreRatio = total > 0 ? correctCount / total : 0;
   const stars = scoreRatio === 1 ? 3 : scoreRatio >= 0.75 ? 2 : scoreRatio >= 0.5 ? 1 : 0;
+  // Passing (for stars/level-unlock purposes) is "at least half" -- a separate, slightly
+  // more generous threshold than the point award below, which pays the higher tier only
+  // for a strict majority.
   const passedThisAttempt = scoreRatio >= 0.5;
 
-  // Quiz XP is only awarded the first time THIS REEL's quiz is submitted -- retaking it
-  // (e.g. while looping through the endless reels feed for review, or retrying to reach
-  // the 50% needed to advance) still shows correct/wrong feedback and can improve
-  // stars/pass status, but can't be replayed for repeat XP. Tracked per reel (not per
-  // level) via reel_watch_progress so a level with several reels still pays out once per
-  // reel, and so a never-passed reel can't be resubmitted forever for free XP.
+  // Quiz points are flat per submission -- every submission earns them, not just the
+  // first, unlike the old one-time-only XP model (repeat attempts are how a student
+  // reaches the 50% needed to advance anyway).
+  const xpEarned = scoreRatio > 0.5 ? QUIZ_PASS_POINTS : QUIZ_FAIL_POINTS;
+
   const watchRow = db.prepare(`SELECT * FROM reel_watch_progress WHERE user_id = ? AND reel_id = ?`).get(req.userId!, reelId) as any;
-  const alreadyAttempted = !!watchRow?.quiz_completed;
-  if (alreadyAttempted) xpEarned = 0;
 
   const levelBeforeXp = getPlayerLevel(req.userId!);
-  if (xpEarned > 0) awardXp(req.userId!, xpEarned, 'reel_quiz');
+  awardXp(req.userId!, xpEarned, 'reel_quiz');
 
   // passed_quiz is sticky -- once a reel has been passed at >=50%, a later poor retry
   // (e.g. reviewing the lesson again) never revokes that.
