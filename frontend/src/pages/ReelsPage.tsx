@@ -10,6 +10,7 @@ import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 import { ReelSlide, type ReelSlideData, type ReelSlideControls } from '../components/ReelSlide';
 import { ReelActionRail } from '../components/ReelActionRail';
+import { PointsInfoModal } from '../components/PointsInfoModal';
 
 /** No backend "like" concept exists -- likes are cosmetic, session-local gamification
  * only, so every reel (new upload or existing) always starts at 0. */
@@ -62,6 +63,9 @@ export function ReelsPage() {
   // the action rail's speaker button is the first real gesture that can turn it on.
   const [muted, setMuted] = useState(true);
   const toggleMute = useCallback(() => setMuted((m) => !m), []);
+
+  // The action rail's diamond opens this -- a quick explainer of how points work.
+  const [pointsInfoOpen, setPointsInfoOpen] = useState(false);
 
   // Controls for whichever ReelSlide is currently active — lets the external action rail
   // open that slide's quiz (each slide's own "are you still watching?" check, driven by its
@@ -249,12 +253,14 @@ export function ReelsPage() {
             onToggleLike={() => toggleLike(activeSlide.reelId)}
             questionCount={activeSlide.questions.length}
             onOpenQuiz={() => activeControlsRef.current?.openQuiz()}
+            onOpenPointsInfo={() => setPointsInfoOpen(true)}
             subjectIcon={activeSlide.subjectIcon}
             subjectKey={activeSlide.subjectKey}
             muted={muted}
             onToggleMute={toggleMute}
           />
         )}
+        <PointsInfoModal open={pointsInfoOpen} onClose={() => setPointsInfoOpen(false)} />
       </div>
     </div>
   );

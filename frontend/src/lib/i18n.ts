@@ -41,6 +41,11 @@ const en = {
     title: '🎉 Double Quiz Points!',
     body: 'Take a quiz in the next {time} to earn double points!',
   },
+  pointsInfo: {
+    title: 'How you earn points',
+    video: 'Finish watching the video: +2 points',
+    quiz: 'Pass the quiz: +3 points',
+  },
   auth: {
     heroTitle: 'Anees',
     loginTitle: 'Welcome Back, Champion!',
@@ -539,6 +544,11 @@ const ar: typeof en = {
   doublePoints: {
     title: '🎉 نقاط الاختبار مضاعفة!',
     body: 'أنجز اختبارًا خلال {time} القادمة لتكسب نقاطًا مضاعفة!',
+  },
+  pointsInfo: {
+    title: 'كيف تكسب النقاط؟',
+    video: 'أنهِ مشاهدة الفيديو: +2 نقطة',
+    quiz: 'انجح في الاختبار: +3 نقاط',
   },
   auth: {
     heroTitle: 'أنيس',

@@ -15,6 +15,7 @@ export function ReelActionRail({
   onToggleLike,
   questionCount,
   onOpenQuiz,
+  onOpenPointsInfo,
   subjectIcon,
   subjectKey,
   muted,
@@ -26,6 +27,7 @@ export function ReelActionRail({
   onToggleLike: () => void;
   questionCount: number;
   onOpenQuiz: () => void;
+  onOpenPointsInfo: () => void;
   subjectIcon: string;
   subjectKey: string;
   muted: boolean;
@@ -64,12 +66,12 @@ export function ReelActionRail({
         <span className="reel-rail-count">{questionCount}</span>
       </button>
 
-      <div className="reel-rail-btn">
+      <button type="button" className="reel-rail-btn" onClick={onOpenPointsInfo} aria-label={t('pointsInfo.title')}>
         <span className="notif-bell" style={{ fontSize: 19 }}>
           💎
         </span>
         <span className="reel-rail-count">{t('reels.xpTag')}</span>
-      </div>
+      </button>
 
       <span className="notif-bell" aria-hidden style={{ fontSize: 18 }}>
         {subjectKey === 'math' ? <RiCalculatorLine size={18} /> : subjectKey === 'science' ? <RiAtomLine size={18} /> : subjectIcon}
