@@ -5,8 +5,15 @@ import { requireAuth } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { awardXp, getPlayerLevel, VIDEO_HALF_WATCH_POINTS, VIDEO_FULL_WATCH_POINTS, QUIZ_PASS_POINTS, QUIZ_FAIL_POINTS } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
+import { getDoublePointsStatus, DOUBLE_POINTS_MULTIPLIER } from '../lib/doublePoints.js';
 
 export const reelsRouter = Router();
+
+// Polled by the frontend (see DoublePointsNotification.tsx) to pop up a notification the
+// moment the hour's random double-points window opens, without needing any push mechanism.
+reelsRouter.get('/double-points-status', requireAuth, (_req, res) => {
+  res.json(getDoublePointsStatus());
+});
 
 // Level 1 starts available for every account from the moment it exists, even before any
 // progress row has been written for it (matches GET /map's own fallback, backend/src/routes/map.ts)
@@ -201,7 +208,7 @@ const watchSchema = z.object({
 
 // Reports a batch of genuine watch-time seconds (sent periodically by the player while a
 // reel is actively in view). Points are flat per watch-through, not continuous per second:
-// reaching the halfway mark of THIS watch-through pays VIDEO_HALF_WATCH_POINTS, finishing it
+// reaching the halfway mark of THIS watch-through pays VIDEO_HALF_WATCH_POINTS, reaching 80%
 // pays VIDEO_FULL_WATCH_POINTS instead (not on top of the half tier already paid this same
 // watch-through) -- then rolls over so a fresh rewatch/loop earns again.
 //
@@ -231,6 +238,11 @@ reelsRouter.post('/:reelId/watch', requireAuth, requireCsrfHeader, validateBody(
 
   const { seconds: reportedSeconds } = req.body as { seconds: number };
   const durationCap = Math.max(1, reel.duration_sec as number);
+  // Full points now trigger at 80% watched, not 100% -- a student who watches nearly all
+  // of a reel shouldn't be denied the full tier over the last fifth of it. The half tier
+  // stays at the literal halfway point, unchanged.
+  const fullTierThreshold = durationCap * 0.8;
+  const halfTierThreshold = durationCap * 0.5;
 
   const existing = db
     .prepare(`SELECT * FROM reel_watch_progress WHERE user_id = ? AND reel_id = ?`)
@@ -252,12 +264,12 @@ reelsRouter.post('/:reelId/watch', requireAuth, requireCsrfHeader, validateBody(
 
   // A single call can span more than one full watch-through (e.g. a short reel, or a big
   // elapsed-time slack) -- the loop pays each completed watch-through its own full tier.
-  while (loopWatched >= durationCap) {
+  while (loopWatched >= fullTierThreshold) {
     pointsDelta += VIDEO_FULL_WATCH_POINTS - loopTier * VIDEO_HALF_WATCH_POINTS;
-    loopWatched -= durationCap;
+    loopWatched -= fullTierThreshold;
     loopTier = 0;
   }
-  if (loopTier === 0 && loopWatched >= durationCap / 2) {
+  if (loopTier === 0 && loopWatched >= halfTierThreshold) {
     pointsDelta += VIDEO_HALF_WATCH_POINTS;
     loopTier = 1;
   }
@@ -325,7 +337,9 @@ reelsRouter.post('/:reelId/submit', requireAuth, requireCsrfHeader, validateBody
   // Quiz points are flat per submission -- every submission earns them, not just the
   // first, unlike the old one-time-only XP model (repeat attempts are how a student
   // reaches the 50% needed to advance anyway).
-  const xpEarned = scoreRatio > 0.5 ? QUIZ_PASS_POINTS : QUIZ_FAIL_POINTS;
+  const doublePoints = getDoublePointsStatus();
+  const basePoints = scoreRatio > 0.5 ? QUIZ_PASS_POINTS : QUIZ_FAIL_POINTS;
+  const xpEarned = doublePoints.active ? basePoints * DOUBLE_POINTS_MULTIPLIER : basePoints;
 
   const watchRow = db.prepare(`SELECT * FROM reel_watch_progress WHERE user_id = ? AND reel_id = ?`).get(req.userId!, reelId) as any;
 
@@ -353,6 +367,7 @@ reelsRouter.post('/:reelId/submit', requireAuth, requireCsrfHeader, validateBody
       total,
       xpEarned,
       stars,
+      doublePointsActive: doublePoints.active,
       leveledUp: levelAfterXpGrade > levelBeforeXp,
       newPlayerLevel: levelAfterXpGrade,
     });
@@ -421,6 +436,7 @@ reelsRouter.post('/:reelId/submit', requireAuth, requireCsrfHeader, validateBody
     total,
     xpEarned,
     stars,
+    doublePointsActive: doublePoints.active,
     leveledUp: levelAfterXp > levelBeforeXp,
     newPlayerLevel: levelAfterXp,
   });

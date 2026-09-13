@@ -10,6 +10,7 @@ import { ThemeToggle } from './components/ThemeToggle';
 import { QuickMenu } from './components/QuickMenu';
 import { Footer } from './components/Footer';
 import { WarningModal } from './components/WarningModal';
+import { DoublePointsNotification } from './components/DoublePointsNotification';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsPage } from './pages/TermsPage';
@@ -66,6 +67,8 @@ function ProtectedLayout() {
         {!hideFooter && <Footer />}
       </div>
       <QuickMenu />
+      {/* Admin has no quiz/gameplay surface of its own -- nothing for this to announce there. */}
+      {user.role !== 'admin' && <DoublePointsNotification />}
     </div>
   );
 }

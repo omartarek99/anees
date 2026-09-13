@@ -407,6 +407,20 @@ svg {
   }
 }
 
+.double-points-toast {
+  animation: double-points-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes double-points-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .quick-menu-item {
   display: flex;
   align-items: center;

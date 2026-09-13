@@ -37,6 +37,10 @@ const en = {
   warning: {
     title: 'A Message From the Anees Team',
   },
+  doublePoints: {
+    title: '🎉 Double Quiz Points!',
+    body: 'Take a quiz in the next {time} to earn double points!',
+  },
   auth: {
     heroTitle: 'Anees',
     loginTitle: 'Welcome Back, Champion!',
@@ -531,6 +535,10 @@ const ar: typeof en = {
   },
   warning: {
     title: 'رسالة من فريق أنيس',
+  },
+  doublePoints: {
+    title: '🎉 نقاط الاختبار مضاعفة!',
+    body: 'أنجز اختبارًا خلال {time} القادمة لتكسب نقاطًا مضاعفة!',
   },
   auth: {
     heroTitle: 'أنيس',
