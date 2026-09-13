@@ -28,7 +28,32 @@ export type DoublePointsStatus = {
   secondsUntilNext: number;
 };
 
+// Admin-triggerable manual window (see routes/admin.ts POST /double-points/start), on top
+// of the automatic random one -- in-memory only (resets on server restart), since this is
+// a "kick one off right now" control, not a schedule anyone needs to persist.
+let manualOverrideEndsAt: number | null = null;
+
+export function startDoublePointsNow(durationMs: number = WINDOW_MINUTES * 60 * 1000): number {
+  manualOverrideEndsAt = Date.now() + durationMs;
+  return manualOverrideEndsAt;
+}
+
 export function getDoublePointsStatus(now: Date = new Date()): DoublePointsStatus {
+  if (manualOverrideEndsAt !== null) {
+    const msRemaining = manualOverrideEndsAt - now.getTime();
+    if (msRemaining > 0) {
+      return {
+        active: true,
+        windowId: `manual-${manualOverrideEndsAt}`,
+        secondsRemaining: Math.ceil(msRemaining / 1000),
+        secondsUntilNext: 0,
+      };
+    }
+    // Expired -- clear it so we fall through to the normal per-hour computation below
+    // (and stop paying the Date.now() comparison on every future call).
+    manualOverrideEndsAt = null;
+  }
+
   const startMinute = startMinuteForHour(now);
   const endMinute = startMinute + WINDOW_MINUTES;
   const nowSecondsIntoHour = now.getUTCMinutes() * 60 + now.getUTCSeconds();

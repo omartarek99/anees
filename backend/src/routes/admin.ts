@@ -13,12 +13,20 @@ import { deleteUserById } from '../lib/deleteUser.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
 import { deleteReelVideoIfAny } from '../lib/reelVideo.js';
 import { decrypt } from '../lib/encryption.js';
+import { getDoublePointsStatus, startDoublePointsNow } from '../lib/doublePoints.js';
 
 import type { Response } from 'express';
 
 export const adminRouter = Router();
 
 adminRouter.use(requireAuth, requireRole('admin'));
+
+// Manually kicks off a double-quiz-points window right now, on top of the automatic random
+// one -- e.g. to spotlight it during a live class or demo instead of waiting on chance.
+adminRouter.post('/double-points/start', requireCsrfHeader, (_req, res) => {
+  startDoublePointsNow();
+  res.json(getDoublePointsStatus());
+});
 
 const PAGE_SIZE = 20;
 
