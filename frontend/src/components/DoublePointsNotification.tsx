@@ -69,9 +69,11 @@ export function DoublePointsNotification() {
       className="double-points-toast"
       style={{
         position: 'fixed',
-        // Physical bottom-left, not a logical inset -- stays put regardless of language.
+        // Logical inset, the opposite side from the quick menu (bottom:20 +
+        // inset-inline-start there) -- right in English, left in Arabic, so the two never
+        // overlap in either language.
         bottom: 16,
-        left: 16,
+        insetInlineEnd: 16,
         zIndex: 200,
         display: 'flex',
         alignItems: 'center',
