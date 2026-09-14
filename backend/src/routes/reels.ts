@@ -329,16 +329,14 @@ reelsRouter.post('/:reelId/submit', requireAuth, requireCsrfHeader, validateBody
   const total = questions.length;
   const scoreRatio = total > 0 ? correctCount / total : 0;
   const stars = scoreRatio === 1 ? 3 : scoreRatio >= 0.75 ? 2 : scoreRatio >= 0.5 ? 1 : 0;
-  // Passing (for stars/level-unlock purposes) is "at least half" -- a separate, slightly
-  // more generous threshold than the point award below, which pays the higher tier only
-  // for a strict majority.
   const passedThisAttempt = scoreRatio >= 0.5;
 
   // Quiz points are flat per submission -- every submission earns them, not just the
   // first, unlike the old one-time-only XP model (repeat attempts are how a student
-  // reaches the 50% needed to advance anyway).
+  // reaches the 50% needed to advance anyway). Same "at least half" threshold as
+  // stars/level-unlock above -- 2 out of 4 correct (exactly 50%) counts as a pass.
   const doublePoints = getDoublePointsStatus();
-  const basePoints = scoreRatio > 0.5 ? QUIZ_PASS_POINTS : QUIZ_FAIL_POINTS;
+  const basePoints = scoreRatio >= 0.5 ? QUIZ_PASS_POINTS : QUIZ_FAIL_POINTS;
   const xpEarned = doublePoints.active ? basePoints * DOUBLE_POINTS_MULTIPLIER : basePoints;
 
   const watchRow = db.prepare(`SELECT * FROM reel_watch_progress WHERE user_id = ? AND reel_id = ?`).get(req.userId!, reelId) as any;

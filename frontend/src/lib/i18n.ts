@@ -765,7 +765,7 @@ const ar: typeof en = {
     play: '▶ تشغيل الدرس',
     pause: '⏸ إيقاف مؤقت',
     videoComingSoon: '🎬 الفيديو قريبًا — في الوقت الحالي اقرأ الدرس أدناه!',
-    xpTag: 'خبرة',
+    xpTag: 'نقاط',
     seeMore: 'عرض المزيد',
     seeLess: 'عرض أقل',
     correctCount: '{correct}/{total} إجابة صحيحة!',
