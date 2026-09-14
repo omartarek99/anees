@@ -379,8 +379,9 @@ teacherReelsRouter.post(
     }
 
     let compressed: Buffer;
+    let durationSeconds: number | null;
     try {
-      compressed = await compressVideo(video.buffer);
+      ({ buffer: compressed, durationSeconds } = await compressVideo(video.buffer));
     } catch (err) {
       console.error('Video compression failed:', err instanceof Error ? err.message : err);
       res.status(500).json({ error: "We couldn't process the video. Please try a different file." });
@@ -402,7 +403,18 @@ teacherReelsRouter.post(
     const { data: publicUrlData } = supabaseAdmin.storage.from(VIDEO_BUCKET).getPublicUrl(path);
 
     await deleteReelVideoIfAny(reel.video_url);
-    db.prepare(`UPDATE reels SET video_url = ? WHERE id = ?`).run(publicUrlData.publicUrl, reel.id);
+    // The real, measured video duration replaces whatever placeholder duration the teacher's
+    // composer form had -- it drives the reel's progress bar and the watch-points thresholds
+    // (routes/reels.ts POST /:reelId/watch), so it has to match the actual file, not a guess.
+    if (durationSeconds !== null && durationSeconds > 0) {
+      db.prepare(`UPDATE reels SET video_url = ?, duration_sec = ? WHERE id = ?`).run(
+        publicUrlData.publicUrl,
+        Math.round(durationSeconds),
+        reel.id
+      );
+    } else {
+      db.prepare(`UPDATE reels SET video_url = ? WHERE id = ?`).run(publicUrlData.publicUrl, reel.id);
+    }
 
     res.json({ videoUrl: publicUrlData.publicUrl });
   }
