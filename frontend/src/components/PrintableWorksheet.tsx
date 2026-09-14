@@ -12,15 +12,21 @@ export function PrintableWorksheet({
   subjectLabel,
   subjectIcon,
   difficultyLabel,
+  difficultyIcon,
   questions,
 }: {
   subjectLabel: string;
   subjectIcon: string;
   difficultyLabel: string;
+  difficultyIcon: string;
   questions: PrintableQuestion[];
 }) {
   const { t, lang, dir } = useLanguage();
   const letters = lang === 'ar' ? ['أ', 'ب', 'ج', 'د'] : ['A', 'B', 'C', 'D'];
+  // Cycles a handful of print-safe pastel tints across questions purely for visual
+  // variety -- grade 5/6 age group, so the page reads as a fun activity sheet rather
+  // than a plain exam.
+  const tints = ['pw-tint-a', 'pw-tint-b', 'pw-tint-c', 'pw-tint-d'];
 
   return createPortal(
     <div className="printable-worksheet-portal" dir={dir}>
@@ -32,12 +38,16 @@ export function PrintableWorksheet({
         <header className="printable-worksheet-header">
           <img src="/icons/icon-192.png" alt="" className="printable-worksheet-logo" />
           <div>
-            <h1>{t('brand')}</h1>
+            <h1>
+              {t('brand')} <span aria-hidden>🦅</span>
+            </h1>
             <p>
-              {subjectIcon} {subjectLabel} — {difficultyLabel}
+              {subjectIcon} {subjectLabel} — {difficultyIcon} {difficultyLabel}
             </p>
           </div>
         </header>
+
+        <p className="printable-worksheet-tagline">{t('worksheets.printTagline')}</p>
 
         <div className="printable-worksheet-fields">
           <span>
@@ -50,7 +60,7 @@ export function PrintableWorksheet({
 
         <ol className="printable-worksheet-questions">
           {questions.map((q, i) => (
-            <li key={q.id}>
+            <li key={q.id} className={tints[i % tints.length]}>
               <p>{q.text}</p>
               <ul>
                 {q.choices.map((choice, ci) => (
@@ -63,6 +73,19 @@ export function PrintableWorksheet({
             </li>
           ))}
         </ol>
+
+        <div className="printable-worksheet-checkout">
+          <div className="printable-worksheet-score">
+            <span aria-hidden>⭐</span>
+            {t('worksheets.printScoreLabel')} <i />/ {questions.length}
+          </div>
+          <div className="printable-worksheet-mood">
+            <span>{t('worksheets.printMoodQuestion')}</span>
+            <span className="printable-worksheet-mood-faces" aria-hidden>
+              😄 😐 😕
+            </span>
+          </div>
+        </div>
 
         <footer className="printable-worksheet-footer">{t('brand')}</footer>
       </div>

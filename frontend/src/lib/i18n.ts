@@ -437,6 +437,9 @@ const en = {
     print: '🖨️ Print Worksheet',
     printName: 'Name',
     printDate: 'Date',
+    printTagline: "Let's learn and have fun! 🚀",
+    printScoreLabel: 'My score:',
+    printMoodQuestion: 'How did this worksheet feel? Circle one:',
   },
   leaderboard: {
     title: '🏆 Monthly Leaderboard',
@@ -944,6 +947,9 @@ const ar: typeof en = {
     print: '🖨️ طباعة ورقة العمل',
     printName: 'الاسم',
     printDate: 'التاريخ',
+    printTagline: 'هيا نتعلّم ونلعب! 🚀',
+    printScoreLabel: 'نتيجتي:',
+    printMoodQuestion: 'كيف كان شعورك تجاه هذه الورقة؟ ضع دائرة حول إجابتك:',
   },
   leaderboard: {
     title: '🏆 قائمة المتصدرين الشهرية',

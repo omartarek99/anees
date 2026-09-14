@@ -84,6 +84,24 @@ export function WorksheetsPage() {
     setResult(null);
   }
 
+  // Browsers print their own header/footer (page title + URL) on every printed page --
+  // no page can turn that off outright, that's the print dialog's own "Headers and
+  // footers" checkbox, entirely up to whoever is printing. What a page *can* do is
+  // control what that header actually says, since it reads the live document.title --
+  // blanking it just for the print and restoring it on `afterprint` (fires whether the
+  // student/teacher actually printed or cancelled) keeps the tab's real title everywhere
+  // else without a blank title ever being visible on screen.
+  function handlePrint() {
+    const original = document.title;
+    document.title = ' ';
+    const restore = () => {
+      document.title = original;
+      window.removeEventListener('afterprint', restore);
+    };
+    window.addEventListener('afterprint', restore);
+    window.print();
+  }
+
   return (
     <div className="stack">
       <Topbar title={t('worksheets.title')} subtitle={t('worksheets.subtitle')} />
@@ -158,7 +176,7 @@ export function WorksheetsPage() {
               {/* Printing a worksheet for a class is a teacher task -- students solve it
                   interactively in-app instead, so this stays out of their view. */}
               {user?.role === 'teacher' && (
-                <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
+                <button className="btn btn-secondary btn-sm" onClick={handlePrint}>
                   {t('worksheets.print')}
                 </button>
               )}
@@ -173,6 +191,7 @@ export function WorksheetsPage() {
               subjectLabel={subject === 'math' ? t('worksheets.math') : t('worksheets.science')}
               subjectIcon={subject === 'math' ? '🧮' : '🔬'}
               difficultyLabel={t(`worksheets.${difficulty}`)}
+              difficultyIcon={DIFFICULTIES.find((d) => d.key === difficulty)!.icon}
               questions={questions}
             />
           )}

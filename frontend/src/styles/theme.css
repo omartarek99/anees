@@ -1374,6 +1374,15 @@ a:focus-visible {
   opacity: 0.95;
 }
 
+.printable-worksheet-tagline {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #c22954;
+  margin: -6px 0 16px;
+  position: relative;
+}
+
 .printable-worksheet-fields {
   display: flex;
   justify-content: space-between;
@@ -1400,22 +1409,45 @@ a:focus-visible {
 }
 .printable-worksheet-questions > li {
   counter-increment: pw-question;
-  margin-bottom: 16px;
-  padding-bottom: 14px;
-  border-bottom: 1px dashed #d8c9ba;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
   break-inside: avoid;
 }
-.printable-worksheet-questions > li:last-child {
-  border-bottom: none;
+/* A handful of print-safe pastel tints, cycled per question purely for variety -- grade
+   5/6 age group, so the page reads as a fun activity sheet rather than a plain exam. */
+.pw-tint-a {
+  background: rgba(240, 168, 58, 0.1);
+}
+.pw-tint-b {
+  background: rgba(194, 41, 84, 0.07);
+}
+.pw-tint-c {
+  background: rgba(61, 123, 217, 0.08);
+}
+.pw-tint-d {
+  background: rgba(99, 153, 34, 0.08);
 }
 .printable-worksheet-questions > li > p {
   font-weight: 700;
   font-size: 14.5px;
   margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .printable-worksheet-questions > li > p::before {
-  content: counter(pw-question) '. ';
-  color: #8a1538;
+  content: counter(pw-question);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f0a83a, #8a1538);
+  color: #fff;
+  font-size: 12px;
+  flex-shrink: 0;
 }
 .printable-worksheet-questions ul {
   list-style: none;
@@ -1443,6 +1475,46 @@ a:focus-visible {
   font-weight: 700;
   color: #8a1538;
   flex-shrink: 0;
+}
+
+.printable-worksheet-checkout {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  margin-top: 20px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(240, 168, 58, 0.12);
+  border: 1.5px dashed #f0a83a;
+  position: relative;
+}
+.printable-worksheet-score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #4a0e24;
+}
+.printable-worksheet-score i {
+  display: inline-block;
+  width: 34px;
+  border-bottom: 1px solid #999;
+  font-style: normal;
+}
+.printable-worksheet-mood {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #4a0e24;
+}
+.printable-worksheet-mood-faces {
+  font-size: 18px;
+  letter-spacing: 8px;
 }
 
 .printable-worksheet-footer {
