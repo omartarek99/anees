@@ -1323,23 +1323,25 @@ a:focus-visible {
   overflow: hidden;
 }
 
-.printable-worksheet-corner {
+/* The brand name itself as a faint, rotated, page-spanning watermark -- sits behind every
+   other element here. Those all have their own `position: relative` (with this staying
+   plain `position: absolute`, no z-index needed on either side): per CSS's own painting
+   order, positioned descendants of a stacking context paint in DOM order when their
+   z-index ties, so being first in the markup (PrintableWorksheet.tsx) is what keeps this
+   below the header/fields/questions/footer painted after it, not a z-index number. */
+.printable-worksheet-watermark {
   position: absolute;
-  top: -30mm;
-  width: 70mm;
-  height: 70mm;
-  border-radius: 50%;
-  background: radial-gradient(circle at center, rgba(138, 21, 56, 0.08), transparent 70%);
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 150px;
+  font-weight: 800;
+  color: #8a1538;
+  opacity: 0.055;
+  transform: rotate(-24deg);
+  white-space: nowrap;
   pointer-events: none;
-}
-.printable-worksheet-corner-start {
-  inset-inline-start: -30mm;
-}
-.printable-worksheet-corner-end {
-  top: auto;
-  bottom: -30mm;
-  inset-inline-end: -30mm;
-  background: radial-gradient(circle at center, rgba(240, 168, 58, 0.14), transparent 70%);
 }
 
 .printable-worksheet-header {

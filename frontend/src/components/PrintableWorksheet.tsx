@@ -25,8 +25,9 @@ export function PrintableWorksheet({
   return createPortal(
     <div className="printable-worksheet-portal" dir={dir}>
       <div className="printable-worksheet">
-        <div className="printable-worksheet-corner printable-worksheet-corner-start" aria-hidden />
-        <div className="printable-worksheet-corner printable-worksheet-corner-end" aria-hidden />
+        <div className="printable-worksheet-watermark" aria-hidden>
+          {t('brand')}
+        </div>
 
         <header className="printable-worksheet-header">
           <img src="/icons/icon-192.png" alt="" className="printable-worksheet-logo" />
