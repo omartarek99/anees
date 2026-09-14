@@ -434,6 +434,9 @@ const en = {
     generating: 'Generating…',
     generateAnother: 'Generate Another Worksheet',
     genError: 'Could not generate a worksheet.',
+    print: '🖨️ Print Worksheet',
+    printName: 'Name',
+    printDate: 'Date',
   },
   leaderboard: {
     title: '🏆 Monthly Leaderboard',
@@ -938,6 +941,9 @@ const ar: typeof en = {
     generating: 'جارٍ الإنشاء…',
     generateAnother: 'إنشاء ورقة عمل أخرى',
     genError: 'تعذّر إنشاء ورقة العمل.',
+    print: '🖨️ طباعة ورقة العمل',
+    printName: 'الاسم',
+    printDate: 'التاريخ',
   },
   leaderboard: {
     title: '🏆 قائمة المتصدرين الشهرية',

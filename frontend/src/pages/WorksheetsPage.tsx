@@ -7,6 +7,7 @@ import { pickText, translateApiError } from '../lib/i18n';
 import { QuizCard, type QuizAnswer, type QuizQuestion } from '../components/QuizCard';
 import { QuizResults, type ResultItem } from '../components/QuizResults';
 import { Topbar } from '../components/Topbar';
+import { PrintableWorksheet } from '../components/PrintableWorksheet';
 
 type Subject = 'math' | 'science';
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -27,7 +28,7 @@ type SubmitResponse = {
 };
 
 export function WorksheetsPage() {
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { t, lang } = useLanguage();
   const [subject, setSubject] = useState<Subject>('math');
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
@@ -153,11 +154,28 @@ export function WorksheetsPage() {
               {subject === 'math' ? t('worksheets.math') : t('worksheets.science')} —{' '}
               {t(`worksheets.${difficulty}`)}
             </h2>
-            <button className="btn btn-ghost btn-sm" onClick={reset}>
-              {t('common.cancel')}
-            </button>
+            <div className="flex gap-sm">
+              {/* Printing a worksheet for a class is a teacher task -- students solve it
+                  interactively in-app instead, so this stays out of their view. */}
+              {user?.role === 'teacher' && (
+                <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
+                  {t('worksheets.print')}
+                </button>
+              )}
+              <button className="btn btn-ghost btn-sm" onClick={reset}>
+                {t('common.cancel')}
+              </button>
+            </div>
           </div>
           <QuizCard questions={questions} onSubmit={submit} submitting={submitting} />
+          {user?.role === 'teacher' && (
+            <PrintableWorksheet
+              subjectLabel={subject === 'math' ? t('worksheets.math') : t('worksheets.science')}
+              subjectIcon={subject === 'math' ? '🧮' : '🔬'}
+              difficultyLabel={t(`worksheets.${difficulty}`)}
+              questions={questions}
+            />
+          )}
         </div>
       )}
 

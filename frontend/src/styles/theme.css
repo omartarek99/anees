@@ -1291,3 +1291,165 @@ a:focus-visible {
     filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
   }
 }
+
+/* ---------------- Printable worksheet (PrintableWorksheet.tsx) ----------------
+   Portalled onto document.body (a sibling of #root), hidden on screen and shown only
+   for @media print, which also hides #root entirely -- the printed page is exactly this,
+   nothing else from the app chrome. Colors here are deliberately hardcoded (not the
+   theme's CSS variables) and always light -- a physical printout should never follow the
+   viewer's on-screen dark-mode preference; it has to look right and ink-economical on
+   actual paper regardless of what theme the browser happened to be in. */
+.printable-worksheet-portal {
+  display: none;
+}
+
+@media print {
+  #root {
+    display: none !important;
+  }
+  .printable-worksheet-portal {
+    display: block !important;
+  }
+  @page {
+    margin: 16mm 14mm;
+  }
+}
+
+.printable-worksheet {
+  position: relative;
+  font-family: var(--font-body);
+  color: #201217;
+  background: #fff;
+  overflow: hidden;
+}
+
+.printable-worksheet-corner {
+  position: absolute;
+  top: -30mm;
+  width: 70mm;
+  height: 70mm;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(138, 21, 56, 0.08), transparent 70%);
+  pointer-events: none;
+}
+.printable-worksheet-corner-start {
+  inset-inline-start: -30mm;
+}
+.printable-worksheet-corner-end {
+  top: auto;
+  bottom: -30mm;
+  inset-inline-end: -30mm;
+  background: radial-gradient(circle at center, rgba(240, 168, 58, 0.14), transparent 70%);
+}
+
+.printable-worksheet-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #8a1538, #c22954);
+  color: #fff;
+  margin-bottom: 18px;
+  position: relative;
+}
+.printable-worksheet-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.printable-worksheet-header h1 {
+  font-size: 22px;
+  margin: 0;
+  color: #fff;
+}
+.printable-worksheet-header p {
+  font-size: 14px;
+  margin: 2px 0 0;
+  opacity: 0.95;
+}
+
+.printable-worksheet-fields {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 4px 4px 20px;
+  color: #4a0e24;
+  position: relative;
+}
+.printable-worksheet-fields i {
+  display: inline-block;
+  width: 140px;
+  border-bottom: 1px solid #999;
+  font-style: normal;
+}
+
+.printable-worksheet-questions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: pw-question;
+  position: relative;
+}
+.printable-worksheet-questions > li {
+  counter-increment: pw-question;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed #d8c9ba;
+  break-inside: avoid;
+}
+.printable-worksheet-questions > li:last-child {
+  border-bottom: none;
+}
+.printable-worksheet-questions > li > p {
+  font-weight: 700;
+  font-size: 14.5px;
+  margin: 0 0 8px;
+}
+.printable-worksheet-questions > li > p::before {
+  content: counter(pw-question) '. ';
+  color: #8a1538;
+}
+.printable-worksheet-questions ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+}
+.printable-worksheet-questions ul li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+}
+.printable-worksheet-choice-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid #8a1538;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8a1538;
+  flex-shrink: 0;
+}
+
+.printable-worksheet-footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 11px;
+  color: #b8a8ae;
+  letter-spacing: 1px;
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+  position: relative;
+}
