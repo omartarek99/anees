@@ -21,8 +21,10 @@ export function PrintableWorksheet({
   difficultyIcon: string;
   questions: PrintableQuestion[];
 }) {
-  const { t, lang, dir } = useLanguage();
-  const letters = lang === 'ar' ? ['أ', 'ب', 'ج', 'د'] : ['A', 'B', 'C', 'D'];
+  const { t, dir } = useLanguage();
+  // Always Latin letters, even in the Arabic layout -- A/B/C/D is how a multiple-choice
+  // worksheet is conventionally lettered for this age group either way.
+  const letters = ['A', 'B', 'C', 'D'];
   // Cycles a handful of print-safe pastel tints across questions purely for visual
   // variety -- grade 5/6 age group, so the page reads as a fun activity sheet rather
   // than a plain exam.

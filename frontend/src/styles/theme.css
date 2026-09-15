@@ -1323,14 +1323,20 @@ a:focus-visible {
   overflow: hidden;
 }
 
-/* The brand name itself as a faint, rotated, page-spanning watermark -- sits behind every
-   other element here. Those all have their own `position: relative` (with this staying
-   plain `position: absolute`, no z-index needed on either side): per CSS's own painting
-   order, positioned descendants of a stacking context paint in DOM order when their
-   z-index ties, so being first in the markup (PrintableWorksheet.tsx) is what keeps this
-   below the header/fields/questions/footer painted after it, not a z-index number. */
+/* The brand name itself as a faint, rotated watermark, repeated on every printed page --
+   `position: fixed` (not `absolute`) is what makes that repetition happen: in paged media,
+   a fixed element is positioned against each individual page box and drawn on every page,
+   while an absolutely-positioned one is only ever placed once relative to the *whole*
+   scrollable content, landing on a single arbitrary page (and often clipped at a page
+   break) once the worksheet runs past one page -- which is exactly the stray/clipped
+   shape this replaces. Sits behind every other element here: those all have their own
+   `position: relative` (with this staying `position: fixed`, no z-index needed on either
+   side) -- per CSS's own painting order, positioned descendants of a stacking context
+   paint in DOM order when their z-index ties, so being first in the markup
+   (PrintableWorksheet.tsx) is what keeps this below the header/fields/questions/footer
+   painted after it, not a z-index number. */
 .printable-worksheet-watermark {
-  position: absolute;
+  position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
