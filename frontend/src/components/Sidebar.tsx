@@ -1,6 +1,15 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
-import { RiVideoFill, RiMapFill, RiHome2Line, RiGamepadLine, RiFilePaper2Line } from '@remixicon/react';
+import {
+  RiVideoFill,
+  RiMapFill,
+  RiHome2Line,
+  RiGamepadLine,
+  RiFilePaper2Line,
+  RiGroupFill,
+  RiFilmFill,
+  RiBarChartBoxFill,
+} from '@remixicon/react';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import PeopleIcon from '@mui/icons-material/People';
 import { useAuth } from '../lib/auth-context';
@@ -28,9 +37,14 @@ const GAME_LINKS: SidebarLink[] = [
 // Teacher-only extra, on top of the shared game links above.
 const TEACHER_LINKS: SidebarLink[] = [{ to: '/teacher/reels', key: 'nav.myReels', icon: '🎥' }];
 
-// Admin is a pure account-management role, not a gameplay one -- it gets its own single
-// link (which doubles as its landing page) instead of the shared game surface.
-const ADMIN_LINKS: SidebarLink[] = [{ to: '/admin', key: 'nav.admin', icon: '🛡️' }];
+// Admin is a pure account-management role, not a gameplay one -- instead of the shared
+// game surface it gets one icon per section (Users/Videos/Reports), each its own route
+// (see App.tsx's /admin/:tab), same as every other page in the app.
+const ADMIN_LINKS: SidebarLink[] = [
+  { to: '/admin/users', key: 'nav.adminUsers', icon: <RiGroupFill size={20} /> },
+  { to: '/admin/videos', key: 'nav.adminVideos', icon: <RiFilmFill size={20} /> },
+  { to: '/admin/reports', key: 'nav.adminReports', icon: <RiBarChartBoxFill size={20} /> },
+];
 
 export function Sidebar() {
   const { user } = useAuth();

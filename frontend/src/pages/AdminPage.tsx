@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth, type Role } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -105,25 +106,23 @@ function AdminUsersPanel() {
   );
 }
 
+const TABS: Tab[] = ['users', 'videos', 'reports'];
+
+// Each section used to be an in-page tab switcher; it's now its own icon-bar entry
+// (see Sidebar.tsx's ADMIN_LINKS) and its own route, matching every other page in the
+// app -- Users/Videos/Reports/Friends/etc. are each reached by clicking a distinct icon,
+// not by a secondary in-page control.
 export function AdminPage() {
   const { t } = useLanguage();
-  const [tab, setTab] = useState<Tab>('users');
+  const { tab: rawTab } = useParams<{ tab: string }>();
+  if (!TABS.includes(rawTab as Tab)) return <Navigate to="/admin/users" replace />;
+  const tab = rawTab as Tab;
+
+  const titleKey = tab === 'users' ? 'admin.tabUsers' : tab === 'videos' ? 'admin.tabVideos' : 'admin.tabReports';
 
   return (
     <div className="stack">
-      <Topbar title={t('admin.pageTitle')} subtitle={t('admin.pageSubtitle')} />
-
-      <div className="flex gap-sm">
-        <button type="button" className={`btn ${tab === 'users' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTab('users')}>
-          {t('admin.tabUsers')}
-        </button>
-        <button type="button" className={`btn ${tab === 'videos' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTab('videos')}>
-          {t('admin.tabVideos')}
-        </button>
-        <button type="button" className={`btn ${tab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTab('reports')}>
-          {t('admin.tabReports')}
-        </button>
-      </div>
+      <Topbar title={t(titleKey)} subtitle={t('admin.pageSubtitle')} />
 
       {tab === 'users' && <AdminUsersPanel />}
       {tab === 'videos' && <AdminVideosPanel />}
