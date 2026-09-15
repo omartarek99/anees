@@ -184,11 +184,22 @@ export function WorksheetsPage() {
             </h2>
             <div className="flex gap-sm">
               {/* Printing a worksheet for a class is a teacher task -- students solve it
-                  interactively in-app instead, so this stays out of their view. */}
+                  interactively in-app instead, so this stays out of their view. The +10
+                  badge mirrors TEACHER_PRINT_POINTS in backend lib/xp.ts -- purely a
+                  heads-up before they click, the actual award happens server-side. */}
               {user?.role === 'teacher' && (
-                <button className="btn btn-secondary btn-sm" onClick={handlePrint}>
-                  {t('worksheets.print')}
-                </button>
+                <span className="flex gap-sm" style={{ alignItems: 'center' }}>
+                  <button className="btn btn-secondary btn-sm" onClick={handlePrint}>
+                    {t('worksheets.print')}
+                  </button>
+                  <span
+                    className="badge badge-gold"
+                    style={{ fontSize: 11 }}
+                    title={t('worksheets.printPoints', { points: 10 })}
+                  >
+                    🏆 {t('worksheets.printPoints', { points: 10 })}
+                  </span>
+                </span>
               )}
               <button className="btn btn-ghost btn-sm" onClick={reset}>
                 {t('common.cancel')}
