@@ -1530,26 +1530,24 @@ a:focus-visible {
    Same portal + tiling-watermark pattern as the printable worksheet above (see its
    comment for why the watermark is a background-image, not a positioned element) -- a
    single-page decorative document instead of a multi-page one, so it doesn't need the
-   worksheet's break-inside/counter machinery, just a wide bordered card. Prints on its
-   own landscape page via the named `@page certificate` below (opted into with the `page`
-   property on the portal) -- the worksheet's own pages stay portrait, unaffected, since
-   the two are never printed in the same action.
+   worksheet's break-inside/counter machinery, just a wide bordered card.
+
+   Prints landscape, but that's set by ProfilePage.tsx's print trigger injecting a plain
+   `<style>@page{size:landscape}</style>` for the few seconds around the actual print call,
+   not by a rule here -- a `@page certificate {}` *named* page (opted into via `page:
+   certificate` on the portal) is valid CSS Paged Media syntax and looked right in every
+   on-screen check, but didn't actually drive Chrome's print orientation in a real print (a
+   real print came out portrait despite it). Don't reintroduce a named-page rule here
+   without confirming it actually works in a real print dialog, not just on-screen.
 
    Fills the printable area exactly (width: 100%, no fixed max-width) rather than a fixed
    pixel size -- a fixed px width can't know the actual paper size/margins Chrome ends up
    using, so it risked overflowing onto a second page or leaving a mismatched gutter;
-   percentage width always exactly matches whatever page box @page above produced.
+   percentage width always exactly matches whatever page box the print ends up with.
 
    --cert-light/--cert-dark are set inline per-instance (PrintableCertificate.tsx) from the
    certificate's tier (bronze/gold/platinum, lib/certificateTiers.ts) -- every accent color
    below reads from them instead of a hardcoded hex so the whole card re-themes per tier. */
-@page certificate {
-  size: landscape;
-  margin: 10mm 16mm;
-}
-.printable-certificate-portal {
-  page: certificate;
-}
 
 /* A shield silhouette, not a bordered rectangle -- clip-path polygon() instead of
    border/border-radius. A plain CSS border can't follow a clip-path (it stays drawn along
@@ -1696,9 +1694,9 @@ a:focus-visible {
    only the recipient name and achievement title are overlaid as plain positioned text
    (percentages, so they always track the image regardless of what size it prints at),
    landing on the photo's own "Named Names" / achievement line; nothing else about the
-   image is touched. Still prints on the shared landscape @page certificate above -- the
-   photo is portrait, so it's simply centered on that wider page rather than getting its
-   own page-size rule, which would add a second named page for one certificate variant. */
+   image is touched. Prints on the page's own natural (portrait) default -- unlike the
+   drawn shield, ProfilePage.tsx's print trigger does NOT inject a landscape override for
+   these, since the photo is portrait-shaped and looks right on a portrait page as-is. */
 .printable-certificate-photo-container {
   text-align: center;
   padding: 20px 0;

@@ -2,7 +2,7 @@ import { useId, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
-import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
+import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, usesCertificatePhotoTemplate, type CertificateType } from '../lib/certificateTiers';
 
 export type PrintableCertificateData = {
   recipientName: string;
@@ -161,8 +161,9 @@ const BRONZE_STUDENT_PHOTO = '/Certificate/Bronze-student.png';
 export function PrintableCertificate({ data }: { data: PrintableCertificateData }) {
   const { t, lang, dir } = useLanguage();
   const palette = CERT_PALETTES[data.type];
-  const usePlatinumStudentPhoto = data.type === 'platinum' && data.recipientRole === 'student';
-  const useBronzeStudentPhoto = data.type === 'bronze' && data.recipientRole === 'student';
+  const usePhotoTemplate = usesCertificatePhotoTemplate(data.type, data.recipientRole);
+  const usePlatinumStudentPhoto = usePhotoTemplate && data.type === 'platinum';
+  const useBronzeStudentPhoto = usePhotoTemplate && data.type === 'bronze';
 
   const watermarkSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><text x="120" y="130" font-size="30" font-weight="800" fill="${palette.dark}" fill-opacity="0.07" text-anchor="middle" transform="rotate(-24 120 120)" font-family="sans-serif">${t('brand')}</text></svg>`;
   const frameStyle = {
