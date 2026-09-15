@@ -1696,19 +1696,25 @@ a:focus-visible {
    landing on the photo's own "Named Names" / achievement line; nothing else about the
    image is touched. Prints on the page's own natural (portrait) default -- unlike the
    drawn shield, ProfilePage.tsx's print trigger does NOT inject a landscape override for
-   these, since the photo is portrait-shaped and looks right on a portrait page as-is. */
+   these, since the photo is portrait-shaped and looks right on a portrait page as-is.
+
+   width: 100% (no fixed max-height) so the photo fills the printable page exactly instead
+   of sitting as a small fixed-size box with blank paper around it -- these plaque photos'
+   own aspect ratio (roughly 3:4) is already close to a portrait page's printable area, so
+   filling the width leaves height comfortably under the page's, no overflow onto a second
+   page. Same reasoning as the drawn shield's own width: 100% a few rules up. */
 .printable-certificate-photo-container {
-  text-align: center;
-  padding: 20px 0;
+  width: 100%;
 }
 .printable-certificate-photo-wrap {
   position: relative;
-  display: inline-block;
+  display: block;
+  width: 100%;
 }
 .printable-certificate-photo {
   display: block;
-  max-height: 420px;
-  width: auto;
+  width: 100%;
+  height: auto;
 }
 /* top is the vertical CENTER of the baked-in text it sits over (translateY(-50%) keeps
    that true regardless of the span's own line-height), measured directly off the source
