@@ -1749,3 +1749,33 @@ a:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* The bronze plaque (Bronze-student.png) already has two blank copper plates built in --
+   date on the left, name on the right -- so unlike the platinum photo above, these sit
+   directly on the plate with no masking patch needed, just text in a tone that reads like
+   the plaque's own engraved lettering. */
+.printable-certificate-photo-bronze-date {
+  position: absolute;
+  top: 92%;
+  left: 3%;
+  width: 28%;
+  transform: translateY(-50%);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ddc3b3;
+}
+.printable-certificate-photo-bronze-name {
+  position: absolute;
+  top: 92%;
+  left: 68%;
+  width: 29%;
+  transform: translateY(-50%);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ddc3b3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
