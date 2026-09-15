@@ -9,6 +9,7 @@ import { moderateContent } from '../lib/moderation.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { teacherReelSchema, teacherReelQuestionSchema, generateQuestionsSchema } from '../lib/schemas.js';
 import { compressVideo } from '../lib/videoCompression.js';
+import { awardTeacherPoints, teacherVideoUploadPoints } from '../lib/xp.js';
 import { VIDEO_BUCKET, VIDEO_PATH_PREFIX, deleteReelVideoIfAny } from '../lib/reelVideo.js';
 import { generateQuizQuestions } from '../lib/gemini.js';
 import { aiGenerationLimiter } from '../middleware/rateLimit.js';
@@ -412,6 +413,11 @@ teacherReelsRouter.post(
         Math.round(durationSeconds),
         reel.id
       );
+      // 10 teacher points per 30s of real video duration, capped at 90s counted (see
+      // lib/xp.ts) -- awarded on every successful upload, including replacing an
+      // existing video, same as every other point source in this app pays out per action.
+      const points = teacherVideoUploadPoints(durationSeconds);
+      if (points > 0) awardTeacherPoints(req.userId!, points, 'video_upload');
     } else {
       db.prepare(`UPDATE reels SET video_url = ? WHERE id = ?`).run(publicUrlData.publicUrl, reel.id);
     }

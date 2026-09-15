@@ -40,6 +40,29 @@ export function awardXp(userId: number, amount: number, reason: string) {
   db.prepare(`UPDATE users SET total_xp = total_xp + ? WHERE id = ?`).run(amount, userId);
 }
 
+// Teacher points are a separate currency from total_xp above, only ever earned by
+// teacher accounts -- printing a worksheet (routes/worksheets.ts POST /print) and
+// uploading a lesson video (routes/teacherReels.ts POST /:id/video) are the only two
+// sources, driving the teacher-only leaderboard (routes/leaderboard.ts).
+export const TEACHER_PRINT_POINTS = 10;
+export const TEACHER_VIDEO_POINTS_PER_30S = 10;
+// A video only ever earns points for its first 90 seconds -- a 10-minute lesson video
+// earns exactly as much as a 90-second one (30 points), not proportionally more.
+export const TEACHER_VIDEO_MAX_COUNTED_SECONDS = 90;
+
+export function awardTeacherPoints(userId: number, amount: number, reason: string) {
+  if (amount === 0) return;
+  db.prepare(`INSERT INTO teacher_point_events (user_id, amount, reason) VALUES (?,?,?)`).run(userId, amount, reason);
+  db.prepare(`UPDATE users SET teacher_points = teacher_points + ? WHERE id = ?`).run(amount, userId);
+}
+
+/** 10 points per full 30-second chunk of video, counting at most
+ * TEACHER_VIDEO_MAX_COUNTED_SECONDS of the actual duration (so max 30 points/upload). */
+export function teacherVideoUploadPoints(durationSeconds: number): number {
+  const counted = Math.min(durationSeconds, TEACHER_VIDEO_MAX_COUNTED_SECONDS);
+  return Math.floor(counted / 30) * TEACHER_VIDEO_POINTS_PER_30S;
+}
+
 /** "Player level" = the map level the student is currently on (highest completed + 1), capped at 50. */
 export function getPlayerLevel(userId: number): number {
   const row = db

@@ -13,6 +13,9 @@ type LeaderboardResponse = {
   leaders: Leader[];
   me: Leader | null;
   inTop20: boolean;
+  // True when the requesting user is a teacher -- backend then ranks by teacher_points
+  // (video uploads + worksheet prints) among teachers only, instead of student XP.
+  isTeacherBoard: boolean;
 };
 
 const CROWNS: Record<number, string> = { 1: '👑', 2: '🥈', 3: '🥉' };
@@ -72,14 +75,18 @@ export function LeaderboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isTeacherBoard = data?.isTeacherBoard ?? user?.role === 'teacher';
   const monthLabel = new Date().toLocaleString(lang === 'ar' ? 'ar-QA' : 'en-US', { month: 'long', year: 'numeric' });
-  const xpUnit = t('common.xpUnit');
+  const xpUnit = isTeacherBoard ? t('common.pointsUnit') : t('common.xpUnit');
   const top3 = data?.leaders.slice(0, 3) ?? [];
   const rest = data?.leaders.slice(3) ?? [];
 
   return (
     <div className="stack">
-      <Topbar title={t('leaderboard.title')} subtitle={t('leaderboard.subtitle', { month: monthLabel })} />
+      <Topbar
+        title={t('leaderboard.title')}
+        subtitle={t(isTeacherBoard ? 'leaderboard.teacherSubtitle' : 'leaderboard.subtitle', { month: monthLabel })}
+      />
 
       {error && <div className="form-error-banner">{error}</div>}
       {!data && !error && (
@@ -91,7 +98,7 @@ export function LeaderboardPage() {
       {data && data.leaders.length === 0 && (
         <div className="empty-state">
           <div style={{ fontSize: 40 }}>🌱</div>
-          <p>{t('leaderboard.empty')}</p>
+          <p>{t(isTeacherBoard ? 'leaderboard.teacherEmpty' : 'leaderboard.empty')}</p>
         </div>
       )}
 

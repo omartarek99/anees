@@ -11,6 +11,11 @@ CREATE TABLE IF NOT EXISTS users (
   display_name TEXT NOT NULL,
   avatar_key TEXT NOT NULL DEFAULT 'falcon',
   total_xp INTEGER NOT NULL DEFAULT 0,
+  -- Separate currency from total_xp, only ever earned by teacher accounts (worksheet
+  -- prints + video uploads, see lib/xp.ts) -- drives the teacher-only leaderboard
+  -- (routes/leaderboard.ts), kept apart from student XP since it rewards a completely
+  -- different kind of activity and isn't meant to be comparable to it.
+  teacher_points INTEGER NOT NULL DEFAULT 0,
   is_seed INTEGER NOT NULL DEFAULT 0,
   role TEXT NOT NULL CHECK (role IN ('student','teacher','admin')) DEFAULT 'student',
   grade INTEGER,
@@ -208,6 +213,24 @@ CREATE TABLE IF NOT EXISTS xp_events (
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   amount INTEGER NOT NULL,
   reason TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Audit log for teacher_points awards (worksheet_print / video_upload), mirroring
+-- xp_events -- also what the teacher leaderboard sums per month (routes/leaderboard.ts).
+CREATE TABLE IF NOT EXISTS teacher_point_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- One row per worksheet-print action a teacher takes (routes/worksheets.ts POST /print) --
+-- both the "worksheets printed" profile stat and the print-points award read off this.
+CREATE TABLE IF NOT EXISTS worksheet_prints (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

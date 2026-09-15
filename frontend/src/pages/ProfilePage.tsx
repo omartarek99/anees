@@ -26,11 +26,16 @@ type Profile = {
   role: 'student' | 'teacher' | 'admin';
   bio: string;
   totalXp: number;
+  // Separate currency from totalXp, only ever nonzero for teachers -- see backend
+  // lib/xp.ts. Drives the teacher-only leaderboard and this profile's stats for teachers.
+  teacherPoints: number;
   playerLevel: number;
   rankTier: RankTier;
   levelsCompleted: number;
   bossesDefeated: number;
   worksheetsCompleted: number;
+  videosCount: number;
+  worksheetsPrintedCount: number;
   joinedAt: string;
   // Only present (and only ever populated) for teacher profiles -- their authored,
   // published reels, shown as a portfolio any signed-in viewer can browse.
@@ -193,15 +198,25 @@ export function ProfilePage() {
 
           <div className="stack" style={{ gap: 4 }}>
             <RankBadge tier={profile.rankTier} size={26} />
-            <span style={{ fontSize: 13, fontWeight: 700 }}>
-              ⭐ {profile.totalXp} {t('profile.totalXp')}
-            </span>
-            <span style={{ fontSize: 13, fontWeight: 700 }}>
-              📚 {profile.levelsCompleted} {t('profile.levelsCompleted')}
-            </span>
+            {profile.role === 'teacher' ? (
+              <span style={{ fontSize: 13, fontWeight: 700 }}>
+                🏆 {profile.teacherPoints} {t('profile.teacherPoints')}
+              </span>
+            ) : (
+              <>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>
+                  ⭐ {profile.totalXp} {t('profile.totalXp')}
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>
+                  📚 {profile.levelsCompleted} {t('profile.levelsCompleted')}
+                </span>
+              </>
+            )}
             {profile.rankTier.nextMinXp !== null && (
               <p className="muted" style={{ fontSize: 11, margin: 0 }}>
-                {t('profile.nextTierXp', { xp: profile.rankTier.nextMinXp - profile.totalXp })}
+                {t('profile.nextTierXp', {
+                  xp: profile.rankTier.nextMinXp - (profile.role === 'teacher' ? profile.teacherPoints : profile.totalXp),
+                })}
               </p>
             )}
           </div>
@@ -209,8 +224,17 @@ export function ProfilePage() {
       </div>
 
       <div className="grid-cards">
-        <StatCard icon="🐉" label={t('profile.bossesDefeated')} value={profile.bossesDefeated} color={STAT_COLORS[0]} />
-        <StatCard icon="📝" label={t('profile.worksheetsDone')} value={profile.worksheetsCompleted} color={STAT_COLORS[1]} />
+        {profile.role === 'teacher' ? (
+          <>
+            <StatCard icon="🎬" label={t('profile.totalVideos')} value={profile.videosCount} color={STAT_COLORS[0]} />
+            <StatCard icon="🖨️" label={t('profile.worksheetsPrinted')} value={profile.worksheetsPrintedCount} color={STAT_COLORS[1]} />
+          </>
+        ) : (
+          <>
+            <StatCard icon="🐉" label={t('profile.bossesDefeated')} value={profile.bossesDefeated} color={STAT_COLORS[0]} />
+            <StatCard icon="📝" label={t('profile.worksheetsDone')} value={profile.worksheetsCompleted} color={STAT_COLORS[1]} />
+          </>
+        )}
       </div>
 
       <div className="card stack" style={{ gap: 6 }}>

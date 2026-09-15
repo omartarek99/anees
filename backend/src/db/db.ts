@@ -232,3 +232,9 @@ if (!reelWatchCols.some((c) => c.name === 'loop_watched_seconds')) {
 if (!reelWatchCols.some((c) => c.name === 'current_loop_tier')) {
   db.exec(`ALTER TABLE reel_watch_progress ADD COLUMN current_loop_tier INTEGER NOT NULL DEFAULT 0`);
 }
+
+// Teacher points (separate currency from total_xp), added after the initial users table.
+const userColsForTeacherPoints = db.prepare(`PRAGMA table_info(users)`).all() as { name: string }[];
+if (!userColsForTeacherPoints.some((c) => c.name === 'teacher_points')) {
+  db.exec(`ALTER TABLE users ADD COLUMN teacher_points INTEGER NOT NULL DEFAULT 0`);
+}

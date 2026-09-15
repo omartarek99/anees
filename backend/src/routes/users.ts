@@ -7,7 +7,7 @@ import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { updateProfileSchema } from '../lib/schemas.js';
 import { moderateText } from '../lib/moderation.js';
 import { getPlayerLevel } from '../lib/xp.js';
-import { getRankTier } from '../lib/ranks.js';
+import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { AVATAR_PHOTO_BUCKET, AVATAR_PHOTO_PATH_PREFIX, deleteAvatarPhotoIfAny } from '../lib/avatarPhoto.js';
 
@@ -51,6 +51,10 @@ function profileSummary(user: any) {
   const worksheetsCompleted = db
     .prepare(`SELECT COUNT(*) as c FROM worksheet_attempts WHERE user_id = ? AND status = 'submitted'`)
     .get(user.id) as { c: number };
+  const videos = user.role === 'teacher' ? teacherVideos(user.id) : undefined;
+  const worksheetsPrinted = db
+    .prepare(`SELECT COUNT(*) as c FROM worksheet_prints WHERE user_id = ?`)
+    .get(user.id) as { c: number };
 
   return {
     username: user.username,
@@ -60,13 +64,18 @@ function profileSummary(user: any) {
     role: user.role,
     bio: user.bio ?? '',
     totalXp: user.total_xp,
+    // Separate currency from total_xp, only ever nonzero for teachers (see lib/xp.ts) --
+    // drives the teacher-only leaderboard, shown on their own profile instead of total XP.
+    teacherPoints: user.teacher_points ?? 0,
     playerLevel,
-    rankTier: getRankTier(user.total_xp),
+    rankTier: user.role === 'teacher' ? getTeacherRankTier(user.teacher_points ?? 0) : getRankTier(user.total_xp),
     levelsCompleted: completedLevels.c,
     bossesDefeated: bossesDefeated.c,
     worksheetsCompleted: worksheetsCompleted.c,
+    videosCount: videos?.length ?? 0,
+    worksheetsPrintedCount: worksheetsPrinted.c,
     joinedAt: user.created_at,
-    videos: user.role === 'teacher' ? teacherVideos(user.id) : undefined,
+    videos,
   };
 }
 

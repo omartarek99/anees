@@ -91,7 +91,7 @@ export function WorksheetsPage() {
   // blanking it just for the print and restoring it on `afterprint` (fires whether the
   // student/teacher actually printed or cancelled) keeps the tab's real title everywhere
   // else without a blank title ever being visible on screen.
-  function handlePrint() {
+  async function handlePrint() {
     const original = document.title;
     document.title = ' ';
     const restore = () => {
@@ -99,6 +99,16 @@ export function WorksheetsPage() {
       window.removeEventListener('afterprint', restore);
     };
     window.addEventListener('afterprint', restore);
+
+    // A page can't observe window.print() actually completing (vs. being cancelled in
+    // the dialog), so "printed" here just means "clicked print" -- tracked/awarded
+    // best-effort, never blocking the print itself if the request is slow or fails.
+    try {
+      await api.post('/worksheets/print', {});
+      await refreshUser();
+    } catch {
+      // ignore -- points tracking is best-effort
+    }
     window.print();
   }
 

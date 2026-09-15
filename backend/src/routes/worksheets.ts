@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/db.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
-import { awardXp, WORKSHEET_XP_PER_CORRECT } from '../lib/xp.js';
+import { awardXp, awardTeacherPoints, TEACHER_PRINT_POINTS, WORKSHEET_XP_PER_CORRECT } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
 
 export const worksheetsRouter = Router();
@@ -102,6 +102,17 @@ worksheetsRouter.post('/:id/submit', requireAuth, requireCsrfHeader, validateBod
   ).run(correctCount, xpEarned, JSON.stringify(answers), attempt.id);
 
   res.json({ results, correctCount, total: questions.length, xpEarned });
+});
+
+// Called right before window.print() on the teacher's printable worksheet (frontend
+// WorksheetsPage.tsx) -- printing itself is a browser-native action a page can't observe
+// completing or being cancelled, so this just tracks "the teacher clicked print", which is
+// what "each print he make" means in practice. Teacher-only: students never see the print
+// button in the first place, but the role check here is the real gate.
+worksheetsRouter.post('/print', requireAuth, requireRole('teacher'), requireCsrfHeader, (req, res) => {
+  db.prepare(`INSERT INTO worksheet_prints (user_id) VALUES (?)`).run(req.userId!);
+  awardTeacherPoints(req.userId!, TEACHER_PRINT_POINTS, 'worksheet_print');
+  res.json({ ok: true });
 });
 
 worksheetsRouter.get('/history', requireAuth, (req, res) => {
