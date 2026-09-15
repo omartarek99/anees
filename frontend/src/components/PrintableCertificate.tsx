@@ -2,7 +2,7 @@ import { useId, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
-import { CERT_PALETTES, type CertificateType } from '../lib/certificateTiers';
+import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
 
 export type PrintableCertificateData = {
   recipientName: string;
@@ -63,45 +63,69 @@ function TeacherSeal({ light, dark }: { light: string; dark: string }) {
   );
 }
 
-// Gear (bronze), sunburst (gold), and atom (platinum) -- a student certificate's seal icon
-// changes with its tier, not just its color, so each tier reads as its own little emblem.
+// Gear cluster (bronze), orrery (gold), and atom + crystals (platinum) -- a student
+// certificate's seal icon changes with its tier, not just its color, so each tier reads
+// as its own little emblem (mechanical / celestial / crystalline, echoing the reference
+// plaques this design was modeled on) rather than a single reused medal shape.
 function GearIcon({ light, dark }: { light: string; dark: string }) {
-  const teeth = Array.from({ length: 8 }, (_, i) => (
-    <rect key={i} x="46" y="3" width="8" height="15" rx="2.5" fill={dark} transform={`rotate(${(360 / 8) * i} 50 50)`} />
+  const bigTeeth = Array.from({ length: 8 }, (_, i) => (
+    <rect key={i} x="46" y="2" width="8" height="14" rx="2.5" fill={dark} transform={`rotate(${(360 / 8) * i} 50 40)`} />
+  ));
+  const smallTeeth = Array.from({ length: 6 }, (_, i) => (
+    <rect key={`s${i}`} x="73.5" y="61" width="5" height="9" rx="1.5" fill={light} transform={`rotate(${(360 / 6) * i} 76 68)`} />
   ));
   return (
     <svg viewBox="0 0 100 100" width="66" height="66" aria-hidden="true">
-      {teeth}
-      <circle cx="50" cy="50" r="29" fill={light} stroke={dark} strokeWidth="2.5" />
-      <circle cx="50" cy="50" r="12" fill="#fff" stroke={dark} strokeWidth="2.5" />
+      {bigTeeth}
+      <circle cx="50" cy="40" r="25" fill={light} stroke={dark} strokeWidth="2.5" />
+      <circle cx="50" cy="40" r="9" fill="#fff" stroke={dark} strokeWidth="2.5" />
+      {smallTeeth}
+      <circle cx="76" cy="68" r="12" fill={dark} stroke={light} strokeWidth="2" />
+      <circle cx="76" cy="68" r="4.5" fill="#fff" />
     </svg>
   );
 }
 function SunIcon({ light, dark }: { light: string; dark: string }) {
   const rays = Array.from({ length: 12 }, (_, i) => (
-    <rect key={i} x="48" y="1" width="4" height="15" rx="2" fill={light} transform={`rotate(${(360 / 12) * i} 50 50)`} />
+    <rect key={i} x="48" y="1" width="4" height="12" rx="2" fill={light} transform={`rotate(${(360 / 12) * i} 50 50)`} />
   ));
+  const planets = [
+    { angle: 20, r: 3.5 },
+    { angle: 140, r: 3 },
+    { angle: 250, r: 4 },
+  ];
   return (
     <svg viewBox="0 0 100 100" width="66" height="66" aria-hidden="true">
+      <circle cx="50" cy="50" r="44" fill="none" stroke={light} strokeWidth="1.2" opacity="0.6" />
+      <circle cx="50" cy="50" r="36" fill="none" stroke={dark} strokeWidth="1" strokeDasharray="2 3" opacity="0.6" />
       {rays}
-      <circle cx="50" cy="50" r="26" fill={dark} />
+      <circle cx="50" cy="50" r="21" fill={dark} />
       <path
-        d="M50 32 L55.5 45.5 L70 45.5 L58.5 54 L62.5 68 L50 59.5 L37.5 68 L41.5 54 L30 45.5 L44.5 45.5 Z"
+        d="M50 36 L54 46 L64 46 L56 52 L59 62 L50 56 L41 62 L44 52 L36 46 L46 46 Z"
         fill="#fff"
       />
+      {planets.map((p, i) => {
+        const rad = (p.angle * Math.PI) / 180;
+        const cx = 50 + 44 * Math.cos(rad);
+        const cy = 50 + 44 * Math.sin(rad);
+        return <circle key={i} cx={cx} cy={cy} r={p.r} fill={dark} stroke={light} strokeWidth="1" />;
+      })}
     </svg>
   );
 }
 function AtomIcon({ light, dark }: { light: string; dark: string }) {
   return (
     <svg viewBox="0 0 100 100" width="66" height="66" aria-hidden="true">
-      <ellipse cx="50" cy="50" rx="42" ry="16" fill="none" stroke={light} strokeWidth="3" />
-      <ellipse cx="50" cy="50" rx="42" ry="16" fill="none" stroke={light} strokeWidth="3" transform="rotate(60 50 50)" />
-      <ellipse cx="50" cy="50" rx="42" ry="16" fill="none" stroke={light} strokeWidth="3" transform="rotate(120 50 50)" />
-      <circle cx="50" cy="50" r="7" fill={dark} />
-      <circle cx="92" cy="50" r="4.5" fill={dark} />
-      <circle cx="29" cy="64" r="4.5" fill={dark} transform="rotate(60 50 50)" />
-      <circle cx="29" cy="64" r="4.5" fill={dark} transform="rotate(120 50 50)" />
+      <ellipse cx="50" cy="44" rx="40" ry="15" fill="none" stroke={light} strokeWidth="3" />
+      <ellipse cx="50" cy="44" rx="40" ry="15" fill="none" stroke={light} strokeWidth="3" transform="rotate(60 50 44)" />
+      <ellipse cx="50" cy="44" rx="40" ry="15" fill="none" stroke={light} strokeWidth="3" transform="rotate(120 50 44)" />
+      <circle cx="50" cy="44" r="7" fill={dark} />
+      <circle cx="90" cy="44" r="4" fill={dark} />
+      <circle cx="30" cy="57" r="4" fill={dark} transform="rotate(60 50 44)" />
+      <circle cx="30" cy="57" r="4" fill={dark} transform="rotate(120 50 44)" />
+      <path d="M37 88 L41.5 74 L46 88 Z" fill={light} stroke={dark} strokeWidth="1" />
+      <path d="M47.5 92 L53 70 L58.5 92 Z" fill={dark} stroke={dark} strokeWidth="1" opacity="0.9" />
+      <path d="M59 88 L63.5 76 L68 88 Z" fill={light} stroke={dark} strokeWidth="1" />
     </svg>
   );
 }
@@ -117,19 +141,28 @@ function StudentSeal({ light, dark, type }: { light: string; dark: string; type:
  * its own landscape page (theme.css's `@page certificate`, opted into via the `page`
  * property) -- a certificate is conventionally wider than tall, unlike the worksheet's
  * portrait pages, and the two never print at the same time so the named page doesn't
- * affect the worksheet's own (default, portrait) page box. The whole color scheme (border,
- * heading, divider, corners, seal, signature) is driven by the certificate's tier -- set
- * as CSS custom properties here so theme.css's rules can stay tier-agnostic. */
+ * affect the worksheet's own (default, portrait) page box.
+ *
+ * The card is a shield silhouette, not a bordered rectangle -- a CSS `border` can't follow
+ * a `clip-path` polygon (it stays drawn along the box's rectangular edge and gets clipped
+ * off wherever the polygon cuts inside it), so the "border" here is two nested elements
+ * clipped to the *same* polygon: an outer one (the tier gradient) slightly larger than an
+ * inner one (the white/watermarked panel with all the actual content), the size
+ * difference reading as a frame all the way around the shield's outline. The whole color
+ * scheme (frame, heading, divider, seal, signature) is driven by the certificate's tier --
+ * set as CSS custom properties here so theme.css's rules can stay tier-agnostic. */
 export function PrintableCertificate({ data }: { data: PrintableCertificateData }) {
   const { t, lang, dir } = useLanguage();
   const palette = CERT_PALETTES[data.type];
 
   const watermarkSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><text x="120" y="130" font-size="30" font-weight="800" fill="${palette.dark}" fill-opacity="0.07" text-anchor="middle" transform="rotate(-24 120 120)" font-family="sans-serif">${t('brand')}</text></svg>`;
-  const cardStyle = {
-    backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(watermarkSvg)}")`,
+  const frameStyle = {
     '--cert-light': palette.light,
     '--cert-dark': palette.dark,
   } as CSSProperties;
+  const panelStyle: CSSProperties = {
+    backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(watermarkSvg)}")`,
+  };
 
   const title = pickText(lang, data.title, data.titleAr);
   const message = pickText(lang, data.message, data.messageAr);
@@ -137,42 +170,39 @@ export function PrintableCertificate({ data }: { data: PrintableCertificateData 
 
   return createPortal(
     <div className="printable-certificate-portal" dir={dir}>
-      <div className="printable-certificate" style={cardStyle}>
-        <span className="printable-certificate-corner printable-certificate-corner-tl" aria-hidden>
-          <CornerFlourish light={palette.light} dark={palette.dark} />
-        </span>
-        <span className="printable-certificate-corner printable-certificate-corner-tr" aria-hidden>
-          <CornerFlourish light={palette.light} dark={palette.dark} />
-        </span>
-        <span className="printable-certificate-corner printable-certificate-corner-br" aria-hidden>
-          <CornerFlourish light={palette.light} dark={palette.dark} />
-        </span>
-        <span className="printable-certificate-corner printable-certificate-corner-bl" aria-hidden>
-          <CornerFlourish light={palette.light} dark={palette.dark} />
-        </span>
-
-        <img src="/icons/icon-192.png" alt="" className="printable-certificate-logo" />
-        <p className="printable-certificate-brand">{t('brand')}</p>
-        <h1 className="printable-certificate-heading">{t('certificate.heading')}</h1>
-        <div className="printable-certificate-divider" aria-hidden />
-        <p className="printable-certificate-presented">{t('certificate.presentedTo')}</p>
-        <p className="printable-certificate-name">{data.recipientName}</p>
-        <p className="printable-certificate-award-title">{title}</p>
-        {message && <p className="printable-certificate-message">{message}</p>}
-
-        <div className="printable-certificate-seal">
-          {data.recipientRole === 'teacher' ? (
-            <TeacherSeal light={palette.light} dark={palette.dark} />
-          ) : (
-            <StudentSeal light={palette.light} dark={palette.dark} type={data.type} />
-          )}
-        </div>
-
-        <div className="printable-certificate-footer">
-          <span className="printable-certificate-signature">{t('certificate.signatureLine')}</span>
-          <span>
-            {t('certificate.dateLabel')}: {dateLabel}
+      <div className="printable-certificate" style={frameStyle}>
+        <div className="printable-certificate-panel" style={panelStyle}>
+          <span className="printable-certificate-corner printable-certificate-corner-tl" aria-hidden>
+            <CornerFlourish light={palette.light} dark={palette.dark} />
           </span>
+          <span className="printable-certificate-corner printable-certificate-corner-tr" aria-hidden>
+            <CornerFlourish light={palette.light} dark={palette.dark} />
+          </span>
+
+          <img src="/icons/icon-192.png" alt="" className="printable-certificate-logo" />
+          <p className="printable-certificate-brand">{t('brand')}</p>
+          <span className="printable-certificate-tier-badge">{t(CERT_TYPE_LABEL_KEY[data.type])}</span>
+          <h1 className="printable-certificate-heading">{t('certificate.heading')}</h1>
+          <div className="printable-certificate-divider" aria-hidden />
+          <p className="printable-certificate-presented">{t('certificate.presentedTo')}</p>
+          <p className="printable-certificate-name">{data.recipientName}</p>
+          <p className="printable-certificate-award-title">{title}</p>
+          {message && <p className="printable-certificate-message">{message}</p>}
+
+          <div className="printable-certificate-seal">
+            {data.recipientRole === 'teacher' ? (
+              <TeacherSeal light={palette.light} dark={palette.dark} />
+            ) : (
+              <StudentSeal light={palette.light} dark={palette.dark} type={data.type} />
+            )}
+          </div>
+
+          <div className="printable-certificate-footer">
+            <span className="printable-certificate-signature">{t('certificate.signatureLine')}</span>
+            <span>
+              {t('certificate.dateLabel')}: {dateLabel}
+            </span>
+          </div>
         </div>
       </div>
     </div>,

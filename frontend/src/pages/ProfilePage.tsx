@@ -9,13 +9,7 @@ import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
 import { PrintableCertificate } from '../components/PrintableCertificate';
-import { CERT_PALETTES, type CertificateType } from '../lib/certificateTiers';
-
-const CERT_TYPE_LABEL_KEY: Record<CertificateType, 'admin.certTypeBronze' | 'admin.certTypeGold' | 'admin.certTypePlatinum'> = {
-  bronze: 'admin.certTypeBronze',
-  gold: 'admin.certTypeGold',
-  platinum: 'admin.certTypePlatinum',
-};
+import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
 
 type TeacherVideo = {
   id: number;

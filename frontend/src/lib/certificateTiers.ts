@@ -11,3 +11,11 @@ export const CERT_PALETTES: Record<CertificateType, { light: string; dark: strin
   gold: { light: '#f0c96a', dark: '#c9971f' },
   platinum: { light: '#7fd8cf', dark: '#379e93' },
 };
+
+// Shared by the admin composer's tier picker, the profile card badge, and the printed
+// certificate's own tier label -- one map instead of three copies drifting apart.
+export const CERT_TYPE_LABEL_KEY: Record<CertificateType, 'admin.certTypeBronze' | 'admin.certTypeGold' | 'admin.certTypePlatinum'> = {
+  bronze: 'admin.certTypeBronze',
+  gold: 'admin.certTypeGold',
+  platinum: 'admin.certTypePlatinum',
+};

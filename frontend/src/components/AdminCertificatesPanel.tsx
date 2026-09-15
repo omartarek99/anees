@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
-import { CERT_TYPES, CERT_PALETTES, type CertificateType } from '../lib/certificateTiers';
+import { CERT_TYPES, CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
 
 type AdminUserSummary = { id: number; username: string; displayName: string; role: 'student' | 'teacher' | 'admin' };
 
@@ -21,11 +21,6 @@ type Certificate = {
   createdAt: string;
 };
 
-const CERT_TYPE_LABEL_KEY: Record<CertificateType, 'admin.certTypeBronze' | 'admin.certTypeGold' | 'admin.certTypePlatinum'> = {
-  bronze: 'admin.certTypeBronze',
-  gold: 'admin.certTypeGold',
-  platinum: 'admin.certTypePlatinum',
-};
 
 /** Admin-only: hand-issue a certificate to a student or teacher's profile (shown there via
  * routes/users.ts profileSummary, printable the same way a teacher's worksheet is -- see

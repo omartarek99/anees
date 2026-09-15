@@ -1551,40 +1551,39 @@ a:focus-visible {
   page: certificate;
 }
 
+/* A shield silhouette, not a bordered rectangle -- clip-path polygon() instead of
+   border/border-radius. A plain CSS border can't follow a clip-path (it stays drawn along
+   the box's own rectangular edge and gets clipped off wherever the polygon cuts inside
+   it), so the "frame" here is two nested elements clipped to this *same* polygon: this
+   outer one (the tier gradient, sized by its own padding below) and .printable-
+   certificate-panel inside it (smaller by that padding, white/watermarked, holds the
+   actual content) -- the size difference between the two reads as a border following the
+   shield's outline all the way around. Percentages (not fixed px points) so the shape
+   always matches whatever width the page box actually rendered at (see the width: 100%
+   comment above this block). The taper only starts at 76% of the height, keeping the
+   upper three-quarters essentially full width for content -- only the seal/footer near
+   the bottom sit in the narrowing point, which is why the footer below is a centered
+   stack instead of a wide space-between row. */
 .printable-certificate {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 7px;
+  background: linear-gradient(160deg, var(--cert-light), var(--cert-dark));
+  clip-path: polygon(0% 5%, 5% 0%, 95% 0%, 100% 5%, 100% 76%, 80% 90%, 50% 100%, 20% 90%, 0% 76%);
+  position: relative;
+}
+.printable-certificate-panel {
   font-family: var(--font-body);
   color: #201217;
   background-color: #fff;
   background-repeat: repeat;
   background-size: 240px 240px;
-  width: 100%;
   box-sizing: border-box;
-  margin: 0;
-  padding: 30px 56px 22px;
+  padding: 32px 60px 52px;
   text-align: center;
-  border: 3px solid var(--cert-light);
-  border-radius: 24px;
+  clip-path: polygon(0% 5%, 5% 0%, 95% 0%, 100% 5%, 100% 76%, 80% 90%, 50% 100%, 20% 90%, 0% 76%);
   position: relative;
-  overflow: hidden;
-}
-.printable-certificate::before {
-  content: '';
-  position: absolute;
-  inset: 9px;
-  border: 1.5px solid var(--cert-dark);
-  border-radius: 16px;
-  pointer-events: none;
-}
-/* A slim tri-tone bar across the top, echoing the corner flourishes below -- purely
-   decorative, drawn with CSS rather than another SVG since it's just a straight gradient
-   strip. */
-.printable-certificate::after {
-  content: '';
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  height: 9px;
-  background: linear-gradient(90deg, var(--cert-light), var(--cert-dark), var(--cert-light));
 }
 .printable-certificate-corner {
   position: absolute;
@@ -1593,23 +1592,13 @@ a:focus-visible {
   z-index: 1;
 }
 .printable-certificate-corner-tl {
-  top: 16px;
-  inset-inline-start: 16px;
+  top: 22px;
+  inset-inline-start: 22px;
 }
 .printable-certificate-corner-tr {
-  top: 16px;
-  inset-inline-end: 16px;
+  top: 22px;
+  inset-inline-end: 22px;
   transform: rotate(90deg);
-}
-.printable-certificate-corner-br {
-  bottom: 16px;
-  inset-inline-end: 16px;
-  transform: rotate(180deg);
-}
-.printable-certificate-corner-bl {
-  bottom: 16px;
-  inset-inline-start: 16px;
-  transform: rotate(270deg);
 }
 .printable-certificate-logo {
   width: 48px;
@@ -1626,6 +1615,17 @@ a:focus-visible {
   text-transform: uppercase;
   color: var(--cert-dark);
   margin: 0 0 6px;
+}
+.printable-certificate-tier-badge {
+  display: inline-block;
+  padding: 3px 16px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--cert-light), var(--cert-dark));
+  margin: 0 0 10px;
 }
 .printable-certificate-heading {
   font-size: 30px;
@@ -1671,12 +1671,16 @@ a:focus-visible {
   width: 56px;
   margin: 6px auto 0;
 }
+/* Stacked and centered, not a wide space-between row -- the shield's taper means there's
+   less horizontal room down here than up in the wide top section (see the polygon comment
+   above), and short centered lines stay legible at any width the taper leaves. */
 .printable-certificate-footer {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-top: 12px;
-  padding-top: 10px;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid #eee;
   font-size: 11.5px;
   color: #6b4650;
