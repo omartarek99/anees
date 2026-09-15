@@ -30,13 +30,19 @@ export function PrintableWorksheet({
   // than a plain exam.
   const tints = ['pw-tint-a', 'pw-tint-b', 'pw-tint-c', 'pw-tint-d'];
 
+  // The watermark is a *tiling background image*, not a positioned DOM element -- Chrome's
+  // print/PDF engine doesn't reliably repeat position:fixed content across pages (a real,
+  // longstanding limitation despite what the paged-media spec calls for), so a single
+  // watermark element only ever showed up once, clipped wherever it happened to land in
+  // the whole multi-page flow. A background-image tile has no such problem: each page
+  // simply paints the portion of the infinitely-repeating pattern that falls inside it,
+  // the same ordinary way backgrounds always work, page breaks or not.
+  const watermarkSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><text x="120" y="130" font-size="30" font-weight="800" fill="#8a1538" fill-opacity="0.09" text-anchor="middle" transform="rotate(-24 120 120)" font-family="sans-serif">${t('brand')}</text></svg>`;
+  const watermarkStyle = { backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(watermarkSvg)}")` };
+
   return createPortal(
     <div className="printable-worksheet-portal" dir={dir}>
-      <div className="printable-worksheet">
-        <div className="printable-worksheet-watermark" aria-hidden>
-          {t('brand')}
-        </div>
-
+      <div className="printable-worksheet" style={watermarkStyle}>
         <header className="printable-worksheet-header">
           <img src="/icons/icon-192.png" alt="" className="printable-worksheet-logo" />
           <div>

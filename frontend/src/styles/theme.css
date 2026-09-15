@@ -1315,39 +1315,21 @@ a:focus-visible {
   }
 }
 
+/* The brand-name watermark is a *tiling background image* (inline style, PrintableWorksheet.tsx
+   computes the actual data: URL) rather than a positioned DOM element -- Chrome's print/PDF
+   engine doesn't reliably repeat position:fixed content across pages (a real, longstanding
+   limitation despite what the paged-media spec calls for), so a single watermark element
+   only ever showed up once, clipped wherever it happened to land in the whole multi-page
+   flow. A background-image tile has no such problem: each page simply paints the portion
+   of the infinitely-repeating pattern that falls inside it, the same ordinary way
+   backgrounds always work regardless of page breaks -- and paints behind this element's own
+   children automatically, no stacking/z-index concerns at all. */
 .printable-worksheet {
-  position: relative;
   font-family: var(--font-body);
   color: #201217;
-  background: #fff;
-  overflow: hidden;
-}
-
-/* The brand name itself as a faint, rotated watermark, repeated on every printed page --
-   `position: fixed` (not `absolute`) is what makes that repetition happen: in paged media,
-   a fixed element is positioned against each individual page box and drawn on every page,
-   while an absolutely-positioned one is only ever placed once relative to the *whole*
-   scrollable content, landing on a single arbitrary page (and often clipped at a page
-   break) once the worksheet runs past one page -- which is exactly the stray/clipped
-   shape this replaces. Sits behind every other element here: those all have their own
-   `position: relative` (with this staying `position: fixed`, no z-index needed on either
-   side) -- per CSS's own painting order, positioned descendants of a stacking context
-   paint in DOM order when their z-index ties, so being first in the markup
-   (PrintableWorksheet.tsx) is what keeps this below the header/fields/questions/footer
-   painted after it, not a z-index number. */
-.printable-worksheet-watermark {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 150px;
-  font-weight: 800;
-  color: #8a1538;
-  opacity: 0.055;
-  transform: rotate(-24deg);
-  white-space: nowrap;
-  pointer-events: none;
+  background-color: #fff;
+  background-repeat: repeat;
+  background-size: 240px 240px;
 }
 
 .printable-worksheet-header {
@@ -1359,7 +1341,6 @@ a:focus-visible {
   background: linear-gradient(135deg, #8a1538, #c22954);
   color: #fff;
   margin-bottom: 18px;
-  position: relative;
 }
 .printable-worksheet-logo {
   width: 52px;
@@ -1386,7 +1367,6 @@ a:focus-visible {
   font-weight: 700;
   color: #c22954;
   margin: -6px 0 16px;
-  position: relative;
 }
 
 .printable-worksheet-fields {
@@ -1397,7 +1377,6 @@ a:focus-visible {
   font-weight: 700;
   margin: 4px 4px 20px;
   color: #4a0e24;
-  position: relative;
 }
 .printable-worksheet-fields i {
   display: inline-block;
@@ -1411,7 +1390,6 @@ a:focus-visible {
   margin: 0;
   padding: 0;
   counter-reset: pw-question;
-  position: relative;
 }
 .printable-worksheet-questions > li {
   counter-increment: pw-question;
@@ -1494,7 +1472,6 @@ a:focus-visible {
   border-radius: 14px;
   background: rgba(240, 168, 58, 0.12);
   border: 1.5px dashed #f0a83a;
-  position: relative;
 }
 .printable-worksheet-score {
   display: flex;
@@ -1531,5 +1508,4 @@ a:focus-visible {
   letter-spacing: 1px;
   border-top: 1px solid #eee;
   padding-top: 8px;
-  position: relative;
 }
