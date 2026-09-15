@@ -9,7 +9,7 @@ import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
 import { PrintableCertificate } from '../components/PrintableCertificate';
-import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, usesCertificatePhotoTemplate, type CertificateType } from '../lib/certificateTiers';
+import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
 
 type TeacherVideo = {
   id: number;
@@ -112,30 +112,23 @@ export function ProfilePage() {
   // race the portal not existing yet) -- blanks the title the same way WorksheetsPage's
   // print does, restoring it on `afterprint` (fires whether printed or cancelled).
   //
-  // The bronze/platinum certificates are a <img> plaque photo (PrintableCertificate.tsx),
-  // not drawn CSS/SVG -- freshly mounted, its network fetch hasn't necessarily finished by
-  // the time this effect runs, so calling window.print() immediately could rasterize the
-  // page before the image ever painted (an empty box, with only the absolutely-positioned
-  // name/date text floating over nothing). Waiting for every <img> in the portal to
-  // actually finish loading first closes that race for every certificate template, not
-  // just the photo ones -- the drawn templates' small logo image included.
+  // Waits for the portal's <img> tags (logo + seal icons are inline SVG, so in practice
+  // just the small logo) to actually finish loading before printing -- otherwise
+  // window.print() can rasterize the page before an image has painted.
+  //
+  // Certificates print landscape -- a `@page { size: landscape }` scoped to a *named* page
+  // (`page: certificate` on the portal) turned out not to reliably drive Chrome's actual
+  // print orientation despite being valid CSS Paged Media syntax (confirmed by a real
+  // print producing a portrait page instead). Injecting a plain *unnamed* `@page` rule only
+  // for the few seconds around this one print call -- removed again in `restore` --
+  // sidesteps that gap entirely, since unnamed `@page size` is the well-supported case, and
+  // it can't leak into the worksheet's own portrait print (that one runs at a completely
+  // different time, never while this style tag exists).
   useEffect(() => {
-    if (!printingCert || !profile) return;
+    if (!printingCert) return;
     let cancelled = false;
 
     const original = document.title;
-    // Photo-template certificates (bronze/platinum, students only -- see
-    // certificateTiers.ts) are portrait plaque images, so they print on the page's own
-    // natural default. Every other certificate is the drawn shield, meant to print wide --
-    // a `@page { size: landscape }` scoped to a *named* page (`page: certificate` on the
-    // portal) turned out not to reliably drive Chrome's actual print orientation despite
-    // being valid CSS Paged Media syntax (confirmed by a real print producing a portrait
-    // page). Injecting a plain *unnamed* `@page` rule only for the few seconds around this
-    // one print call -- removed again in `restore` -- sidesteps that gap entirely, since
-    // unnamed `@page size` is the well-supported case, and it can't leak into the
-    // worksheet's own portrait print (that one runs at a completely different time, never
-    // while this style tag exists).
-    const needsLandscape = !usesCertificatePhotoTemplate(printingCert.type, profile.role === 'teacher' ? 'teacher' : 'student');
     let landscapeStyle: HTMLStyleElement | null = null;
 
     const restore = () => {
@@ -162,11 +155,9 @@ export function ProfilePage() {
     ready.then(() => {
       if (cancelled) return;
       document.title = ' ';
-      if (needsLandscape) {
-        landscapeStyle = document.createElement('style');
-        landscapeStyle.textContent = '@page { size: landscape; margin: 10mm 16mm; }';
-        document.head.appendChild(landscapeStyle);
-      }
+      landscapeStyle = document.createElement('style');
+      landscapeStyle.textContent = '@page { size: landscape; margin: 10mm 16mm; }';
+      document.head.appendChild(landscapeStyle);
       window.addEventListener('afterprint', restore);
       window.print();
     });
@@ -174,7 +165,7 @@ export function ProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [printingCert, profile]);
+  }, [printingCert]);
 
   async function saveDisplayName() {
     if (!nameDraft.trim()) return;

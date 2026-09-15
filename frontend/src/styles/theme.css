@@ -1549,26 +1549,21 @@ a:focus-visible {
    certificate's tier (bronze/gold/platinum, lib/certificateTiers.ts) -- every accent color
    below reads from them instead of a hardcoded hex so the whole card re-themes per tier. */
 
-/* A shield silhouette, not a bordered rectangle -- clip-path polygon() instead of
-   border/border-radius. A plain CSS border can't follow a clip-path (it stays drawn along
-   the box's own rectangular edge and gets clipped off wherever the polygon cuts inside
-   it), so the "frame" here is two nested elements clipped to this *same* polygon: this
+/* A double-bordered rectangle, not a shield -- the "frame" is two nested elements: this
    outer one (the tier gradient, sized by its own padding below) and .printable-
    certificate-panel inside it (smaller by that padding, white/watermarked, holds the
-   actual content) -- the size difference between the two reads as a border following the
-   shield's outline all the way around. Percentages (not fixed px points) so the shape
-   always matches whatever width the page box actually rendered at (see the width: 100%
-   comment above this block). The taper only starts at 76% of the height, keeping the
-   upper three-quarters essentially full width for content -- only the seal/footer near
-   the bottom sit in the narrowing point, which is why the footer below is a centered
-   stack instead of a wide space-between row. */
+   actual content), the size difference reading as a border all the way around. Kept as
+   two layers (not a single CSS `border`) since that's also what made the earlier shield
+   variant's border follow its clip-path -- reusing the same structure means switching
+   between rectangle and shield later is just swapping clip-path for border-radius here,
+   nothing else. */
 .printable-certificate {
   width: 100%;
   box-sizing: border-box;
   margin: 0;
-  padding: 7px;
+  padding: 6px;
   background: linear-gradient(160deg, var(--cert-light), var(--cert-dark));
-  clip-path: polygon(0% 5%, 5% 0%, 95% 0%, 100% 5%, 100% 76%, 80% 90%, 50% 100%, 20% 90%, 0% 76%);
+  border-radius: 24px;
   position: relative;
 }
 .printable-certificate-panel {
@@ -1578,9 +1573,9 @@ a:focus-visible {
   background-repeat: repeat;
   background-size: 240px 240px;
   box-sizing: border-box;
-  padding: 32px 60px 52px;
+  padding: 36px 60px;
   text-align: center;
-  clip-path: polygon(0% 5%, 5% 0%, 95% 0%, 100% 5%, 100% 76%, 80% 90%, 50% 100%, 20% 90%, 0% 76%);
+  border-radius: 20px;
   position: relative;
 }
 .printable-certificate-corner {
@@ -1590,13 +1585,23 @@ a:focus-visible {
   z-index: 1;
 }
 .printable-certificate-corner-tl {
-  top: 22px;
-  inset-inline-start: 22px;
+  top: 18px;
+  inset-inline-start: 18px;
 }
 .printable-certificate-corner-tr {
-  top: 22px;
-  inset-inline-end: 22px;
+  top: 18px;
+  inset-inline-end: 18px;
   transform: rotate(90deg);
+}
+.printable-certificate-corner-bl {
+  bottom: 18px;
+  inset-inline-start: 18px;
+  transform: rotate(270deg);
+}
+.printable-certificate-corner-br {
+  bottom: 18px;
+  inset-inline-end: 18px;
+  transform: rotate(180deg);
 }
 .printable-certificate-logo {
   width: 48px;
@@ -1669,117 +1674,18 @@ a:focus-visible {
   width: 56px;
   margin: 6px auto 0;
 }
-/* Stacked and centered, not a wide space-between row -- the shield's taper means there's
-   less horizontal room down here than up in the wide top section (see the polygon comment
-   above), and short centered lines stay legible at any width the taper leaves. */
 .printable-certificate-footer {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  margin-top: 10px;
-  padding-top: 8px;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 16px;
+  padding-top: 12px;
   border-top: 1px solid #eee;
-  font-size: 11.5px;
+  font-size: 12px;
   color: #6b4650;
 }
 .printable-certificate-signature {
   font-weight: 800;
   font-style: italic;
   color: var(--cert-dark);
-}
-
-/* ---------------- Platinum student certificate photo (PrintableCertificate.tsx) ----
-   A fixed plaque image the admin supplied, used verbatim instead of the drawn shield --
-   only the recipient name and achievement title are overlaid as plain positioned text
-   (percentages, so they always track the image regardless of what size it prints at),
-   landing on the photo's own "Named Names" / achievement line; nothing else about the
-   image is touched. Prints on the page's own natural (portrait) default -- unlike the
-   drawn shield, ProfilePage.tsx's print trigger does NOT inject a landscape override for
-   these, since the photo is portrait-shaped and looks right on a portrait page as-is.
-
-   width: 100% (no fixed max-height) so the photo fills the printable page exactly instead
-   of sitting as a small fixed-size box with blank paper around it -- these plaque photos'
-   own aspect ratio (roughly 3:4) is already close to a portrait page's printable area, so
-   filling the width leaves height comfortably under the page's, no overflow onto a second
-   page. Same reasoning as the drawn shield's own width: 100% a few rules up. */
-.printable-certificate-photo-container {
-  width: 100%;
-}
-.printable-certificate-photo-wrap {
-  position: relative;
-  display: block;
-  width: 100%;
-}
-.printable-certificate-photo {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-/* top is the vertical CENTER of the baked-in text it sits over (translateY(-50%) keeps
-   that true regardless of the span's own line-height), measured directly off the source
-   image's pixels. The background patch approximately matches the plaque's own dark tone
-   sampled from the image -- covering the original baked "إنجاز أكاديمي متميز" / name text
-   underneath it, since that's burned into the photo and can't itself be removed. */
-.printable-certificate-photo-topic {
-  position: absolute;
-  top: 85.8%;
-  left: 13%;
-  right: 13%;
-  transform: translateY(-50%);
-  text-align: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: #f0ece4;
-  background: #423d3a;
-  padding: 5px 6px;
-  border-radius: 3px;
-  line-height: 1.2;
-}
-.printable-certificate-photo-name {
-  position: absolute;
-  top: 92%;
-  right: 5%;
-  transform: translateY(-50%);
-  text-align: right;
-  font-size: 13px;
-  font-weight: 700;
-  color: #f0ece4;
-  background: #423d3a;
-  padding: 3px 8px;
-  border-radius: 3px;
-  white-space: nowrap;
-  max-width: 42%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* The bronze plaque (Bronze-student.png) already has two blank copper plates built in --
-   date on the left, name on the right -- so unlike the platinum photo above, these sit
-   directly on the plate with no masking patch needed, just text in a tone that reads like
-   the plaque's own engraved lettering. */
-.printable-certificate-photo-bronze-date {
-  position: absolute;
-  top: 92%;
-  left: 3%;
-  width: 28%;
-  transform: translateY(-50%);
-  text-align: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: #ddc3b3;
-}
-.printable-certificate-photo-bronze-name {
-  position: absolute;
-  top: 92%;
-  left: 68%;
-  width: 29%;
-  transform: translateY(-50%);
-  text-align: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: #ddc3b3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }

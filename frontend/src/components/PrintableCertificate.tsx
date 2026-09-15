@@ -2,7 +2,7 @@ import { useId, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
-import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, usesCertificatePhotoTemplate, type CertificateType } from '../lib/certificateTiers';
+import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
 
 export type PrintableCertificateData = {
   recipientName: string;
@@ -137,33 +137,21 @@ function StudentSeal({ light, dark, type }: { light: string; dark: string; type:
 
 /** Same portal + print-only pattern as PrintableWorksheet.tsx (see its comments for why):
  * renders as a sibling of #root so `@media print` (theme.css) can hide the app shell and
- * show only this, invisible on screen until the browser's print dialog opens. Prints on
- * its own landscape page (theme.css's `@page certificate`, opted into via the `page`
- * property) -- a certificate is conventionally wider than tall, unlike the worksheet's
- * portrait pages, and the two never print at the same time so the named page doesn't
- * affect the worksheet's own (default, portrait) page box.
+ * show only this, invisible on screen until the browser's print dialog opens. Prints
+ * landscape -- a certificate is conventionally wider than tall, unlike the worksheet's
+ * portrait pages -- via ProfilePage.tsx's print trigger injecting a temporary `@page`
+ * style around the print call rather than page CSS here (a CSS named page turned out not
+ * to reliably drive Chrome's actual print orientation, see ProfilePage.tsx's comment).
  *
- * The card is a shield silhouette, not a bordered rectangle -- a CSS `border` can't follow
- * a `clip-path` polygon (it stays drawn along the box's rectangular edge and gets clipped
- * off wherever the polygon cuts inside it), so the "border" here is two nested elements
- * clipped to the *same* polygon: an outer one (the tier gradient) slightly larger than an
- * inner one (the white/watermarked panel with all the actual content), the size
- * difference reading as a frame all the way around the shield's outline. The whole color
- * scheme (frame, heading, divider, seal, signature) is driven by the certificate's tier --
- * set as CSS custom properties here so theme.css's rules can stay tier-agnostic. */
-// Fixed, admin-supplied plaque photos used verbatim for these two student tiers instead
-// of the drawn shield -- everything in the image stays exactly as provided, only a couple
-// of small text overlays change per certificate (positioned to land on each photo's own
-// blank/placeholder spot, see the JSX below for which fields each one gets).
-const PLATINUM_STUDENT_PHOTO = '/Certificate/platinum-student.png';
-const BRONZE_STUDENT_PHOTO = '/Certificate/Bronze-student.png';
-
+ * The card's double border is two nested elements, not a single CSS `border` -- an outer
+ * one (the tier gradient) slightly larger than an inner one (the white/watermarked panel
+ * with all the actual content), the size difference reading as a frame all the way around.
+ * The whole color scheme (frame, heading, divider, seal, signature) is driven by the
+ * certificate's tier -- set as CSS custom properties here so theme.css's rules can stay
+ * tier-agnostic. */
 export function PrintableCertificate({ data }: { data: PrintableCertificateData }) {
   const { t, lang, dir } = useLanguage();
   const palette = CERT_PALETTES[data.type];
-  const usePhotoTemplate = usesCertificatePhotoTemplate(data.type, data.recipientRole);
-  const usePlatinumStudentPhoto = usePhotoTemplate && data.type === 'platinum';
-  const useBronzeStudentPhoto = usePhotoTemplate && data.type === 'bronze';
 
   const watermarkSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><text x="120" y="130" font-size="30" font-weight="800" fill="${palette.dark}" fill-opacity="0.07" text-anchor="middle" transform="rotate(-24 120 120)" font-family="sans-serif">${t('brand')}</text></svg>`;
   const frameStyle = {
@@ -178,36 +166,6 @@ export function PrintableCertificate({ data }: { data: PrintableCertificateData 
   const message = pickText(lang, data.message, data.messageAr);
   const dateLabel = new Date(data.issuedAt.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US');
 
-  if (usePlatinumStudentPhoto) {
-    return createPortal(
-      <div className="printable-certificate-portal" dir={dir}>
-        <div className="printable-certificate-photo-container">
-          <div className="printable-certificate-photo-wrap">
-            <img src={PLATINUM_STUDENT_PHOTO} alt="" className="printable-certificate-photo" />
-            <span className="printable-certificate-photo-topic">{title}</span>
-            <span className="printable-certificate-photo-name">{data.recipientName}</span>
-          </div>
-        </div>
-      </div>,
-      document.body
-    );
-  }
-
-  if (useBronzeStudentPhoto) {
-    return createPortal(
-      <div className="printable-certificate-portal" dir={dir}>
-        <div className="printable-certificate-photo-container">
-          <div className="printable-certificate-photo-wrap">
-            <img src={BRONZE_STUDENT_PHOTO} alt="" className="printable-certificate-photo" />
-            <span className="printable-certificate-photo-bronze-date">{dateLabel}</span>
-            <span className="printable-certificate-photo-bronze-name">{data.recipientName}</span>
-          </div>
-        </div>
-      </div>,
-      document.body
-    );
-  }
-
   return createPortal(
     <div className="printable-certificate-portal" dir={dir}>
       <div className="printable-certificate" style={frameStyle}>
@@ -216,6 +174,12 @@ export function PrintableCertificate({ data }: { data: PrintableCertificateData 
             <CornerFlourish light={palette.light} dark={palette.dark} />
           </span>
           <span className="printable-certificate-corner printable-certificate-corner-tr" aria-hidden>
+            <CornerFlourish light={palette.light} dark={palette.dark} />
+          </span>
+          <span className="printable-certificate-corner printable-certificate-corner-bl" aria-hidden>
+            <CornerFlourish light={palette.light} dark={palette.dark} />
+          </span>
+          <span className="printable-certificate-corner printable-certificate-corner-br" aria-hidden>
             <CornerFlourish light={palette.light} dark={palette.dark} />
           </span>
 

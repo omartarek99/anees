@@ -19,13 +19,3 @@ export const CERT_TYPE_LABEL_KEY: Record<CertificateType, 'admin.certTypeBronze'
   gold: 'admin.certTypeGold',
   platinum: 'admin.certTypePlatinum',
 };
-
-// Bronze and platinum student certificates render an admin-supplied plaque photo verbatim
-// (PrintableCertificate.tsx) instead of the drawn shield -- those photos are portrait, so
-// they print on the page's natural default orientation. Every other combination (gold at
-// any role, any tier for a teacher) still uses the drawn landscape shield. Shared between
-// PrintableCertificate.tsx (which template to render) and ProfilePage.tsx's print trigger
-// (whether to force landscape before calling window.print()) so the two can't drift apart.
-export function usesCertificatePhotoTemplate(type: CertificateType, role: 'student' | 'teacher'): boolean {
-  return role === 'student' && (type === 'bronze' || type === 'platinum');
-}
