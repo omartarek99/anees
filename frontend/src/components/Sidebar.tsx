@@ -41,9 +41,9 @@ const TEACHER_LINKS: SidebarLink[] = [{ to: '/teacher/reels', key: 'nav.myReels'
 // game surface it gets one icon per section (Users/Videos/Reports), each its own route
 // (see App.tsx's /admin/:tab), same as every other page in the app.
 const ADMIN_LINKS: SidebarLink[] = [
+  { to: '/admin/reports', key: 'nav.adminReports', icon: <RiBarChartBoxFill size={20} /> },
   { to: '/admin/users', key: 'nav.adminUsers', icon: <RiGroupFill size={20} /> },
   { to: '/admin/videos', key: 'nav.adminVideos', icon: <RiFilmFill size={20} /> },
-  { to: '/admin/reports', key: 'nav.adminReports', icon: <RiBarChartBoxFill size={20} /> },
 ];
 
 export function Sidebar() {
