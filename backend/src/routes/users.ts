@@ -36,6 +36,28 @@ function teacherVideos(userId: number) {
   }));
 }
 
+// Certificates an admin has issued to this account (routes/admin.ts POST /certificates) --
+// shown on the profile as a portfolio, same idea as a teacher's videos below, most recent
+// first so a newly-issued certificate is the first thing the recipient sees.
+function userCertificates(userId: number) {
+  const rows = db
+    .prepare(
+      `SELECT c.*, u.display_name as issuer_display_name FROM certificates c
+       LEFT JOIN users u ON u.id = c.issued_by
+       WHERE c.user_id = ? ORDER BY c.created_at DESC`
+    )
+    .all(userId) as any[];
+  return rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    titleAr: r.title_ar,
+    message: r.message,
+    messageAr: r.message_ar,
+    issuedByName: r.issuer_display_name ?? null,
+    createdAt: r.created_at,
+  }));
+}
+
 function profileSummary(user: any) {
   const playerLevel = getPlayerLevel(user.id);
   const completedLevels = db
@@ -76,6 +98,7 @@ function profileSummary(user: any) {
     worksheetsPrintedCount: worksheetsPrinted.c,
     joinedAt: user.created_at,
     videos,
+    certificates: userCertificates(user.id),
   };
 }
 

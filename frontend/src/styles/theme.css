@@ -1299,7 +1299,8 @@ a:focus-visible {
    theme's CSS variables) and always light -- a physical printout should never follow the
    viewer's on-screen dark-mode preference; it has to look right and ink-economical on
    actual paper regardless of what theme the browser happened to be in. */
-.printable-worksheet-portal {
+.printable-worksheet-portal,
+.printable-certificate-portal {
   display: none;
 }
 
@@ -1307,7 +1308,8 @@ a:focus-visible {
   #root {
     display: none !important;
   }
-  .printable-worksheet-portal {
+  .printable-worksheet-portal,
+  .printable-certificate-portal {
     display: block !important;
   }
   @page {
@@ -1321,7 +1323,9 @@ a:focus-visible {
      that checkbox -- applied to every element here, not just the outer container, since
      the setting is a per-element rendering instruction, not something that inherits. */
   .printable-worksheet-portal,
-  .printable-worksheet-portal * {
+  .printable-worksheet-portal *,
+  .printable-certificate-portal,
+  .printable-certificate-portal * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -1520,4 +1524,95 @@ a:focus-visible {
   letter-spacing: 1px;
   border-top: 1px solid #eee;
   padding-top: 8px;
+}
+
+/* ---------------- Printable certificate (PrintableCertificate.tsx) ----------------
+   Same portal + tiling-watermark pattern as the printable worksheet above (see its
+   comment for why the watermark is a background-image, not a positioned element) --
+   a single-page decorative document instead of a multi-page one, so it doesn't need the
+   worksheet's break-inside/counter machinery, just a centered bordered card. */
+.printable-certificate {
+  font-family: var(--font-body);
+  color: #201217;
+  background-color: #fff;
+  background-repeat: repeat;
+  background-size: 240px 240px;
+  max-width: 720px;
+  margin: 40px auto;
+  padding: 48px 40px;
+  text-align: center;
+  border: 3px solid #f0a83a;
+  border-radius: 24px;
+  position: relative;
+}
+.printable-certificate::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1.5px solid #8a1538;
+  border-radius: 16px;
+  pointer-events: none;
+}
+.printable-certificate-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid #f0a83a;
+  object-fit: cover;
+  margin-bottom: 6px;
+}
+.printable-certificate-brand {
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #8a1538;
+  margin: 0 0 20px;
+}
+.printable-certificate-heading {
+  font-size: 30px;
+  margin: 0 0 18px;
+  color: #8a1538;
+}
+.printable-certificate-presented {
+  font-size: 13px;
+  color: #6b4650;
+  margin: 0 0 6px;
+}
+.printable-certificate-name {
+  font-size: 26px;
+  font-weight: 800;
+  color: #4a0e24;
+  margin: 0 0 18px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0a83a;
+  display: inline-block;
+}
+.printable-certificate-award-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #c22954;
+  margin: 0 0 14px;
+}
+.printable-certificate-message {
+  font-size: 14px;
+  color: #4a0e24;
+  max-width: 480px;
+  margin: 0 auto 24px;
+  line-height: 1.6;
+}
+.printable-certificate-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 32px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+  font-size: 12px;
+  color: #6b4650;
+}
+.printable-certificate-signature {
+  font-weight: 800;
+  font-style: italic;
+  color: #8a1538;
 }

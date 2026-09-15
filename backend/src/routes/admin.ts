@@ -8,6 +8,7 @@ import {
   adminSetWarningSchema,
   adminSetBanSchema,
   adminSetXpSchema,
+  adminIssueCertificateSchema,
 } from '../lib/schemas.js';
 import { deleteUserById } from '../lib/deleteUser.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
@@ -48,11 +49,14 @@ function applyUserUpdate(res: Response, targetId: number, runUpdate: () => { cha
     res.status(404).json({ error: 'User not found.' });
     return;
   }
-  const row = db.prepare(`SELECT * FROM users WHERE id = ?`).get(targetId);
-  res.json({ user: adminUser(row) });
+  const row = db.prepare(`SELECT * FROM users WHERE id = ?`).get(targetId) as any;
+  // Recomputed here too (not just the /users list) -- otherwise a role change or an XP
+  // edit would blank out that row's rank badge in the response until the next full reload.
+  const rank = row.role === 'student' ? buildRankMap('student').get(row.id) ?? null : row.role === 'teacher' ? buildRankMap('teacher').get(row.id) ?? null : null;
+  res.json({ user: adminUser(row, rank) });
 }
 
-function adminUser(row: any) {
+function adminUser(row: any, rank: number | null = null) {
   return {
     id: row.id,
     username: row.username,
@@ -61,6 +65,11 @@ function adminUser(row: any) {
     role: row.role,
     grade: row.grade,
     totalXp: row.total_xp,
+    teacherPoints: row.teacher_points ?? 0,
+    // Ranking among every other real (non-seed) account of the same role, by whichever
+    // currency that role actually earns -- total_xp for students, teacher_points for
+    // teachers (see lib/xp.ts). Null for admins, who don't have a ranking at all.
+    rank,
     isActive: !!row.is_active,
     emailVerified: !!row.email_verified,
     warningMessage: row.warning_message ?? null,
@@ -69,6 +78,26 @@ function adminUser(row: any) {
     isBanned: isCurrentlyBanned(row.banned_until),
     createdAt: row.created_at,
   };
+}
+
+// Competition ranking (ties share a rank; the next distinct value skips ahead by the tie
+// count) over every real account of one role, by whichever currency that role earns.
+// Computed in JS off one full-column read rather than a per-row correlated subquery --
+// this app's realistic scale (a school's worth of accounts) makes that trivially cheap,
+// and it means the whole page's ranks come from a single query per role, not one per row.
+function buildRankMap(role: 'student' | 'teacher'): Map<number, number> {
+  const valueCol = role === 'student' ? 'total_xp' : 'teacher_points';
+  const rows = db.prepare(`SELECT id, ${valueCol} as v FROM users WHERE role = ? AND is_seed = 0`).all(role) as {
+    id: number;
+    v: number;
+  }[];
+  const sorted = [...rows].sort((a, b) => b.v - a.v);
+  const map = new Map<number, number>();
+  sorted.forEach((row, i) => {
+    const rank = i > 0 && sorted[i - 1].v === row.v ? map.get(sorted[i - 1].id)! : i + 1;
+    map.set(row.id, rank);
+  });
+  return map;
 }
 
 // Role/grade filtering (and the is_seed exclusion) stay in SQL -- cheap, indexed-enough
@@ -101,7 +130,13 @@ adminRouter.get('/users', (req, res) => {
     .prepare(`SELECT * FROM users WHERE ${clauses.join(' AND ')} ORDER BY created_at DESC`)
     .all(...params) as any[];
 
-  let users = rows.map(adminUser);
+  // Ranks are computed across ALL real accounts of a role, not just this filtered/paginated
+  // page -- otherwise a search or grade filter would silently reshuffle everyone's rank.
+  const studentRanks = buildRankMap('student');
+  const teacherRanks = buildRankMap('teacher');
+  let users = rows.map((row) =>
+    adminUser(row, row.role === 'student' ? studentRanks.get(row.id) ?? null : row.role === 'teacher' ? teacherRanks.get(row.id) ?? null : null)
+  );
   if (search) {
     users = users.filter(
       (u) => u.username.toLowerCase().includes(search) || u.email.toLowerCase().includes(search) || u.displayName.toLowerCase().includes(search)
@@ -183,6 +218,67 @@ adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSch
   }
   const { totalXp } = req.body as { totalXp: number };
   applyUserUpdate(res, targetId, () => db.prepare(`UPDATE users SET total_xp = ? WHERE id = ?`).run(totalXp, targetId));
+});
+
+// ---------------------------------------------------------------------------------------
+// Certificates -- admin hand-issues one to a student or teacher's profile (routes/users.ts
+// profileSummary shows them to the recipient, printable the same way a worksheet is).
+// ---------------------------------------------------------------------------------------
+
+function adminCertificate(row: any) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    recipientUsername: row.recipient_username,
+    recipientDisplayName: row.recipient_display_name,
+    recipientRole: row.recipient_role,
+    title: row.title,
+    titleAr: row.title_ar,
+    message: row.message,
+    messageAr: row.message_ar,
+    issuedByName: row.issuer_display_name ?? null,
+    createdAt: row.created_at,
+  };
+}
+
+adminRouter.get('/certificates', (_req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT c.*, ru.username as recipient_username, ru.display_name as recipient_display_name,
+              ru.role as recipient_role, iu.display_name as issuer_display_name
+       FROM certificates c
+       JOIN users ru ON ru.id = c.user_id
+       LEFT JOIN users iu ON iu.id = c.issued_by
+       ORDER BY c.created_at DESC`
+    )
+    .all() as any[];
+  res.json({ certificates: rows.map(adminCertificate) });
+});
+
+adminRouter.post('/certificates', requireCsrfHeader, validateBody(adminIssueCertificateSchema), (req, res) => {
+  const { userId, title, titleAr, message, messageAr } = req.body as import('zod').infer<typeof adminIssueCertificateSchema>;
+  const recipient = db.prepare(`SELECT id, role FROM users WHERE id = ?`).get(userId) as { id: number; role: string } | undefined;
+  if (!recipient || recipient.role === 'admin') {
+    res.status(400).json({ error: 'Certificates can only be issued to a student or teacher account.' });
+    return;
+  }
+  const id = Number(
+    db
+      .prepare(
+        `INSERT INTO certificates (user_id, title, title_ar, message, message_ar, issued_by) VALUES (?,?,?,?,?,?)`
+      )
+      .run(userId, title, titleAr, message, messageAr, req.userId!).lastInsertRowid
+  );
+  res.status(201).json({ id });
+});
+
+adminRouter.delete('/certificates/:id', requireCsrfHeader, (req, res) => {
+  const result = db.prepare(`DELETE FROM certificates WHERE id = ?`).run(Number(req.params.id));
+  if (result.changes === 0) {
+    res.status(404).json({ error: 'Not found.' });
+    return;
+  }
+  res.json({ ok: true });
 });
 
 // ---------------------------------------------------------------------------------------

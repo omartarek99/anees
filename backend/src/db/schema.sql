@@ -234,6 +234,20 @@ CREATE TABLE IF NOT EXISTS worksheet_prints (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Certificates an admin hand-issues to a student or teacher (routes/admin.ts POST
+-- /certificates) -- shown on the recipient's own profile (routes/users.ts
+-- profileSummary), printable there the same way a teacher's worksheet is.
+CREATE TABLE IF NOT EXISTS certificates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  title_ar TEXT NOT NULL DEFAULT '',
+  message TEXT NOT NULL DEFAULT '',
+  message_ar TEXT NOT NULL DEFAULT '',
+  issued_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS friend_requests (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   from_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

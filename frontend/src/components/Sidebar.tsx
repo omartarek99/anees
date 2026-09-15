@@ -9,6 +9,7 @@ import {
   RiGroupFill,
   RiFilmFill,
   RiBarChartBoxFill,
+  RiCertificateFill,
 } from '@remixicon/react';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import PeopleIcon from '@mui/icons-material/People';
@@ -44,6 +45,7 @@ const ADMIN_LINKS: SidebarLink[] = [
   { to: '/admin/reports', key: 'nav.adminReports', icon: <RiBarChartBoxFill size={20} /> },
   { to: '/admin/users', key: 'nav.adminUsers', icon: <RiGroupFill size={20} /> },
   { to: '/admin/videos', key: 'nav.adminVideos', icon: <RiFilmFill size={20} /> },
+  { to: '/admin/certificates', key: 'nav.adminCertificates', icon: <RiCertificateFill size={20} /> },
 ];
 
 export function Sidebar() {

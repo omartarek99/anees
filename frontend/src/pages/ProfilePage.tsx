@@ -8,6 +8,7 @@ import { pickText, translateApiError } from '../lib/i18n';
 import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
+import { PrintableCertificate } from '../components/PrintableCertificate';
 
 type TeacherVideo = {
   id: number;
@@ -16,6 +17,16 @@ type TeacherVideo = {
   videoUrl: string;
   grade: number | null;
   subject: { key: string; name: string; nameAr?: string | null; icon: string };
+};
+
+type Certificate = {
+  id: number;
+  title: string;
+  titleAr: string;
+  message: string;
+  messageAr: string;
+  issuedByName: string | null;
+  createdAt: string;
 };
 
 type Profile = {
@@ -40,6 +51,9 @@ type Profile = {
   // Only present (and only ever populated) for teacher profiles -- their authored,
   // published reels, shown as a portfolio any signed-in viewer can browse.
   videos?: TeacherVideo[];
+  // Admin-issued certificates (routes/admin.ts POST /certificates) -- shown to everyone
+  // who can view this profile, same as videos above.
+  certificates: Certificate[];
 };
 
 const STAT_COLORS = ['stat-card-yellow', 'stat-card-green'];
@@ -75,6 +89,7 @@ export function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [printingCert, setPrintingCert] = useState<Certificate | null>(null);
 
   function load() {
     const path = isOwnProfile ? '/users/me' : `/users/${username}`;
@@ -89,6 +104,23 @@ export function ProfilePage() {
   }
 
   useEffect(load, [username]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fires once PrintableCertificate has actually mounted (this effect runs after the DOM
+  // commit, unlike calling window.print() straight from the click handler, which would
+  // race the portal not existing yet) -- blanks the title the same way WorksheetsPage's
+  // print does, restoring it on `afterprint` (fires whether printed or cancelled).
+  useEffect(() => {
+    if (!printingCert) return;
+    const original = document.title;
+    document.title = ' ';
+    const restore = () => {
+      document.title = original;
+      window.removeEventListener('afterprint', restore);
+      setPrintingCert(null);
+    };
+    window.addEventListener('afterprint', restore);
+    window.print();
+  }, [printingCert]);
 
   async function saveDisplayName() {
     if (!nameDraft.trim()) return;
@@ -243,6 +275,48 @@ export function ProfilePage() {
           {profile.bio || t('profile.noBioYet')}
         </p>
       </div>
+
+      {profile.certificates.length > 0 && (
+        <div className="card stack">
+          <h3 style={{ fontSize: 16 }}>{t('profile.certificates')}</h3>
+          <div className="grid-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+            {profile.certificates.map((cert) => (
+              <div key={cert.id} className="card stack" style={{ gap: 6, padding: 14 }}>
+                <span style={{ fontSize: 28 }} aria-hidden>
+                  🎖️
+                </span>
+                <strong style={{ fontSize: 14 }}>{pickText(lang, cert.title, cert.titleAr)}</strong>
+                {(cert.message || cert.messageAr) && (
+                  <p className="muted" style={{ fontSize: 12, margin: 0 }}>
+                    {pickText(lang, cert.message, cert.messageAr)}
+                  </p>
+                )}
+                {cert.issuedByName && (
+                  <p className="muted" style={{ fontSize: 11, margin: 0 }}>
+                    {t('profile.certificateFrom', { name: cert.issuedByName })}
+                  </p>
+                )}
+                <button type="button" className="btn btn-secondary btn-sm" style={{ width: 'fit-content' }} onClick={() => setPrintingCert(cert)}>
+                  {t('profile.printCertificate')}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {printingCert && (
+        <PrintableCertificate
+          data={{
+            recipientName: profile.displayName,
+            title: printingCert.title,
+            titleAr: printingCert.titleAr,
+            message: printingCert.message,
+            messageAr: printingCert.messageAr,
+            issuedAt: printingCert.createdAt,
+          }}
+        />
+      )}
 
       {profile.role === 'teacher' && (
         <div className="card stack">

@@ -12,6 +12,11 @@ export type AdminUser = {
   role: Role;
   grade: number | null;
   totalXp: number;
+  // Separate currency from totalXp, only ever nonzero for teachers -- see backend
+  // lib/xp.ts. rank is this account's standing among every other real account of the
+  // same role (by totalXp for students, teacherPoints for teachers); null for admins.
+  teacherPoints: number;
+  rank: number | null;
   isActive: boolean;
   emailVerified: boolean;
   warningMessage: string | null;
@@ -162,6 +167,11 @@ export function AdminUserRow({
           </p>
         </div>
         <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+          {u.rank !== null && (
+            <span className="badge badge-gold" title={u.role === 'teacher' ? t('admin.teacherPointsLabel') : t('admin.pointsLabel')}>
+              #{u.rank} · {u.role === 'teacher' ? `🏆 ${u.teacherPoints}` : `💎 ${u.totalXp}`}
+            </span>
+          )}
           <select
             value={u.role}
             disabled={isSelf}
