@@ -1690,3 +1690,62 @@ a:focus-visible {
   font-style: italic;
   color: var(--cert-dark);
 }
+
+/* ---------------- Platinum student certificate photo (PrintableCertificate.tsx) ----
+   A fixed plaque image the admin supplied, used verbatim instead of the drawn shield --
+   only the recipient name and achievement title are overlaid as plain positioned text
+   (percentages, so they always track the image regardless of what size it prints at),
+   landing on the photo's own "Named Names" / achievement line; nothing else about the
+   image is touched. Still prints on the shared landscape @page certificate above -- the
+   photo is portrait, so it's simply centered on that wider page rather than getting its
+   own page-size rule, which would add a second named page for one certificate variant. */
+.printable-certificate-photo-container {
+  text-align: center;
+  padding: 20px 0;
+}
+.printable-certificate-photo-wrap {
+  position: relative;
+  display: inline-block;
+}
+.printable-certificate-photo {
+  display: block;
+  max-height: 420px;
+  width: auto;
+}
+/* top is the vertical CENTER of the baked-in text it sits over (translateY(-50%) keeps
+   that true regardless of the span's own line-height), measured directly off the source
+   image's pixels. The background patch approximately matches the plaque's own dark tone
+   sampled from the image -- covering the original baked "إنجاز أكاديمي متميز" / name text
+   underneath it, since that's burned into the photo and can't itself be removed. */
+.printable-certificate-photo-topic {
+  position: absolute;
+  top: 85.8%;
+  left: 13%;
+  right: 13%;
+  transform: translateY(-50%);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f0ece4;
+  background: #423d3a;
+  padding: 5px 6px;
+  border-radius: 3px;
+  line-height: 1.2;
+}
+.printable-certificate-photo-name {
+  position: absolute;
+  top: 92%;
+  right: 5%;
+  transform: translateY(-50%);
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f0ece4;
+  background: #423d3a;
+  padding: 3px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+  max-width: 42%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

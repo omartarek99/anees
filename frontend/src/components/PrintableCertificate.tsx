@@ -151,9 +151,16 @@ function StudentSeal({ light, dark, type }: { light: string; dark: string; type:
  * difference reading as a frame all the way around the shield's outline. The whole color
  * scheme (frame, heading, divider, seal, signature) is driven by the certificate's tier --
  * set as CSS custom properties here so theme.css's rules can stay tier-agnostic. */
+// A fixed, admin-supplied plaque photo used verbatim for platinum student certificates
+// instead of the drawn shield -- only the recipient name and the achievement title are
+// ever overlaid on it (positioned to land on the photo's own "Named Names" / achievement
+// line), everything else in the image stays exactly as provided.
+const PLATINUM_STUDENT_PHOTO = '/Certificate/platinum-student.png';
+
 export function PrintableCertificate({ data }: { data: PrintableCertificateData }) {
   const { t, lang, dir } = useLanguage();
   const palette = CERT_PALETTES[data.type];
+  const usePlatinumStudentPhoto = data.type === 'platinum' && data.recipientRole === 'student';
 
   const watermarkSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><text x="120" y="130" font-size="30" font-weight="800" fill="${palette.dark}" fill-opacity="0.07" text-anchor="middle" transform="rotate(-24 120 120)" font-family="sans-serif">${t('brand')}</text></svg>`;
   const frameStyle = {
@@ -167,6 +174,21 @@ export function PrintableCertificate({ data }: { data: PrintableCertificateData 
   const title = pickText(lang, data.title, data.titleAr);
   const message = pickText(lang, data.message, data.messageAr);
   const dateLabel = new Date(data.issuedAt.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US');
+
+  if (usePlatinumStudentPhoto) {
+    return createPortal(
+      <div className="printable-certificate-portal" dir={dir}>
+        <div className="printable-certificate-photo-container">
+          <div className="printable-certificate-photo-wrap">
+            <img src={PLATINUM_STUDENT_PHOTO} alt="" className="printable-certificate-photo" />
+            <span className="printable-certificate-photo-topic">{title}</span>
+            <span className="printable-certificate-photo-name">{data.recipientName}</span>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  }
 
   return createPortal(
     <div className="printable-certificate-portal" dir={dir}>
