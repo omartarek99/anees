@@ -9,6 +9,13 @@ import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
 import { PrintableCertificate } from '../components/PrintableCertificate';
+import { CERT_PALETTES, type CertificateType } from '../lib/certificateTiers';
+
+const CERT_TYPE_LABEL_KEY: Record<CertificateType, 'admin.certTypeBronze' | 'admin.certTypeGold' | 'admin.certTypePlatinum'> = {
+  bronze: 'admin.certTypeBronze',
+  gold: 'admin.certTypeGold',
+  platinum: 'admin.certTypePlatinum',
+};
 
 type TeacherVideo = {
   id: number;
@@ -25,6 +32,7 @@ type Certificate = {
   titleAr: string;
   message: string;
   messageAr: string;
+  type: CertificateType;
   issuedByName: string | null;
   createdAt: string;
 };
@@ -285,6 +293,19 @@ export function ProfilePage() {
                 <span style={{ fontSize: 28 }} aria-hidden>
                   🎖️
                 </span>
+                <span
+                  style={{
+                    width: 'fit-content',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: 999,
+                    color: '#fff',
+                    background: `linear-gradient(135deg, ${CERT_PALETTES[cert.type].light}, ${CERT_PALETTES[cert.type].dark})`,
+                  }}
+                >
+                  {t(CERT_TYPE_LABEL_KEY[cert.type])}
+                </span>
                 <strong style={{ fontSize: 14 }}>{pickText(lang, cert.title, cert.titleAr)}</strong>
                 {(cert.message || cert.messageAr) && (
                   <p className="muted" style={{ fontSize: 12, margin: 0 }}>
@@ -309,10 +330,12 @@ export function ProfilePage() {
         <PrintableCertificate
           data={{
             recipientName: profile.displayName,
+            recipientRole: profile.role === 'teacher' ? 'teacher' : 'student',
             title: printingCert.title,
             titleAr: printingCert.titleAr,
             message: printingCert.message,
             messageAr: printingCert.messageAr,
+            type: printingCert.type,
             issuedAt: printingCert.createdAt,
           }}
         />

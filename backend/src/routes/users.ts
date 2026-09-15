@@ -53,6 +53,7 @@ function userCertificates(userId: number) {
     titleAr: r.title_ar,
     message: r.message,
     messageAr: r.message_ar,
+    type: r.type,
     issuedByName: r.issuer_display_name ?? null,
     createdAt: r.created_at,
   }));

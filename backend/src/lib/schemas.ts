@@ -108,6 +108,7 @@ export const adminIssueCertificateSchema = z.object({
   titleAr: z.string().trim().max(120).optional().default(''),
   message: z.string().trim().max(500).optional().default(''),
   messageAr: z.string().trim().max(500).optional().default(''),
+  type: z.enum(['bronze', 'gold', 'platinum']).optional().default('gold'),
 });
 
 const choiceSchema = z.string().trim().min(1).max(120);

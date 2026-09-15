@@ -244,6 +244,9 @@ CREATE TABLE IF NOT EXISTS certificates (
   title_ar TEXT NOT NULL DEFAULT '',
   message TEXT NOT NULL DEFAULT '',
   message_ar TEXT NOT NULL DEFAULT '',
+  -- Drives the printed certificate's whole color scheme (PrintableCertificate.tsx) --
+  -- bronze/gold/platinum, matching the palette lib/ranks.ts already uses for rank tiers.
+  type TEXT NOT NULL DEFAULT 'gold' CHECK (type IN ('bronze','gold','platinum')),
   issued_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

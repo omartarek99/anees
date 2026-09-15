@@ -236,6 +236,7 @@ function adminCertificate(row: any) {
     titleAr: row.title_ar,
     message: row.message,
     messageAr: row.message_ar,
+    type: row.type,
     issuedByName: row.issuer_display_name ?? null,
     createdAt: row.created_at,
   };
@@ -256,7 +257,7 @@ adminRouter.get('/certificates', (_req, res) => {
 });
 
 adminRouter.post('/certificates', requireCsrfHeader, validateBody(adminIssueCertificateSchema), (req, res) => {
-  const { userId, title, titleAr, message, messageAr } = req.body as import('zod').infer<typeof adminIssueCertificateSchema>;
+  const { userId, title, titleAr, message, messageAr, type } = req.body as import('zod').infer<typeof adminIssueCertificateSchema>;
   const recipient = db.prepare(`SELECT id, role FROM users WHERE id = ?`).get(userId) as { id: number; role: string } | undefined;
   if (!recipient || recipient.role === 'admin') {
     res.status(400).json({ error: 'Certificates can only be issued to a student or teacher account.' });
@@ -265,9 +266,9 @@ adminRouter.post('/certificates', requireCsrfHeader, validateBody(adminIssueCert
   const id = Number(
     db
       .prepare(
-        `INSERT INTO certificates (user_id, title, title_ar, message, message_ar, issued_by) VALUES (?,?,?,?,?,?)`
+        `INSERT INTO certificates (user_id, title, title_ar, message, message_ar, type, issued_by) VALUES (?,?,?,?,?,?,?)`
       )
-      .run(userId, title, titleAr, message, messageAr, req.userId!).lastInsertRowid
+      .run(userId, title, titleAr, message, messageAr, type, req.userId!).lastInsertRowid
   );
   res.status(201).json({ id });
 });

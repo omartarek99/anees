@@ -238,3 +238,9 @@ const userColsForTeacherPoints = db.prepare(`PRAGMA table_info(users)`).all() as
 if (!userColsForTeacherPoints.some((c) => c.name === 'teacher_points')) {
   db.exec(`ALTER TABLE users ADD COLUMN teacher_points INTEGER NOT NULL DEFAULT 0`);
 }
+
+// Certificate tier (bronze/gold/platinum), added after the initial certificates table.
+const certificateCols = db.prepare(`PRAGMA table_info(certificates)`).all() as { name: string }[];
+if (!certificateCols.some((c) => c.name === 'type')) {
+  db.exec(`ALTER TABLE certificates ADD COLUMN type TEXT NOT NULL CHECK (type IN ('bronze','gold','platinum')) DEFAULT 'gold'`);
+}

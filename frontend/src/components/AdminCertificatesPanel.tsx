@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
+import { CERT_TYPES, CERT_PALETTES, type CertificateType } from '../lib/certificateTiers';
 
 type AdminUserSummary = { id: number; username: string; displayName: string; role: 'student' | 'teacher' | 'admin' };
 
@@ -15,8 +16,15 @@ type Certificate = {
   titleAr: string;
   message: string;
   messageAr: string;
+  type: CertificateType;
   issuedByName: string | null;
   createdAt: string;
+};
+
+const CERT_TYPE_LABEL_KEY: Record<CertificateType, 'admin.certTypeBronze' | 'admin.certTypeGold' | 'admin.certTypePlatinum'> = {
+  bronze: 'admin.certTypeBronze',
+  gold: 'admin.certTypeGold',
+  platinum: 'admin.certTypePlatinum',
 };
 
 /** Admin-only: hand-issue a certificate to a student or teacher's profile (shown there via
@@ -31,6 +39,7 @@ export function AdminCertificatesPanel() {
   const [titleAr, setTitleAr] = useState('');
   const [message, setMessage] = useState('');
   const [messageAr, setMessageAr] = useState('');
+  const [type, setType] = useState<CertificateType>('gold');
   const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [certificates, setCertificates] = useState<Certificate[] | null>(null);
@@ -75,6 +84,7 @@ export function AdminCertificatesPanel() {
         titleAr: titleAr.trim(),
         message: message.trim(),
         messageAr: messageAr.trim(),
+        type,
       });
       setRecipient(null);
       setSearch('');
@@ -82,6 +92,7 @@ export function AdminCertificatesPanel() {
       setTitleAr('');
       setMessage('');
       setMessageAr('');
+      setType('gold');
       loadCertificates();
     } catch (err) {
       setFormError(err instanceof ApiError ? translateApiError(lang, err.message) : t('admin.certSendError'));
@@ -177,6 +188,39 @@ export function AdminCertificatesPanel() {
           <textarea value={messageAr} onChange={(e) => setMessageAr(e.target.value)} maxLength={500} rows={3} dir="rtl" />
         </div>
 
+        <div className="field">
+          <label>{t('admin.certTypeLabel')}</label>
+          <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
+            {CERT_TYPES.map((ct) => {
+              const palette = CERT_PALETTES[ct];
+              const selected = type === ct;
+              return (
+                <button
+                  key={ct}
+                  type="button"
+                  onClick={() => setType(ct)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 14px',
+                    borderRadius: 999,
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: 13,
+                    border: selected ? `2px solid ${palette.dark}` : '2px solid transparent',
+                    background: `linear-gradient(135deg, ${palette.light}, ${palette.dark})`,
+                    color: '#fff',
+                    opacity: selected ? 1 : 0.55,
+                  }}
+                >
+                  🎖️ {t(CERT_TYPE_LABEL_KEY[ct])}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <button type="button" className="btn btn-primary" disabled={!recipient || !title.trim() || sending} onClick={handleSend}>
           {t('admin.certSendButton')}
         </button>
@@ -192,20 +236,37 @@ export function AdminCertificatesPanel() {
         )}
         {certificates && certificates.length === 0 && <p className="muted">{t('admin.certNoneSent')}</p>}
         <div className="stack" style={{ gap: 10 }}>
-          {certificates?.map((c) => (
-            <div key={c.id} className="list-row flex-between" style={{ alignItems: 'flex-start' }}>
-              <div>
-                <strong>{c.title}</strong>
-                <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>
-                  {c.recipientDisplayName} (@{c.recipientUsername}) ·{' '}
-                  {new Date(c.createdAt.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US')}
-                </p>
+          {certificates?.map((c) => {
+            const palette = CERT_PALETTES[c.type];
+            return (
+              <div key={c.id} className="list-row flex-between" style={{ alignItems: 'flex-start' }}>
+                <div>
+                  <div className="flex gap-sm" style={{ alignItems: 'center' }}>
+                    <strong>{c.title}</strong>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        color: '#fff',
+                        background: `linear-gradient(135deg, ${palette.light}, ${palette.dark})`,
+                      }}
+                    >
+                      {t(CERT_TYPE_LABEL_KEY[c.type])}
+                    </span>
+                  </div>
+                  <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>
+                    {c.recipientDisplayName} (@{c.recipientUsername}) ·{' '}
+                    {new Date(c.createdAt.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US')}
+                  </p>
+                </div>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleRevoke(c)}>
+                  {t('admin.certRevokeButton')}
+                </button>
               </div>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleRevoke(c)}>
-                {t('admin.certRevokeButton')}
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
