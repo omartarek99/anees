@@ -1313,6 +1313,18 @@ a:focus-visible {
   @page {
     margin: 16mm 14mm;
   }
+  /* Chrome's print dialog has its own "Background graphics" toggle, OFF by default -- with
+     it off, every background-color/background-image on the page (the watermark tile, the
+     header gradient, the pastel question tints, the checkout box) is silently dropped from
+     the printed output, no matter how the page's own CSS is written. This property is the
+     one way a page can override that and force its own backgrounds through regardless of
+     that checkbox -- applied to every element here, not just the outer container, since
+     the setting is a per-element rendering instruction, not something that inherits. */
+  .printable-worksheet-portal,
+  .printable-worksheet-portal * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
 
 /* The brand-name watermark is a *tiling background image* (inline style, PrintableWorksheet.tsx
