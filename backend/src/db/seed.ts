@@ -65,8 +65,15 @@ function ensureDevAdmin() {
   const email = 'dev_admin@anees.local';
   db.prepare(
     `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
-  ).run('dev_admin', encrypt(email), hashForLookup(email), passwordHash, 'Dev Admin', 'robot', 0, 0, 'admin', null, 1);
+  ).run('dev_admin', encrypt(email), hashForLookup(email), passwordHash, 'Anees Team', 'robot', 0, 0, 'admin', null, 1);
   console.log('[seed] Added dev_admin account to existing database.');
+}
+
+/** Renames the dev_admin account to "Anees Team" -- runs on every boot so a database
+ * seeded before this rename (still showing the old "Dev Admin" placeholder) picks it up
+ * too, not just a brand-new one. */
+function ensureAdminDisplayName() {
+  db.prepare(`UPDATE users SET display_name = 'Anees Team' WHERE username = 'dev_admin'`).run();
 }
 
 /** The seed accounts never go through Supabase signup, so on a database created before
@@ -93,6 +100,7 @@ function ensureDevTeacherProgress() {
 export function seed() {
   ensureDevTeacher();
   ensureDevAdmin();
+  ensureAdminDisplayName();
   ensureSeedAccountsVerified();
   ensureDevTeacherProgress();
   const subjectCount = (db.prepare('SELECT COUNT(*) as c FROM subjects').get() as { c: number }).c;
