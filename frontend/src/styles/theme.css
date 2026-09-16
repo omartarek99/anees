@@ -1331,6 +1331,16 @@ a:focus-visible {
   }
 }
 
+/* Fills the printable page's width exactly (see the printable-worksheet's own width: 100%
+   comment above for why percentage, not a fixed px size) -- height is whatever the
+   admin-uploaded image's own aspect ratio works out to, since unlike the earlier bronze/
+   platinum plaque photos there's no guaranteed portrait ratio to assume here. */
+.printable-certificate-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 /* The brand-name watermark is a *tiling background image* (inline style, PrintableWorksheet.tsx
    computes the actual data: URL) rather than a positioned DOM element -- Chrome's print/PDF
    engine doesn't reliably repeat position:fixed content across pages (a real, longstanding

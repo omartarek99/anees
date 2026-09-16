@@ -8,6 +8,7 @@ import { pickText, translateApiError } from '../lib/i18n';
 import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
+import { PrintableCertificateImage } from '../components/PrintableCertificateImage';
 import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
 
 type TeacherVideo = {
@@ -88,6 +89,7 @@ export function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [printingCert, setPrintingCert] = useState<Certificate | null>(null);
 
   function load() {
     const path = isOwnProfile ? '/users/me' : `/users/${username}`;
@@ -102,6 +104,45 @@ export function ProfilePage() {
   }
 
   useEffect(load, [username]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fires once PrintableCertificateImage has actually mounted (this effect runs after the
+  // DOM commit, unlike calling window.print() straight from the click handler, which would
+  // race the portal not existing yet) -- blanks the title the same way WorksheetsPage's
+  // print does, restoring it on `afterprint` (fires whether printed or cancelled). Waits
+  // for the portal's <img> to finish loading first -- it's usually already cached (the same
+  // certificate is already showing on this page), but not guaranteed, and printing before
+  // it paints would rasterize a blank page.
+  useEffect(() => {
+    if (!printingCert) return;
+    let cancelled = false;
+
+    const original = document.title;
+    const restore = () => {
+      document.title = original;
+      window.removeEventListener('afterprint', restore);
+      setPrintingCert(null);
+    };
+
+    const portal = document.querySelector('.printable-certificate-portal');
+    const img = portal?.querySelector('img') ?? null;
+    const ready = !img || img.complete
+      ? Promise.resolve()
+      : new Promise<void>((resolve) => {
+          img.addEventListener('load', () => resolve(), { once: true });
+          img.addEventListener('error', () => resolve(), { once: true });
+        });
+
+    ready.then(() => {
+      if (cancelled) return;
+      document.title = ' ';
+      window.addEventListener('afterprint', restore);
+      window.print();
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [printingCert]);
 
   async function saveDisplayName() {
     if (!nameDraft.trim()) return;
@@ -262,19 +303,14 @@ export function ProfilePage() {
           <h3 style={{ fontSize: 16 }}>{t('profile.certificates')}</h3>
           <div className="grid-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
             {profile.certificates.map((cert) => (
-              <a
-                key={cert.id}
-                href={cert.imageUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="card stack"
-                style={{ gap: 6, padding: 14, textDecoration: 'none', color: 'inherit' }}
-              >
-                <img
-                  src={cert.imageUrl}
-                  alt={cert.title}
-                  style={{ width: '100%', borderRadius: 'var(--radius-sm)', aspectRatio: '4 / 3', objectFit: 'contain', background: 'var(--sand)' }}
-                />
+              <div key={cert.id} className="card stack" style={{ gap: 6, padding: 14 }}>
+                <a href={cert.imageUrl} target="_blank" rel="noreferrer">
+                  <img
+                    src={cert.imageUrl}
+                    alt={cert.title}
+                    style={{ width: '100%', borderRadius: 'var(--radius-sm)', aspectRatio: '4 / 3', objectFit: 'contain', background: 'var(--sand)' }}
+                  />
+                </a>
                 <span
                   style={{
                     width: 'fit-content',
@@ -294,11 +330,16 @@ export function ProfilePage() {
                     {t('profile.certificateFrom', { name: cert.issuedByName })}
                   </p>
                 )}
-              </a>
+                <button type="button" className="btn btn-secondary btn-sm" style={{ width: 'fit-content' }} onClick={() => setPrintingCert(cert)}>
+                  {t('profile.printCertificate')}
+                </button>
+              </div>
             ))}
           </div>
         </div>
       )}
+
+      {printingCert && <PrintableCertificateImage imageUrl={printingCert.imageUrl} title={printingCert.title} />}
 
       {profile.role === 'teacher' && (
         <div className="card stack">

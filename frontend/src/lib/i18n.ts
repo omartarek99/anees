@@ -521,6 +521,7 @@ const en = {
     noVideosYet: 'No videos yet.',
     certificates: 'Certificates',
     certificateFrom: 'From {name}',
+    printCertificate: '🖨️ Print',
   },
   certificateAward: {
     title: 'You earned a certificate!',
@@ -1071,6 +1072,7 @@ const ar: typeof en = {
     noVideosYet: 'لا توجد فيديوهات بعد.',
     certificates: 'الشهادات',
     certificateFrom: 'من {name}',
+    printCertificate: '🖨️ طباعة',
   },
   certificateAward: {
     title: 'لقد حصلت على شهادة!',
