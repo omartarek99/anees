@@ -6,7 +6,6 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { pickText, translateApiError } from '../lib/i18n';
 import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
-import { AvatarFrame } from '../components/AvatarFrame';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
 import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
@@ -57,16 +56,6 @@ type Profile = {
 };
 
 const STAT_COLORS = ['stat-card-yellow', 'stat-card-green'];
-
-// Platinum outranks gold outranks bronze -- a student/teacher with certificates of more
-// than one tier gets the frame for the best one they've earned, not the most recent.
-const TIER_RANK: Record<CertificateType, number> = { bronze: 1, gold: 2, platinum: 3 };
-function highestCertificateTier(certificates: Certificate[]): CertificateType | null {
-  return certificates.reduce<CertificateType | null>(
-    (best, cert) => (!best || TIER_RANK[cert.type] > TIER_RANK[best] ? cert.type : best),
-    null
-  );
-}
 
 // Rank progress ring (replaces the old linear xp-bar) -- radius/circumference are shared
 // between the track and fill circles so the fill's dash math stays in one place.
@@ -181,21 +170,13 @@ export function ProfilePage() {
   }
 
   const joinedDate = new Date(profile.joinedAt.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US');
-  const highestTier = highestCertificateTier(profile.certificates);
-  const avatarEl = <Avatar avatarKey={profile.avatarKey} photoUrl={profile.avatarUrl} size={72} />;
 
   return (
     <div className="stack">
       <Topbar title={profile.displayName} subtitle={`@${profile.username} · ${t('profile.joined', { date: joinedDate })}`} />
 
       <div className="card flex gap-md" style={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        {highestTier ? (
-          <AvatarFrame tier={highestTier} size={72}>
-            {avatarEl}
-          </AvatarFrame>
-        ) : (
-          avatarEl
-        )}
+        <Avatar avatarKey={profile.avatarKey} photoUrl={profile.avatarUrl} size={72} />
 
         <div className="flex gap-md" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', width: 84, height: 84, flexShrink: 0 }}>
