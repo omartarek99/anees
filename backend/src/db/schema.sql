@@ -241,12 +241,22 @@ CREATE TABLE IF NOT EXISTS certificates (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
+  -- Legacy columns from an earlier, code-drawn certificate design -- no longer written by
+  -- the admin composer (routes/admin.ts POST /certificates), kept only so existing rows
+  -- (and any database that already has them) don't need a destructive rebuild.
   title_ar TEXT NOT NULL DEFAULT '',
   message TEXT NOT NULL DEFAULT '',
   message_ar TEXT NOT NULL DEFAULT '',
-  -- Drives the printed certificate's whole color scheme (PrintableCertificate.tsx) --
-  -- bronze/gold/platinum, matching the palette lib/ranks.ts already uses for rank tiers.
+  -- A category label (matching the palette lib/ranks.ts already uses for rank tiers) shown
+  -- as a colored badge -- the certificate's actual visual is the admin-uploaded image
+  -- below, not drawn from this.
   type TEXT NOT NULL DEFAULT 'gold' CHECK (type IN ('bronze','gold','platinum')),
+  -- The admin-supplied certificate image (Supabase Storage public URL) -- the certificate
+  -- IS this image; nothing is drawn or overlaid on top of it.
+  image_url TEXT NOT NULL DEFAULT '',
+  -- Set once the recipient has dismissed the celebratory award popup (CertificateAwardPopup.tsx)
+  -- for this certificate -- NULL means it still needs to be announced on their next visit.
+  viewed_at TEXT,
   issued_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

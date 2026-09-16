@@ -244,3 +244,11 @@ const certificateCols = db.prepare(`PRAGMA table_info(certificates)`).all() as {
 if (!certificateCols.some((c) => c.name === 'type')) {
   db.exec(`ALTER TABLE certificates ADD COLUMN type TEXT NOT NULL CHECK (type IN ('bronze','gold','platinum')) DEFAULT 'gold'`);
 }
+// Admin-uploaded certificate image + the recipient's "seen the award popup yet" marker,
+// added after the initial certificates table (which drew the certificate in code instead).
+if (!certificateCols.some((c) => c.name === 'image_url')) {
+  db.exec(`ALTER TABLE certificates ADD COLUMN image_url TEXT NOT NULL DEFAULT ''`);
+}
+if (!certificateCols.some((c) => c.name === 'viewed_at')) {
+  db.exec(`ALTER TABLE certificates ADD COLUMN viewed_at TEXT`);
+}

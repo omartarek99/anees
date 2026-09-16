@@ -10,6 +10,7 @@ import { getPlayerLevel } from '../lib/xp.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { AVATAR_PHOTO_BUCKET, AVATAR_PHOTO_PATH_PREFIX, deleteAvatarPhotoIfAny } from '../lib/avatarPhoto.js';
+import { looksLikeImage } from '../lib/imageValidation.js';
 
 export const usersRouter = Router();
 
@@ -50,10 +51,8 @@ function userCertificates(userId: number) {
   return rows.map((r) => ({
     id: r.id,
     title: r.title,
-    titleAr: r.title_ar,
-    message: r.message,
-    messageAr: r.message_ar,
     type: r.type,
+    imageUrl: r.image_url,
     issuedByName: r.issuer_display_name ?? null,
     createdAt: r.created_at,
   }));
@@ -166,23 +165,6 @@ function handleAvatarUpload(req: Request, res: Response, next: NextFunction) {
     }
     next();
   });
-}
-
-// multer's fileFilter only trusts the client-declared Content-Type -- this checks the
-// actual file signature (same approach as teacherReels.ts's looksLikeVideo) so arbitrary
-// content can't be stored in the PUBLIC `videos` bucket disguised as a photo.
-function looksLikeImage(buffer: Buffer, mimetype: string): boolean {
-  if (mimetype === 'image/jpeg') {
-    return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
-  }
-  if (mimetype === 'image/png') {
-    const PNG_SIG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-    return buffer.length >= 8 && PNG_SIG.every((b, i) => buffer[i] === b);
-  }
-  if (mimetype === 'image/webp') {
-    return buffer.length >= 12 && buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP';
-  }
-  return false;
 }
 
 usersRouter.post('/me/avatar', requireAuth, requireCsrfHeader, handleAvatarUpload, async (req, res) => {

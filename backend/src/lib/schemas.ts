@@ -102,13 +102,13 @@ export const adminSetXpSchema = z.object({
   totalXp: z.number().int().min(0).max(1_000_000),
 });
 
+// Arrives as multipart/form-data (it's issued alongside an uploaded image), so every field
+// lands as a string -- z.coerce.number() for userId, and the enum still validates a plain
+// string fine.
 export const adminIssueCertificateSchema = z.object({
-  userId: z.number().int(),
-  title: z.string().trim().min(1, 'Title is required.').max(120),
-  titleAr: z.string().trim().max(120).optional().default(''),
-  message: z.string().trim().max(500).optional().default(''),
-  messageAr: z.string().trim().max(500).optional().default(''),
-  type: z.enum(['bronze', 'gold', 'platinum']).optional().default('gold'),
+  userId: z.coerce.number().int(),
+  title: z.string().trim().min(1, 'Name is required.').max(120),
+  type: z.enum(['bronze', 'gold', 'platinum']),
 });
 
 const choiceSchema = z.string().trim().min(1).max(120);

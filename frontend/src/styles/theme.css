@@ -1526,166 +1526,89 @@ a:focus-visible {
   padding-top: 8px;
 }
 
-/* ---------------- Printable certificate (PrintableCertificate.tsx) ----------------
-   Same portal + tiling-watermark pattern as the printable worksheet above (see its
-   comment for why the watermark is a background-image, not a positioned element) -- a
-   single-page decorative document instead of a multi-page one, so it doesn't need the
-   worksheet's break-inside/counter machinery, just a wide bordered card.
-
-   Prints landscape, but that's set by ProfilePage.tsx's print trigger injecting a plain
-   `<style>@page{size:landscape}</style>` for the few seconds around the actual print call,
-   not by a rule here -- a `@page certificate {}` *named* page (opted into via `page:
-   certificate` on the portal) is valid CSS Paged Media syntax and looked right in every
-   on-screen check, but didn't actually drive Chrome's print orientation in a real print (a
-   real print came out portrait despite it). Don't reintroduce a named-page rule here
-   without confirming it actually works in a real print dialog, not just on-screen.
-
-   Fills the printable area exactly (width: 100%, no fixed max-width) rather than a fixed
-   pixel size -- a fixed px width can't know the actual paper size/margins Chrome ends up
-   using, so it risked overflowing onto a second page or leaving a mismatched gutter;
-   percentage width always exactly matches whatever page box the print ends up with.
-
-   --cert-light/--cert-dark are set inline per-instance (PrintableCertificate.tsx) from the
-   certificate's tier (bronze/gold/platinum, lib/certificateTiers.ts) -- every accent color
-   below reads from them instead of a hardcoded hex so the whole card re-themes per tier. */
-
-/* A double-bordered rectangle, not a shield -- the "frame" is two nested elements: this
-   outer one (the tier gradient, sized by its own padding below) and .printable-
-   certificate-panel inside it (smaller by that padding, white/watermarked, holds the
-   actual content), the size difference reading as a border all the way around. Kept as
-   two layers (not a single CSS `border`) since that's also what made the earlier shield
-   variant's border follow its clip-path -- reusing the same structure means switching
-   between rectangle and shield later is just swapping clip-path for border-radius here,
-   nothing else. */
-.printable-certificate {
-  width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 6px;
-  background: linear-gradient(160deg, var(--cert-light), var(--cert-dark));
-  border-radius: 24px;
+/* ---------------- Certificate award popup (CertificateAwardPopup.tsx) ----------------
+   Same modal-overlay + spring entrance as LevelUpToast, plus a burst of falling confetti
+   pieces (plain divs animated with CSS, not a particle library) and a couple of flickering
+   fire emoji for the "fire and celebration" feel. */
+.certificate-award-card {
   position: relative;
-}
-.printable-certificate-panel {
-  font-family: var(--font-body);
-  color: #201217;
-  background-color: #fff;
-  background-repeat: repeat;
-  background-size: 240px 240px;
-  box-sizing: border-box;
-  padding: 36px 60px;
-  text-align: center;
-  border-radius: 20px;
-  position: relative;
-}
-.printable-certificate-corner {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-  z-index: 1;
-}
-.printable-certificate-corner-tl {
-  top: 18px;
-  inset-inline-start: 18px;
-}
-.printable-certificate-corner-tr {
-  top: 18px;
-  inset-inline-end: 18px;
-  transform: rotate(90deg);
-}
-.printable-certificate-corner-bl {
-  bottom: 18px;
-  inset-inline-start: 18px;
-  transform: rotate(270deg);
-}
-.printable-certificate-corner-br {
-  bottom: 18px;
-  inset-inline-end: 18px;
-  transform: rotate(180deg);
-}
-.printable-certificate-logo {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 2px solid var(--cert-light);
-  object-fit: cover;
-  margin-bottom: 2px;
-}
-.printable-certificate-brand {
-  font-weight: 800;
-  font-size: 12px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--cert-dark);
-  margin: 0 0 6px;
-}
-.printable-certificate-tier-badge {
-  display: inline-block;
-  padding: 3px 16px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
+  overflow: hidden;
   color: #fff;
-  background: linear-gradient(135deg, var(--cert-light), var(--cert-dark));
-  margin: 0 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-lg);
+  padding: 32px 36px;
+  box-shadow: 0 24px 60px rgba(20, 20, 20, 0.35), 0 6px 16px rgba(20, 30, 60, 0.15), inset 0 2px 0 rgba(255, 255, 255, 0.35);
+  max-width: 380px;
+  width: 100%;
 }
-.printable-certificate-heading {
-  font-size: 30px;
-  margin: 0 0 8px;
-  color: var(--cert-dark);
-  letter-spacing: 1px;
+.certificate-award-confetti-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
-.printable-certificate-divider {
-  width: 110px;
-  height: 3px;
-  margin: 0 auto 14px;
+.certificate-award-confetti {
+  position: absolute;
+  top: -20px;
+  width: 8px;
+  height: 12px;
   border-radius: 2px;
-  background: linear-gradient(90deg, var(--cert-light), var(--cert-dark));
+  animation-name: certificate-confetti-fall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
 }
-.printable-certificate-presented {
-  font-size: 12.5px;
-  color: #6b4650;
-  margin: 0 0 6px;
+@keyframes certificate-confetti-fall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(480px) rotate(540deg);
+    opacity: 0;
+  }
 }
-.printable-certificate-name {
-  font-size: 28px;
-  font-weight: 800;
-  color: #4a0e24;
-  margin: 0 0 12px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--cert-light);
+.certificate-award-fire {
   display: inline-block;
+  animation: certificate-fire-flicker 0.6s ease-in-out infinite;
 }
-.printable-certificate-award-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--cert-dark);
-  margin: 0 0 10px;
+@keyframes certificate-fire-flicker {
+  0%,
+  100% {
+    transform: scale(1) rotate(-4deg);
+  }
+  50% {
+    transform: scale(1.18) rotate(4deg);
+  }
 }
-.printable-certificate-message {
-  font-size: 13.5px;
-  color: #4a0e24;
-  max-width: 560px;
-  margin: 0 auto 4px;
-  line-height: 1.55;
+.certificate-award-heading {
+  color: #fff;
+  font-size: 24px;
+  margin: 6px 0 2px;
 }
-.printable-certificate-seal {
-  width: 56px;
-  margin: 6px auto 0;
-}
-.printable-certificate-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid #eee;
-  font-size: 12px;
-  color: #6b4650;
-}
-.printable-certificate-signature {
+.certificate-award-tier {
   font-weight: 800;
-  font-style: italic;
-  color: var(--cert-dark);
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 14px;
+}
+.certificate-award-image {
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+.certificate-award-name {
+  font-weight: 800;
+  font-size: 17px;
+  color: #fff;
+  margin: 14px 0 0;
+}
+.certificate-award-issuer {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 4px 0 0;
 }

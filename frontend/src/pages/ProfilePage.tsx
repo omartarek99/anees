@@ -8,7 +8,6 @@ import { pickText, translateApiError } from '../lib/i18n';
 import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
-import { PrintableCertificate } from '../components/PrintableCertificate';
 import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
 
 type TeacherVideo = {
@@ -23,10 +22,8 @@ type TeacherVideo = {
 type Certificate = {
   id: number;
   title: string;
-  titleAr: string;
-  message: string;
-  messageAr: string;
   type: CertificateType;
+  imageUrl: string;
   issuedByName: string | null;
   createdAt: string;
 };
@@ -91,7 +88,6 @@ export function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const [printingCert, setPrintingCert] = useState<Certificate | null>(null);
 
   function load() {
     const path = isOwnProfile ? '/users/me' : `/users/${username}`;
@@ -106,66 +102,6 @@ export function ProfilePage() {
   }
 
   useEffect(load, [username]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Fires once PrintableCertificate has actually mounted (this effect runs after the DOM
-  // commit, unlike calling window.print() straight from the click handler, which would
-  // race the portal not existing yet) -- blanks the title the same way WorksheetsPage's
-  // print does, restoring it on `afterprint` (fires whether printed or cancelled).
-  //
-  // Waits for the portal's <img> tags (logo + seal icons are inline SVG, so in practice
-  // just the small logo) to actually finish loading before printing -- otherwise
-  // window.print() can rasterize the page before an image has painted.
-  //
-  // Certificates print landscape -- a `@page { size: landscape }` scoped to a *named* page
-  // (`page: certificate` on the portal) turned out not to reliably drive Chrome's actual
-  // print orientation despite being valid CSS Paged Media syntax (confirmed by a real
-  // print producing a portrait page instead). Injecting a plain *unnamed* `@page` rule only
-  // for the few seconds around this one print call -- removed again in `restore` --
-  // sidesteps that gap entirely, since unnamed `@page size` is the well-supported case, and
-  // it can't leak into the worksheet's own portrait print (that one runs at a completely
-  // different time, never while this style tag exists).
-  useEffect(() => {
-    if (!printingCert) return;
-    let cancelled = false;
-
-    const original = document.title;
-    let landscapeStyle: HTMLStyleElement | null = null;
-
-    const restore = () => {
-      document.title = original;
-      landscapeStyle?.remove();
-      window.removeEventListener('afterprint', restore);
-      setPrintingCert(null);
-    };
-
-    const portal = document.querySelector('.printable-certificate-portal');
-    const images = portal ? Array.from(portal.querySelectorAll('img')) : [];
-    const ready = Promise.all(
-      images.map(
-        (img) =>
-          img.complete
-            ? Promise.resolve()
-            : new Promise<void>((resolve) => {
-                img.addEventListener('load', () => resolve(), { once: true });
-                img.addEventListener('error', () => resolve(), { once: true });
-              })
-      )
-    );
-
-    ready.then(() => {
-      if (cancelled) return;
-      document.title = ' ';
-      landscapeStyle = document.createElement('style');
-      landscapeStyle.textContent = '@page { size: landscape; margin: 10mm 16mm; }';
-      document.head.appendChild(landscapeStyle);
-      window.addEventListener('afterprint', restore);
-      window.print();
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [printingCert]);
 
   async function saveDisplayName() {
     if (!nameDraft.trim()) return;
@@ -326,10 +262,19 @@ export function ProfilePage() {
           <h3 style={{ fontSize: 16 }}>{t('profile.certificates')}</h3>
           <div className="grid-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
             {profile.certificates.map((cert) => (
-              <div key={cert.id} className="card stack" style={{ gap: 6, padding: 14 }}>
-                <span style={{ fontSize: 28 }} aria-hidden>
-                  🎖️
-                </span>
+              <a
+                key={cert.id}
+                href={cert.imageUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="card stack"
+                style={{ gap: 6, padding: 14, textDecoration: 'none', color: 'inherit' }}
+              >
+                <img
+                  src={cert.imageUrl}
+                  alt={cert.title}
+                  style={{ width: '100%', borderRadius: 'var(--radius-sm)', aspectRatio: '4 / 3', objectFit: 'contain', background: 'var(--sand)' }}
+                />
                 <span
                   style={{
                     width: 'fit-content',
@@ -343,39 +288,16 @@ export function ProfilePage() {
                 >
                   {t(CERT_TYPE_LABEL_KEY[cert.type])}
                 </span>
-                <strong style={{ fontSize: 14 }}>{pickText(lang, cert.title, cert.titleAr)}</strong>
-                {(cert.message || cert.messageAr) && (
-                  <p className="muted" style={{ fontSize: 12, margin: 0 }}>
-                    {pickText(lang, cert.message, cert.messageAr)}
-                  </p>
-                )}
+                <strong style={{ fontSize: 14 }}>{cert.title}</strong>
                 {cert.issuedByName && (
                   <p className="muted" style={{ fontSize: 11, margin: 0 }}>
                     {t('profile.certificateFrom', { name: cert.issuedByName })}
                   </p>
                 )}
-                <button type="button" className="btn btn-secondary btn-sm" style={{ width: 'fit-content' }} onClick={() => setPrintingCert(cert)}>
-                  {t('profile.printCertificate')}
-                </button>
-              </div>
+              </a>
             ))}
           </div>
         </div>
-      )}
-
-      {printingCert && (
-        <PrintableCertificate
-          data={{
-            recipientName: profile.displayName,
-            recipientRole: profile.role === 'teacher' ? 'teacher' : 'student',
-            title: printingCert.title,
-            titleAr: printingCert.titleAr,
-            message: printingCert.message,
-            messageAr: printingCert.messageAr,
-            type: printingCert.type,
-            issuedAt: printingCert.createdAt,
-          }}
-        />
       )}
 
       {profile.role === 'teacher' && (

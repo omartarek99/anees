@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
@@ -13,28 +13,27 @@ type Certificate = {
   recipientDisplayName: string;
   recipientRole: 'student' | 'teacher' | 'admin';
   title: string;
-  titleAr: string;
-  message: string;
-  messageAr: string;
   type: CertificateType;
+  imageUrl: string;
   issuedByName: string | null;
   createdAt: string;
 };
 
-
-/** Admin-only: hand-issue a certificate to a student or teacher's profile (shown there via
- * routes/users.ts profileSummary, printable the same way a teacher's worksheet is -- see
- * PrintableCertificate.tsx), plus a history of everything sent so far. */
+/** Admin-only: upload a certificate image and hand-issue it to a student or teacher's
+ * profile (routes/users.ts profileSummary shows it there; CertificateAwardPopup announces
+ * it with confetti on their next visit), plus a history of everything sent so far. The
+ * certificate IS the uploaded image -- nothing is drawn on top of it, so issuing one only
+ * needs a recipient, a name, and a category. */
 export function AdminCertificatesPanel() {
   const { t, lang } = useLanguage();
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<AdminUserSummary[]>([]);
   const [recipient, setRecipient] = useState<AdminUserSummary | null>(null);
   const [title, setTitle] = useState('');
-  const [titleAr, setTitleAr] = useState('');
-  const [message, setMessage] = useState('');
-  const [messageAr, setMessageAr] = useState('');
   const [type, setType] = useState<CertificateType>('gold');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [certificates, setCertificates] = useState<Certificate[] | null>(null);
@@ -68,26 +67,37 @@ export function AdminCertificatesPanel() {
     return () => clearTimeout(id);
   }, [search, recipient]);
 
+  // Revoked once the preview <img> no longer needs it (a fresh one is made per file pick,
+  // and the final cleanup on unmount) -- object URLs otherwise leak for the page's lifetime.
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    };
+  }, [imagePreviewUrl]);
+
+  function handlePickImage(file: File | null) {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImageFile(file);
+    setImagePreviewUrl(file ? URL.createObjectURL(file) : null);
+  }
+
   async function handleSend() {
-    if (!recipient || !title.trim()) return;
+    if (!recipient || !title.trim() || !imageFile) return;
     setSending(true);
     setFormError(null);
     try {
-      await api.post('/admin/certificates', {
-        userId: recipient.id,
-        title: title.trim(),
-        titleAr: titleAr.trim(),
-        message: message.trim(),
-        messageAr: messageAr.trim(),
-        type,
-      });
+      const formData = new FormData();
+      formData.append('userId', String(recipient.id));
+      formData.append('title', title.trim());
+      formData.append('type', type);
+      formData.append('image', imageFile);
+      await api.postForm('/admin/certificates', formData);
       setRecipient(null);
       setSearch('');
       setTitle('');
-      setTitleAr('');
-      setMessage('');
-      setMessageAr('');
       setType('gold');
+      handlePickImage(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       loadCertificates();
     } catch (err) {
       setFormError(err instanceof ApiError ? translateApiError(lang, err.message) : t('admin.certSendError'));
@@ -164,24 +174,6 @@ export function AdminCertificatesPanel() {
           <label>{t('admin.certTitleLabel')}</label>
           <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} placeholder={t('admin.certTitlePlaceholder')} />
         </div>
-        <div className="field">
-          <label>{t('admin.certTitleArLabel')}</label>
-          <input value={titleAr} onChange={(e) => setTitleAr(e.target.value)} maxLength={120} dir="rtl" />
-        </div>
-        <div className="field">
-          <label>{t('admin.certMessageLabel')}</label>
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            maxLength={500}
-            rows={3}
-            placeholder={t('admin.certMessagePlaceholder')}
-          />
-        </div>
-        <div className="field">
-          <label>{t('admin.certMessageArLabel')}</label>
-          <textarea value={messageAr} onChange={(e) => setMessageAr(e.target.value)} maxLength={500} rows={3} dir="rtl" />
-        </div>
 
         <div className="field">
           <label>{t('admin.certTypeLabel')}</label>
@@ -216,8 +208,30 @@ export function AdminCertificatesPanel() {
           </div>
         </div>
 
-        <button type="button" className="btn btn-primary" disabled={!recipient || !title.trim() || sending} onClick={handleSend}>
-          {t('admin.certSendButton')}
+        <div className="field">
+          <label>{t('admin.certImageLabel')}</label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => handlePickImage(e.target.files?.[0] ?? null)}
+          />
+          {imagePreviewUrl && (
+            <img
+              src={imagePreviewUrl}
+              alt=""
+              style={{ marginTop: 10, maxWidth: 220, maxHeight: 220, borderRadius: 'var(--radius-sm)', objectFit: 'contain' }}
+            />
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={!recipient || !title.trim() || !imageFile || sending}
+          onClick={handleSend}
+        >
+          {sending ? t('admin.certSending') : t('admin.certSendButton')}
         </button>
       </div>
 
@@ -234,27 +248,34 @@ export function AdminCertificatesPanel() {
           {certificates?.map((c) => {
             const palette = CERT_PALETTES[c.type];
             return (
-              <div key={c.id} className="list-row flex-between" style={{ alignItems: 'flex-start' }}>
-                <div>
-                  <div className="flex gap-sm" style={{ alignItems: 'center' }}>
-                    <strong>{c.title}</strong>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        padding: '2px 8px',
-                        borderRadius: 999,
-                        color: '#fff',
-                        background: `linear-gradient(135deg, ${palette.light}, ${palette.dark})`,
-                      }}
-                    >
-                      {t(CERT_TYPE_LABEL_KEY[c.type])}
-                    </span>
+              <div key={c.id} className="list-row flex-between" style={{ alignItems: 'center' }}>
+                <div className="flex gap-md" style={{ alignItems: 'center' }}>
+                  <img
+                    src={c.imageUrl}
+                    alt=""
+                    style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', objectFit: 'cover', flexShrink: 0 }}
+                  />
+                  <div>
+                    <div className="flex gap-sm" style={{ alignItems: 'center' }}>
+                      <strong>{c.title}</strong>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: 999,
+                          color: '#fff',
+                          background: `linear-gradient(135deg, ${palette.light}, ${palette.dark})`,
+                        }}
+                      >
+                        {t(CERT_TYPE_LABEL_KEY[c.type])}
+                      </span>
+                    </div>
+                    <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>
+                      {c.recipientDisplayName} (@{c.recipientUsername}) ·{' '}
+                      {new Date(c.createdAt.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US')}
+                    </p>
                   </div>
-                  <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>
-                    {c.recipientDisplayName} (@{c.recipientUsername}) ·{' '}
-                    {new Date(c.createdAt.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US')}
-                  </p>
                 </div>
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleRevoke(c)}>
                   {t('admin.certRevokeButton')}

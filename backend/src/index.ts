@@ -17,6 +17,7 @@ import { craftRouter } from './routes/craft.js';
 import { teacherReelsRouter } from './routes/teacherReels.js';
 import { adminRouter } from './routes/admin.js';
 import { analyticsRouter } from './routes/analytics.js';
+import { certificatesRouter } from './routes/certificates.js';
 import { FRONTEND_ORIGIN } from './lib/config.js';
 
 seed();
@@ -84,6 +85,7 @@ app.use('/api/craft', ...authenticated, craftRouter);
 app.use('/api/teacher-reels', teacherReelsRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/certificates', ...authenticated, certificatesRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found.' });

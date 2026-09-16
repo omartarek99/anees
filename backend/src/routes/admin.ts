@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { db } from '../db/db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { requireCsrfHeader, validateBody } from '../middleware/validate.js';
@@ -15,8 +16,11 @@ import { isCurrentlyBanned } from '../lib/accountStatus.js';
 import { deleteReelVideoIfAny } from '../lib/reelVideo.js';
 import { decrypt } from '../lib/encryption.js';
 import { getDoublePointsStatus, startDoublePointsNow } from '../lib/doublePoints.js';
+import { supabaseAdmin } from '../lib/supabase.js';
+import { looksLikeImage } from '../lib/imageValidation.js';
+import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX, deleteCertificateImageIfAny } from '../lib/certificateImage.js';
 
-import type { Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 
 export const adminRouter = Router();
 
@@ -221,9 +225,37 @@ adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSch
 });
 
 // ---------------------------------------------------------------------------------------
-// Certificates -- admin hand-issues one to a student or teacher's profile (routes/users.ts
-// profileSummary shows them to the recipient, printable the same way a worksheet is).
+// Certificates -- admin uploads an image and hand-issues it to a student or teacher's
+// profile (routes/users.ts profileSummary shows it to the recipient; CertificateAwardPopup
+// on their next visit announces it). The certificate IS the uploaded image -- nothing is
+// drawn or overlaid on top of it, so issuing one just needs a recipient, a name, a category,
+// and the file.
 // ---------------------------------------------------------------------------------------
+
+const certificateImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) cb(null, true);
+    else cb(new Error('INVALID_IMAGE_TYPE'));
+  },
+}).single('image');
+
+function handleCertificateImageUpload(req: Request, res: Response, next: NextFunction) {
+  certificateImageUpload(req, res, (err) => {
+    if (err) {
+      res.status(400).json({ error: 'Please upload a valid image (JPG, PNG, or WebP, under 8MB).' });
+      return;
+    }
+    next();
+  });
+}
+
+const CERTIFICATE_IMAGE_MIME_TO_EXT: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
 
 function adminCertificate(row: any) {
   return {
@@ -233,10 +265,8 @@ function adminCertificate(row: any) {
     recipientDisplayName: row.recipient_display_name,
     recipientRole: row.recipient_role,
     title: row.title,
-    titleAr: row.title_ar,
-    message: row.message,
-    messageAr: row.message_ar,
     type: row.type,
+    imageUrl: row.image_url,
     issuedByName: row.issuer_display_name ?? null,
     createdAt: row.created_at,
   };
@@ -256,29 +286,60 @@ adminRouter.get('/certificates', (_req, res) => {
   res.json({ certificates: rows.map(adminCertificate) });
 });
 
-adminRouter.post('/certificates', requireCsrfHeader, validateBody(adminIssueCertificateSchema), (req, res) => {
-  const { userId, title, titleAr, message, messageAr, type } = req.body as import('zod').infer<typeof adminIssueCertificateSchema>;
+adminRouter.post('/certificates', requireCsrfHeader, handleCertificateImageUpload, async (req, res) => {
+  const parsed = adminIssueCertificateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Invalid request.', details: parsed.error.flatten() });
+    return;
+  }
+  const { userId, title, type } = parsed.data;
+
   const recipient = db.prepare(`SELECT id, role FROM users WHERE id = ?`).get(userId) as { id: number; role: string } | undefined;
   if (!recipient || recipient.role === 'admin') {
     res.status(400).json({ error: 'Certificates can only be issued to a student or teacher account.' });
     return;
   }
+
+  const image = req.file;
+  if (!image || !looksLikeImage(image.buffer, image.mimetype)) {
+    res.status(400).json({ error: 'Please upload a valid image (JPG, PNG, or WebP, under 8MB).' });
+    return;
+  }
+  if (!supabaseAdmin) {
+    res.status(500).json({ error: "We couldn't upload the certificate. Please try again." });
+    return;
+  }
+
+  const ext = CERTIFICATE_IMAGE_MIME_TO_EXT[image.mimetype];
+  const path = `${CERTIFICATE_IMAGE_PATH_PREFIX}${userId}-${Date.now()}.${ext}`;
+  const { error: uploadError } = await supabaseAdmin.storage
+    .from(CERTIFICATE_IMAGE_BUCKET)
+    .upload(path, image.buffer, { contentType: image.mimetype });
+  if (uploadError) {
+    console.error('Certificate image upload failed:', uploadError.message);
+    res.status(500).json({ error: "We couldn't upload the certificate. Please try again." });
+    return;
+  }
+  const { data: publicUrlData } = supabaseAdmin.storage.from(CERTIFICATE_IMAGE_BUCKET).getPublicUrl(path);
+
   const id = Number(
     db
-      .prepare(
-        `INSERT INTO certificates (user_id, title, title_ar, message, message_ar, type, issued_by) VALUES (?,?,?,?,?,?,?)`
-      )
-      .run(userId, title, titleAr, message, messageAr, type, req.userId!).lastInsertRowid
+      .prepare(`INSERT INTO certificates (user_id, title, type, image_url, issued_by) VALUES (?,?,?,?,?)`)
+      .run(userId, title, type, publicUrlData.publicUrl, req.userId!).lastInsertRowid
   );
   res.status(201).json({ id });
 });
 
-adminRouter.delete('/certificates/:id', requireCsrfHeader, (req, res) => {
-  const result = db.prepare(`DELETE FROM certificates WHERE id = ?`).run(Number(req.params.id));
-  if (result.changes === 0) {
+adminRouter.delete('/certificates/:id', requireCsrfHeader, async (req, res) => {
+  const row = db.prepare(`SELECT image_url FROM certificates WHERE id = ?`).get(Number(req.params.id)) as
+    | { image_url: string | null }
+    | undefined;
+  if (!row) {
     res.status(404).json({ error: 'Not found.' });
     return;
   }
+  db.prepare(`DELETE FROM certificates WHERE id = ?`).run(Number(req.params.id));
+  await deleteCertificateImageIfAny(row.image_url);
   res.json({ ok: true });
 });
 
