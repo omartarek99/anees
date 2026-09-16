@@ -1299,8 +1299,7 @@ a:focus-visible {
    theme's CSS variables) and always light -- a physical printout should never follow the
    viewer's on-screen dark-mode preference; it has to look right and ink-economical on
    actual paper regardless of what theme the browser happened to be in. */
-.printable-worksheet-portal,
-.printable-certificate-portal {
+.printable-worksheet-portal {
   display: none;
 }
 
@@ -1308,8 +1307,7 @@ a:focus-visible {
   #root {
     display: none !important;
   }
-  .printable-worksheet-portal,
-  .printable-certificate-portal {
+  .printable-worksheet-portal {
     display: block !important;
   }
   @page {
@@ -1323,27 +1321,10 @@ a:focus-visible {
      that checkbox -- applied to every element here, not just the outer container, since
      the setting is a per-element rendering instruction, not something that inherits. */
   .printable-worksheet-portal,
-  .printable-worksheet-portal *,
-  .printable-certificate-portal,
-  .printable-certificate-portal * {
+  .printable-worksheet-portal * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-}
-
-/* Fits the image to exactly one page, whatever its own aspect ratio (unlike the earlier
-   bronze/platinum plaque photos there's no guaranteed portrait ratio to assume here):
-   100vh maps to the page's own height during print pagination, and object-fit: contain
-   scales the image to fit fully within that box -- letterboxed on whichever axis has
-   spare room, never cropped and never spilling onto a second page. Paired with
-   ProfilePage.tsx's print trigger zeroing the page margin for this one print call, so
-   "100%"/"100vh" here mean the *entire* physical page, not the page minus a margin. */
-.printable-certificate-image {
-  display: block;
-  width: 100%;
-  height: 100vh;
-  object-fit: contain;
-  margin: 0 auto;
 }
 
 /* The brand-name watermark is a *tiling background image* (inline style, PrintableWorksheet.tsx

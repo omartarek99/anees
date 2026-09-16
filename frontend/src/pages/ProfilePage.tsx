@@ -8,7 +8,6 @@ import { pickText, translateApiError } from '../lib/i18n';
 import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
-import { PrintableCertificateImage } from '../components/PrintableCertificateImage';
 import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
 
 type TeacherVideo = {
@@ -89,7 +88,6 @@ export function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const [printingCert, setPrintingCert] = useState<Certificate | null>(null);
 
   function load() {
     const path = isOwnProfile ? '/users/me' : `/users/${username}`;
@@ -104,59 +102,6 @@ export function ProfilePage() {
   }
 
   useEffect(load, [username]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Fires once PrintableCertificateImage has actually mounted (this effect runs after the
-  // DOM commit, unlike calling window.print() straight from the click handler, which would
-  // race the portal not existing yet) -- blanks the title the same way WorksheetsPage's
-  // print does, restoring it on `afterprint` (fires whether printed or cancelled). Waits
-  // for the portal's <img> to finish loading first -- it's usually already cached (the same
-  // certificate is already showing on this page), but not guaranteed, and printing before
-  // it paints would rasterize a blank page.
-  //
-  // Also zeroes the page margin for the few seconds around this one print call -- the
-  // worksheet's own `@page { margin: 16mm 14mm }` (theme.css) is otherwise the only page
-  // rule in the stylesheet, and those margins were eating into the certificate image's
-  // available space (visible blank border, and a tall image spilling onto a second page).
-  // Injected as a temporary <style> rather than editing that shared rule directly, the same
-  // trick already used for forcing landscape before -- removed again in `restore`, so it
-  // never affects the worksheet's own print.
-  useEffect(() => {
-    if (!printingCert) return;
-    let cancelled = false;
-
-    const original = document.title;
-    let marginStyle: HTMLStyleElement | null = null;
-
-    const restore = () => {
-      document.title = original;
-      marginStyle?.remove();
-      window.removeEventListener('afterprint', restore);
-      setPrintingCert(null);
-    };
-
-    const portal = document.querySelector('.printable-certificate-portal');
-    const img = portal?.querySelector('img') ?? null;
-    const ready = !img || img.complete
-      ? Promise.resolve()
-      : new Promise<void>((resolve) => {
-          img.addEventListener('load', () => resolve(), { once: true });
-          img.addEventListener('error', () => resolve(), { once: true });
-        });
-
-    ready.then(() => {
-      if (cancelled) return;
-      document.title = ' ';
-      marginStyle = document.createElement('style');
-      marginStyle.textContent = '@page { margin: 0; }';
-      document.head.appendChild(marginStyle);
-      window.addEventListener('afterprint', restore);
-      window.print();
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [printingCert]);
 
   async function saveDisplayName() {
     if (!nameDraft.trim()) return;
@@ -344,16 +289,20 @@ export function ProfilePage() {
                     {t('profile.certificateFrom', { name: cert.issuedByName })}
                   </p>
                 )}
-                <button type="button" className="btn btn-secondary btn-sm" style={{ width: 'fit-content' }} onClick={() => setPrintingCert(cert)}>
-                  {t('profile.printCertificate')}
-                </button>
+                <a
+                  href={cert.imageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-secondary btn-sm"
+                  style={{ width: 'fit-content', textDecoration: 'none' }}
+                >
+                  {t('profile.openCertificate')}
+                </a>
               </div>
             ))}
           </div>
         </div>
       )}
-
-      {printingCert && <PrintableCertificateImage imageUrl={printingCert.imageUrl} title={printingCert.title} />}
 
       {profile.role === 'teacher' && (
         <div className="card stack">
