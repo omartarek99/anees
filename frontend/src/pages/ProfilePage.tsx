@@ -112,13 +112,24 @@ export function ProfilePage() {
   // for the portal's <img> to finish loading first -- it's usually already cached (the same
   // certificate is already showing on this page), but not guaranteed, and printing before
   // it paints would rasterize a blank page.
+  //
+  // Also zeroes the page margin for the few seconds around this one print call -- the
+  // worksheet's own `@page { margin: 16mm 14mm }` (theme.css) is otherwise the only page
+  // rule in the stylesheet, and those margins were eating into the certificate image's
+  // available space (visible blank border, and a tall image spilling onto a second page).
+  // Injected as a temporary <style> rather than editing that shared rule directly, the same
+  // trick already used for forcing landscape before -- removed again in `restore`, so it
+  // never affects the worksheet's own print.
   useEffect(() => {
     if (!printingCert) return;
     let cancelled = false;
 
     const original = document.title;
+    let marginStyle: HTMLStyleElement | null = null;
+
     const restore = () => {
       document.title = original;
+      marginStyle?.remove();
       window.removeEventListener('afterprint', restore);
       setPrintingCert(null);
     };
@@ -135,6 +146,9 @@ export function ProfilePage() {
     ready.then(() => {
       if (cancelled) return;
       document.title = ' ';
+      marginStyle = document.createElement('style');
+      marginStyle.textContent = '@page { margin: 0; }';
+      document.head.appendChild(marginStyle);
       window.addEventListener('afterprint', restore);
       window.print();
     });

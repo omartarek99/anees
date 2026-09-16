@@ -1331,14 +1331,19 @@ a:focus-visible {
   }
 }
 
-/* Fills the printable page's width exactly (see the printable-worksheet's own width: 100%
-   comment above for why percentage, not a fixed px size) -- height is whatever the
-   admin-uploaded image's own aspect ratio works out to, since unlike the earlier bronze/
-   platinum plaque photos there's no guaranteed portrait ratio to assume here. */
+/* Fits the image to exactly one page, whatever its own aspect ratio (unlike the earlier
+   bronze/platinum plaque photos there's no guaranteed portrait ratio to assume here):
+   100vh maps to the page's own height during print pagination, and object-fit: contain
+   scales the image to fit fully within that box -- letterboxed on whichever axis has
+   spare room, never cropped and never spilling onto a second page. Paired with
+   ProfilePage.tsx's print trigger zeroing the page margin for this one print call, so
+   "100%"/"100vh" here mean the *entire* physical page, not the page minus a margin. */
 .printable-certificate-image {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100vh;
+  object-fit: contain;
+  margin: 0 auto;
 }
 
 /* The brand-name watermark is a *tiling background image* (inline style, PrintableWorksheet.tsx
