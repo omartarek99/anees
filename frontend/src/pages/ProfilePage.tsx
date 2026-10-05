@@ -6,6 +6,8 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { pickText, translateApiError } from '../lib/i18n';
 import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
+import { ProfileAvatar3D } from '../components/ProfileAvatar3D';
+import type { AvatarConfig } from '../components/avatar3d/avatarConfig';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
 import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
@@ -33,6 +35,8 @@ type Profile = {
   displayName: string;
   avatarKey: string;
   avatarUrl: string | null;
+  // The student's customised 3D character; null until they save one.
+  avatar3d: AvatarConfig | null;
   role: 'student' | 'teacher' | 'admin';
   bio: string;
   totalXp: number;
@@ -129,6 +133,12 @@ export function ProfilePage() {
     }
   }
 
+  // Throws on failure -- ProfileAvatar3D shows the error and keeps the customiser open.
+  async function saveAvatar3d(avatar3d: AvatarConfig) {
+    const data = await api.patch<{ profile: Profile }>('/users/me', { avatar3d });
+    setProfile(data.profile);
+  }
+
   async function saveBio() {
     setSaving(true);
     setSaveError(null);
@@ -176,7 +186,17 @@ export function ProfilePage() {
       <Topbar title={profile.displayName} subtitle={`@${profile.username} · ${t('profile.joined', { date: joinedDate })}`} />
 
       <div className="card flex gap-md" style={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        <Avatar avatarKey={profile.avatarKey} photoUrl={profile.avatarUrl} size={72} />
+        {profile.role === 'student' && (isOwnProfile || profile.avatar3d) ? (
+          <ProfileAvatar3D
+            avatarKey={profile.avatarKey}
+            photoUrl={profile.avatarUrl}
+            config={profile.avatar3d}
+            size={72}
+            onSave={isOwnProfile ? saveAvatar3d : undefined}
+          />
+        ) : (
+          <Avatar avatarKey={profile.avatarKey} photoUrl={profile.avatarUrl} size={72} />
+        )}
 
         <div className="flex gap-md" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', width: 84, height: 84, flexShrink: 0 }}>

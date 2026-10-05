@@ -37,6 +37,10 @@ CREATE TABLE IF NOT EXISTS users (
   -- Uploaded profile photo (Supabase Storage public URL), overriding the stylized
   -- avatar_key icon wherever an avatar is shown. NULL until the user uploads one.
   avatar_url TEXT,
+  -- The student's customised 3D character (frontend/src/components/avatar3d), stored as a small
+  -- JSON object of option ids only (validated by avatar3dSchema in lib/schemas.ts). NULL until
+  -- they save one; readers fall back to the default character / the static avatar.
+  avatar3d TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

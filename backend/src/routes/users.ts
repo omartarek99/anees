@@ -4,7 +4,7 @@ import multer from 'multer';
 import { db } from '../db/db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
-import { updateProfileSchema } from '../lib/schemas.js';
+import { avatar3dSchema, updateProfileSchema } from '../lib/schemas.js';
 import { moderateText } from '../lib/moderation.js';
 import { getPlayerLevel } from '../lib/xp.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
@@ -58,6 +58,18 @@ function userCertificates(userId: number) {
   }));
 }
 
+// The stored 3D character, re-validated on the way out so a hand-edited / legacy row can never
+// reach the client as anything but a well-formed config (or null -> default character).
+function parseAvatar3d(raw: unknown) {
+  if (typeof raw !== 'string') return null;
+  try {
+    const parsed = avatar3dSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
 function profileSummary(user: any) {
   const playerLevel = getPlayerLevel(user.id);
   const completedLevels = db
@@ -83,6 +95,7 @@ function profileSummary(user: any) {
     displayName: user.display_name,
     avatarKey: user.avatar_key,
     avatarUrl: user.avatar_url ?? null,
+    avatar3d: parseAvatar3d(user.avatar3d),
     role: user.role,
     bio: user.bio ?? '',
     totalXp: user.total_xp,
@@ -112,7 +125,12 @@ usersRouter.get('/me', requireAuth, (req, res) => {
 });
 
 usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProfileSchema), (req, res) => {
-  const { displayName, avatarKey, bio } = req.body as { displayName?: string; avatarKey?: string; bio?: string };
+  const { displayName, avatarKey, bio, avatar3d } = req.body as {
+    displayName?: string;
+    avatarKey?: string;
+    bio?: string;
+    avatar3d?: unknown;
+  };
 
   if (displayName !== undefined) {
     const check = moderateText(displayName);
@@ -124,6 +142,9 @@ usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProf
   }
   if (avatarKey !== undefined) {
     db.prepare(`UPDATE users SET avatar_key = ? WHERE id = ?`).run(avatarKey, req.userId!);
+  }
+  if (avatar3d !== undefined) {
+    db.prepare(`UPDATE users SET avatar3d = ? WHERE id = ?`).run(JSON.stringify(avatar3d), req.userId!);
   }
   if (bio !== undefined) {
     // Empty bio (clearing it) is always fine -- only non-empty text needs moderation.

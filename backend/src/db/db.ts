@@ -238,6 +238,10 @@ const userColsForTeacherPoints = db.prepare(`PRAGMA table_info(users)`).all() as
 if (!userColsForTeacherPoints.some((c) => c.name === 'teacher_points')) {
   db.exec(`ALTER TABLE users ADD COLUMN teacher_points INTEGER NOT NULL DEFAULT 0`);
 }
+// The student's 3D character config (JSON of option ids), added after the initial users table.
+if (!userColsForTeacherPoints.some((c) => c.name === 'avatar3d')) {
+  db.exec(`ALTER TABLE users ADD COLUMN avatar3d TEXT`);
+}
 
 // Certificate tier (bronze/gold/platinum), added after the initial certificates table.
 const certificateCols = db.prepare(`PRAGMA table_info(certificates)`).all() as { name: string }[];

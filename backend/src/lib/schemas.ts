@@ -68,10 +68,28 @@ export const resendVerificationSchema = z.object({
   idToken: z.string().min(1, 'Missing verification token.'),
 });
 
+// The student's 3D character: option ids only, so nothing free-form is ever stored. The lists
+// below must match frontend/src/components/avatar3d/avatarConfig.ts.
+const AVATAR3D_COLORS = ['white', 'black', 'maroon', 'red', 'yellow', 'green', 'blue', 'gray'] as const;
+export const avatar3dSchema = z
+  .object({
+    skin: z.enum(['porcelain', 'fair', 'wheat', 'olive', 'tan', 'caramel', 'brown', 'deep']),
+    outfit: z.enum(['thobe', 'casual']),
+    thobe: z.enum(['summer', 'navy', 'brown']),
+    top: z.enum(['tshirt', 'hoodie']),
+    topColor: z.enum(AVATAR3D_COLORS),
+    bottom: z.enum(['jeans', 'black-jeans', 'khaki', 'gray']),
+    headwear: z.enum(['none', 'ghutra', 'cap']),
+    capColor: z.enum(AVATAR3D_COLORS),
+    accessory: z.enum(['none', 'reading', 'sunglasses']),
+  })
+  .strict();
+
 export const updateProfileSchema = z.object({
   displayName: displayNameSchema.optional(),
   avatarKey: avatarKeySchema.optional(),
   bio: bioSchema.optional(),
+  avatar3d: avatar3dSchema.optional(),
 });
 
 export const adminSetRoleSchema = z.object({
