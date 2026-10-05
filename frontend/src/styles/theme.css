@@ -55,6 +55,10 @@
   --radius-lg: 28px;
   --radius-xl: 32px;
   --radius-pill: 999px;
+  /* Button corner radii, from the Figma "try-for-anees" file: the default CTA ("Get Now")
+     is 12px, the compact one ("Register") is 8px. */
+  --radius-btn: 12px;
+  --radius-btn-sm: 8px;
 
   --shadow-sm: 0 2px 8px rgba(20, 30, 60, 0.06);
   --shadow-md: 0 8px 24px rgba(20, 30, 60, 0.1);
@@ -89,6 +93,10 @@
      on the page's own light background — don't need. */
   --glass-blur-lg: blur(26px) saturate(200%);
   --glass-bg-nav: rgba(255, 255, 255, 0.74);
+  /* The sidebar alone is far more see-through than the top bar -- the Figma glass panels are a
+     10% white fill with a heavy blur, no opaque base -- so it gets its own token rather than
+     thinning --glass-bg-nav (which the top bar also uses and should keep its contrast headroom). */
+  --glass-bg-sidebar: rgba(255, 255, 255, 0.22);
   --glass-sheen: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.55) 0%,
@@ -168,6 +176,7 @@ html[lang='ar'] {
   --glass-bg-strong: rgba(35, 20, 25, 0.78);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-bg-nav: rgba(18, 10, 13, 0.84);
+  --glass-bg-sidebar: rgba(255, 255, 255, 0.07);
   --glass-sheen: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.1) 0%,
@@ -277,17 +286,20 @@ svg {
   width: var(--sidebar-w);
   flex-shrink: 0;
   min-height: 100vh;
-  background: var(--glass-bg-nav);
-  -webkit-backdrop-filter: var(--glass-blur-lg);
-  backdrop-filter: var(--glass-blur-lg);
+  background: var(--glass-bg-sidebar);
+  /* 27px = the Figma file's 54 background-blur (Figma's radius is double CSS's). */
+  -webkit-backdrop-filter: blur(27px) saturate(180%);
+  backdrop-filter: blur(27px) saturate(180%);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 18px 0 20px;
   position: sticky;
   top: 0;
-  border-inline-end: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: var(--shadow-3d-md);
+  border-inline-end: 1px solid var(--glass-border);
+  /* Hairline top highlight + a faint wide halo instead of the heavy drop shadow, which reads
+     as a dirty smudge on a see-through panel. */
+  box-shadow: 0 0 40px rgba(20, 30, 60, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   z-index: 10;
 }
 
@@ -559,7 +571,7 @@ svg {
   justify-content: center;
   gap: 8px;
   padding: 12px 22px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-btn);
   border: none;
   font-weight: 700;
   font-size: 15px;
@@ -589,22 +601,44 @@ a:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--white), 0 0 0 6px var(--maroon-light);
 }
+/* Gradient buttons (primary / gold / danger) share the Figma file's button look: a
+   left-to-right gradient and a coloured under-glow (its Register button is
+   `0 22px 45px -22px` of its own pink). On top of that, the glass finish: the fill sits at
+   94% so whatever is behind tints through the backdrop blur, a faint sheen fades out over the
+   top half, and a hairline inner ring catches light along the edge. The ring is an inset
+   shadow rather than a border so it doesn't change the button's size. */
 .btn-primary {
-  background: linear-gradient(150deg, var(--maroon-light), var(--maroon));
+  --btn-from: var(--maroon-light);
+  --btn-to: var(--maroon);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 50%),
+    linear-gradient(90deg, color-mix(in srgb, var(--btn-from) 94%, transparent), color-mix(in srgb, var(--btn-to) 94%, transparent));
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  backdrop-filter: blur(10px) saturate(160%);
   color: var(--white);
-  box-shadow: 0 4px 12px rgba(138, 21, 56, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 18px 34px -18px color-mix(in srgb, var(--maroon-light) 85%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 8px 22px rgba(138, 21, 56, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 24px 40px -18px color-mix(in srgb, var(--maroon-light) 95%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
   transform: translateY(-2px) scale(1.02);
 }
+/* Dark mode brightens --maroon-light/--maroon for text on dark glass, which would leave white
+   button text on a light pink -- fill the button with the deeper pair instead. */
+:root[data-theme='dark'] .btn-primary {
+  --btn-from: var(--maroon);
+  --btn-to: var(--maroon-dark);
+}
 .btn-gold {
-  background: linear-gradient(150deg, var(--gold-light), var(--gold));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 50%),
+    linear-gradient(90deg, color-mix(in srgb, var(--gold-light) 94%, transparent), color-mix(in srgb, var(--gold) 94%, transparent));
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  backdrop-filter: blur(10px) saturate(160%);
   color: #4a2f00;
-  box-shadow: 0 4px 12px rgba(240, 168, 58, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 18px 34px -18px rgba(240, 168, 58, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 .btn-gold:hover:not(:disabled) {
-  box-shadow: 0 8px 20px rgba(240, 168, 58, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  box-shadow: 0 24px 40px -18px rgba(240, 168, 58, 1), inset 0 0 0 1px rgba(255, 255, 255, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.65);
   transform: translateY(-2px) scale(1.02);
 }
 .btn-secondary {
@@ -634,14 +668,20 @@ a:focus-visible {
   padding: 8px 16px;
   min-height: 36px;
   font-size: 13px;
+  border-radius: var(--radius-btn-sm);
 }
 .btn-danger {
-  background: linear-gradient(150deg, #f0747f, var(--danger));
+  /* Fixed colours, not --danger: that token flips to a light pink in dark mode (it's tuned for
+     text on dark glass), which would put white button text on ~2.7:1. */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 50%),
+    linear-gradient(90deg, rgba(200, 68, 82, 0.94), rgba(168, 50, 63, 0.94));
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  backdrop-filter: blur(10px) saturate(160%);
   color: var(--white);
-  box-shadow: 0 4px 12px rgba(224, 82, 95, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 18px 34px -18px rgba(224, 82, 95, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 .btn-danger:hover:not(:disabled) {
-  box-shadow: 0 8px 20px rgba(224, 82, 95, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: 0 24px 40px -18px rgba(224, 82, 95, 0.95), inset 0 0 0 1px rgba(255, 255, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
   transform: translateY(-2px) scale(1.02);
 }
 
