@@ -330,7 +330,7 @@ export function ReelSlide({
           {/* bottom info block — the like/quiz/XP action rail now lives outside the reel frame
               (see ReelActionRail, rendered by ReelsPage), so this only needs to clear its own
               padding, not reserved space for an overlay. */}
-          <div style={{ position: 'absolute', left: 16, right: 16, bottom: 20, zIndex: 3 }}>
+          <div className="on-dark" style={{ position: 'absolute', left: 16, right: 16, bottom: 20, zIndex: 3 }}>
             <span
               className="badge"
               style={{ background: 'rgba(255,255,255,0.18)', color: 'white', marginBottom: 8, backdropFilter: 'blur(6px)' }}
@@ -414,7 +414,7 @@ export function ReelSlide({
 
           {isActive && stillWatching && (
             <div
-              className="swiper-no-swiping swiper-no-mousewheel"
+              className="swiper-no-swiping swiper-no-mousewheel on-dark"
               style={{
                 position: 'absolute',
                 inset: 0,

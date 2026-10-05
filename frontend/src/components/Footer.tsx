@@ -5,13 +5,13 @@ export function Footer() {
   const { t } = useLanguage();
   return (
     <footer className="flex-center gap-md muted" style={{ padding: '16px 12px 24px', fontSize: 13, flexWrap: 'wrap' }}>
-      <Link to="/privacy" style={{ color: 'inherit' }}>
+      <Link to="/privacy" style={{ color: 'inherit', textDecoration: 'none' }}>
         {t('legal.privacy')}
       </Link>
-      <Link to="/terms" style={{ color: 'inherit' }}>
+      <Link to="/terms" style={{ color: 'inherit', textDecoration: 'none' }}>
         {t('legal.terms')}
       </Link>
-      <Link to="/cookies" style={{ color: 'inherit' }}>
+      <Link to="/cookies" style={{ color: 'inherit', textDecoration: 'none' }}>
         {t('legal.cookies')}
       </Link>
     </footer>

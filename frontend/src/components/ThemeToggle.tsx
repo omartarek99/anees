@@ -9,14 +9,10 @@ export function ThemeToggle({ floating = false }: { floating?: boolean }) {
     <button
       type="button"
       onClick={toggleTheme}
-      className="btn btn-sm"
+      className={floating ? 'btn btn-sm btn-float' : 'btn btn-sm'}
       title={label}
       aria-label={label}
-      style={
-        floating
-          ? { background: 'var(--white)', color: 'var(--maroon)', border: '2px solid var(--maroon)' }
-          : { background: 'rgba(255,255,255,0.15)', color: 'white', flexShrink: 0 }
-      }
+      style={floating ? undefined : { background: 'rgba(255,255,255,0.15)', color: 'white', flexShrink: 0 }}
     >
       {theme === 'dark' ? '☀️' : '🌙'}
     </button>

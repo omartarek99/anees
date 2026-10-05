@@ -6,13 +6,9 @@ export function LanguageToggle({ floating = false }: { floating?: boolean }) {
     <button
       type="button"
       onClick={toggleLang}
-      className="btn btn-sm"
+      className={floating ? 'btn btn-sm btn-float' : 'btn btn-sm'}
       title={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
-      style={
-        floating
-          ? { background: 'var(--white)', color: 'var(--maroon)', border: '2px solid var(--maroon)' }
-          : { background: 'rgba(255,255,255,0.15)', color: 'white', flexShrink: 0 }
-      }
+      style={floating ? undefined : { background: 'rgba(255,255,255,0.15)', color: 'white', flexShrink: 0 }}
     >
       🌐 {t('common.language')}
     </button>

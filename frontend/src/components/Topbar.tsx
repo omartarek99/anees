@@ -39,7 +39,7 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
             <span className="stat-pill" style={{ color: 'var(--pastel-blue-ink)' }}>
               💎 {user.totalXp}
             </span>
-            <span className="stat-pill" style={{ color: 'var(--gold-dark)' }}>
+            <span className="stat-pill" style={{ color: 'var(--gold-ink)' }}>
               🏅 {user.playerLevel}
             </span>
             <Link to="/profile" className="stat-pill" title={user.rankTier.name}>

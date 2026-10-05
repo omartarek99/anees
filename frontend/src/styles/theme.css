@@ -17,16 +17,22 @@
   --gold-light: #fbdb9e;
   /* ponytail: darkened from #a9701c — WCAG AA contrast fix (was 3.13:1 as badge text on --gold-light) */
   --gold-dark: #7a4e10;
+  /* Gold as TEXT directly on a glass surface (the topbar's level pill): --gold-dark only works
+     on the light --gold-light badge fill, and sinks into dark glass. */
+  --gold-ink: #7a4e10;
 
-  /* Neutral surfaces — warmed from a cool blue-gray to a warm ivory/taupe so it harmonizes
-     with the maroon+gold brand pair instead of fighting it. */
-  --sand: #f7f1ec;
-  --sand-light: #f9f5f1;
-  --sand-dark: #e3d5cb;
+  /* Neutral surfaces — cool pearl: liquid glass reads as glass against a cool, luminous
+     ground, and the maroon + gold brand colours stay in as light orbs behind it (see
+     --body-bg-image) rather than as the page tint. */
+  --sand: #eef1f7;
+  --sand-light: #f5f7fb;
+  --sand-dark: #d3dae8;
 
   --ink: #182338;
-  /* ponytail: darkened from #6b7590 — WCAG AA contrast fix (was 4.06:1 on light surfaces, now 4.5+) */
-  --ink-soft: #646d86;
+  /* ponytail: darkened from #6b7590 — WCAG AA contrast fix (was 4.06:1 on light surfaces, now 4.5+).
+     Darkened again from #646d86 for the cooler, slightly darker pearl backdrop, which sits
+     directly behind footer/muted text. */
+  --ink-soft: #5a627a;
   --white: #ffffff;
 
   /* ponytail: --success/--danger darkened from #2e9e5b/#e0525f — WCAG AA contrast fix
@@ -40,74 +46,77 @@
 
   /* Pastel accent set used for stat cards / category pills / badges (translucent, for the glass look) */
   --pastel-blue: rgba(219, 230, 248, 0.62);
-  --pastel-blue-ink: #3967a7;
+  --pastel-blue-ink: #26478a;
   --pastel-yellow: rgba(251, 238, 198, 0.62);
-  --pastel-yellow-ink: #8c6216;
+  --pastel-yellow-ink: #664508;
   --pastel-pink: rgba(249, 217, 222, 0.62);
-  --pastel-pink-ink: #9f4659;
+  --pastel-pink-ink: #82304a;
   --pastel-green: rgba(220, 241, 224, 0.62);
-  --pastel-green-ink: #27774c;
+  --pastel-green-ink: #1a5c3c;
   --pastel-purple: rgba(228, 224, 251, 0.62);
-  --pastel-purple-ink: #6556c3;
+  --pastel-purple-ink: #46379f;
 
-  --radius-sm: 12px;
-  --radius-md: 20px;
-  --radius-lg: 28px;
-  --radius-xl: 32px;
+  /* Liquid-glass radii: generous, matching the 16/24/32 steps of the reference board. */
+  --radius-sm: 16px;
+  --radius-md: 24px;
+  --radius-lg: 32px;
+  --radius-xl: 40px;
   --radius-pill: 999px;
   /* Button corner radii, from the Figma "try-for-anees" file: the default CTA ("Get Now")
      is 12px, the compact one ("Register") is 8px. */
   --radius-btn: 12px;
   --radius-btn-sm: 8px;
 
-  --shadow-sm: 0 2px 8px rgba(20, 30, 60, 0.06);
-  --shadow-md: 0 8px 24px rgba(20, 30, 60, 0.1);
-  --shadow-lg: 0 16px 40px rgba(20, 30, 60, 0.16);
+  --shadow-sm: 0 2px 8px rgba(36, 52, 96, 0.08);
+  --shadow-md: 0 10px 26px -10px rgba(36, 52, 96, 0.22);
+  --shadow-lg: 0 20px 44px -16px rgba(36, 52, 96, 0.3);
 
-  /* Glassmorphism + 3D depth tokens.
-     --glass-bg (the .card background) is a soft diagonal wash rather than flat white --
-     it's the one glass tone used for big content surfaces, so it carries the "creative
-     inside color" the small chrome elements below don't need. */
-  --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.58) 0%, rgba(255, 232, 238, 0.4) 100%);
-  --glass-bg-strong: rgba(255, 255, 255, 0.68);
-  --glass-border: rgba(255, 255, 255, 0.65);
-  --glass-blur: blur(18px) saturate(180%);
-  --glass-blur-sm: blur(10px) saturate(160%);
+  /* ---- Liquid glass ----
+     The material from the "Liquid Glass Foundations" reference: a translucent body, a thick
+     bright rim (a hairline ring + a hot specular edge along the top + a faint catch-light along
+     the bottom), a soft refracted glow pooling just inside the bottom edge, and a long soft
+     shadow below. The rim lives in the --shadow-3d-* tokens as inset shadows, so every surface
+     that already used them (cards, chips, bells, rows, modals, ...) picks it up at once and
+     none of it changes an element's size. */
+  --glass-bg: linear-gradient(150deg, rgba(255, 255, 255, 0.66) 0%, rgba(255, 255, 255, 0.34) 100%);
+  --glass-bg-strong: rgba(255, 255, 255, 0.64);
+  --glass-border: rgba(255, 255, 255, 0.85);
+  --glass-blur: blur(24px) saturate(190%);
+  --glass-blur-sm: blur(14px) saturate(170%);
 
   /* Small "light chip" surfaces (icon circles, form inputs, hover washes) that were
      hardcoded to white -- pulled into tokens so dark mode can turn them into light-on-dark
      tints instead of staying jarringly bright on a dark page. */
-  --surface-chip: rgba(255, 255, 255, 0.75);
-  --surface-input: rgba(255, 255, 255, 0.7);
-  --surface-hover: rgba(255, 255, 255, 0.55);
-  --surface-row: rgba(238, 241, 248, 0.55);
-  --podium-bg: repeating-conic-gradient(from 0deg, rgba(251, 248, 240, 0.75) 0deg 4deg, rgba(244, 239, 226, 0.75) 4deg 8deg);
-  --surface-panel: rgba(245, 247, 251, 0.78);
-  --surface-panel-strong: rgba(245, 247, 251, 0.86);
+  --surface-chip: rgba(255, 255, 255, 0.78);
+  --surface-input: rgba(255, 255, 255, 0.5);
+  --surface-hover: rgba(255, 255, 255, 0.6);
+  --surface-row: rgba(255, 255, 255, 0.42);
+  --podium-bg: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.55) 0deg 4deg, rgba(235, 241, 252, 0.55) 4deg 8deg);
+  --surface-panel: rgba(247, 249, 253, 0.78);
+  --surface-panel-strong: rgba(247, 249, 253, 0.88);
 
-  /* "Liquid glass" upgrade for the persistent nav chrome (sidebar/topbar) and cards.
-     --glass-blur-lg is the "how frosted" knob — tune the blur px here.
+  /* --glass-blur-lg is the "how frosted" knob for the persistent nav chrome (sidebar/topbar).
      --glass-bg-nav is more opaque than the card tint on purpose: sidebar/topbar are the one
-     surface guaranteed to sit over literally any page content (light gradient today, but the
-     margin is cheap), so they carry extra contrast headroom that cards — which only ever sit
-     on the page's own light background — don't need. */
+     surface guaranteed to sit over literally any page content, so they carry extra contrast
+     headroom that cards -- which only ever sit on the page's own backdrop -- don't need. */
   --glass-blur-lg: blur(26px) saturate(200%);
-  --glass-bg-nav: rgba(255, 255, 255, 0.74);
-  /* The sidebar alone is far more see-through than the top bar -- the Figma glass panels are a
-     10% white fill with a heavy blur, no opaque base -- so it gets its own token rather than
-     thinning --glass-bg-nav (which the top bar also uses and should keep its contrast headroom). */
-  --glass-bg-sidebar: rgba(255, 255, 255, 0.22);
-  --glass-sheen: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.55) 0%,
-    rgba(255, 255, 255, 0.1) 30%,
-    rgba(255, 255, 255, 0) 55%,
-    rgba(255, 255, 255, 0.14) 82%,
-    rgba(255, 255, 255, 0.34) 100%
-  );
-  --shadow-3d-sm: 0 2px 6px rgba(20, 30, 60, 0.1), 0 1px 2px rgba(20, 30, 60, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  --shadow-3d-md: 0 10px 28px rgba(20, 30, 60, 0.16), 0 2px 8px rgba(20, 30, 60, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  --shadow-3d-lg: 0 24px 60px rgba(20, 30, 60, 0.22), 0 6px 16px rgba(20, 30, 60, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --glass-bg-nav: rgba(255, 255, 255, 0.62);
+  /* The sidebar alone is far more see-through than the top bar (a thin fill over a heavy
+     blur), so it gets its own token rather than thinning --glass-bg-nav. */
+  --glass-bg-sidebar: rgba(255, 255, 255, 0.26);
+  /* Specular highlight: a hot corner glow at the top-left plus a faint diagonal sweep and a
+     return of light at the opposite corner -- what makes a flat translucent rectangle read as
+     a curved sheet of glass. Painted over the surface by the ::before rule on glass elements. */
+  --glass-sheen: radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0) 72%, rgba(255, 255, 255, 0.28) 100%);
+  --shadow-3d-sm: 0 8px 16px -8px rgba(36, 52, 96, 0.28), 0 1px 2px rgba(36, 52, 96, 0.08), inset 0 1.5px 1px rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.45), inset 0 -2px 3px rgba(255, 255, 255, 0.35);
+  --shadow-3d-md: 0 20px 36px -18px rgba(36, 52, 96, 0.36), 0 2px 8px rgba(36, 52, 96, 0.08), inset 0 2px 2px rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5), inset 0 -3px 5px rgba(255, 255, 255, 0.35), inset 0 -18px 32px -22px rgba(110, 140, 205, 0.4);
+  --shadow-3d-lg: 0 32px 56px -24px rgba(36, 52, 96, 0.44), 0 4px 14px rgba(36, 52, 96, 0.1), inset 0 2px 2px rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55), inset 0 -3px 6px rgba(255, 255, 255, 0.4), inset 0 -22px 40px -26px rgba(110, 140, 205, 0.45);
+  /* Just the rim (no outer shadow), for surfaces that supply their own coloured glow. */
+  --glass-rim: inset 0 2px 2px rgba(255, 255, 255, 0.95), inset 0 0 0 1px rgba(255, 255, 255, 0.5), inset 0 -3px 5px rgba(255, 255, 255, 0.35);
 
   /* English: Anton for headings (bold, condensed, display-style -- suits this app's
      playful adventure theme) + Poppins for body. Arabic gets its own pair below since
@@ -119,11 +128,16 @@
 
   --pattern-light: none;
 
-  --body-bg-color: #f5efe8;
-  --body-bg-image: radial-gradient(circle at 12% 18%, rgba(138, 21, 56, 0.16), transparent 42%),
-    radial-gradient(circle at 88% 12%, rgba(240, 168, 58, 0.26), transparent 42%),
-    radial-gradient(circle at 80% 88%, rgba(194, 41, 84, 0.14), transparent 46%),
-    radial-gradient(circle at 15% 92%, rgba(251, 219, 158, 0.4), transparent 42%);
+  /* Glass needs something luminous behind it to refract, so the backdrop is a pearl base with
+     soft colour orbs: the brand maroon and gold, plus a violet and a teal for the cool
+     refractions in the reference. A white bloom in the middle keeps the area behind the
+     content light (muted text sits directly on it and must stay AA). */
+  --body-bg-color: #e9eef7;
+  --body-bg-image: radial-gradient(44% 40% at 8% 12%, rgba(194, 41, 84, 0.26), transparent 70%),
+    radial-gradient(42% 38% at 92% 8%, rgba(240, 168, 58, 0.34), transparent 70%),
+    radial-gradient(48% 44% at 86% 90%, rgba(108, 98, 235, 0.28), transparent 70%),
+    radial-gradient(46% 42% at 6% 92%, rgba(48, 196, 196, 0.3), transparent 70%),
+    radial-gradient(62% 52% at 50% 46%, rgba(255, 255, 255, 0.78), transparent 78%);
 }
 
 /* Arabic: Almarai for headings (a bold Arabic display/UI face) + Noto Sans Arabic for
@@ -153,9 +167,11 @@ html[lang='ar'] {
   --maroon-light: #f0729a;
   --maroon-pale: rgba(212, 62, 107, 0.18);
 
-  --sand: #241a20;
-  --sand-light: #2c2027;
-  --sand-dark: #4a3540;
+  --gold-ink: #f4c46b;
+
+  --sand: #1d1826;
+  --sand-light: #251f31;
+  --sand-dark: #433a55;
 
   --ink: #f3ecec;
   --ink-soft: #b8a8ae;
@@ -166,46 +182,48 @@ html[lang='ar'] {
   --danger-light: rgba(242, 113, 125, 0.16);
   --info: #6fa3f5;
 
-  --pastel-blue: rgba(219, 230, 248, 0.82);
-  --pastel-yellow: rgba(251, 238, 198, 0.82);
-  --pastel-pink: rgba(249, 217, 222, 0.82);
-  --pastel-green: rgba(220, 241, 224, 0.82);
-  --pastel-purple: rgba(228, 224, 251, 0.82);
+  /* Tinted-glass tiles are dark in dark mode, so their label ink flips to light tints of the
+     same hue (light mode's deep inks would be unreadable on them). */
+  --pastel-blue-ink: #aecbff;
+  --pastel-yellow-ink: #f7d88f;
+  --pastel-pink-ink: #f8afc2;
+  --pastel-green-ink: #a4e6bd;
+  --pastel-purple-ink: #c9bfff;
 
-  --glass-bg: linear-gradient(135deg, rgba(45, 24, 30, 0.7) 0%, rgba(30, 16, 20, 0.55) 100%);
-  --glass-bg-strong: rgba(35, 20, 25, 0.78);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-bg-nav: rgba(18, 10, 13, 0.84);
+  --glass-bg: linear-gradient(150deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 100%);
+  --glass-bg-strong: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.24);
+  --glass-bg-nav: rgba(22, 16, 32, 0.55);
   --glass-bg-sidebar: rgba(255, 255, 255, 0.07);
-  --glass-sheen: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0.02) 30%,
-    rgba(255, 255, 255, 0) 55%,
-    rgba(255, 255, 255, 0.03) 82%,
-    rgba(255, 255, 255, 0.07) 100%
-  );
+  --glass-sheen: radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 45%, rgba(255, 255, 255, 0) 75%, rgba(255, 255, 255, 0.08) 100%);
 
-  --surface-chip: rgba(255, 255, 255, 0.1);
-  --surface-input: rgba(255, 255, 255, 0.06);
-  --surface-hover: rgba(255, 255, 255, 0.1);
-  --surface-row: rgba(255, 255, 255, 0.06);
-  --podium-bg: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.05) 0deg 4deg, rgba(255, 255, 255, 0.02) 4deg 8deg);
-  --surface-panel: rgba(28, 16, 20, 0.88);
-  --surface-panel-strong: rgba(24, 14, 17, 0.92);
+  --surface-chip: rgba(255, 255, 255, 0.14);
+  --surface-input: rgba(255, 255, 255, 0.08);
+  --surface-hover: rgba(255, 255, 255, 0.12);
+  --surface-row: rgba(255, 255, 255, 0.08);
+  --podium-bg: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.07) 0deg 4deg, rgba(255, 255, 255, 0.03) 4deg 8deg);
+  --surface-panel: rgba(26, 20, 38, 0.74);
+  --surface-panel-strong: rgba(24, 18, 34, 0.84);
 
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
-  --shadow-3d-sm: 0 2px 6px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --shadow-3d-md: 0 10px 28px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  --shadow-3d-lg: 0 24px 60px rgba(0, 0, 0, 0.6), 0 6px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --shadow-md: 0 10px 26px -10px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 20px 44px -16px rgba(0, 0, 0, 0.62);
+  /* Same rim recipe as light mode, but the specular edge is a faint white and the refracted
+     glow inside the bottom edge picks up the page's violet. */
+  --shadow-3d-sm: 0 8px 16px -8px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1.5px 1px rgba(255, 255, 255, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 -2px 3px rgba(255, 255, 255, 0.06);
+  --shadow-3d-md: 0 20px 36px -18px rgba(0, 0, 0, 0.62), 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 2px 2px rgba(255, 255, 255, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 -3px 5px rgba(255, 255, 255, 0.07), inset 0 -18px 32px -22px rgba(130, 120, 255, 0.28);
+  --shadow-3d-lg: 0 32px 56px -24px rgba(0, 0, 0, 0.7), 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.32),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14), inset 0 -3px 6px rgba(255, 255, 255, 0.08), inset 0 -22px 40px -26px rgba(130, 120, 255, 0.32);
+  --glass-rim: inset 0 2px 2px rgba(255, 255, 255, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.14), inset 0 -3px 5px rgba(255, 255, 255, 0.07);
 
-  --body-bg-color: #130a0d;
-  --body-bg-image: radial-gradient(circle at 12% 18%, rgba(212, 62, 107, 0.24), transparent 42%),
-    radial-gradient(circle at 88% 12%, rgba(240, 168, 58, 0.16), transparent 42%),
-    radial-gradient(circle at 80% 88%, rgba(212, 62, 107, 0.14), transparent 46%),
-    radial-gradient(circle at 15% 92%, rgba(106, 16, 41, 0.4), transparent 42%);
+  --body-bg-color: #0f0b17;
+  --body-bg-image: radial-gradient(44% 40% at 8% 12%, rgba(212, 62, 107, 0.34), transparent 70%),
+    radial-gradient(42% 38% at 92% 8%, rgba(240, 168, 58, 0.2), transparent 70%),
+    radial-gradient(48% 44% at 86% 90%, rgba(100, 92, 235, 0.32), transparent 70%),
+    radial-gradient(46% 42% at 6% 92%, rgba(40, 190, 190, 0.22), transparent 70%);
 }
 
 * {
@@ -355,7 +373,8 @@ svg {
 .sidebar-icon-btn.active {
   background: linear-gradient(150deg, var(--maroon-light), var(--maroon));
   color: white;
-  box-shadow: 0 4px 12px rgba(138, 21, 56, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 12px 20px -8px color-mix(in srgb, var(--maroon-light) 80%, transparent), inset 0 1.5px 1px rgba(255, 255, 255, 0.46),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
 /* ---------------- Quick menu (floating settings, icon-bar side) ---------------- */
@@ -387,12 +406,14 @@ svg {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: var(--shadow-3d-md);
+  box-shadow: 0 16px 26px -10px color-mix(in srgb, var(--maroon-light) 75%, transparent), inset 0 2px 1.5px rgba(255, 255, 255, 0.46),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2), inset 0 -3px 5px rgba(255, 255, 255, 0.14);
   transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease;
 }
 .quick-menu-btn:hover {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: var(--shadow-3d-lg);
+  box-shadow: 0 22px 32px -10px color-mix(in srgb, var(--maroon-light) 90%, transparent), inset 0 2px 1.5px rgba(255, 255, 255, 0.56),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.27), inset 0 -3px 5px rgba(255, 255, 255, 0.17);
 }
 
 .quick-menu-panel {
@@ -573,6 +594,9 @@ svg {
   padding: 12px 22px;
   border-radius: var(--radius-btn);
   border: none;
+  /* .btn is also put on <a>/<Link> (e.g. the home page's Watch a Reel / Open the Map), which
+     would otherwise carry the default link underline into the button label. */
+  text-decoration: none;
   font-weight: 700;
   font-size: 15px;
   cursor: pointer;
@@ -615,12 +639,12 @@ a:focus-visible {
   -webkit-backdrop-filter: blur(10px) saturate(160%);
   backdrop-filter: blur(10px) saturate(160%);
   color: var(--white);
-  box-shadow: 0 18px 34px -18px color-mix(in srgb, var(--maroon-light) 85%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: 0 18px 34px -18px color-mix(in srgb, var(--maroon-light) 85%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26);
 }
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 24px 40px -18px color-mix(in srgb, var(--maroon-light) 95%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  box-shadow: 0 24px 40px -18px color-mix(in srgb, var(--maroon-light) 95%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.36);
   transform: translateY(-2px) scale(1.02);
 }
 /* Dark mode brightens --maroon-light/--maroon for text on dark glass, which would leave white
@@ -635,10 +659,10 @@ a:focus-visible {
   -webkit-backdrop-filter: blur(10px) saturate(160%);
   backdrop-filter: blur(10px) saturate(160%);
   color: #4a2f00;
-  box-shadow: 0 18px 34px -18px rgba(240, 168, 58, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  box-shadow: 0 18px 34px -18px rgba(240, 168, 58, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.44);
 }
 .btn-gold:hover:not(:disabled) {
-  box-shadow: 0 24px 40px -18px rgba(240, 168, 58, 1), inset 0 0 0 1px rgba(255, 255, 255, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  box-shadow: 0 24px 40px -18px rgba(240, 168, 58, 1), inset 0 0 0 1px rgba(255, 255, 255, 0.44), inset 0 1px 0 rgba(255, 255, 255, 0.54);
   transform: translateY(-2px) scale(1.02);
 }
 .btn-secondary {
@@ -678,11 +702,126 @@ a:focus-visible {
   -webkit-backdrop-filter: blur(10px) saturate(160%);
   backdrop-filter: blur(10px) saturate(160%);
   color: var(--white);
-  box-shadow: 0 18px 34px -18px rgba(224, 82, 95, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: 0 18px 34px -18px rgba(224, 82, 95, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 .btn-danger:hover:not(:disabled) {
-  box-shadow: 0 24px 40px -18px rgba(224, 82, 95, 0.95), inset 0 0 0 1px rgba(255, 255, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  box-shadow: 0 24px 40px -18px rgba(224, 82, 95, 0.95), inset 0 0 0 1px rgba(255, 255, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.36);
   transform: translateY(-2px) scale(1.02);
+}
+
+/* The corner toggles on the auth pages (LanguageToggle / ThemeToggle, `floating`): an opaque
+   white pill. Was an inline style, moved here so the light-mode glass treatment below can
+   restyle it without touching dark mode. */
+.btn-float {
+  background: var(--white);
+  color: var(--maroon);
+  border: 2px solid var(--maroon);
+}
+
+/* ---------------- Light-mode glass buttons ----------------
+   LIGHT MODE ONLY (every selector is gated on :not([data-theme='dark']), so dark mode keeps the
+   gradient buttons defined above, untouched). After the "Liquid Glass UI Kit" reference:
+   translucent tinted glass you can see the page through, with a bright rim, a hot highlight
+   along the top edge, light pooling inside the bottom edge, and a soft coloured cast shadow
+   with a second, offset one for the reflected look.
+   Legibility is the hard part: a see-through fill makes the label's contrast depend on whatever
+   sits behind the button (worst case a pale card). White labels on translucent maroon needed
+   the fill to be ~75% opaque AND dimmed (smoked glass) to pass, which came out as a muddy
+   mauve. So the labels are DARK on luminous tinted glass instead: the tints stay vivid, the fill
+   can be genuinely see-through (~60%), and the contrast is far stronger. Measured worst case
+   over white cards and every backdrop orb: dark maroon on rose glass >= 5.2:1, dark red on red
+   glass >= 5.3:1, dark brown on amber >= 7:1, maroon on clear glass >= 7:1. */
+:root:not([data-theme='dark']) .btn-primary,
+:root:not([data-theme='dark']) .btn-gold,
+:root:not([data-theme='dark']) .btn-danger,
+:root:not([data-theme='dark']) .btn-secondary,
+:root:not([data-theme='dark']) .btn-float,
+:root:not([data-theme='dark']) .quick-menu-btn,
+:root:not([data-theme='dark']) .sidebar-icon-btn.active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 28%),
+    linear-gradient(90deg, color-mix(in srgb, var(--glass-a) var(--glass-pct), transparent), color-mix(in srgb, var(--glass-b) var(--glass-pct), transparent));
+  -webkit-backdrop-filter: blur(14px) saturate(180%) brightness(var(--glass-shade, 1));
+  backdrop-filter: blur(14px) saturate(180%) brightness(var(--glass-shade, 1));
+  box-shadow: 0 16px 26px -12px var(--glass-cast), 6px 12px 18px -12px color-mix(in srgb, var(--glass-cast) 55%, transparent),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5), inset 0 1.5px 2px rgba(255, 255, 255, 0.7), inset 0 -8px 14px -8px rgba(255, 255, 255, 0.42);
+}
+/* Rose-ruby glass: primary buttons, the menu button, and the active sidebar tile. */
+:root:not([data-theme='dark']) .btn-primary,
+:root:not([data-theme='dark']) .quick-menu-btn,
+:root:not([data-theme='dark']) .sidebar-icon-btn.active {
+  --glass-a: rgb(228, 70, 112);
+  --glass-b: rgb(198, 46, 92);
+  --glass-pct: 60%;
+  --glass-cast: rgba(196, 40, 84, 0.5);
+  color: #3a0a1c;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+:root:not([data-theme='dark']) .btn-danger {
+  --glass-a: rgb(230, 70, 78);
+  --glass-b: rgb(204, 50, 60);
+  --glass-pct: 60%;
+  --glass-cast: rgba(204, 50, 60, 0.5);
+  color: #3e0a0e;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+:root:not([data-theme='dark']) .btn-gold {
+  --glass-a: rgb(240, 168, 58);
+  --glass-b: rgb(255, 205, 110);
+  --glass-pct: 58%;
+  --glass-cast: rgba(240, 168, 58, 0.6);
+  color: #4a2f00;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+/* Secondary is clear frosted glass: the label is maroon on near-white, so it needs no dimming. */
+:root:not([data-theme='dark']) .btn-secondary {
+  --glass-a: #fff;
+  --glass-b: #fff;
+  --glass-pct: 30%;
+  --glass-cast: rgba(36, 52, 96, 0.3);
+  color: var(--maroon);
+  border: 1.5px solid rgba(138, 21, 56, 0.55);
+}
+/* The auth-page corner toggles sit on the fixed maroon gradient: frosted white glass with a dark
+   maroon label (the backdrop is dark, so the white fill is what the label reads against). */
+:root:not([data-theme='dark']) .btn-float {
+  --glass-a: #fff;
+  --glass-b: #fff;
+  --glass-pct: 58%;
+  --glass-cast: rgba(40, 0, 16, 0.45);
+  color: #4a0e24;
+  border: none;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+:root:not([data-theme='dark']) .btn-primary:hover:not(:disabled),
+:root:not([data-theme='dark']) .btn-gold:hover:not(:disabled),
+:root:not([data-theme='dark']) .btn-danger:hover:not(:disabled),
+:root:not([data-theme='dark']) .btn-secondary:hover:not(:disabled),
+:root:not([data-theme='dark']) .btn-float:hover:not(:disabled),
+:root:not([data-theme='dark']) .quick-menu-btn:hover {
+  box-shadow: 0 22px 32px -12px var(--glass-cast), 8px 14px 20px -12px color-mix(in srgb, var(--glass-cast) 65%, transparent),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6), inset 0 1.5px 2px rgba(255, 255, 255, 0.82), inset 0 -8px 14px -8px rgba(255, 255, 255, 0.5);
+}
+/* Buttons on a DARK surface (the reel player's video scrim and its "still watching?" overlay,
+   marked .on-dark) keep the deep gradient button with a white label: a see-through rose fill
+   with a dark label has nothing luminous to sit on there, and would be unreadable. */
+:root:not([data-theme='dark']) .on-dark .btn-primary {
+  --glass-cast: color-mix(in srgb, var(--maroon-light) 85%, transparent);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 50%),
+    linear-gradient(90deg, color-mix(in srgb, var(--maroon-light) 94%, transparent), color-mix(in srgb, var(--maroon) 94%, transparent));
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  backdrop-filter: blur(10px) saturate(160%);
+  color: var(--white);
+  text-shadow: none;
+  box-shadow: 0 18px 34px -18px var(--glass-cast), inset 0 0 0 1px rgba(255, 255, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+:root:not([data-theme='dark']) .on-dark .btn-primary:hover:not(:disabled) {
+  box-shadow: 0 24px 40px -18px color-mix(in srgb, var(--maroon-light) 95%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.36);
+}
+/* Re-assert the keyboard focus ring, which the box-shadow above would otherwise replace. */
+:root:not([data-theme='dark']) .btn:focus-visible:not(:disabled),
+:root:not([data-theme='dark']) .quick-menu-btn:focus-visible {
+  box-shadow: 0 0 0 3px var(--white), 0 0 0 6px var(--maroon-light);
 }
 
 /* ---------------- Cards ---------------- */
@@ -691,7 +830,7 @@ a:focus-visible {
   background: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  border: 1.5px solid var(--glass-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-3d-md);
   padding: 20px;
@@ -700,7 +839,8 @@ a:focus-visible {
    is harmless: `border-radius: inherit` on a square box is just a no-op). */
 .sidebar::before,
 .topbar::before,
-.card::before {
+.card::before,
+.stat-card::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -718,16 +858,24 @@ a:focus-visible {
 }
 
 /* ---------------- Stat cards ---------------- */
+/* Tinted-glass tiles, after the coloured tiles in the reference: a diagonal wash of the hue
+   (set per variant via --tile-a/--tile-b), a thick bright rim, light refracting inside the
+   bottom edge, and that hue's glow pooling on the surface beneath. The hue only tints the glass
+   lightly -- the label ink on top must stay AA, so the saturation lives in the glow and rim. */
 .stat-card {
+  --tile-a: rgba(255, 255, 255, 0.5);
+  --tile-b: rgba(255, 255, 255, 0.3);
+  --tile-glow: rgba(36, 52, 96, 0.35);
   position: relative;
   border-radius: var(--radius-lg);
   padding: 20px;
   min-height: 118px;
   overflow: hidden;
-  border: 1px solid var(--glass-border);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  backdrop-filter: blur(14px) saturate(160%);
-  box-shadow: var(--shadow-3d-sm);
+  background: linear-gradient(145deg, var(--tile-a), var(--tile-b));
+  border: 1.5px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  box-shadow: 0 20px 30px -18px var(--tile-glow), var(--glass-rim), inset 0 -18px 30px -22px var(--tile-glow);
 }
 .stat-card-icon {
   position: absolute;
@@ -755,24 +903,61 @@ a:focus-visible {
   font-weight: 800;
 }
 .stat-card-blue {
-  background: var(--pastel-blue);
+  --tile-a: rgba(110, 150, 255, 0.42);
+  --tile-b: rgba(150, 220, 255, 0.34);
+  --tile-glow: rgba(70, 120, 255, 0.55);
   color: var(--pastel-blue-ink);
 }
 .stat-card-yellow {
-  background: var(--pastel-yellow);
+  --tile-a: rgba(255, 185, 80, 0.44);
+  --tile-b: rgba(255, 222, 140, 0.36);
+  --tile-glow: rgba(255, 160, 50, 0.55);
   color: var(--pastel-yellow-ink);
 }
 .stat-card-pink {
-  background: var(--pastel-pink);
+  --tile-a: rgba(255, 120, 155, 0.38);
+  --tile-b: rgba(255, 180, 200, 0.32);
+  --tile-glow: rgba(255, 90, 130, 0.5);
   color: var(--pastel-pink-ink);
 }
 .stat-card-green {
-  background: var(--pastel-green);
+  --tile-a: rgba(60, 200, 165, 0.38);
+  --tile-b: rgba(165, 232, 196, 0.32);
+  --tile-glow: rgba(30, 180, 150, 0.5);
   color: var(--pastel-green-ink);
 }
 .stat-card-purple {
-  background: var(--pastel-purple);
+  --tile-a: rgba(140, 120, 255, 0.4);
+  --tile-b: rgba(200, 185, 255, 0.32);
+  --tile-glow: rgba(120, 95, 240, 0.5);
   color: var(--pastel-purple-ink);
+}
+/* On the dark page the wash is far fainter (it only has to tint a dark pane) and the glow
+   carries the colour; the ink is the light tint set in the dark token block. */
+:root[data-theme='dark'] .stat-card-blue {
+  --tile-a: rgba(100, 140, 255, 0.3);
+  --tile-b: rgba(120, 200, 255, 0.14);
+  --tile-glow: rgba(90, 130, 255, 0.5);
+}
+:root[data-theme='dark'] .stat-card-yellow {
+  --tile-a: rgba(255, 185, 80, 0.28);
+  --tile-b: rgba(255, 222, 140, 0.12);
+  --tile-glow: rgba(255, 160, 50, 0.45);
+}
+:root[data-theme='dark'] .stat-card-pink {
+  --tile-a: rgba(255, 120, 155, 0.28);
+  --tile-b: rgba(255, 180, 200, 0.12);
+  --tile-glow: rgba(255, 90, 130, 0.45);
+}
+:root[data-theme='dark'] .stat-card-green {
+  --tile-a: rgba(60, 200, 165, 0.26);
+  --tile-b: rgba(165, 232, 196, 0.12);
+  --tile-glow: rgba(30, 180, 150, 0.45);
+}
+:root[data-theme='dark'] .stat-card-purple {
+  --tile-a: rgba(140, 120, 255, 0.3);
+  --tile-b: rgba(200, 185, 255, 0.14);
+  --tile-glow: rgba(120, 95, 240, 0.5);
 }
 .stat-card-value,
 .stat-card .stat-card-label {
@@ -802,24 +987,24 @@ a:focus-visible {
   text-align: center;
   -webkit-backdrop-filter: var(--glass-blur-sm);
   backdrop-filter: var(--glass-blur-sm);
-  box-shadow: var(--shadow-3d-sm);
+  box-shadow: 0 14px 22px -14px var(--tile-glow, rgba(36, 52, 96, 0.35)), var(--glass-rim);
   transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.18s ease, box-shadow 0.18s ease;
 }
 .category-pill:hover {
   transform: translateY(-3px) scale(1.03);
-  box-shadow: var(--shadow-3d-md);
+  box-shadow: 0 20px 28px -14px var(--tile-glow, rgba(36, 52, 96, 0.4)), var(--glass-rim);
 }
 .category-pill:active {
   transform: translateY(-1px) scale(0.98);
 }
 .category-pill.selected {
   border-color: currentColor;
-  box-shadow: var(--shadow-3d-md);
+  box-shadow: 0 20px 28px -14px var(--tile-glow, rgba(36, 52, 96, 0.4)), var(--glass-rim);
 }
 .category-pill-icon {
   width: 38px;
   height: 38px;
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -941,7 +1126,9 @@ a:focus-visible {
 }
 .podium-3 .podium-block {
   height: 58px;
-  background: linear-gradient(160deg, #f291a1, var(--pastel-pink-ink));
+  /* A fixed rose, not --pastel-pink-ink: that token goes light in dark mode, which would put
+     this block's white numeral on a pale pink. */
+  background: linear-gradient(160deg, #f291a1, #9f4659);
   box-shadow: 0 6px 16px rgba(192, 84, 107, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.45);
 }
 
@@ -957,17 +1144,21 @@ a:focus-visible {
   font-size: 14px;
   color: var(--ink-soft);
 }
+/* Inputs are recessed glass: the opposite of the raised chips -- a soft inner shadow along
+   the top edge (the lip casting onto the well) and a bright hairline along the bottom. The
+   border stays a visible mid-tone so the field boundary is still findable. */
 .field input,
 .field select,
 .field textarea {
   padding: 12px 14px;
   border-radius: var(--radius-sm);
-  border: 2px solid var(--sand-dark);
+  border: 1.5px solid var(--sand-dark);
   font-size: 15px;
   background: var(--surface-input);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   color: var(--ink);
+  box-shadow: inset 0 2px 6px rgba(36, 52, 96, 0.12), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 .field input:focus,
@@ -975,7 +1166,7 @@ a:focus-visible {
 .field textarea:focus {
   outline: none;
   border-color: var(--maroon);
-  box-shadow: 0 0 0 4px rgba(138, 21, 56, 0.14);
+  box-shadow: inset 0 2px 6px rgba(36, 52, 96, 0.1), 0 0 0 4px rgba(138, 21, 56, 0.14);
 }
 .field-error {
   color: var(--danger);
@@ -1010,6 +1201,8 @@ a:focus-visible {
   border-radius: var(--radius-pill);
   font-weight: 700;
   font-size: 12px;
+  /* A small raised chip: bright upper edge and a short soft shadow, like the reference's pills. */
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.35), 0 4px 8px -4px rgba(36, 52, 96, 0.28);
 }
 .badge-gold {
   background: var(--gold-light);
@@ -1060,9 +1253,11 @@ a:focus-visible {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 22, 40, 0.45);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  /* Lighter, bluer scrim with a stronger blur than before, so the glass modal on top reads as a
+     sheet of glass floating over a defocused page rather than a card on a dark dimmer. */
+  background: rgba(24, 34, 64, 0.38);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
   display: flex;
   align-items: center;
   justify-content: center;
