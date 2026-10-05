@@ -27,19 +27,20 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
           <div className="text-center" style={{ marginBottom: 20 }}>
             {/* The logo already spells out the name, so it IS the page's h1 (its alt text
                 carries the heading) instead of sitting above a duplicate visible title.
-                Fixed light tile: the logo's dark strokes need it against the maroon backdrop. */}
-            <h1
-              style={{
-                display: 'inline-block',
-                margin: 0,
-                padding: 12,
-                lineHeight: 0,
-                background: '#fbf6f1',
-                borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-lg)',
-              }}
-            >
-              <img src="/icons/logo.png" alt={t('auth.heroTitle')} style={{ height: 150, width: 'auto' }} />
+                No backing tile: the logo's dark strokes would sink into the maroon backdrop,
+                so a white outline hugs the artwork itself (stacked drop-shadows follow the
+                alpha edge) with a soft glow behind it. */}
+            <h1 style={{ margin: 0, lineHeight: 0 }}>
+              <img
+                src="/icons/logo.png"
+                alt={t('auth.heroTitle')}
+                style={{
+                  height: 150,
+                  width: 'auto',
+                  margin: '0 auto',
+                  filter: 'drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 4px 18px rgba(255, 255, 255, 0.45))',
+                }}
+              />
             </h1>
           </div>
           <motion.div
