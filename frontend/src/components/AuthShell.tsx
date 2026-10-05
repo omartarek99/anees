@@ -25,12 +25,22 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
       <MotionConfig reducedMotion="user">
         <div style={{ width: '100%', maxWidth: 420 }}>
           <div className="text-center" style={{ marginBottom: 20 }}>
-            <img
-              src="/icons/icon-192.png"
-              alt=""
-              style={{ width: 72, height: 72, borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)' }}
-            />
-            <h1 style={{ color: 'var(--white)', fontSize: 26, marginTop: 8 }}>{t('auth.heroTitle')}</h1>
+            {/* The logo already spells out the name, so it IS the page's h1 (its alt text
+                carries the heading) instead of sitting above a duplicate visible title.
+                Fixed light tile: the logo's dark strokes need it against the maroon backdrop. */}
+            <h1
+              style={{
+                display: 'inline-block',
+                margin: 0,
+                padding: 12,
+                lineHeight: 0,
+                background: '#fbf6f1',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-lg)',
+              }}
+            >
+              <img src="/icons/logo.png" alt={t('auth.heroTitle')} style={{ height: 150, width: 'auto' }} />
+            </h1>
           </div>
           <motion.div
             className="card"

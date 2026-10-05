@@ -295,12 +295,13 @@ svg {
   width: 44px;
   height: 44px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(150deg, #2c3a58, var(--ink));
-  color: white;
+  /* Fixed light tile in both themes: the logo's black swirl would disappear against a dark
+     surface, and theme tokens flip dark in dark mode. */
+  background: #fbf6f1;
+  padding: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
   margin-bottom: 28px;
   flex-shrink: 0;
   box-shadow: var(--shadow-3d-sm);
@@ -1245,7 +1246,6 @@ a:focus-visible {
   .sidebar-logo {
     width: 36px;
     height: 36px;
-    font-size: 18px;
     margin-bottom: 16px;
   }
   .sidebar-icon-btn {
@@ -1359,7 +1359,10 @@ a:focus-visible {
   height: 52px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.7);
-  object-fit: cover;
+  /* White chip: the logo's dark strokes would sink into the maroon header otherwise. */
+  background: #fff;
+  padding: 4px;
+  object-fit: contain;
   flex-shrink: 0;
 }
 .printable-worksheet-header h1 {

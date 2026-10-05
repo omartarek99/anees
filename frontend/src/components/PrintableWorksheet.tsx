@@ -44,7 +44,7 @@ export function PrintableWorksheet({
     <div className="printable-worksheet-portal" dir={dir}>
       <div className="printable-worksheet" style={watermarkStyle}>
         <header className="printable-worksheet-header">
-          <img src="/icons/icon-192.png" alt="" className="printable-worksheet-logo" />
+          <img src="/icons/logo-mark.png" alt="" className="printable-worksheet-logo" />
           <div>
             <h1>
               {t('brand')} <span aria-hidden>🦅</span>

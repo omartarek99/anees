@@ -65,7 +65,7 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <NavLink to="/" className="sidebar-logo" title={t('brand')}>
-        <img src="/icons/icon-192.png" alt={t('brand')} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+        <img src="/icons/logo-mark.png" alt={t('brand')} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
       </NavLink>
 
       <nav className="sidebar-nav">
