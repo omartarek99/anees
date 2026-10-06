@@ -10,7 +10,7 @@ import { ProfileAvatar3D } from '../components/ProfileAvatar3D';
 import type { AvatarConfig } from '../components/avatar3d/avatarConfig';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
-import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
+import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, certPillBackground, type CertificateType } from '../lib/certificateTiers';
 
 type TeacherVideo = {
   id: number;
@@ -58,6 +58,10 @@ type Profile = {
   // who can view this profile, same as videos above.
   certificates: Certificate[];
 };
+
+// Isolates the @handle as an LTR run so Arabic (RTL) text doesn't flip it to 'handle@'.
+const LRI = '\u2066';
+const PDI = '\u2069';
 
 const STAT_COLORS = ['stat-card-yellow', 'stat-card-green'];
 
@@ -108,7 +112,10 @@ export function ProfilePage() {
   useEffect(load, [username]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function saveDisplayName() {
-    if (!nameDraft.trim()) return;
+    if (!nameDraft.trim()) {
+      setSaveError(t('profile.nameRequired'));
+      return;
+    }
     setSaving(true);
     setSaveError(null);
     try {
@@ -183,7 +190,7 @@ export function ProfilePage() {
 
   return (
     <div className="stack">
-      <Topbar title={profile.displayName} subtitle={`@${profile.username} · ${t('profile.joined', { date: joinedDate })}`} />
+      <Topbar title={profile.displayName} subtitle={`${LRI}@${profile.username}${PDI} · ${t('profile.joined', { date: joinedDate })}`} />
 
       <div className="card flex gap-md" style={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         {profile.role === 'student' && (isOwnProfile || profile.avatar3d) ? (
@@ -198,6 +205,8 @@ export function ProfilePage() {
           <Avatar avatarKey={profile.avatarKey} photoUrl={profile.avatarUrl} size={72} />
         )}
 
+        {/* Admin accounts have no level / rank / XP -- only the avatar and name. */}
+        {profile.role !== 'admin' && (
         <div className="flex gap-md" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', width: 84, height: 84, flexShrink: 0 }}>
             <svg width={84} height={84} viewBox="0 0 84 84" style={{ transform: 'rotate(-90deg)' }}>
@@ -247,15 +256,17 @@ export function ProfilePage() {
             )}
             {profile.rankTier.nextMinXp !== null && (
               <p className="muted" style={{ fontSize: 11, margin: 0 }}>
-                {t('profile.nextTierXp', {
+                {t(profile.role === 'teacher' ? 'profile.nextTierPoints' : 'profile.nextTierXp', {
                   xp: profile.rankTier.nextMinXp - (profile.role === 'teacher' ? profile.teacherPoints : profile.totalXp),
                 })}
               </p>
             )}
           </div>
         </div>
+        )}
       </div>
 
+      {profile.role !== 'admin' && (
       <div className="grid-cards">
         {profile.role === 'teacher' ? (
           <>
@@ -269,6 +280,7 @@ export function ProfilePage() {
           </>
         )}
       </div>
+      )}
 
       <div className="card stack" style={{ gap: 6 }}>
         <h3 style={{ fontSize: 16 }}>{t('profile.bio')}</h3>
@@ -297,8 +309,8 @@ export function ProfilePage() {
                     fontWeight: 700,
                     padding: '2px 8px',
                     borderRadius: 999,
-                    color: '#fff',
-                    background: `linear-gradient(135deg, ${CERT_PALETTES[cert.type].light}, ${CERT_PALETTES[cert.type].dark})`,
+                    color: CERT_PALETTES[cert.type].ink,
+                    background: certPillBackground(cert.type),
                   }}
                 >
                   {t(CERT_TYPE_LABEL_KEY[cert.type])}

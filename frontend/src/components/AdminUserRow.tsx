@@ -163,7 +163,7 @@ export function AdminUserRow({
             {u.displayName} {isSelf && <span className="muted">{t('admin.you')}</span>}
           </strong>
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-            @{u.username} · {u.email}
+            <bdi dir="ltr">@{u.username} · {u.email}</bdi>
           </p>
         </div>
         <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>

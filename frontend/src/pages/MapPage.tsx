@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
@@ -199,6 +199,19 @@ export function MapPage() {
 
   useEffect(load, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Nodes and artwork are laid out in a fixed 340px coordinate system; on a narrower card the
+  // whole stage is scaled down together so the nodes stay on their padlocks (not clipped or drifting).
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const mapReady = levels !== null;
+  useEffect(() => {
+    const el = mapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => setScale(Math.min(1, entry.contentRect.width / MAP_WIDTH)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [mapReady]);
+
   const positions = useMemo(() => {
     const map = new Map<number, { x: number; y: number }>();
     for (let i = 0; i < 50; i++) map.set(i + 1, nodePosition(i));
@@ -247,7 +260,9 @@ export function MapPage() {
 
       {levels && (
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ position: 'relative', width: '100%', maxWidth: 340, margin: '0 auto', height: totalHeight }}>
+          <div ref={mapRef} style={{ position: 'relative', width: '100%', maxWidth: MAP_WIDTH, margin: '0 auto', height: totalHeight * scale }}>
+          {/* Pinned to the physical left: in RTL a wider-than-parent box would otherwise overflow leftwards and the scale() would land off-centre. */}
+          <div style={{ position: 'absolute', left: 0, top: 0, width: MAP_WIDTH, height: totalHeight, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
             {ZONES.map((zone) => {
               const imageZoneIdx = imageZoneMins.indexOf(zone.min);
               const isImageZone = imageZoneIdx !== -1;
@@ -388,6 +403,7 @@ export function MapPage() {
                 </button>
               );
             })}
+          </div>
           </div>
         </div>
       )}

@@ -344,6 +344,21 @@ button.a3d-mini:hover {
   }
 }
 
+/* Small portrait phones (e.g. 320x568): give the options more of the screen. */
+@media (max-width: 860px) and (max-height: 640px) and (orientation: portrait) {
+  .a3d-modal {
+    grid-template-rows: minmax(150px, 32%) minmax(0, 1fr);
+  }
+
+  .a3d-panel-head {
+    padding-block: 8px 4px;
+  }
+
+  .a3d-tab {
+    padding-block: 6px;
+  }
+}
+
 /* Phone in landscape: too short to stack (the options would collapse to nothing), so go side by side. */
 @media (max-width: 860px) and (max-height: 520px) {
   .a3d-modal {

@@ -122,9 +122,12 @@ export function AdminPage() {
   const titleKey =
     tab === 'users' ? 'admin.tabUsers' : tab === 'videos' ? 'admin.tabVideos' : tab === 'reports' ? 'admin.tabReports' : 'admin.tabCertificates';
 
+  const subtitleKey =
+    tab === 'users' ? 'admin.pageSubtitle' : tab === 'videos' ? 'admin.subtitleVideos' : tab === 'reports' ? 'admin.subtitleReports' : 'admin.subtitleCertificates';
+
   return (
     <div className="stack">
-      <Topbar title={t(titleKey)} subtitle={t('admin.pageSubtitle')} />
+      <Topbar title={t(titleKey)} subtitle={t(subtitleKey)} />
 
       {tab === 'users' && <AdminUsersPanel />}
       {tab === 'videos' && <AdminVideosPanel />}

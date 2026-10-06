@@ -5,7 +5,7 @@ import { useLanguage } from '../lib/language-context';
 import { pickText, translateApiError } from '../lib/i18n';
 import { QuizResults, type ResultItem } from './QuizResults';
 import { BossArt } from './BossArt';
-import { getBossConfig, computeBossHp, ENCOURAGEMENT_AR, randomFrom } from '../lib/boss-config';
+import { getBossConfig, computeBossHp, ENCOURAGEMENT_AR, ENCOURAGEMENT_EN, randomFrom } from '../lib/boss-config';
 
 type BossDetail = {
   comingSoon: boolean;
@@ -71,6 +71,7 @@ function usePulseTransform(trigger: unknown, frames: string[], stepMs: number): 
 export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClose: () => void }) {
   const { refreshUser } = useAuth();
   const { t, lang } = useLanguage();
+  const cheers = lang === 'ar' ? ENCOURAGEMENT_AR : ENCOURAGEMENT_EN;
   const config = useMemo(() => getBossConfig(levelNumber), [levelNumber]);
 
   const [detail, setDetail] = useState<BossDetail | null>(null);
@@ -91,7 +92,7 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
   const [lastHitKind, setLastHitKind] = useState<'hit' | 'miss'>('hit');
 
   useEffect(() => {
-    setBanner(randomFrom(ENCOURAGEMENT_AR.start));
+    setBanner(randomFrom(cheers.start));
     api
       .get<BossDetail>(`/map/boss/${levelNumber}`)
       .then(setDetail)
@@ -153,9 +154,9 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
       setResultsSoFar(nextResults);
       const nextHp = computeBossHp(config, nextResults, total || 1);
       if (res.isCorrect) {
-        setBanner(nextHp > 0 && nextHp <= 35 ? randomFrom(ENCOURAGEMENT_AR.lowHp) : randomFrom(ENCOURAGEMENT_AR.correct));
+        setBanner(nextHp > 0 && nextHp <= 35 ? randomFrom(cheers.lowHp) : randomFrom(cheers.correct));
       } else {
-        setBanner(randomFrom(ENCOURAGEMENT_AR.wrong));
+        setBanner(randomFrom(cheers.wrong));
       }
     } catch (err) {
       setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('boss.loadError'));
@@ -175,7 +176,7 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
     try {
       const res = await api.post<BossSubmitResult>(`/map/boss/${levelNumber}/submit`, { answers });
       setResult(res);
-      setBanner(res.passed ? randomFrom(ENCOURAGEMENT_AR.victory) : randomFrom(ENCOURAGEMENT_AR.defeat));
+      setBanner(res.passed ? randomFrom(cheers.victory) : randomFrom(cheers.defeat));
       await refreshUser();
     } catch (err) {
       setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('boss.loadError'));
@@ -361,7 +362,7 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
               <h2>{result.passed ? t('boss.victory') : t('boss.survives')}</h2>
               <p className="muted">{t('boss.correctCount', { correct: result.correctCount, total: result.total })}</p>
               <div className="boss-encourage-banner" style={{ margin: '12px auto', maxWidth: 420 }}>
-                {result.passed ? randomFrom(ENCOURAGEMENT_AR.victory) : randomFrom(ENCOURAGEMENT_AR.defeat)}
+                {result.passed ? randomFrom(cheers.victory) : randomFrom(cheers.defeat)}
               </div>
               {result.passed && (
                 <p className="badge badge-gold" style={{ fontSize: 15, marginTop: 12 }}>

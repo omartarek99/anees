@@ -42,8 +42,10 @@ export function MonthlyTotalChart({ months, totalsBySecond }: { months: string[]
   const barWidth = Math.min(24, bandWidth * 0.6);
   const gridFracs = [0, 0.25, 0.5, 0.75, 1];
 
+  // minWidth keeps the axis labels at their real size on a phone; the card scrolls sideways instead of shrinking them to ~4px.
   return (
-    <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} style={{ width: '100%', height: 'auto' }} role="img" aria-label="Monthly total watch time">
+    <div style={{ overflowX: 'auto' }}>
+    <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} style={{ width: '100%', minWidth: CHART_W, height: 'auto' }} role="img" aria-label="Monthly total watch time">
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="var(--maroon-light)" />
@@ -99,6 +101,7 @@ export function MonthlyTotalChart({ months, totalsBySecond }: { months: string[]
 
       <line x1={MARGIN.left} y1={BASELINE_Y} x2={MARGIN.left + PLOT_W} y2={BASELINE_Y} stroke="var(--ink-soft)" strokeWidth={1} />
     </svg>
+    </div>
   );
 }
 
@@ -132,7 +135,7 @@ export function StudentWatchHeatmap({ months, students }: { months: string[]; st
             {students.map((s) => (
               <tr key={s.userId}>
                 <td style={{ position: 'sticky', insetInlineStart: 0, background: 'var(--glass-bg-strong)', padding: '4px 10px', whiteSpace: 'nowrap' }}>
-                  {s.displayName} <span className="muted">@{s.username}</span>
+                  {s.displayName} <span className="muted"><bdi dir="ltr">@{s.username}</bdi></span>
                 </td>
                 {s.monthly.map((seconds, i) => {
                   const pct = seconds > 0 ? Math.max(10, Math.round((seconds / max) * 100)) : 0;

@@ -48,7 +48,7 @@ function LeaderRow({ leader, highlight, xpUnit }: { leader: Leader; highlight: b
           <div style={{ fontWeight: 700 }}>{leader.displayName}</div>
           <div className="flex gap-sm" style={{ alignItems: 'center' }}>
             <span className="muted" style={{ fontSize: 12 }}>
-              @{leader.username}
+              <bdi dir="ltr">@{leader.username}</bdi>
             </span>
             <RankBadge tier={leader.rankTier} size={16} />
           </div>

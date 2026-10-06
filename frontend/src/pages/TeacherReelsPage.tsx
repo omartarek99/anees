@@ -193,6 +193,7 @@ export function TeacherReelsPage() {
   }
 
   async function handleDelete(id: number) {
+    if (!window.confirm(t('teacherReels.deleteLessonConfirm'))) return;
     try {
       await api.delete(`/teacher-reels/${id}`);
       setReels((prev) => (prev ? prev.filter((r) => r.id !== id) : prev));
@@ -296,8 +297,16 @@ export function TeacherReelsPage() {
         })),
       };
 
-      const reelId = editingId ?? (await api.post<{ id: number }>('/teacher-reels', payload)).id;
-      if (editingId) await api.patch(`/teacher-reels/${editingId}`, payload);
+      let reelId = editingId;
+      if (reelId) {
+        await api.patch(`/teacher-reels/${reelId}`, payload);
+      } else {
+        // Switch to edit mode right away: if the video upload below fails, pressing the button
+        // again must update this lesson, not create a duplicate.
+        reelId = (await api.post<{ id: number }>('/teacher-reels', payload)).id;
+        setEditingId(reelId);
+        loadReels();
+      }
 
       if (videoFile) {
         const formData = new FormData();
@@ -442,16 +451,19 @@ export function TeacherReelsPage() {
                 />
               </div>
               {[0, 1, 2, 3].map((ci) => (
-                <div className="field" key={ci} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div className="field" key={ci} style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
                   <input
                     type="radio"
                     name={`correct-${qi}`}
                     checked={q.correctIndex === ci}
                     onChange={() => updateQuestion(qi, { correctIndex: ci })}
                     title={t('teacherReels.correctAnswerHint')}
+                    aria-label={t('teacherReels.markCorrect', { number: String(ci + 1) })}
+                    style={{ flex: '0 0 auto', width: 'auto' }}
                   />
                   <input
-                    style={{ flex: 1 }}
+                    style={{ flex: '1 1 180px', minWidth: 0 }}
+                    aria-label={t('teacherReels.choicePlaceholder', { number: String(ci + 1) })}
                     placeholder={t('teacherReels.choicePlaceholder', { number: String(ci + 1) })}
                     value={q.choices[ci]}
                     onChange={(e) => updateChoice(qi, ci, e.target.value, false)}
@@ -459,8 +471,9 @@ export function TeacherReelsPage() {
                     maxLength={120}
                   />
                   <input
-                    style={{ flex: 1 }}
+                    style={{ flex: '1 1 180px', minWidth: 0 }}
                     dir="rtl"
+                    aria-label={t('teacherReels.choiceArPlaceholder', { number: String(ci + 1) })}
                     placeholder={t('teacherReels.choiceArPlaceholder', { number: String(ci + 1) })}
                     value={q.choicesAr[ci]}
                     onChange={(e) => updateChoice(qi, ci, e.target.value, true)}

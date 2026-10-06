@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth, type Role } from '../lib/auth-context';
@@ -17,9 +17,13 @@ function SignupConsent() {
   return (
     <p className="muted" style={{ fontSize: 12.5, marginTop: -6, marginBottom: 16 }}>
       {before}
-      <Link to="/terms">{t('legal.terms')}</Link>
+      <Link to="/terms" target="_blank" rel="noopener">
+        {t('legal.terms')}
+      </Link>
       {middle}
-      <Link to="/privacy">{t('legal.privacy')}</Link>
+      <Link to="/privacy" target="_blank" rel="noopener">
+        {t('legal.privacy')}
+      </Link>
       {after}
     </p>
   );
@@ -46,6 +50,12 @@ export function SignupPage() {
   const [pendingIdToken, setPendingIdToken] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+  // The banner sits at the top of a long form but the submit button is at the bottom (on a
+  // phone it would otherwise look like nothing happened), so bring it into view.
+  const errorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (error) errorRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [error]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -108,11 +118,13 @@ export function SignupPage() {
   }
 
   return (
-    <AuthShell title={t('auth.signupTitle')} subtitle={t('auth.signupSubtitle')}>
+    <AuthShell title={t('auth.signupTitle')} subtitle={t(role === 'teacher' ? 'auth.signupSubtitleTeacher' : 'auth.signupSubtitle')}>
       <form onSubmit={handleSubmit}>
         <AnimatePresence>
           {error && (
             <motion.div
+              ref={errorRef}
+              role="alert"
               className="form-error-banner"
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
@@ -234,11 +246,12 @@ export function SignupPage() {
             required
             pattern="[a-zA-Z0-9_]{3,20}"
             title={t('auth.usernameHint')}
+            autoComplete="username"
           />
         </div>
         <div className="field">
-          <label htmlFor="email">{t('auth.parentEmail')}</label>
-          <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <label htmlFor="email">{t(role === 'teacher' ? 'auth.email' : 'auth.parentEmail')}</label>
+          <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
         </div>
         <div className="field">
           <label htmlFor="password">{t('auth.password')}</label>
@@ -249,12 +262,31 @@ export function SignupPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
+            autoComplete="new-password"
+            aria-describedby="password-hint"
           />
+          <small id="password-hint" className="muted">
+            {t('auth.passwordHint')}
+          </small>
         </div>
-        {/* Honeypot -- invisible and unreachable by keyboard/AT for a real person (off-screen,
-            not display:none, since some bots specifically skip display:none fields), but a
-            generic bot filling every input it finds fills this too. */}
-        <div style={{ position: 'absolute', left: -9999, width: 1, height: 1, overflow: 'hidden' }} aria-hidden="true">
+        {/* Honeypot -- invisible and unreachable by keyboard/AT for a real person (clipped to
+            nothing, not display:none, since some bots specifically skip display:none fields),
+            but a generic bot filling every input it finds fills this too. Kept inside the card
+            via inset-inline-start instead of a huge negative `left`: in RTL, overflow to the
+            left is scrollable, so left:-9999 made the Arabic page scroll ~10,000px sideways. */}
+        <div
+          style={{
+            position: 'absolute',
+            insetInlineStart: 0,
+            width: 1,
+            height: 1,
+            overflow: 'hidden',
+            clipPath: 'inset(50%)',
+            opacity: 0,
+            pointerEvents: 'none',
+          }}
+          aria-hidden="true"
+        >
           <label htmlFor="website">Website</label>
           <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
         </div>

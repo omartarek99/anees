@@ -24,7 +24,7 @@ export function QuizResults({ questions, results }: { questions: QuizQuestion[];
             className="card"
             style={{ borderInlineStart: `6px solid ${r.isCorrect ? 'var(--success)' : 'var(--danger)'}` }}
           >
-            <p style={{ fontWeight: 700, marginBottom: 8 }}>
+            <p dir="auto" style={{ fontWeight: 700, marginBottom: 8 }}>
               {r.isCorrect ? '✅' : '❌'} {q.text}
             </p>
             {!r.isCorrect && r.chosenIndex >= 0 && (

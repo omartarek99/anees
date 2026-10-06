@@ -76,7 +76,7 @@ export function AdminVideosPanel() {
           <div className="spinner" />
         </div>
       )}
-      {reels && reels.length === 0 && !loadError && <p className="muted">{t('admin.noVideos')}</p>}
+      {reels && reels.length === 0 && !loadError && <p className="muted">{t(search.trim() ? 'admin.noVideos' : 'admin.noVideosAtAll')}</p>}
 
       <div className="stack" style={{ gap: 10, marginTop: 12 }}>
         {reels?.map((reel) => (

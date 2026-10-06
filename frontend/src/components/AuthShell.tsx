@@ -6,11 +6,9 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
   const { t } = useLanguage();
   return (
     <div
+      className="auth-shell"
       style={{
         minHeight: '100vh',
-        backgroundColor: 'var(--maroon)',
-        backgroundImage:
-          'radial-gradient(circle at 15% 20%, rgba(255,255,255,0.16), transparent 42%), radial-gradient(circle at 85% 15%, rgba(240,168,58,0.35), transparent 42%), radial-gradient(circle at 75% 90%, rgba(255,255,255,0.14), transparent 45%), linear-gradient(160deg, var(--maroon-light), var(--maroon-dark))',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

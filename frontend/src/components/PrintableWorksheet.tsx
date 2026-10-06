@@ -69,7 +69,7 @@ export function PrintableWorksheet({
         <ol className="printable-worksheet-questions">
           {questions.map((q, i) => (
             <li key={q.id} className={tints[i % tints.length]}>
-              <p>{q.text}</p>
+              <p dir="auto">{q.text}</p>
               <ul>
                 {q.choices.map((choice, ci) => (
                   <li key={ci}>

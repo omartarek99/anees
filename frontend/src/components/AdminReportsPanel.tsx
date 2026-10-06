@@ -74,7 +74,7 @@ function WatchTimeTable({ gradeFilter }: { gradeFilter: GradeFilter }) {
               {students.map((s) => (
                 <tr key={s.userId} style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
                   <td style={{ padding: '6px 8px' }}>
-                    {s.displayName} <span className="muted">@{s.username}</span>
+                    {s.displayName} <span className="muted"><bdi dir="ltr">@{s.username}</bdi></span>
                   </td>
                   <td style={{ padding: '6px 8px' }}>{s.grade ?? '—'}</td>
                   <td style={{ padding: '6px 8px' }}>{formatWatchTime(s.totalWatchedSeconds)}</td>

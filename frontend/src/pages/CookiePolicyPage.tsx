@@ -1,8 +1,8 @@
 import { useLanguage } from '../lib/language-context';
 import { LegalPageShell, LegalSection } from '../components/LegalPageShell';
 
-const EFFECTIVE_DATE = '6 September 2026';
-const EFFECTIVE_DATE_AR = '٦ سبتمبر ٢٠٢٦';
+const EFFECTIVE_DATE = '6 October 2026';
+const EFFECTIVE_DATE_AR = '٦ أكتوبر ٢٠٢٦';
 
 const TABLE_HEAD = { en: ['Name', 'Purpose', 'Type', 'Duration'], ar: ['الاسم', 'الغرض', 'النوع', 'المدة'] };
 const TABLE_ROW = {
@@ -48,14 +48,15 @@ const CONTENT = {
     {
       heading: '2. Do You Need to Consent?',
       body: [
-        'No. Under GDPR/ePrivacy-style rules, a cookie that is "strictly necessary" for a service you asked for — like staying logged in — does not require a consent banner, only disclosure, which this page provides. Anees has no analytics, advertising, or tracking cookies, which are the kinds that would need consent.',
-        'If analytics or third-party embeds are ever added to Anees in the future, this policy (and a consent banner) will need to be updated first.',
+        'Not for the session cookie. Under GDPR/ePrivacy-style rules, a cookie that is "strictly necessary" for a service you asked for — like staying logged in — does not require consent, only disclosure, which this page provides. Anees sets no advertising, third-party analytics, or tracking cookies.',
+        'Anees does offer one optional extra, which is why a cookie notice appears on your first visit: if you accept, it counts which pages are visited (for example "/map"), so we can see what is used. The count is first-party and anonymous, stores only the page name and the time (never who you are), and sets no cookie. If you decline, nothing is counted. Your choice is remembered on your device (see section 3).',
+        'If any third-party analytics or embeds are ever added to Anees in the future, this policy will need to be updated first.',
       ],
     },
     {
       heading: '3. Local Storage (Not a Cookie, but Similar)',
       body: [
-        'Your chosen display language (Arabic/English) is saved with your browser\'s local storage, on your device only. It is never sent to the server and does not identify you.',
+        'Your chosen display language (Arabic/English), your light/dark theme, and your cookie-notice choice (accepted or declined) are saved in your browser\'s local storage, on your device only. They are never sent to the server and do not identify you.',
       ],
     },
     {
@@ -73,13 +74,14 @@ const CONTENT = {
     {
       heading: '٢. هل تحتاج للموافقة؟',
       body: [
-        'لا. بموجب قواعد مثل GDPR/ePrivacy، فإن ملف تعريف الارتباط "الضروري تمامًا" لخدمة طلبتها بنفسك — مثل البقاء مسجّلاً للدخول — لا يتطلب شريط موافقة، بل الإفصاح فقط، وهو ما توفره هذه الصفحة. لا يحتوي أنيس على ملفات تعريف ارتباط للتحليلات أو الإعلانات أو التتبّع، وهي الأنواع التي تتطلب الموافقة.',
-        'إذا أُضيفت أدوات تحليلات أو عناصر من أطراف ثالثة إلى أنيس مستقبلاً، فيجب تحديث هذه السياسة (وإضافة شريط موافقة) أولاً.',
+        'ليس بالنسبة لملف الجلسة. بموجب قواعد مثل GDPR/ePrivacy، فإن ملف تعريف الارتباط "الضروري تمامًا" لخدمة طلبتها بنفسك — مثل البقاء مسجّلاً للدخول — لا يتطلب موافقة، بل الإفصاح فقط، وهو ما توفره هذه الصفحة. لا يضع أنيس ملفات تعريف ارتباط للإعلانات أو لتحليلات الأطراف الثالثة أو للتتبّع.',
+        'يقدّم أنيس ميزة اختيارية واحدة، ولهذا يظهر إشعار ملفات تعريف الارتباط عند زيارتك الأولى: إذا وافقت، يُحصي الموقع الصفحات التي تُزار (مثل "/map") لنعرف ما يُستخدم. هذا العدّ من طرفنا فقط ومجهول الهوية، ولا يحفظ سوى اسم الصفحة والوقت (ولا يحفظ هويتك أبدًا)، ولا يضع أي ملف تعريف ارتباط. وإذا رفضت فلن يُحصى شيء. يُحفظ اختيارك على جهازك (انظر القسم ٣).',
+        'إذا أُضيفت أدوات تحليلات أو عناصر من أطراف ثالثة إلى أنيس مستقبلاً، فيجب تحديث هذه السياسة أولاً.',
       ],
     },
     {
       heading: '٣. التخزين المحلي (ليس ملف تعريف ارتباط، لكنه مشابه)',
-      body: ['يُحفظ تفضيل اللغة الذي تختاره (عربي/إنجليزي) في التخزين المحلي لمتصفحك، على جهازك فقط. لا يُرسل أبدًا إلى الخادم ولا يحدّد هويتك.'],
+      body: ['يُحفظ تفضيل اللغة الذي تختاره (عربي/إنجليزي) والمظهر (فاتح/داكن) واختيارك في إشعار ملفات تعريف الارتباط (موافقة أو رفض) في التخزين المحلي لمتصفحك، على جهازك فقط. لا تُرسل أبدًا إلى الخادم ولا تحدّد هويتك.'],
     },
     {
       heading: '٤. التحكم في ملفات تعريف الارتباط',

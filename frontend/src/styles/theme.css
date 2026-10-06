@@ -266,8 +266,27 @@ a {
   color: var(--maroon);
 }
 
-button {
+button,
+input,
+select,
+textarea {
   font-family: inherit;
+}
+
+/* Login / signup backdrop (components/AuthShell.tsx). Fixed colours rather than the --maroon
+   tokens: dark mode brightens those for text on dark glass, which turned this whole backdrop
+   (and the translucent card over it) a saturated pink with unreadable text. */
+.auth-shell {
+  background-color: #8a1538;
+  background-image: radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.16), transparent 42%),
+    radial-gradient(circle at 85% 15%, rgba(240, 168, 58, 0.35), transparent 42%),
+    radial-gradient(circle at 75% 90%, rgba(255, 255, 255, 0.14), transparent 45%), linear-gradient(160deg, #c22954, #4a0e24);
+}
+:root[data-theme='dark'] .auth-shell {
+  background-color: #140810;
+  background-image: radial-gradient(circle at 15% 20%, rgba(212, 62, 107, 0.14), transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(240, 168, 58, 0.1), transparent 42%),
+    radial-gradient(circle at 75% 90%, rgba(100, 92, 235, 0.16), transparent 45%), linear-gradient(160deg, #240a14, #0e050a);
 }
 
 img,
@@ -297,6 +316,10 @@ svg {
   max-width: 1080px;
   margin: 0 auto;
   padding: 20px 24px 96px;
+}
+/* Cancels .app-main's padding for the full-bleed reels page (kept in step with the phone padding below). */
+.reels-bleed {
+  margin: -20px -24px -96px;
 }
 
 /* ---------------- Sidebar ---------------- */
@@ -677,6 +700,12 @@ a:focus-visible {
   background: var(--maroon-pale);
   box-shadow: var(--shadow-3d-md);
   transform: translateY(-2px);
+}
+/* Dark mode: --maroon is only ~3.3:1 on dark glass, and even --maroon-light is thin over a pink-tinted
+   card (login/signup) -- a softer pink-white reads clearly on both. */
+:root[data-theme='dark'] .btn-secondary {
+  color: color-mix(in srgb, var(--maroon-light) 55%, white);
+  border-color: color-mix(in srgb, var(--maroon-light) 75%, transparent);
 }
 .btn-ghost {
   background: transparent;
@@ -1492,6 +1521,9 @@ a:focus-visible {
   .topbar {
     padding-left: 12px;
     padding-right: 12px;
+  }
+  .reels-bleed {
+    margin-inline: -12px;
   }
 
   /* Reels: not enough width on a phone for the video frame and a whole separate icon

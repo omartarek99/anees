@@ -96,12 +96,11 @@ export function FriendsPage() {
         ).map((tabDef) => (
           <button
             key={tabDef.key}
-            className="btn btn-sm"
-            onClick={() => setTab(tabDef.key)}
-            style={{
-              background: tab === tabDef.key ? 'var(--maroon)' : 'var(--white)',
-              color: tab === tabDef.key ? 'white' : 'var(--maroon)',
-              border: '2px solid var(--maroon)',
+            className={tab === tabDef.key ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'}
+            onClick={() => {
+              setTab(tabDef.key);
+              setMessage(null);
+              setError(null);
             }}
           >
             {tabDef.label}
@@ -127,7 +126,7 @@ export function FriendsPage() {
                 <div>
                   <div style={{ fontWeight: 700 }}>{f.displayName}</div>
                   <div className="muted" style={{ fontSize: 12 }}>
-                    @{f.username} · {f.totalXp} {t('common.xpUnit')}
+                    <bdi dir="ltr">@{f.username}</bdi> · {f.totalXp} {t('common.xpUnit')}
                   </div>
                 </div>
               </Link>
@@ -177,22 +176,37 @@ export function FriendsPage() {
             <label htmlFor="search">{t('friends.searchLabel')}</label>
             <input id="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('friends.searchPlaceholder')} />
           </div>
-          {results.map((r) => (
-            <div key={r.username} className="list-row flex-between">
-              <div className="flex gap-md" style={{ alignItems: 'center' }}>
-                <Avatar avatarKey={r.avatarKey} size={40} />
-                <div>
-                  <div style={{ fontWeight: 700 }}>{r.displayName}</div>
-                  <div className="muted" style={{ fontSize: 12 }}>
-                    @{r.username}
+          {results.map((r) => {
+            // Already friends / a request is pending either way -> a status label, not a button
+            // that can only fail with a 409.
+            const status = friends?.some((f) => f.username === r.username)
+              ? t('friends.statusFriends')
+              : [...incoming, ...outgoing].some((q) => q.username === r.username)
+                ? t('friends.statusPending')
+                : null;
+            return (
+              <div key={r.username} className="list-row flex-between">
+                <div className="flex gap-md" style={{ alignItems: 'center' }}>
+                  <Avatar avatarKey={r.avatarKey} size={40} />
+                  <div>
+                    <div style={{ fontWeight: 700 }}>{r.displayName}</div>
+                    <div className="muted" style={{ fontSize: 12 }}>
+                      <bdi dir="ltr">@{r.username}</bdi>
+                    </div>
                   </div>
                 </div>
+                {status ? (
+                  <span className="muted" style={{ fontSize: 13, fontWeight: 700 }}>
+                    {status}
+                  </span>
+                ) : (
+                  <button className="btn btn-primary btn-sm" onClick={() => sendRequest(r.username)}>
+                    {t('friends.addFriend')}
+                  </button>
+                )}
               </div>
-              <button className="btn btn-primary btn-sm" onClick={() => sendRequest(r.username)}>
-                {t('friends.addFriend')}
-              </button>
-            </div>
-          ))}
+            );
+          })}
           {query.trim().length >= 2 && results.length === 0 && <p className="muted">{t('friends.noResults')}</p>}
         </div>
       )}

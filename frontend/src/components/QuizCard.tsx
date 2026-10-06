@@ -33,7 +33,8 @@ export function QuizCard({
     <div className="stack">
       {questions.map((q, qi) => (
         <div key={q.id} className="card">
-          <p style={{ fontWeight: 700, marginBottom: 12 }}>
+          {/* dir=auto: a pure-math question ("36 ÷ 6 = ?") reads left-to-right even in the Arabic UI. */}
+          <p dir="auto" style={{ fontWeight: 700, marginBottom: 12 }}>
             {qi + 1}. {q.text}
           </p>
           <div className="stack" style={{ gap: 8 }}>
@@ -60,7 +61,7 @@ export function QuizCard({
                       height: 24,
                       borderRadius: '50%',
                       background: selected ? 'var(--maroon)' : 'var(--sand-dark)',
-                      color: 'white',
+                      color: selected ? 'white' : 'var(--ink)',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',

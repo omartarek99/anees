@@ -64,7 +64,7 @@ export function LoginPage() {
     <AuthShell title={t('auth.loginTitle')} subtitle={t('auth.loginSubtitle')}>
       <form onSubmit={handleSubmit}>
         {error && (
-          <div className="form-error-banner">
+          <div className="form-error-banner" role="alert">
             {error}
             {bannedUntil && ` (${new Date(bannedUntil).toLocaleString(lang === 'ar' ? 'ar' : 'en-US')})`}
           </div>

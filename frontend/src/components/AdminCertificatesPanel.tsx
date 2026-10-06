@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
-import { CERT_TYPES, CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
+import { CERT_TYPES, CERT_PALETTES, CERT_TYPE_LABEL_KEY, certPillBackground, type CertificateType } from '../lib/certificateTiers';
 
 type AdminUserSummary = { id: number; username: string; displayName: string; role: 'student' | 'teacher' | 'admin' };
 
@@ -133,7 +133,7 @@ export function AdminCertificatesPanel() {
           {recipient ? (
             <div className="flex-between" style={{ alignItems: 'center' }}>
               <span>
-                <strong>{recipient.displayName}</strong> <span className="muted">@{recipient.username}</span>
+                <strong>{recipient.displayName}</strong> <span className="muted"><bdi dir="ltr">@{recipient.username}</bdi></span>
               </span>
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => setRecipient(null)}>
                 {t('admin.certRecipientChange')}
@@ -161,7 +161,7 @@ export function AdminCertificatesPanel() {
                         setResults([]);
                       }}
                     >
-                      <strong>{u.displayName}</strong> <span className="muted">@{u.username} · {u.role}</span>
+                      <strong>{u.displayName}</strong> <span className="muted"><bdi dir="ltr">@{u.username}</bdi> · {u.role}</span>
                     </button>
                   ))}
                 </div>
@@ -196,9 +196,9 @@ export function AdminCertificatesPanel() {
                     fontWeight: 700,
                     fontSize: 13,
                     border: selected ? `2px solid ${palette.dark}` : '2px solid transparent',
-                    background: `linear-gradient(135deg, ${palette.light}, ${palette.dark})`,
-                    color: '#fff',
-                    opacity: selected ? 1 : 0.55,
+                    background: certPillBackground(ct),
+                    color: palette.ink,
+                    opacity: selected ? 1 : 0.78,
                   }}
                 >
                   🎖️ {t(CERT_TYPE_LABEL_KEY[ct])}
@@ -264,15 +264,15 @@ export function AdminCertificatesPanel() {
                           fontWeight: 700,
                           padding: '2px 8px',
                           borderRadius: 999,
-                          color: '#fff',
-                          background: `linear-gradient(135deg, ${palette.light}, ${palette.dark})`,
+                          color: palette.ink,
+                          background: certPillBackground(c.type),
                         }}
                       >
                         {t(CERT_TYPE_LABEL_KEY[c.type])}
                       </span>
                     </div>
                     <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>
-                      {c.recipientDisplayName} (@{c.recipientUsername}) ·{' '}
+                      {c.recipientDisplayName} (<bdi dir="ltr">@{c.recipientUsername}</bdi>) ·{' '}
                       {new Date(c.createdAt.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US')}
                     </p>
                   </div>

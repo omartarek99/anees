@@ -183,7 +183,7 @@ export function ReelsPage() {
     // Cancels .app-main's own padding (20px/24px/96px) so this page -- and only this page --
     // gets to use the full viewport height for the frame below, TikTok-style, instead of
     // sitting in a shorter box with a lot of dead space above and below it.
-    <div style={{ margin: '-20px -24px -96px' }}>
+    <div className="reels-bleed">
       {/* `direction: ltr` here keeps the action rail on the physical right of the frame in both
           languages (matching TikTok, which never mirrors its action rail for RTL) — the inner
           wrapper resets back to the real page direction so the reel's own caption/badge/exit-

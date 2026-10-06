@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
-import { Navigate, Route, BrowserRouter, Routes, Outlet, useLocation } from 'react-router-dom';
+import { Suspense, lazy, useEffect } from 'react';
+import { Navigate, Route, BrowserRouter, Routes, Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth-context';
-import { LanguageProvider } from './lib/language-context';
+import { LanguageProvider, useLanguage } from './lib/language-context';
 import { ThemeProvider } from './lib/theme-context';
 import { trackPageview } from './lib/analytics';
 import { Sidebar } from './components/Sidebar';
+import { AvatarBoundary } from './components/avatar3d/AvatarBoundary';
 import { LanguageToggle } from './components/LanguageToggle';
 import { ThemeToggle } from './components/ThemeToggle';
 import { QuickMenu } from './components/QuickMenu';
@@ -23,13 +24,40 @@ import { HomePage } from './pages/HomePage';
 import { TeacherHomePage } from './pages/TeacherHomePage';
 import { ReelsPage } from './pages/ReelsPage';
 import { MapPage } from './pages/MapPage';
-import { CraftPage } from './pages/CraftPage';
 import { WorksheetsPage } from './pages/WorksheetsPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { FriendsPage } from './pages/FriendsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { TeacherReelsPage } from './pages/TeacherReelsPage';
 import { AdminPage } from './pages/AdminPage';
+
+// The Quarry is the only place that needs three.js (~1 MB), so it loads on demand instead of
+// weighing down the first load of every page.
+const CraftPage = lazy(() => import('./pages/CraftPage').then((m) => ({ default: m.CraftPage })));
+
+// Navigating to a new page starts at its top (e.g. the Terms link at the bottom of signup).
+// Back/forward (POP) keep the browser's own scroll restoration.
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  const navType = useNavigationType();
+  useEffect(() => {
+    if (navType !== 'POP') window.scrollTo(0, 0);
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
+// The Quarry's chunk can fail to download (offline, or a stale filename after a redeploy) -- show an
+// error in the page instead of letting the rejected lazy import blank the whole app.
+function CraftRoute() {
+  const { t } = useLanguage();
+  return (
+    <AvatarBoundary fallback={<div className="form-error-banner">{t('messages.loadError')}</div>}>
+      <Suspense fallback={<FullScreenLoader />}>
+        <CraftPage />
+      </Suspense>
+    </AvatarBoundary>
+  );
+}
 
 function PageviewTracker() {
   const { pathname } = useLocation();
@@ -109,6 +137,14 @@ function AdminOnly() {
   return <Outlet />;
 }
 
+/** Admin has no gameplay surface (see AdminOnly): a gameplay URL typed by hand sends it back to
+ * the panel, so an admin can't earn XP or appear on the student leaderboard. */
+function NoAdmin() {
+  const { user } = useAuth();
+  if (user?.role === 'admin') return <Navigate to="/admin" replace />;
+  return <Outlet />;
+}
+
 // Admin has no XP/level/rank of its own -- its account exists purely to manage other
 // accounts, so its own profile page (reachable from QuickMenu) forwards straight to the
 // user list it actually wants, same as RoleHome does for "/".
@@ -143,6 +179,7 @@ export default function App() {
         <LanguageProvider>
           <AuthProvider>
             <PageviewTracker />
+            <ScrollToTop />
             <Routes>
               {/* Public regardless of auth state — a visitor should be able to read these before ever signing up. */}
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
@@ -157,12 +194,14 @@ export default function App() {
 
               <Route element={<ProtectedLayout />}>
                 <Route path="/" element={<RoleHome />} />
-                <Route path="/reels" element={<ReelsPage />} />
-                <Route path="/map" element={<MapPage />} />
-                <Route path="/craft" element={<CraftPage />} />
-                <Route path="/worksheets" element={<WorksheetsPage />} />
-                <Route path="/leaderboard" element={<LeaderboardPage />} />
-                <Route path="/friends" element={<FriendsPage />} />
+                <Route element={<NoAdmin />}>
+                  <Route path="/reels" element={<ReelsPage />} />
+                  <Route path="/map" element={<MapPage />} />
+                  <Route path="/craft" element={<CraftRoute />} />
+                  <Route path="/worksheets" element={<WorksheetsPage />} />
+                  <Route path="/leaderboard" element={<LeaderboardPage />} />
+                  <Route path="/friends" element={<FriendsPage />} />
+                </Route>
                 <Route element={<TeacherOnly />}>
                   <Route path="/teacher/reels" element={<TeacherReelsPage />} />
                 </Route>

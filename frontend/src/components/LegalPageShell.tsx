@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../lib/language-context';
 import { LanguageToggle } from './LanguageToggle';
 
@@ -7,14 +7,27 @@ import { LanguageToggle } from './LanguageToggle';
  * language toggle) and card layout, readable independent of login state. */
 export function LegalPageShell({ title, lastUpdated, children }: { title: string; lastUpdated: string; children: ReactNode }) {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const { key } = useLocation();
   return (
     <div style={{ minHeight: '100vh', padding: '24px 16px 80px' }}>
       <div style={{ maxWidth: 760, margin: '0 auto' }}>
         <div className="flex-between" style={{ marginBottom: 20 }}>
-          <Link to="/" className="btn btn-ghost btn-sm">
+          {/* Back goes to wherever the reader came from (e.g. the signup form they were filling in);
+              key === 'default' means this page was the first entry, so fall back to the home route. */}
+          <Link
+            to="/"
+            className="btn btn-ghost btn-sm"
+            onClick={(e) => {
+              if (key !== 'default') {
+                e.preventDefault();
+                navigate(-1);
+              }
+            }}
+          >
             {t('legal.backToApp')}
           </Link>
-          <LanguageToggle />
+          <LanguageToggle floating />
         </div>
         <div className="card" style={{ padding: '32px 28px' }}>
           <h1 style={{ fontSize: 26 }}>{title}</h1>

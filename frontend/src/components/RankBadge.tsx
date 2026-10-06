@@ -34,7 +34,7 @@ export function RankBadge({ tier, size = 28, showName = true }: { tier: RankTier
         <circle cx="20" cy="22" r="6" fill="none" stroke={tier.colorDark} strokeWidth="1" opacity="0.4" />
       </svg>
       {showName && (
-        <span style={{ fontWeight: 800, fontSize: Math.max(11, Math.round(size * 0.4)), color: tier.colorDark }}>{name}</span>
+        <span style={{ fontWeight: 800, fontSize: Math.max(11, Math.round(size * 0.4)), color: `color-mix(in srgb, ${tier.colorDark} 45%, var(--ink))` }}>{name}</span>
       )}
     </span>
   );

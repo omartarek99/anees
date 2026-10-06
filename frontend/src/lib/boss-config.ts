@@ -244,6 +244,15 @@ export const ENCOURAGEMENT_AR = {
   defeat: ['لقد بذلت جهدًا رائعًا! حاول مرة أخرى لتصبح أقوى وتهزمه!'],
 };
 
+export const ENCOURAGEMENT_EN: typeof ENCOURAGEMENT_AR = {
+  start: ['Get ready for battle, champion! 🛡️', 'Show off your Math & Science skills!', "It's showdown time! You've got this!"],
+  correct: ['Nice hit! 💥', 'Awesome! Keep it up! 🔥', 'A mighty blow! The monster is backing off!', 'Excellent! Great progress!', "That's the spirit, champion! 👏", 'Great answer! Keep attacking!'],
+  wrong: ["It's okay, focus on the next question!", 'Be careful with your next answer!', "Don't give up, think it through!", 'Every hero slips sometimes -- keep going strong!'],
+  lowHp: ['The monster is almost beaten! One last strike! ⚡', "Victory is close! Don't stop!", "It's wobbling! Don't stop now!"],
+  victory: ['🏆 You defeated the guardian! A true champion!'],
+  defeat: ['You gave it a great effort! Try again to get stronger and beat it!'],
+};
+
 export function randomFrom(list: string[]): string {
   return list[Math.floor(Math.random() * list.length)];
 }

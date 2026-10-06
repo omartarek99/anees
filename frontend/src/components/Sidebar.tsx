@@ -10,6 +10,7 @@ import {
   RiFilmFill,
   RiBarChartBoxFill,
   RiCertificateFill,
+  RiMovie2Line,
 } from '@remixicon/react';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import PeopleIcon from '@mui/icons-material/People';
@@ -36,7 +37,7 @@ const GAME_LINKS: SidebarLink[] = [
 ];
 
 // Teacher-only extra, on top of the shared game links above.
-const TEACHER_LINKS: SidebarLink[] = [{ to: '/teacher/reels', key: 'nav.myReels', icon: '🎥' }];
+const TEACHER_LINKS: SidebarLink[] = [{ to: '/teacher/reels', key: 'nav.myReels', icon: <RiMovie2Line size={20} /> }];
 
 // Admin is a pure account-management role, not a gameplay one -- instead of the shared
 // game surface it gets one icon per section (Users/Videos/Reports), each its own route

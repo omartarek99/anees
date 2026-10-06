@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from 'react';
+import { Suspense, lazy, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Avatar } from './Avatar';
 import { useLanguage } from '../lib/language-context';
@@ -51,6 +51,7 @@ export function ProfileAvatar3D({ avatarKey, photoUrl, config, size = 48, onSave
   const [error, setError] = useState<string | null>(null);
   const [webgl] = useState(canUseWebGL);
   const [contextLost, setContextLost] = useState(false);
+  const openBtn = useRef<HTMLButtonElement>(null);
 
   const fallback = <Avatar avatarKey={avatarKey} photoUrl={photoUrl} size={size} />;
   // A lost context only swaps in the static avatar once the customiser is closed -- never
@@ -89,7 +90,14 @@ export function ProfileAvatar3D({ avatarKey, photoUrl, config, size = 48, onSave
     <div className="a3d-slot">
       <AvatarBoundary fallback={fallback}>
         {onSave ? (
-          <button type="button" className="a3d-mini" style={style} onClick={openModal} tabIndex={-1} aria-hidden>
+          <button type="button" className="a3d-mini" style={style} onClick={() => {
+              // The modal returns focus to whatever had it when it opened -- make that the labelled button, not this aria-hidden one.
+              openBtn.current?.focus();
+              openModal();
+            }}
+            tabIndex={-1}
+            aria-hidden
+          >
             {canvas}
           </button>
         ) : (
@@ -98,7 +106,7 @@ export function ProfileAvatar3D({ avatarKey, photoUrl, config, size = 48, onSave
           </div>
         )}
         {onSave && (
-          <button type="button" className="btn btn-secondary btn-sm" onClick={openModal}>
+          <button ref={openBtn} type="button" className="btn btn-secondary btn-sm" onClick={openModal}>
             {t('avatar3d.button')}
           </button>
         )}
