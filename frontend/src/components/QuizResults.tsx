@@ -1,6 +1,7 @@
 import type { QuizQuestion } from './QuizCard';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
+import { textDir } from '../lib/bidi';
 
 export type ResultItem = {
   questionId: number;
@@ -24,7 +25,7 @@ export function QuizResults({ questions, results }: { questions: QuizQuestion[];
             className="card"
             style={{ borderInlineStart: `6px solid ${r.isCorrect ? 'var(--success)' : 'var(--danger)'}` }}
           >
-            <p dir="auto" style={{ fontWeight: 700, marginBottom: 8 }}>
+            <p dir={textDir(q.text)} style={{ fontWeight: 700, marginBottom: 8 }}>
               {r.isCorrect ? '✅' : '❌'} {q.text}
             </p>
             {!r.isCorrect && r.chosenIndex >= 0 && (

@@ -449,17 +449,15 @@ export function ReelSlide({
           // questions must not also be read as a swipe-to-next-reel gesture by the parent
           // Swiper — it uses two separate opt-out classes for touch/drag vs. wheel input.
           // no-scrollbar: still scrolls, just hides the visible scrollbar track/thumb.
-          className="swiper-no-swiping swiper-no-mousewheel no-scrollbar"
+          className="swiper-no-swiping swiper-no-mousewheel no-scrollbar reel-sheet"
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'rgba(238,241,247,0.96)',
             backdropFilter: 'blur(22px) saturate(180%)',
             WebkitBackdropFilter: 'blur(22px) saturate(180%)',
             color: 'var(--ink)',
             overflowY: 'auto',
             overscrollBehavior: 'contain',
-            padding: '70px 16px 24px',
             borderRadius: '20px 20px 0 0',
           }}
         >
@@ -498,17 +496,15 @@ export function ReelSlide({
 
       {mode === 'results' && result && (
         <div
-          className="swiper-no-swiping swiper-no-mousewheel no-scrollbar"
+          className="swiper-no-swiping swiper-no-mousewheel no-scrollbar reel-sheet"
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'rgba(238,241,247,0.96)',
             backdropFilter: 'blur(22px) saturate(180%)',
             WebkitBackdropFilter: 'blur(22px) saturate(180%)',
             color: 'var(--ink)',
             overflowY: 'auto',
             overscrollBehavior: 'contain',
-            padding: '70px 16px 24px',
             borderRadius: '20px 20px 0 0',
           }}
         >

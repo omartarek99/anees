@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../lib/language-context';
+import { textDir } from '../lib/bidi';
 
 export type PrintableQuestion = { id: number; text: string; choices: string[] };
 
@@ -69,7 +70,7 @@ export function PrintableWorksheet({
         <ol className="printable-worksheet-questions">
           {questions.map((q, i) => (
             <li key={q.id} className={tints[i % tints.length]}>
-              <p dir="auto">{q.text}</p>
+              <p dir={textDir(q.text)}>{q.text}</p>
               <ul>
                 {q.choices.map((choice, ci) => (
                   <li key={ci}>

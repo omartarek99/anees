@@ -193,7 +193,7 @@ export function ReelsPage() {
         {/* Floating overlay instead of a block above the frame -- doesn't eat into the
             frame's own height budget. */}
         <div
-          className="text-center"
+          className="text-center reels-swipe-hint"
           style={{
             position: 'absolute',
             top: 10,

@@ -57,7 +57,8 @@ const requestSchema = z.object({ toUsername: usernameSchema });
 friendsRouter.post('/request', requireAuth, requireCsrfHeader, validateBody(requestSchema), (req, res) => {
   const { toUsername } = req.body as { toUsername: string };
   const target = db.prepare(`SELECT * FROM users WHERE lower(username) = lower(?)`).get(toUsername) as any;
-  if (!target) {
+  // Admin accounts can't be friends (no Friends page, hidden from search): a request would sit pending forever.
+  if (!target || target.role === 'admin') {
     res.status(404).json({ error: 'No user found with that username.' });
     return;
   }

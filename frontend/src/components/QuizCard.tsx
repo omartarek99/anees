@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '../lib/language-context';
+import { textDir } from '../lib/bidi';
 
 export type QuizQuestion = { id: number; text: string; choices: string[] };
 export type QuizAnswer = { questionId: number; choiceIndex: number };
@@ -33,8 +34,8 @@ export function QuizCard({
     <div className="stack">
       {questions.map((q, qi) => (
         <div key={q.id} className="card">
-          {/* dir=auto: a pure-math question ("36 ÷ 6 = ?") reads left-to-right even in the Arabic UI. */}
-          <p dir="auto" style={{ fontWeight: 700, marginBottom: 12 }}>
+          {/* textDir: a pure-math question ("36 ÷ 6 = ؟") reads left-to-right even in the Arabic UI. */}
+          <p dir={textDir(q.text)} style={{ fontWeight: 700, marginBottom: 12 }}>
             {qi + 1}. {q.text}
           </p>
           <div className="stack" style={{ gap: 8 }}>

@@ -37,8 +37,8 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
       <div className="flex gap-sm" style={{ alignItems: 'center' }}>
         {user.role !== 'admin' && (
           <>
-            <span className="stat-pill" style={{ color: 'var(--pastel-blue-ink)' }} title={t('common.xpUnit')}>
-              💎 {user.totalXp}
+            <span className="stat-pill" style={{ color: 'var(--pastel-blue-ink)' }} title={t(user.role === 'teacher' ? 'profile.teacherPoints' : 'common.xpUnit')}>
+              {user.role === 'teacher' ? `🏆 ${user.teacherPoints}` : `💎 ${user.totalXp}`}
             </span>
             <span className="stat-pill" style={{ color: 'var(--gold-ink)' }} title={t('common.level')}>
               🏅 {user.playerLevel}

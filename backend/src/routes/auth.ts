@@ -85,6 +85,7 @@ function publicUser(user: any) {
     displayName: user.display_name,
     avatarKey: user.avatar_key,
     totalXp: user.total_xp,
+    teacherPoints: user.teacher_points ?? 0,
     playerLevel: getPlayerLevel(user.id),
     // Teachers rank by teacher points, students by XP -- same rule as the profile and leaderboard.
     rankTier: user.role === 'teacher' ? getTeacherRankTier(user.teacher_points ?? 0) : getRankTier(user.total_xp),

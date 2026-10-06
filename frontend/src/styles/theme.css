@@ -1383,7 +1383,6 @@ a:focus-visible {
   border-radius: var(--radius-md);
   background: var(--glass-bg-strong);
   box-shadow: var(--shadow-3d-sm);
-  direction: rtl;
   margin: 14px 16px 0;
 }
 .boss-question-panel {
@@ -1877,4 +1876,28 @@ a:focus-visible {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.85);
   margin: 4px 0 0;
+}
+
+/* Quiz / results sheet laid over a reel (ReelSlide.tsx): its text colour flips with the theme, so
+   the surface must too. On phones the vertical action rail floats over the right edge -- keep
+   the answer rows clear of it so a tap on an option never hits Like / Mute instead. */
+.reel-sheet {
+  background: rgba(238, 241, 247, 0.96);
+  padding: 70px 16px 24px;
+}
+:root[data-theme='dark'] .reel-sheet {
+  background: rgba(22, 17, 32, 0.96);
+}
+@media (max-width: 720px) {
+  .reel-sheet {
+    padding-right: 72px;
+  }
+  .reels-swipe-hint {
+    display: none;
+  }
+}
+
+/* Login / signup card in light mode: more opaque so the muted text keeps its contrast over the crimson backdrop. */
+:root:not([data-theme='dark']) .auth-shell .card {
+  background: rgba(255, 255, 255, 0.9);
 }

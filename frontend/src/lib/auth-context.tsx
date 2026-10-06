@@ -11,6 +11,8 @@ export type User = {
   displayName: string;
   avatarKey: string;
   totalXp: number;
+  // Only ever nonzero for teachers (their own currency, separate from XP).
+  teacherPoints: number;
   playerLevel: number;
   rankTier: RankTier;
   role: Role;

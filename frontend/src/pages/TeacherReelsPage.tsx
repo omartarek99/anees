@@ -531,8 +531,8 @@ export function TeacherReelsPage() {
         {reels && reels.length === 0 && !loadError && <p className="muted">{t('teacherReels.noReels')}</p>}
         <div className="stack" style={{ gap: 10 }}>
           {reels?.map((reel) => (
-            <div key={reel.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
+            <div key={reel.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+              <div style={{ minWidth: 0, flex: '1 1 180px' }}>
                 <strong>{pickText(lang, reel.title, reel.titleAr)}</strong>
                 <p className="muted" style={{ margin: 0, fontSize: 13 }}>
                   {t('teacherReels.reelMeta', {
