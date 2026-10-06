@@ -24,7 +24,7 @@ leaderboardRouter.get('/', requireAuth, (req, res) => {
   // also safe to interpolate.
   const pointsTable = isTeacher ? 'teacher_point_events' : 'xp_events';
   const pointsColumn = isTeacher ? 'teacher_points' : 'total_xp';
-  const roleFilter = isTeacher ? `u.role = 'teacher'` : `u.role != 'teacher'`;
+  const roleFilter = isTeacher ? `u.role = 'teacher'` : `u.role = 'student'`;
   const tierFor = (totalPoints: number) => (isTeacher ? getTeacherRankTier(totalPoints) : getRankTier(totalPoints));
 
   const rows = db

@@ -23,6 +23,7 @@ import { FRONTEND_ORIGIN } from './lib/config.js';
 seed();
 
 const app = express();
+app.disable('x-powered-by');
 // Deliberately not `process.env.PORT` — dev tooling that launches the combined
 // `npm run dev` script (backend + frontend via concurrently) may inject a generic
 // PORT meant for the frontend, which both child processes would otherwise inherit.
@@ -93,6 +94,13 @@ app.use((req, res) => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  // body-parser / Express attach a 4xx status to client mistakes (malformed JSON, oversized body,
+  // bad URL encoding) -- report those as the client error they are, not a 500.
+  const status = Number(err?.status ?? err?.statusCode);
+  if (status >= 400 && status < 500) {
+    res.status(status).json({ error: status === 413 ? 'That request is too large.' : 'Invalid request.' });
+    return;
+  }
   console.error(err);
   res.status(500).json({ error: 'Something went wrong. Please try again.' });
 });

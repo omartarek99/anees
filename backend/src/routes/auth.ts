@@ -10,7 +10,7 @@ import { authLimiter } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
 import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema } from '../lib/schemas.js';
 import { getPlayerLevel } from '../lib/xp.js';
-import { getRankTier } from '../lib/ranks.js';
+import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import {
   firebaseSignUp,
@@ -86,7 +86,8 @@ function publicUser(user: any) {
     avatarKey: user.avatar_key,
     totalXp: user.total_xp,
     playerLevel: getPlayerLevel(user.id),
-    rankTier: getRankTier(user.total_xp),
+    // Teachers rank by teacher points, students by XP -- same rule as the profile and leaderboard.
+    rankTier: user.role === 'teacher' ? getTeacherRankTier(user.teacher_points ?? 0) : getRankTier(user.total_xp),
     role: user.role,
     grade: user.grade,
     createdAt: user.created_at,

@@ -132,12 +132,19 @@ usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProf
     avatar3d?: unknown;
   };
 
+  // Every moderation check runs before the first write, so a request rejected for one field
+  // never leaves another field of the same request half-saved.
+  if (displayName !== undefined && !moderateText(displayName).allowed) {
+    res.status(400).json({ error: 'Please choose an appropriate display name.' });
+    return;
+  }
+  // Empty bio (clearing it) is always fine -- only non-empty text needs moderation.
+  if (bio && !moderateText(bio).allowed) {
+    res.status(400).json({ error: 'Please keep your bio appropriate and free of contact info.' });
+    return;
+  }
+
   if (displayName !== undefined) {
-    const check = moderateText(displayName);
-    if (!check.allowed) {
-      res.status(400).json({ error: 'Please choose an appropriate display name.' });
-      return;
-    }
     db.prepare(`UPDATE users SET display_name = ? WHERE id = ?`).run(displayName, req.userId!);
   }
   if (avatarKey !== undefined) {
@@ -147,14 +154,6 @@ usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProf
     db.prepare(`UPDATE users SET avatar3d = ? WHERE id = ?`).run(JSON.stringify(avatar3d), req.userId!);
   }
   if (bio !== undefined) {
-    // Empty bio (clearing it) is always fine -- only non-empty text needs moderation.
-    if (bio) {
-      const check = moderateText(bio);
-      if (!check.allowed) {
-        res.status(400).json({ error: 'Please keep your bio appropriate and free of contact info.' });
-        return;
-      }
-    }
     db.prepare(`UPDATE users SET bio = ? WHERE id = ?`).run(bio, req.userId!);
   }
 
@@ -226,13 +225,16 @@ usersRouter.get('/search', requireAuth, (req, res) => {
     res.json({ users: [] });
     return;
   }
+  // % and _ typed by the user are literal characters, not wildcards; admin accounts aren't
+  // something a student should be able to search for and friend.
+  const like = `%${q.replace(/[\\%_]/g, '\\$&')}%`;
   const rows = db
     .prepare(
       `SELECT username, display_name, avatar_key FROM users
-       WHERE id != ? AND (username LIKE ? OR display_name LIKE ?)
+       WHERE id != ? AND role != 'admin' AND (username LIKE ? ESCAPE '\\' OR display_name LIKE ? ESCAPE '\\')
        ORDER BY username LIMIT 15`
     )
-    .all(req.userId!, `%${q}%`, `%${q}%`) as any[];
+    .all(req.userId!, like, like) as any[];
   res.json({
     users: rows.map((r) => ({ username: r.username, displayName: r.display_name, avatarKey: r.avatar_key })),
   });
