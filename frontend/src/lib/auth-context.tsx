@@ -17,6 +17,8 @@ export type User = {
   rankTier: RankTier;
   role: Role;
   grade: number | null;
+  schoolName: string | null;
+  teacherSubject: string | null;
   createdAt: string;
   warningMessage: string | null;
 };
@@ -28,10 +30,14 @@ type AuthContextValue = {
     username: string;
     email: string;
     password: string;
-    displayName: string;
+    /** Not asked at signup any more -- the backend defaults it to the username. */
+    displayName?: string;
     avatarKey: string;
     role: Role;
     grade?: number;
+    schoolName: string;
+    /** Teachers only -- a key from the signup subject list. */
+    teacherSubject?: string;
     idDocument?: File;
     /** Honeypot -- see SignupPage.tsx. Always '' from a real submission. */
     website?: string;
@@ -92,7 +98,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     formData.append('username', input.username);
     formData.append('email', input.email);
     formData.append('password', input.password);
-    formData.append('displayName', input.displayName);
+    if (input.displayName) formData.append('displayName', input.displayName);
+    formData.append('schoolName', input.schoolName);
+    if (input.teacherSubject) formData.append('teacherSubject', input.teacherSubject);
     formData.append('avatarKey', input.avatarKey);
     formData.append('role', input.role);
     if (input.grade !== undefined) formData.append('grade', String(input.grade));

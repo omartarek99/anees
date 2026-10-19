@@ -19,6 +19,10 @@ CREATE TABLE IF NOT EXISTS users (
   is_seed INTEGER NOT NULL DEFAULT 0,
   role TEXT NOT NULL CHECK (role IN ('student','teacher','admin')) DEFAULT 'student',
   grade INTEGER,
+  -- Entered at signup (both roles). teacher_subject is a key from TEACHER_SUBJECT_KEYS
+  -- (lib/schemas.ts) and only set for teachers.
+  school_name TEXT,
+  teacher_subject TEXT,
   email_verified INTEGER NOT NULL DEFAULT 0,
   id_document_path TEXT,
   firebase_uid TEXT,
@@ -154,7 +158,13 @@ CREATE TABLE IF NOT EXISTS worksheet_questions (
   choices_json_ar TEXT NOT NULL DEFAULT '[]',
   correct_index INTEGER NOT NULL,
   explanation TEXT NOT NULL,
-  explanation_ar TEXT NOT NULL DEFAULT ''
+  explanation_ar TEXT NOT NULL DEFAULT '',
+  -- NULL for the shared, seeded pool; set for questions generated from a specific teacher
+  -- video's topic (see routes/worksheets.ts) so they never leak into general worksheets.
+  reel_id INTEGER REFERENCES reels(id) ON DELETE CASCADE,
+  -- Lesson name a user typed for an AI-generated general worksheet (reel_id stays NULL);
+  -- NULL for the shared seeded bank. Keeps typed-lesson questions out of the bank.
+  topic TEXT
 );
 
 CREATE TABLE IF NOT EXISTS worksheet_attempts (
@@ -168,7 +178,8 @@ CREATE TABLE IF NOT EXISTS worksheet_attempts (
   total INTEGER NOT NULL DEFAULT 0,
   xp_earned INTEGER NOT NULL DEFAULT 0,
   status TEXT NOT NULL CHECK (status IN ('generated','submitted')) DEFAULT 'generated',
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  reel_id INTEGER REFERENCES reels(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS reel_watch_progress (

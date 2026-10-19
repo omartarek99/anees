@@ -39,6 +39,9 @@ type Profile = {
   avatar3d: AvatarConfig | null;
   role: 'student' | 'teacher' | 'admin';
   bio: string;
+  // Teachers: public. Students: only present on their own profile.
+  schoolName?: string | null;
+  teacherSubject?: string | null;
   totalXp: number;
   // Separate currency from totalXp, only ever nonzero for teachers -- see backend
   // lib/xp.ts. Drives the teacher-only leaderboard and this profile's stats for teachers.
@@ -191,6 +194,21 @@ export function ProfilePage() {
   return (
     <div className="stack">
       <Topbar title={profile.displayName} subtitle={`${LRI}@${profile.username}${PDI} · ${t('profile.joined', { date: joinedDate })}`} />
+
+      {(profile.schoolName || profile.teacherSubject) && (
+        <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
+          {profile.teacherSubject && (
+            <span className="badge badge-gold">
+              🧑‍🏫 {t('profile.teachesSubject')} {t(`auth.subject_${profile.teacherSubject}` as 'auth.subject_math')}
+            </span>
+          )}
+          {profile.schoolName && (
+            <span className="badge badge-gold">
+              🏫 {t('profile.school')}: {profile.schoolName}
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="card flex gap-md" style={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         {profile.role === 'student' && (isOwnProfile || profile.avatar3d) ? (

@@ -91,6 +91,8 @@ function publicUser(user: any) {
     rankTier: user.role === 'teacher' ? getTeacherRankTier(user.teacher_points ?? 0) : getRankTier(user.total_xp),
     role: user.role,
     grade: user.grade,
+    schoolName: user.school_name ?? null,
+    teacherSubject: user.teacher_subject ?? null,
     createdAt: user.created_at,
     warningMessage: user.warning_message ?? null,
   };
@@ -103,7 +105,9 @@ authRouter.post(
   handleIdDocumentUpload,
   validateBody(signupSchema),
   async (req, res) => {
-    const { username, email, password, displayName, avatarKey, role, grade } = req.body;
+    const { username, email, password, avatarKey, role, grade, schoolName, teacherSubject } = req.body;
+    // Nobody enters a display name at signup -- accounts start with their username.
+    const displayName: string = req.body.displayName ?? username;
     const idDocument = req.file;
 
     const usernameCheck = moderateText(username);
@@ -114,6 +118,10 @@ authRouter.post(
     const nameCheck = moderateText(displayName);
     if (!nameCheck.allowed) {
       res.status(400).json({ error: 'Please choose an appropriate display name.' });
+      return;
+    }
+    if (!moderateText(schoolName).allowed) {
+      res.status(400).json({ error: 'Please enter an appropriate school name.' });
       return;
     }
     if (role === 'teacher' && !idDocument) {
@@ -151,7 +159,7 @@ authRouter.post(
     const userId = Number(
       db
         .prepare(
-          `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, role, grade, firebase_uid) VALUES (?,?,?,?,?,?,0,?,?,?)`
+          `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, role, grade, firebase_uid, school_name, teacher_subject) VALUES (?,?,?,?,?,?,0,?,?,?,?,?)`
         )
         .run(
           username,
@@ -162,7 +170,9 @@ authRouter.post(
           avatarKey,
           role,
           role === 'student' ? grade ?? null : null,
-          localId
+          localId,
+          schoolName,
+          role === 'teacher' ? teacherSubject ?? null : null
         )
         .lastInsertRowid
     );

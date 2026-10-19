@@ -273,6 +273,15 @@ textarea {
   font-family: inherit;
 }
 
+/* The open dropdown list is drawn by the browser/OS, not by our glass styling: it showed a
+   white popup with the select's (light, in dark mode) text colour on it -- invisible. Pin
+   every option to dark text on a white background so it reads in both themes. */
+select option,
+select optgroup {
+  color: #1a1a1a;
+  background-color: #ffffff;
+}
+
 /* Login / signup backdrop (components/AuthShell.tsx). Fixed colours rather than the --maroon
    tokens: dark mode brightens those for text on dark glass, which turned this whole backdrop
    (and the translucent card over it) a saturated pink with unreadable text. */

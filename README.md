@@ -44,14 +44,19 @@ No external network calls happen at runtime for the main app **except signup/log
 
 ```bash
 npm run install:all
+cp backend/.env.example backend/.env      # Windows: copy backend\.env.example backend\.env
+# then set ENCRYPTION_KEY in backend/.env (REQUIRED -- the backend refuses to boot without it):
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 npm run dev
 ```
 
 `install:all` installs both the `backend/` and `frontend/` workspaces (the root itself only adds `concurrently`, which drives `dev`). `npm run dev` then starts both at once:
-- Backend API on **http://localhost:4000** (auto-creates and seeds `backend/data/app.db` on first run — nothing to configure, no `.env` needed for the main app)
+- Backend API on **http://localhost:4000** (auto-creates and seeds `backend/data/app.db` on first run; only `ENCRYPTION_KEY` in `backend/.env` is required — the Firebase/Supabase/Gemini keys are optional)
 - Frontend on **http://localhost:5190** (Vite dev server, proxies `/api` to the backend — pinned off Vite's default 5173 to avoid colliding with other local projects)
 
 Open **http://localhost:5190**.
+
+> **Troubleshooting — "Request failed (500)" on every page:** the backend isn't running. The Vite proxy answers `/api` with an empty 500 when nothing is listening on port 4000. Check the `backend` terminal output: a missing/invalid `ENCRYPTION_KEY` in `backend/.env`, or a Node version older than 22.5, are the usual causes. `backend/.env` and `backend/secrets/` are git-ignored, so a fresh clone on another machine never has them. If you also copy `backend/data/app.db` across, use the same `ENCRYPTION_KEY` — stored emails are encrypted with it.
 
 > **Note:** `frontend/src/lib/dev-config.ts` has `DEV_BYPASS_LOGIN = true` by default, so a fresh run **skips the login screen** and auto-signs-in as the seeded `dev_student` account. Set it to `false` (or delete its usage in `auth-context.tsx`) to see the real login/signup flow instead.
 
@@ -103,7 +108,7 @@ see "Automated teacher ID check" below. Email/password and verification are hand
 Nothing else to configure — `localhost` is authorized in every Firebase project by
 default, and Firebase's default verification email template needs no SMTP setup.
 
-Without `backend/.env` filled in, the rest of the app (seed accounts, reels, map,
+Without the optional keys in `backend/.env` (everything except `ENCRYPTION_KEY`), the rest of the app (seed accounts, reels, map,
 worksheets, craft, admin panel, etc.) still runs with zero config as before — only
 signup, teacher ID upload, and teacher video upload fail gracefully with a clear error.
 

@@ -20,6 +20,17 @@ export const displayNameSchema = z
   .min(2, 'Display name must be at least 2 characters.')
   .max(40, 'Display name must be at most 40 characters.');
 
+// What a teacher teaches -- shown as a dropdown at signup. Keys are stored; the Arabic/English
+// labels live in frontend/src/lib/i18n.ts (auth.subject*).
+export const TEACHER_SUBJECT_KEYS = ['math', 'science', 'islamic', 'english', 'arabic', 'ict', 'social'] as const;
+export const teacherSubjectSchema = z.enum(TEACHER_SUBJECT_KEYS);
+
+export const schoolNameSchema = z
+  .string()
+  .trim()
+  .min(2, 'School name must be at least 2 characters.')
+  .max(80, 'School name must be at most 80 characters.');
+
 export const emailSchema = z.string().trim().email('Please enter a valid email address.').max(120);
 
 // Allowed to be blank (clears the bio) -- only max-length is enforced.
@@ -40,10 +51,14 @@ export const signupSchema = z
     username: usernameSchema,
     email: emailSchema,
     password: passwordSchema,
-    displayName: displayNameSchema,
+    // No longer asked at signup -- every account starts with its username as the display
+    // name (changeable later from the profile page). Still accepted so older clients work.
+    displayName: displayNameSchema.optional(),
     avatarKey: avatarKeySchema,
     role: roleSchema,
     grade: gradeSchema.optional(),
+    schoolName: schoolNameSchema,
+    teacherSubject: teacherSubjectSchema.optional(),
     // Honeypot: a field real students never see or fill (hidden off-screen in the signup
     // form, see AuthShell.tsx) but a generic form-filling bot often does. Left blank by a
     // human, so anything else here fails the same way any other invalid field would --
@@ -53,6 +68,10 @@ export const signupSchema = z
   .refine((data) => data.role !== 'student' || data.grade !== undefined, {
     message: 'Please enter your grade.',
     path: ['grade'],
+  })
+  .refine((data) => data.role !== 'teacher' || data.teacherSubject !== undefined, {
+    message: 'Please choose the subject you teach.',
+    path: ['teacherSubject'],
   });
 
 export const loginSchema = z.object({

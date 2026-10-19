@@ -98,6 +98,11 @@ function profileSummary(user: any) {
     avatar3d: parseAvatar3d(user.avatar3d),
     role: user.role,
     bio: user.bio ?? '',
+    // A teacher's school/subject is professional info shown on their public profile. A
+    // student's school is not -- children's profiles are visible to other users, so it is
+    // only added for their own profile (see GET /me below).
+    teacherSubject: user.role === 'teacher' ? user.teacher_subject ?? null : null,
+    schoolName: user.role === 'teacher' ? user.school_name ?? null : null,
     totalXp: user.total_xp,
     // Separate currency from total_xp, only ever nonzero for teachers (see lib/xp.ts) --
     // drives the teacher-only leaderboard, shown on their own profile instead of total XP.
@@ -121,7 +126,7 @@ usersRouter.get('/me', requireAuth, (req, res) => {
     res.status(404).json({ error: 'User not found.' });
     return;
   }
-  res.json({ profile: profileSummary(user) });
+  res.json({ profile: { ...profileSummary(user), schoolName: (user as any).school_name ?? null } });
 });
 
 usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProfileSchema), (req, res) => {

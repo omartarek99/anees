@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { RiCalculatorLine, RiAtomLine } from '@remixicon/react';
+import { useEffect, useState } from 'react';
+import { RiCalculatorLine, RiAtomLine, RiVideoLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -17,7 +17,19 @@ type GenerateResponse = {
   subject: Subject;
   difficulty: Difficulty;
   xpPerCorrect: number;
+  video?: { id: number; title: string; titleAr: string; authorName: string };
+  // The lesson name (درس) the user typed for a general worksheet.
+  topic?: string;
   questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null }[];
+};
+
+type WorksheetVideo = {
+  id: number;
+  title: string;
+  titleAr: string;
+  grade: number;
+  subject: Subject;
+  authorName: string;
 };
 
 type SubmitResponse = {
@@ -37,6 +49,26 @@ export function WorksheetsPage() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Videos this user can build a worksheet from (students: their grade's teacher videos;
+  // teachers: their own uploads) -- offered as suggestions in the lesson-name box below.
+  const [videos, setVideos] = useState<WorksheetVideo[]>([]);
+  // The name of the lesson (درس) or of a video -- the AI writes new questions about it.
+  const [lessonName, setLessonName] = useState('');
+
+  useEffect(() => {
+    api
+      .get<{ videos: WorksheetVideo[] }>('/worksheets/videos')
+      .then((data) => setVideos(data.videos))
+      .catch(() => setVideos([]));
+  }, []);
+
+  // If the typed name is exactly one of the video titles, the worksheet is built from that
+  // video's description (and subject); otherwise from the typed lesson name alone.
+  const typedName = lessonName.trim();
+  const selectedVideo =
+    typedName === ''
+      ? null
+      : videos.find((v) => [v.title, v.titleAr].some((n) => n && n.trim().toLowerCase() === typedName.toLowerCase())) ?? null;
 
   const DIFFICULTIES: { key: Difficulty; label: string; xp: string; icon: string; color: string }[] = [
     { key: 'easy', label: t('worksheets.easy'), xp: t('worksheets.xpPerQuestion', { xp: 5 }), icon: '🌱', color: 'stat-card-green' },
@@ -56,8 +88,11 @@ export function WorksheetsPage() {
     setLoading(true);
     setResult(null);
     try {
-      const data = await api.post<GenerateResponse>('/worksheets/generate', { subject, difficulty });
+      const body = selectedVideo ? { reelId: selectedVideo.id, difficulty } : { subject, difficulty, topic: typedName };
+      const data = await api.post<GenerateResponse>('/worksheets/generate', body);
       setWorksheet(data);
+      // A video worksheet's subject comes from the video, not the pills.
+      setSubject(data.subject);
     } catch (err) {
       setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('worksheets.genError'));
     } finally {
@@ -120,6 +155,38 @@ export function WorksheetsPage() {
 
       {!worksheet && (
         <div className="card stack">
+          <div className="field">
+            <label htmlFor="worksheet-lesson" style={{ fontWeight: 700, marginBottom: 8, display: 'block' }}>
+              {t('worksheets.lessonLabel')}
+            </label>
+            <input
+              id="worksheet-lesson"
+              type="text"
+              list="worksheet-lesson-options"
+              value={lessonName}
+              maxLength={80}
+              autoComplete="off"
+              onChange={(e) => {
+                setLessonName(e.target.value);
+                // Picking a video name also switches the subject to that video's subject.
+                const name = e.target.value.trim().toLowerCase();
+                const match = videos.find((v) => [v.title, v.titleAr].some((n) => n && n.trim().toLowerCase() === name));
+                if (match) setSubject(match.subject);
+              }}
+              placeholder={t('worksheets.lessonPlaceholder')}
+            />
+            {videos.length > 0 && (
+              <datalist id="worksheet-lesson-options">
+                {videos.map((v) => (
+                  <option key={v.id} value={pickText(lang, v.title, v.titleAr)}>
+                    {v.authorName ? t('worksheets.videoBy', { name: v.authorName }) : ''}
+                  </option>
+                ))}
+              </datalist>
+            )}
+            <p className="muted" style={{ fontSize: 13, marginTop: 6 }}>{t('worksheets.lessonHint')}</p>
+          </div>
+
           <div>
             <label style={{ fontWeight: 700, marginBottom: 8, display: 'block' }}>{t('worksheets.subject')}</label>
             <div className="pill-row">
@@ -164,8 +231,14 @@ export function WorksheetsPage() {
             </div>
           </div>
 
-          <button className="btn btn-primary btn-block" onClick={generate} disabled={loading}>
-            {loading ? t('worksheets.generating') : t('worksheets.generate')}
+          <button
+            className="btn btn-primary btn-block"
+            onClick={generate}
+            disabled={loading || typedName.length < 2}
+          >
+            {loading
+              ? t('worksheets.generatingFromLesson')
+              : t('worksheets.generate')}
           </button>
         </div>
       )}
@@ -181,6 +254,18 @@ export function WorksheetsPage() {
               )}
               {subject === 'math' ? t('worksheets.math') : t('worksheets.science')} —{' '}
               {t(`worksheets.${difficulty}`)}
+              {worksheet.topic && (
+                <span className="muted" style={{ fontSize: 14, display: 'block', fontWeight: 600 }}>
+                  {t('worksheets.videoTopic', { title: worksheet.topic })}
+                </span>
+              )}
+              {worksheet.video && (
+                <span className="muted" style={{ fontSize: 14, display: 'block', fontWeight: 600 }}>
+                  <RiVideoLine size={14} style={{ verticalAlign: -2, marginInlineEnd: 4 }} />
+                  {t('worksheets.videoTopic', { title: pickText(lang, worksheet.video.title, worksheet.video.titleAr) })}
+                  {worksheet.video.authorName ? ` — ${t('worksheets.videoBy', { name: worksheet.video.authorName })}` : ''}
+                </span>
+              )}
             </h2>
             <div className="flex gap-sm">
               {/* Printing a worksheet for a class is a teacher task -- students solve it
@@ -209,7 +294,11 @@ export function WorksheetsPage() {
           <QuizCard questions={questions} onSubmit={submit} submitting={submitting} />
           {user?.role === 'teacher' && (
             <PrintableWorksheet
-              subjectLabel={subject === 'math' ? t('worksheets.math') : t('worksheets.science')}
+              subjectLabel={
+                (subject === 'math' ? t('worksheets.math') : t('worksheets.science')) +
+                (worksheet.video ? ` · ${pickText(lang, worksheet.video.title, worksheet.video.titleAr)}` : '') +
+                (worksheet.topic ? ` · ${worksheet.topic}` : '')
+              }
               subjectIcon={subject === 'math' ? '🧮' : '🔬'}
               difficultyLabel={t(`worksheets.${difficulty}`)}
               difficultyIcon={DIFFICULTIES.find((d) => d.key === difficulty)!.icon}

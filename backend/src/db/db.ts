@@ -43,6 +43,13 @@ if (!userCols.some((c) => c.name === 'role')) {
 if (!userCols.some((c) => c.name === 'grade')) {
   db.exec(`ALTER TABLE users ADD COLUMN grade INTEGER`);
 }
+// School + (teachers) the subject they teach, collected at signup.
+if (!userCols.some((c) => c.name === 'school_name')) {
+  db.exec(`ALTER TABLE users ADD COLUMN school_name TEXT`);
+}
+if (!userCols.some((c) => c.name === 'teacher_subject')) {
+  db.exec(`ALTER TABLE users ADD COLUMN teacher_subject TEXT`);
+}
 // Supabase-backed email verification, added after the initial users table.
 if (!userCols.some((c) => c.name === 'email_verified')) {
   db.exec(`ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0`);
@@ -211,6 +218,19 @@ if (!reelCols.some((c) => c.name === 'author_user_id')) {
 // Grade-based teacher reels, decoupled from map levels, added after the initial reels table.
 if (!reelCols.some((c) => c.name === 'grade')) {
   db.exec(`ALTER TABLE reels ADD COLUMN grade INTEGER`);
+}
+
+// Worksheets generated from a teacher video's topic: questions + attempts remember the reel.
+const worksheetQuestionCols = db.prepare(`PRAGMA table_info(worksheet_questions)`).all() as { name: string }[];
+if (!worksheetQuestionCols.some((c) => c.name === 'reel_id')) {
+  db.exec(`ALTER TABLE worksheet_questions ADD COLUMN reel_id INTEGER REFERENCES reels(id) ON DELETE CASCADE`);
+}
+if (!worksheetQuestionCols.some((c) => c.name === 'topic')) {
+  db.exec(`ALTER TABLE worksheet_questions ADD COLUMN topic TEXT`);
+}
+const worksheetAttemptCols = db.prepare(`PRAGMA table_info(worksheet_attempts)`).all() as { name: string }[];
+if (!worksheetAttemptCols.some((c) => c.name === 'reel_id')) {
+  db.exec(`ALTER TABLE worksheet_attempts ADD COLUMN reel_id INTEGER REFERENCES reels(id) ON DELETE SET NULL`);
 }
 
 // Quiz-completion marker for grade-based reels, added after the initial

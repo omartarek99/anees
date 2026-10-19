@@ -24,3 +24,15 @@ export const aiGenerationLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many attempts. Please wait a few minutes and try again.' },
 });
+
+// Worksheets built from a video call the AI on EVERY click (a fresh set each time), so this
+// is keyed per signed-in user rather than per IP -- a whole class behind one school IP
+// shouldn't share a single allowance. Must run after requireAuth.
+export const worksheetAiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `user:${(req as any).userId ?? 'anon'}`,
+  message: { error: 'Too many attempts. Please wait a few minutes and try again.' },
+});

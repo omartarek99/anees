@@ -7,6 +7,7 @@ import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { AuthShell } from '../components/AuthShell';
 import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
+import { TEACHER_SUBJECTS } from '../lib/teacherSubjects';
 
 /** "By signing up you agree to our Terms and Privacy Policy" with the two names as real links —
  * split on the {terms}/{privacy} placeholders since t() only returns plain text. */
@@ -34,11 +35,12 @@ export function SignupPage() {
   const { t, lang } = useLanguage();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [avatarKey, setAvatarKey] = useState('falcon');
   const [role, setRole] = useState<Role>('student');
   const [grade, setGrade] = useState('');
+  const [schoolName, setSchoolName] = useState('');
+  const [teacherSubject, setTeacherSubject] = useState('');
   const [idDocument, setIdDocument] = useState<File | null>(null);
   // Honeypot -- real students never see or fill this (positioned off-screen below), so a
   // non-empty value here means a bot filled every field it found. See schemas.ts's
@@ -66,10 +68,11 @@ export function SignupPage() {
         username,
         email,
         password,
-        displayName,
         avatarKey,
         role,
         grade: role === 'student' ? Number(grade) : undefined,
+        schoolName,
+        teacherSubject: role === 'teacher' ? teacherSubject : undefined,
         idDocument: role === 'teacher' ? idDocument ?? undefined : undefined,
         website,
       });
@@ -137,36 +140,6 @@ export function SignupPage() {
         </AnimatePresence>
 
         <div className="field">
-          <label>{t('auth.chooseHero')}</label>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {AVATAR_OPTIONS.map((key) => {
-              const chosen = avatarKey === key;
-              return (
-                <motion.button
-                  type="button"
-                  key={key}
-                  onClick={() => setAvatarKey(key)}
-                  title={avatarLabel(key, lang)}
-                  whileTap={{ scale: 0.9 }}
-                  animate={{ scale: chosen ? 1.12 : 1 }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 16 }}
-                  style={{
-                    background: 'none',
-                    border: chosen ? '3px solid var(--maroon)' : '3px solid transparent',
-                    transition: 'border-color 0.2s ease',
-                    borderRadius: '50%',
-                    padding: 2,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Avatar avatarKey={key} size={44} />
-                </motion.button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="field">
           <label>{t('auth.iAmA')}</label>
           <div style={{ display: 'flex', gap: 10 }}>
             <button
@@ -188,55 +161,50 @@ export function SignupPage() {
           </div>
         </div>
 
-        <div className="field">
-          <label htmlFor="displayName">{t('auth.displayName')}</label>
-          <input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required maxLength={40} />
-        </div>
-        <AnimatePresence>
+        {/* The hero picker is student-only. Nobody enters a display name at signup -- it starts
+            as the username and can be changed later from the profile page. */}
+        <AnimatePresence initial={false}>
           {role === 'student' && (
             <motion.div
-              className="field"
+              key="student-identity"
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.2 }}
             >
-              <label htmlFor="grade">{t('auth.grade')}</label>
-              <input
-                id="grade"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={12}
-                placeholder={t('auth.gradePlaceholder')}
-                value={grade}
-                onChange={(e) => setGrade(e.target.value)}
-                required
-                title={t('auth.gradeHint')}
-              />
-            </motion.div>
-          )}
-          {role === 'teacher' && (
-            <motion.div
-              className="field"
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2 }}
-            >
-              <label htmlFor="idDocument">{t('auth.teacherIdLabel')}</label>
-              <input
-                id="idDocument"
-                type="file"
-                accept="image/jpeg,image/png"
-                onChange={(e) => setIdDocument(e.target.files?.[0] ?? null)}
-                required
-                title={t('auth.teacherIdHint')}
-              />
-              <small className="muted">{t('auth.teacherIdHint')}</small>
+              <div className="field">
+                <label>{t('auth.chooseHero')}</label>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {AVATAR_OPTIONS.map((key) => {
+                    const chosen = avatarKey === key;
+                    return (
+                      <motion.button
+                        type="button"
+                        key={key}
+                        onClick={() => setAvatarKey(key)}
+                        title={avatarLabel(key, lang)}
+                        whileTap={{ scale: 0.9 }}
+                        animate={{ scale: chosen ? 1.12 : 1 }}
+                        transition={{ type: 'spring', stiffness: 260, damping: 16 }}
+                        style={{
+                          background: 'none',
+                          border: chosen ? '3px solid var(--maroon)' : '3px solid transparent',
+                          transition: 'border-color 0.2s ease',
+                          borderRadius: '50%',
+                          padding: 2,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Avatar avatarKey={key} size={44} />
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
+
         <div className="field">
           <label htmlFor="username">{t('auth.username')}</label>
           <input
@@ -269,6 +237,83 @@ export function SignupPage() {
             {t('auth.passwordHint')}
           </small>
         </div>
+
+        {/* School + class (students) / subject taught + ID (teachers) come last, after the
+            account basics above. */}
+        <div className="field">
+          <label htmlFor="schoolName">{t('auth.school')}</label>
+          <input
+            id="schoolName"
+            value={schoolName}
+            onChange={(e) => setSchoolName(e.target.value)}
+            required
+            minLength={2}
+            maxLength={80}
+            placeholder={t('auth.schoolPlaceholder')}
+            autoComplete="organization"
+          />
+        </div>
+        <AnimatePresence initial={false}>
+          {role === 'student' && (
+            <motion.div
+              key="student-grade"
+              className="field"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+            >
+              <label htmlFor="grade">{t('auth.grade')}</label>
+              <input
+                id="grade"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={12}
+                placeholder={t('auth.gradePlaceholder')}
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+                required
+                title={t('auth.gradeHint')}
+              />
+            </motion.div>
+          )}
+          {role === 'teacher' && (
+            <motion.div
+              key="teacher-extras"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="field">
+                <label htmlFor="teacherSubject">{t('auth.teacherSubject')}</label>
+                <select id="teacherSubject" value={teacherSubject} onChange={(e) => setTeacherSubject(e.target.value)} required>
+                  <option value="" disabled>
+                    {t('auth.teacherSubjectPlaceholder')}
+                  </option>
+                  {TEACHER_SUBJECTS.map((key) => (
+                    <option key={key} value={key}>
+                      {t(`auth.subject_${key}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="idDocument">{t('auth.teacherIdLabel')}</label>
+                <input
+                  id="idDocument"
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  onChange={(e) => setIdDocument(e.target.files?.[0] ?? null)}
+                  required
+                  title={t('auth.teacherIdHint')}
+                />
+                <small className="muted">{t('auth.teacherIdHint')}</small>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         {/* Honeypot -- invisible and unreachable by keyboard/AT for a real person (clipped to
             nothing, not display:none, since some bots specifically skip display:none fields),
             but a generic bot filling every input it finds fills this too. Kept inside the card
