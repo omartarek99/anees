@@ -21,6 +21,7 @@ import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { HomePage } from './pages/HomePage';
+import { LandingPage } from './pages/LandingPage';
 import { TeacherHomePage } from './pages/TeacherHomePage';
 import { ReelsPage } from './pages/ReelsPage';
 import { MapPage } from './pages/MapPage';
@@ -79,7 +80,8 @@ function ProtectedLayout() {
   const { user, loading } = useAuth();
   const { pathname } = useLocation();
   if (loading) return <FullScreenLoader />;
-  if (!user) return <Navigate to="/login" replace />;
+  // A visitor who isn't signed in lands on the public landing page at "/"; any other private URL still goes to login.
+  if (!user) return pathname === '/' ? <LandingPage /> : <Navigate to="/login" replace />;
   // Reels is a full-viewport, TikTok-style feed (see ReelsPage's own negative-margin/100vh
   // sizing) -- a footer peeking in below it would just reintroduce the page scroll that
   // sizing is specifically trying to avoid, and a persistent footer has no place in an
@@ -185,6 +187,7 @@ export default function App() {
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/cookies" element={<CookiePolicyPage />} />
+              <Route path="/welcome" element={<LandingPage />} />
 
               <Route element={<PublicOnlyLayout />}>
                 <Route path="/login" element={<LoginPage />} />

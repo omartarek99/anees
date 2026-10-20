@@ -1,0 +1,266 @@
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../lib/auth-context';
+import { useLanguage } from '../lib/language-context';
+import '../styles/landing.css';
+
+// The first page a visitor sees (logged-out "/", and "/welcome" for anyone). Layout, type and colours
+// follow the "MNTN" Figma landing page: a layered hero with the headline, a left rail and a right
+// "Start / 01 / 02 / 03" progress rail, three alternating story sections, a footer. The photography
+// slots use Anees's own map art; the hero is an inline SVG (no network, scales crisply).
+
+const SECTIONS = [
+  { id: 'learn', n: '01', key: 's1', img: '/images/landing-learn.jpg' },
+  { id: 'play', n: '02', key: 's2', img: '/images/landing-play.jpg' },
+  { id: 'grow', n: '03', key: 's3', img: '/images/landing-grow.jpg' },
+] as const;
+
+const STEP_IDS = ['top', ...SECTIONS.map((s) => s.id)];
+
+// x, y, width, height, corner radius of each tower; the tall rounded ones echo West Bay's silhouette.
+const SKYLINE = [
+  [1350, 200, 26, 160, 1],
+  [1382, 172, 30, 190, 1],
+  [1418, 218, 22, 150, 1],
+  [1478, 188, 34, 180, 17],
+  [1522, 142, 42, 220, 21],
+  [1574, 206, 28, 160, 1],
+  [1608, 176, 24, 190, 1],
+  [1638, 226, 36, 140, 1],
+  [1680, 196, 26, 170, 1],
+  [1712, 238, 30, 130, 1],
+] as const;
+
+const STARS = Array.from({ length: 30 }, (_, i) => ({
+  x: (i * 673) % 1920,
+  y: 40 + ((i * 379) % 380),
+  r: 1 + (i % 3) * 0.6,
+  o: 0.3 + (i % 4) * 0.12,
+}));
+
+function goTo(id: string) {
+  const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById(id)?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+}
+
+function Arrow() {
+  return (
+    <svg className="landing-arrow" width="24" height="16" viewBox="0 0 24 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+      <path d="M1 8h21M16 2l6 6-6 6" />
+    </svg>
+  );
+}
+
+// Three dune ridges (far -> near) with a small figure on the near one, like the hiker in the design.
+function HeroScene() {
+  return (
+    <div className="landing-scene" aria-hidden="true">
+      <svg className="landing-layer landing-layer--sky" viewBox="0 0 1920 700" preserveAspectRatio="xMidYMin slice">
+        {STARS.map((s, i) => (
+          <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#fff" opacity={s.o} />
+        ))}
+        <circle cx="1480" cy="210" r="46" fill="#fbd784" opacity="0.1" />
+        <path d="M1498 168a44 44 0 1 0 0 84a34 34 0 1 1 0-84z" fill="#fbd784" opacity="0.85" />
+      </svg>
+      <svg className="landing-layer landing-layer--far" viewBox="0 0 1920 700" preserveAspectRatio="xMidYMax slice">
+        <defs>
+          <linearGradient id="dune-far" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#3d6c70" />
+            <stop offset="1" stopColor="#1d4350" />
+          </linearGradient>
+        </defs>
+        <ellipse cx="900" cy="290" rx="760" ry="120" fill="#fbd784" opacity="0.1" />
+        <g fill="#10303b" transform="translate(-420 -105) scale(1.3)">
+          {SKYLINE.map(([x, y, w, h, r], i) => (
+            <rect key={i} x={x} y={y} width={w} height={h} rx={r} />
+          ))}
+          <path d="M1452 340V160l8-44 8 44v180z" />
+        </g>
+        <g fill="#fbd784" opacity="0.55" transform="translate(-420 -105) scale(1.3)">
+          {[1392, 1428, 1530, 1584, 1646, 1688].map((x, i) => (
+            <rect key={x} x={x} y={190 + (i % 3) * 22} width="3" height="3" />
+          ))}
+        </g>
+        <path d="M0 300C260 230 430 270 650 235S1040 150 1280 215S1660 280 1920 200V700H0Z" fill="url(#dune-far)" />
+      </svg>
+      <svg className="landing-layer landing-layer--mid" viewBox="0 0 1920 700" preserveAspectRatio="xMidYMax slice">
+        <defs>
+          <linearGradient id="dune-mid" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#21505a" />
+            <stop offset="1" stopColor="#102b36" />
+          </linearGradient>
+        </defs>
+        <path d="M0 400C300 330 520 380 800 330S1260 250 1520 320S1780 390 1920 340V700H0Z" fill="url(#dune-mid)" />
+        <path d="M0 400C300 330 520 380 800 330S1260 250 1520 320S1780 390 1920 340" fill="none" stroke="#fbd784" strokeOpacity="0.35" strokeWidth="2" />
+      </svg>
+      <svg className="landing-layer landing-layer--near" viewBox="0 0 1920 700" preserveAspectRatio="xMidYMax slice">
+        <defs>
+          <linearGradient id="dune-near" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#15404c" />
+            <stop offset="0.45" stopColor="#0c232d" />
+            <stop offset="1" stopColor="#0b1d26" />
+          </linearGradient>
+        </defs>
+        <path d="M0 470C190 440 420 400 650 420S1060 500 1320 530S1740 540 1920 520V700H0Z" fill="url(#dune-near)" />
+        {[0, 1, 2].map((i) => (
+          <path key={i} d={`M0 ${540 + i * 46}C320 ${515 + i * 40} 640 ${560 + i * 44} 960 ${548 + i * 46}S1560 ${600 + i * 40} 1920 ${566 + i * 44}`} fill="none" stroke="#fbd784" strokeOpacity={0.07 - i * 0.015} strokeWidth="2" />
+        ))}
+        <path d="M0 470C190 440 420 400 650 420S1060 500 1320 530S1740 540 1920 520" fill="none" stroke="#fbd784" strokeOpacity="0.3" strokeWidth="2" />
+        <g fill="#050f14" transform="translate(560 336)">
+          <circle cx="12" cy="9" r="8" />
+          <path d="M3 20h18l5 22-5 4v34h-7V54h-4v26H3V46l-5-4z" />
+          <rect x="-3" y="22" width="10" height="26" rx="4" />
+          <path d="M24 26l16-12 3 5-15 14z" />
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+export function LandingPage() {
+  const { t, lang, setLang } = useLanguage();
+  const { user } = useAuth();
+  const [active, setActive] = useState(0);
+  const heroRef = useRef<HTMLElement>(null);
+
+  // Right-hand rail: whichever block crosses the middle of the screen is the current step.
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.isIntersecting && setActive(STEP_IDS.indexOf(e.target.id))),
+      { rootMargin: '-45% 0px -50% 0px' }
+    );
+    STEP_IDS.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) io.observe(el);
+    });
+    return () => io.disconnect();
+  }, []);
+
+  // Parallax: the dune layers lag the scroll at different rates. Off for reduced motion and on phones.
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero || window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 900px)').matches) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      hero.style.setProperty('--sy', String(Math.min(window.scrollY, 1400)));
+    };
+    const onScroll = () => {
+      raf ||= requestAnimationFrame(update);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return (
+    <div className="landing">
+      <header className="landing-header">
+        <Link to="/" className="landing-logo" aria-label={t('brand')}>
+          {t('brand')}
+        </Link>
+        <nav className="landing-nav" aria-label="Anees">
+          <button type="button" onClick={() => goTo('learn')}>{t('landing.navLessons')}</button>
+          <button type="button" onClick={() => goTo('play')}>{t('landing.navAdventure')}</button>
+          <button type="button" onClick={() => goTo('grow')}>{t('landing.navRewards')}</button>
+        </nav>
+        <div className="landing-actions">
+          {user ? (
+            <Link to="/" className="landing-btn landing-btn--solid">{t('landing.openApp')}</Link>
+          ) : (
+            <>
+              <Link to="/login" className="landing-btn landing-btn--ghost">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9.5" />
+                  <circle cx="12" cy="10" r="3.2" />
+                  <path d="M5.5 18.5c1.6-3 4-4 6.5-4s4.900 1 6.500 4" />
+                </svg>
+                {t('landing.login')}
+              </Link>
+              <Link to="/signup" className="landing-btn landing-btn--solid">{t('landing.signup')}</Link>
+            </>
+          )}
+        </div>
+      </header>
+
+      <section className="landing-hero" id="top" ref={heroRef}>
+        <HeroScene />
+        <div className="landing-rail" role="group" aria-label={t('landing.language')}>
+          <span>{t('landing.language')}</span>
+          <button type="button" lang="en" aria-pressed={lang === 'en'} onClick={() => setLang('en')}>EN</button>
+          <button type="button" lang="ar" aria-label="العربية" aria-pressed={lang === 'ar'} onClick={() => setLang('ar')}>ع</button>
+        </div>
+
+        <nav className="landing-steps" aria-label="Sections">
+          <span className="landing-steps-track" aria-hidden="true">
+            <span style={{ transform: `translateY(${active * 60}px)` }} />
+          </span>
+          <ol>
+            {STEP_IDS.map((id, i) => (
+              <li key={id}>
+                <button type="button" aria-current={active === i ? 'step' : undefined} onClick={() => goTo(id)}>
+                  {i === 0 ? t('landing.start') : SECTIONS[i - 1].n}
+                </button>
+              </li>
+            ))}
+          </ol>
+        </nav>
+
+        <div className="landing-hero-copy">
+          <p className="landing-tag">{t('landing.heroTag')}</p>
+          <h1>{t('landing.heroTitle')}</h1>
+          <button type="button" className="landing-scroll" onClick={() => goTo('learn')}>
+            {t('landing.scroll')}
+            <svg className="landing-down" width="16" height="24" viewBox="0 0 16 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+              <path d="M8 2v19M2 15l6 6 6-6" />
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <main className="landing-stories">
+        {SECTIONS.map((s, i) => (
+          <section key={s.id} id={s.id} className={`landing-story${i % 2 ? ' is-flipped' : ''}`}>
+            <div className="landing-copy">
+              <span className="landing-num" aria-hidden="true">{s.n}</span>
+              <p className="landing-tag">{t(`landing.${s.key}Tag`)}</p>
+              <h2>{t(`landing.${s.key}Title`)}</h2>
+              <p className="landing-body">{t(`landing.${s.key}Body`)}</p>
+              <Link to="/signup" className="landing-more">
+                {t(`landing.${s.key}Cta`)}
+                <Arrow />
+              </Link>
+            </div>
+            <img src={s.img} width={680} height={865} loading="lazy" decoding="async" alt={t(`landing.${s.key}Alt`)} />
+          </section>
+        ))}
+      </main>
+
+      <footer className="landing-footer">
+        <div className="landing-footer-brand">
+          <span className="landing-logo">{t('brand')}</span>
+          <p>{t('landing.footerTagline')}</p>
+          <div className="landing-actions">
+            <Link to="/signup" className="landing-btn landing-btn--solid">{t('landing.signup')}</Link>
+            <Link to="/login" className="landing-btn landing-btn--ghost">{t('landing.login')}</Link>
+          </div>
+          <small>{t('landing.copyright')}</small>
+        </div>
+        <div className="landing-footer-col">
+          <h3>{t('landing.colAnees')}</h3>
+          <Link to="/login">{t('landing.login')}</Link>
+          <Link to="/signup">{t('landing.signup')}</Link>
+          <Link to="/signup">{t('landing.teach')}</Link>
+        </div>
+        <div className="landing-footer-col">
+          <h3>{t('landing.colLegal')}</h3>
+          <Link to="/privacy">{t('legal.privacy')}</Link>
+          <Link to="/terms">{t('legal.terms')}</Link>
+          <Link to="/cookies">{t('legal.cookies')}</Link>
+        </div>
+      </footer>
+    </div>
+  );
+}
