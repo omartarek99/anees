@@ -44,3 +44,6 @@ backend/*.traineddata
 # Editor/OS cruft
 .DS_Store
 Thumbs.db
+
+# Ready-to-paste production env block for the hosting dashboard -- contains real secrets
+backend/.env.production
