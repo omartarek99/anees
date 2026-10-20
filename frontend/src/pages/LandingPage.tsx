@@ -4,10 +4,11 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import '../styles/landing.css';
 
-// The first page a visitor sees (logged-out "/", and "/welcome" for anyone). Layout, type and colours
-// follow the "MNTN" Figma landing page: a layered hero with the headline, a left rail and a right
-// "Start / 01 / 02 / 03" progress rail, three alternating story sections, a footer. The photography
-// slots use Anees's own map art; the hero is an inline SVG (no network, scales crisply).
+// The first page a visitor sees (logged-out "/", and "/welcome" for anyone). Layout and type follow the
+// "MNTN" Figma landing page; the palette is the Anees brand board (maroon / sky blue / sand): a layered
+// hero with the headline, a left rail and a right "Start / 01 / 02 / 03" progress rail, three alternating
+// story sections, a footer. The photography slots use Anees's own map art; the hero is an inline SVG
+// (no network, scales crisply).
 
 const SECTIONS = [
   { id: 'learn', n: '01', key: 's1', img: '/images/landing-learn.jpg' },
@@ -57,26 +58,41 @@ function HeroScene() {
     <div className="landing-scene" aria-hidden="true">
       <svg className="landing-layer landing-layer--sky" viewBox="0 0 1920 700" preserveAspectRatio="xMidYMin slice">
         {STARS.map((s, i) => (
-          <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#fff" opacity={s.o} />
+          <circle key={i} cx={s.x} cy={s.y} r={s.r} fill={i % 5 === 0 ? '#27aae1' : '#f6f1e9'} opacity={s.o} />
         ))}
-        <circle cx="1480" cy="210" r="46" fill="#fbd784" opacity="0.1" />
-        <path d="M1498 168a44 44 0 1 0 0 84a34 34 0 1 1 0-84z" fill="#fbd784" opacity="0.85" />
+        <defs>
+          <radialGradient id="moon-glow">
+            <stop offset="0" stopColor="#27aae1" stopOpacity="0.32" />
+            <stop offset="0.35" stopColor="#27aae1" stopOpacity="0.16" />
+            <stop offset="0.7" stopColor="#27aae1" stopOpacity="0.05" />
+            <stop offset="1" stopColor="#27aae1" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="1480" cy="210" r="150" fill="url(#moon-glow)" />
+        <path d="M1498 168a44 44 0 1 0 0 84a34 34 0 1 1 0-84z" fill="#f6f1e9" opacity="0.92" />
       </svg>
       <svg className="landing-layer landing-layer--far" viewBox="0 0 1920 700" preserveAspectRatio="xMidYMax slice">
         <defs>
           <linearGradient id="dune-far" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#3d6c70" />
-            <stop offset="1" stopColor="#1d4350" />
+            <stop offset="0" stopColor="#6b2340" />
+            <stop offset="0.5" stopColor="#4a1a30" />
+            <stop offset="1" stopColor="#331424" />
           </linearGradient>
+          <radialGradient id="horizon-glow">
+            <stop offset="0" stopColor="#f6f1e9" stopOpacity="0.5" />
+            <stop offset="0.3" stopColor="#d9788c" stopOpacity="0.3" />
+            <stop offset="0.65" stopColor="#8a1538" stopOpacity="0.1" />
+            <stop offset="1" stopColor="#8a1538" stopOpacity="0" />
+          </radialGradient>
         </defs>
-        <ellipse cx="900" cy="290" rx="760" ry="120" fill="#fbd784" opacity="0.1" />
-        <g fill="#10303b" transform="translate(-420 -105) scale(1.3)">
+        <ellipse cx="720" cy="300" rx="1100" ry="210" fill="url(#horizon-glow)" />
+        <g fill="#2a1219" transform="translate(-420 -105) scale(1.3)">
           {SKYLINE.map(([x, y, w, h, r], i) => (
             <rect key={i} x={x} y={y} width={w} height={h} rx={r} />
           ))}
           <path d="M1452 340V160l8-44 8 44v180z" />
         </g>
-        <g fill="#fbd784" opacity="0.55" transform="translate(-420 -105) scale(1.3)">
+        <g fill="#27aae1" opacity="0.7" transform="translate(-420 -105) scale(1.3)">
           {[1392, 1428, 1530, 1584, 1646, 1688].map((x, i) => (
             <rect key={x} x={x} y={190 + (i % 3) * 22} width="3" height="3" />
           ))}
@@ -86,27 +102,28 @@ function HeroScene() {
       <svg className="landing-layer landing-layer--mid" viewBox="0 0 1920 700" preserveAspectRatio="xMidYMax slice">
         <defs>
           <linearGradient id="dune-mid" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#21505a" />
-            <stop offset="1" stopColor="#102b36" />
+            <stop offset="0" stopColor="#44192c" />
+            <stop offset="0.5" stopColor="#2e1721" />
+            <stop offset="1" stopColor="#22141a" />
           </linearGradient>
         </defs>
         <path d="M0 400C300 330 520 380 800 330S1260 250 1520 320S1780 390 1920 340V700H0Z" fill="url(#dune-mid)" />
-        <path d="M0 400C300 330 520 380 800 330S1260 250 1520 320S1780 390 1920 340" fill="none" stroke="#fbd784" strokeOpacity="0.35" strokeWidth="2" />
+        <path d="M0 400C300 330 520 380 800 330S1260 250 1520 320S1780 390 1920 340" fill="none" stroke="#27aae1" strokeOpacity="0.4" strokeWidth="2" />
       </svg>
       <svg className="landing-layer landing-layer--near" viewBox="0 0 1920 700" preserveAspectRatio="xMidYMax slice">
         <defs>
           <linearGradient id="dune-near" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#15404c" />
-            <stop offset="0.45" stopColor="#0c232d" />
-            <stop offset="1" stopColor="#0b1d26" />
+            <stop offset="0" stopColor="#2c1822" />
+            <stop offset="0.4" stopColor="#23151b" />
+            <stop offset="1" stopColor="#1b1518" />
           </linearGradient>
         </defs>
         <path d="M0 470C190 440 420 400 650 420S1060 500 1320 530S1740 540 1920 520V700H0Z" fill="url(#dune-near)" />
         {[0, 1, 2].map((i) => (
-          <path key={i} d={`M0 ${540 + i * 46}C320 ${515 + i * 40} 640 ${560 + i * 44} 960 ${548 + i * 46}S1560 ${600 + i * 40} 1920 ${566 + i * 44}`} fill="none" stroke="#fbd784" strokeOpacity={0.07 - i * 0.015} strokeWidth="2" />
+          <path key={i} d={`M0 ${540 + i * 46}C320 ${515 + i * 40} 640 ${560 + i * 44} 960 ${548 + i * 46}S1560 ${600 + i * 40} 1920 ${566 + i * 44}`} fill="none" stroke="#f6f1e9" strokeOpacity={0.07 - i * 0.015} strokeWidth="2" />
         ))}
-        <path d="M0 470C190 440 420 400 650 420S1060 500 1320 530S1740 540 1920 520" fill="none" stroke="#fbd784" strokeOpacity="0.3" strokeWidth="2" />
-        <g fill="#050f14" transform="translate(560 336)">
+        <path d="M0 470C190 440 420 400 650 420S1060 500 1320 530S1740 540 1920 520" fill="none" stroke="#f6f1e9" strokeOpacity="0.2" strokeWidth="2" />
+        <g fill="#0f0a0c" transform="translate(560 336)">
           <circle cx="12" cy="9" r="8" />
           <path d="M3 20h18l5 22-5 4v34h-7V54h-4v26H3V46l-5-4z" />
           <rect x="-3" y="22" width="10" height="26" rx="4" />
@@ -238,7 +255,8 @@ export function LandingPage() {
         ))}
       </main>
 
-      <footer className="landing-footer">
+      <footer className="landing-footer-wrap">
+        <div className="landing-footer">
         <div className="landing-footer-brand">
           <span className="landing-logo">{t('brand')}</span>
           <p>{t('landing.footerTagline')}</p>
@@ -259,6 +277,7 @@ export function LandingPage() {
           <Link to="/privacy">{t('legal.privacy')}</Link>
           <Link to="/terms">{t('legal.terms')}</Link>
           <Link to="/cookies">{t('legal.cookies')}</Link>
+        </div>
         </div>
       </footer>
     </div>

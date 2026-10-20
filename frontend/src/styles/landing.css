@@ -1,16 +1,20 @@
 /* Landing page (pages/LandingPage.tsx) -- the "MNTN" Figma layout in Anees's own words and art.
-   Always dark, whatever the app theme: navy #0b1d26 ground, gold #fbd784 accent, white type.
+   Always dark, whatever the app theme. Palette from the Anees brand board (anees-brand-board.netlify.app):
+   Qatari maroon #8a1538, sky blue #27aae1, sand #f6f1e9, on the board's warm dark ground #1b1518.
    Sizes are the 1920px design's, made fluid with clamp(); positions use logical properties so
    the whole page mirrors in Arabic. */
 
 .landing {
-  --land-bg: #0b1d26;
-  --land-gold: #fbd784;
+  --land-maroon: #8a1538;
+  --land-cyan: #27aae1;
+  --land-sand: #f6f1e9;
+  --land-bg: #1b1518;
+  --land-accent: var(--land-cyan); /* tags, links, rails -- readable on the dark ground (~7:1) */
   --land-serif: 'Playfair Display', 'Times New Roman', Georgia, serif;
   --land-edge: clamp(20px, 4.2vw, 80px);
   min-height: 100vh;
   background: var(--land-bg);
-  color: #fff;
+  color: var(--land-sand);
   font-family: var(--font-body);
   overflow-x: clip;
 }
@@ -30,7 +34,7 @@ html[lang='ar'] .landing {
   cursor: pointer;
 }
 .landing :focus-visible {
-  outline: 2px solid var(--land-gold);
+  outline: 2px solid var(--land-accent);
   outline-offset: 3px;
 }
 
@@ -67,7 +71,7 @@ html[lang='ar'] .landing-logo {
 .landing-nav button:hover,
 .landing-scroll:hover,
 .landing-steps button:hover {
-  color: var(--land-gold);
+  color: var(--land-accent);
 }
 .landing-actions {
   display: flex;
@@ -90,20 +94,21 @@ html[lang='ar'] .landing-logo {
   transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 }
 .landing .landing-btn--solid {
-  background: var(--land-gold);
-  border-color: var(--land-gold);
-  color: var(--land-bg);
+  background: var(--land-sand);
+  border-color: var(--land-sand);
+  color: var(--land-maroon);
 }
 .landing .landing-btn--solid:hover {
-  background: #fff;
-  border-color: #fff;
+  background: var(--land-accent);
+  border-color: var(--land-accent);
+  color: var(--land-bg);
 }
 .landing-btn--ghost {
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: rgb(246 241 233 / 0.4);
 }
 .landing-btn--ghost:hover {
-  border-color: var(--land-gold);
-  color: var(--land-gold);
+  border-color: var(--land-accent);
+  color: var(--land-accent);
 }
 
 /* ---------------- Hero ---------------- */
@@ -112,7 +117,22 @@ html[lang='ar'] .landing-logo {
   isolation: isolate;
   min-height: max(88svh, 640px);
   overflow: hidden;
-  background: linear-gradient(180deg, #0f2a36 0%, #1a4552 46%, #5b6f64 78%, #a9824f 100%);
+  /* Sky: the warm dark ground rises into maroon, with a soft glow where the sun went down. Many eased
+     stops (not two) so the blend has no visible bands; the grain layer below hides what is left. */
+  background:
+    radial-gradient(38% 42% at 80% 16%, rgb(39 170 225 / 0.2) 0%, rgb(39 170 225 / 0.12) 30%, rgb(39 170 225 / 0.05) 60%, transparent 100%),
+    radial-gradient(80% 54% at 30% 62%, rgb(246 241 233 / 0.3) 0%, rgb(214 120 140 / 0.2) 22%, rgb(176 62 98 / 0.12) 45%, rgb(138 21 56 / 0.04) 68%, transparent 100%),
+    linear-gradient(180deg, #1b1518 0%, #22161b 7%, #2c1720 15%, #3b1826 24%, #4f1832 34%, #64173b 44%, #761640 53%, #8a1538 62%, #8a2646 70%, #6e2a40 78%, #4d2433 87%, #2e1b24 95%, #241a1e 100%);
+}
+/* Fine film grain over the sky (an inline SVG turbulence tile): dithers the gradients so dark blends stay smooth. */
+.landing-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  pointer-events: none;
 }
 /* Melts the scene into the story background below (the design's "BG Content" gradient). */
 .landing-hero::after {
@@ -120,7 +140,9 @@ html[lang='ar'] .landing-logo {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(180deg, rgba(11, 29, 38, 0.35) 0%, rgba(11, 29, 38, 0) 30%, rgba(11, 29, 38, 0) 62%, var(--land-bg) 100%);
+  background:
+    linear-gradient(180deg, rgb(27 21 24 / 0.38) 0%, rgb(27 21 24 / 0.16) 7%, rgb(27 21 24 / 0.04) 15%, transparent 24%),
+    linear-gradient(180deg, transparent 56%, rgb(27 21 24 / 0.1) 62%, rgb(27 21 24 / 0.3) 70%, rgb(27 21 24 / 0.58) 78%, rgb(27 21 24 / 0.82) 86%, rgb(27 21 24 / 0.95) 93%, var(--land-bg) 100%);
   pointer-events: none;
 }
 
@@ -172,8 +194,8 @@ html[lang='ar'] .landing-logo {
   line-height: 1.14;
   text-transform: capitalize;
   text-wrap: balance;
-  color: #fff;
-  text-shadow: 0 2px 24px rgba(5, 15, 20, 0.45);
+  color: var(--land-sand);
+  text-shadow: 0 2px 28px rgb(27 21 24 / 0.55);
 }
 html[lang='ar'] .landing-hero-copy h1 {
   text-transform: none;
@@ -185,7 +207,7 @@ html[lang='ar'] .landing-hero-copy h1 {
   align-items: center;
   gap: 24px;
   margin: 0;
-  color: var(--land-gold);
+  color: var(--land-accent);
   font-weight: 800;
   font-size: clamp(0.78rem, 0.5vw + 0.6rem, 1.125rem);
   letter-spacing: 0.33em;
@@ -196,7 +218,7 @@ html[lang='ar'] .landing-hero-copy h1 {
   flex: none;
   inline-size: 72px;
   block-size: 2px;
-  background: var(--land-gold);
+  background: var(--land-accent);
 }
 html[lang='ar'] .landing-tag {
   letter-spacing: 0;
@@ -253,17 +275,17 @@ html[lang='ar'] .landing-tag {
 .landing-rail button {
   inline-size: 34px;
   block-size: 34px;
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border: 1.5px solid rgb(246 241 233 / 0.4);
   border-radius: 50%;
   font-size: 0.8rem;
   font-weight: 700;
 }
 .landing-rail button[aria-pressed='true'] {
-  border-color: var(--land-gold);
-  color: var(--land-gold);
+  border-color: var(--land-accent);
+  color: var(--land-accent);
 }
 .landing-rail button:hover {
-  border-color: var(--land-gold);
+  border-color: var(--land-accent);
 }
 
 /* Right rail: Start / 01 / 02 / 03 with a sliding marker. */
@@ -295,20 +317,21 @@ html[dir='rtl'] .landing-steps {
 }
 .landing-steps button[aria-current='step'] {
   opacity: 1;
-  color: #fff;
+  color: var(--land-accent);
 }
 .landing-steps-track {
   position: relative;
   inline-size: 3px;
   block-size: 240px;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgb(246 241 233 / 0.35);
 }
 .landing-steps-track span {
   position: absolute;
   inset-inline: 0;
   top: 0;
   block-size: 60px;
-  background: #fff;
+  background: var(--land-accent);
+  box-shadow: 0 0 14px rgb(39 170 225 / 0.55);
   transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -317,6 +340,10 @@ html[dir='rtl'] .landing-steps {
   display: block;
 }
 .landing-story {
+  --glow: 138 21 56; /* maroon; the 2nd story (blue sea art) glows sky-blue instead */
+  --glow-a: 0.34;
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
   align-items: center;
@@ -328,6 +355,34 @@ html[dir='rtl'] .landing-steps {
 .landing-story.is-flipped {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
 }
+.landing-stories > :nth-child(2) {
+  --glow: 39 170 225;
+  --glow-a: 0.2;
+}
+/* A wide, soft pool of colour behind each picture: a many-stop radial so it fades out with no visible edge. */
+.landing-story::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset-block: -12%;
+  inset-inline-end: -10%;
+  inline-size: min(72%, 960px);
+  pointer-events: none;
+  background: radial-gradient(
+    closest-side,
+    rgb(var(--glow) / var(--glow-a)) 0%,
+    rgb(var(--glow) / calc(var(--glow-a) * 0.8)) 18%,
+    rgb(var(--glow) / calc(var(--glow-a) * 0.55)) 36%,
+    rgb(var(--glow) / calc(var(--glow-a) * 0.3)) 54%,
+    rgb(var(--glow) / calc(var(--glow-a) * 0.12)) 72%,
+    rgb(var(--glow) / calc(var(--glow-a) * 0.03)) 88%,
+    transparent 100%
+  );
+}
+.landing-story.is-flipped::before {
+  inset-inline-end: auto;
+  inset-inline-start: -10%;
+}
 .landing-story.is-flipped img {
   order: -1;
 }
@@ -338,6 +393,7 @@ html[dir='rtl'] .landing-steps {
   object-fit: cover;
   justify-self: end;
   border-radius: 2px;
+  box-shadow: 0 60px 120px -50px rgb(var(--glow) / 0.6);
 }
 .landing-story.is-flipped img {
   justify-self: start;
@@ -375,7 +431,7 @@ html[dir='rtl'] .landing-steps {
   font-size: clamp(2rem, 3.35vw, 4rem);
   line-height: 1.15;
   text-wrap: balance;
-  color: #fff;
+  color: var(--land-sand);
 }
 html[lang='ar'] .landing-copy h2 {
   line-height: 1.4;
@@ -390,7 +446,7 @@ html[lang='ar'] .landing-copy h2 {
   display: inline-flex;
   align-items: center;
   gap: 16px;
-  color: var(--land-gold);
+  color: var(--land-accent);
   font-weight: 700;
   text-decoration: none;
 }
@@ -408,6 +464,20 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
 }
 
 /* ---------------- Footer ---------------- */
+.landing-footer-wrap {
+  position: relative;
+  background:
+    radial-gradient(60% 130% at 12% 100%, rgb(138 21 56 / 0.42) 0%, rgb(138 21 56 / 0.3) 22%, rgb(138 21 56 / 0.16) 45%, rgb(138 21 56 / 0.05) 70%, transparent 100%),
+    radial-gradient(45% 110% at 92% 100%, rgb(39 170 225 / 0.14) 0%, rgb(39 170 225 / 0.07) 40%, rgb(39 170 225 / 0.02) 70%, transparent 100%);
+}
+.landing-footer-wrap::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  block-size: 1px;
+  background: linear-gradient(90deg, transparent, rgb(246 241 233 / 0.18) 30%, rgb(246 241 233 / 0.18) 70%, transparent);
+}
 .landing-footer {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -444,7 +514,7 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
   font-family: var(--font-body);
   font-weight: 700;
   font-size: clamp(1.1rem, 0.5vw + 0.95rem, 1.5rem);
-  color: var(--land-gold);
+  color: var(--land-accent);
 }
 .landing-footer-col a {
   font-weight: 500;
@@ -452,7 +522,7 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
   text-decoration: none;
 }
 .landing-footer-col a:hover {
-  color: var(--land-gold);
+  color: var(--land-accent);
 }
 
 /* ---------------- Responsive ---------------- */
