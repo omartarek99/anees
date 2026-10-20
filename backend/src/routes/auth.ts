@@ -16,12 +16,12 @@ import {
   firebaseSignUp,
   firebaseSignIn,
   firebaseLookup,
-  firebaseSendVerificationEmail,
   firebaseConfirmVerification,
   firebaseDeleteUser,
 } from '../lib/firebase.js';
 import { verifyQatarIdPhoto, type IdVerificationFailureReason } from '../lib/idVerification.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
+import { sendVerificationEmail } from '../lib/mailer.js';
 import { FRONTEND_ORIGIN } from '../lib/config.js';
 import { encrypt, decrypt, hashForLookup } from '../lib/encryption.js';
 
@@ -209,14 +209,14 @@ authRouter.post(
       }
     }
 
-    const sendResult = await firebaseSendVerificationEmail(idToken, verifyEmailContinueUrl, lang ?? 'ar');
+    const sendResult = await sendVerificationEmail({ email, idToken, lang: lang ?? 'ar' });
     if (!sendResult.ok) {
       // Roll back so the username/email is free to retry with instead of being stuck
       // on an account that never got its verification email (and never leave an
       // orphaned ID photo sitting in storage either).
       if (idDocumentPath) await supabaseAdmin!.storage.from(ID_DOCUMENT_BUCKET).remove([idDocumentPath]);
       await rollback();
-      console.error('Firebase sendOobCode failed:', sendResult.error);
+      console.error('Sending the verification email failed:', sendResult.error);
       res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
       return;
     }
@@ -351,9 +351,9 @@ authRouter.post(
       return;
     }
 
-    const sendResult = await firebaseSendVerificationEmail(idToken, verifyEmailContinueUrl, lang ?? 'ar');
+    const sendResult = await sendVerificationEmail({ email: lookupResult.data.users[0].email, idToken, lang: lang ?? 'ar' });
     if (!sendResult.ok) {
-      console.error('Firebase resend failed:', sendResult.error);
+      console.error('Resending the verification email failed:', sendResult.error);
       res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
       return;
     }
