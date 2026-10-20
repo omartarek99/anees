@@ -123,7 +123,9 @@ function AnalyticsSummaryCard() {
           <div className="stack" style={{ gap: 4 }}>
             {summary.topPaths.map((p) => (
               <div key={p.path} className="flex" style={{ justifyContent: 'space-between', fontSize: 13.5 }}>
-                <code>{p.path}</code>
+                <code>
+                  <bdi dir="ltr">{p.path}</bdi>
+                </code>
                 <span className="muted">{p.views}</span>
               </div>
             ))}

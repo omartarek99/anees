@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { asyncRouter } from '../lib/asyncRouter.js';
 import type { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { db } from '../db/db.js';
@@ -14,7 +14,7 @@ import { VIDEO_BUCKET, VIDEO_PATH_PREFIX, deleteReelVideoIfAny } from '../lib/re
 import { generateQuizQuestions } from '../lib/gemini.js';
 import { aiGenerationLimiter } from '../middleware/rateLimit.js';
 
-export const teacherReelsRouter = Router();
+export const teacherReelsRouter = asyncRouter();
 
 // Accepted upload containers -- compression (see videoCompression.ts) always re-encodes to
 // mp4 before storage regardless of which of these the teacher uploaded, so no extension

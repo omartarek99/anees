@@ -137,9 +137,14 @@ Return ONLY the JSON array, matching the provided schema exactly.`;
     let res: Response | null = null;
     let data: any = null;
     const now = Date.now();
+    // One overall budget across the whole model fallback chain: five models x 30s would hold the
+    // request open ~150s, past the hosting proxy's own limit.
+    const deadline = now + 45_000;
     const candidates = MODELS.filter((m) => (quotaSkipUntil.get(m) ?? 0) <= now);
     // Everything was recently out of quota -- still try them all rather than fail without asking.
     for (const model of candidates.length > 0 ? candidates : MODELS) {
+      const budget = deadline - Date.now();
+      if (budget < 2_000) break;
       let r: Response;
       let d: any;
       try {
@@ -147,7 +152,7 @@ Return ONLY the JSON array, matching the provided schema exactly.`;
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           // A hung upstream must not hang the user's request forever.
-          signal: AbortSignal.timeout(30_000),
+          signal: AbortSignal.timeout(Math.min(30_000, budget)),
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {

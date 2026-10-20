@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { asyncRouter } from '../lib/asyncRouter.js';
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { db } from '../db/db.js';
-import { requireAuth, requireRole } from '../middleware/auth.js';
+import { forbidRole, requireAuth, requireRole } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { worksheetAiLimiter } from '../middleware/rateLimit.js';
 import { awardXp, awardTeacherPoints, TEACHER_PRINT_POINTS, WORKSHEET_XP_PER_CORRECT } from '../lib/xp.js';
@@ -11,7 +11,7 @@ import { generateQuizQuestions } from '../lib/gemini.js';
 import { moderateContent } from '../lib/moderation.js';
 import { teacherReelQuestionSchema } from '../lib/schemas.js';
 
-export const worksheetsRouter = Router();
+export const worksheetsRouter = asyncRouter();
 
 const QUESTIONS_PER_WORKSHEET = 10;
 
@@ -161,11 +161,17 @@ async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise
     // Not configured / API hiccup -- fall back to saved questions below.
     if (result.error !== 'NOT_CONFIGURED') console.error('Gemini worksheet generation failed:', result.error);
   } else {
-    const parsed = z.array(teacherReelQuestionSchema).safeParse(result.data);
-    if (!parsed.success) {
-      console.error('Gemini worksheet response failed validation:', parsed.error.flatten());
+    // Validate item by item: one malformed question (3 choices, bad correctIndex) shouldn't throw
+    // away the other nine.
+    const items: unknown[] = Array.isArray(result.data) ? result.data : [];
+    const valid = items.flatMap((item) => {
+      const r = teacherReelQuestionSchema.safeParse(item);
+      return r.success ? [r.data] : [];
+    });
+    if (valid.length === 0) {
+      console.error('Gemini worksheet response had no valid questions.');
     } else {
-      for (const q of parsed.data) {
+      for (const q of valid) {
         if (q.correctIndex < 0 || q.correctIndex > 3 || known.has(q.questionText)) continue;
         // Nobody reviews AI output before a student sees it here (unlike the teacher
         // composer), so run the same content filter lesson text goes through.
@@ -264,9 +270,10 @@ function limitAiWhenAi(req: Request, res: Response, next: NextFunction) {
 worksheetsRouter.post(
   '/generate',
   requireAuth,
+  forbidRole('admin'),
   requireCsrfHeader,
-  limitAiWhenAi,
   validateBody(generateSchema),
+  limitAiWhenAi,
   async (req, res) => {
     try {
       const { subject, difficulty, reelId, topic: rawTopic } = req.body as {
@@ -321,6 +328,7 @@ worksheetsRouter.post(
       }
 
       // A typed lesson name (درس): the AI writes a fresh set on it every time.
+      let aiUnavailable = false;
       if (rawTopic) {
         // Collapse whitespace and drop quotes/control characters -- the name goes into the
         // AI prompt, so it must stay a plain label rather than carry extra instructions.
@@ -343,20 +351,22 @@ worksheetsRouter.post(
           },
           difficulty
         );
-        if (picked.length === 0) {
-          res.status(404).json({ error: 'No questions could be made for this lesson yet. Please try again later.' });
+        if (picked.length > 0) {
+          const attemptId = createAttempt(req.userId!, subjectRow.id, difficulty, null, picked.map((q) => q.id));
+          res.status(201).json({
+            worksheetId: attemptId,
+            subject,
+            difficulty,
+            xpPerCorrect: WORKSHEET_XP_PER_CORRECT[difficulty],
+            topic,
+            questions: picked.map(questionPayload),
+          });
           return;
         }
-        const attemptId = createAttempt(req.userId!, subjectRow.id, difficulty, null, picked.map((q) => q.id));
-        res.status(201).json({
-          worksheetId: attemptId,
-          subject,
-          difficulty,
-          xpPerCorrect: WORKSHEET_XP_PER_CORRECT[difficulty],
-          topic,
-          questions: picked.map(questionPayload),
-        });
-        return;
+        // The AI is unavailable (no key, quota, outage) and nothing is saved for this lesson:
+        // hand back a general practice worksheet from the seeded bank instead of an error that
+        // can never succeed -- flagged so the page can say so.
+        aiUnavailable = true;
       }
 
       // reel_id/topic IS NULL keeps video- and lesson-specific questions out of the bank.
@@ -377,6 +387,7 @@ worksheetsRouter.post(
         difficulty,
         xpPerCorrect: WORKSHEET_XP_PER_CORRECT[difficulty],
         questions: picked.map(questionPayload),
+        ...(aiUnavailable ? { aiUnavailable: true } : {}),
       });
     } catch (err) {
       console.error('Worksheet generation failed:', err);
@@ -389,7 +400,7 @@ const submitSchema = z.object({
   answers: z.array(z.object({ questionId: z.number(), choiceIndex: z.number().min(0).max(3) })),
 });
 
-worksheetsRouter.post('/:id/submit', requireAuth, requireCsrfHeader, validateBody(submitSchema), (req, res) => {
+worksheetsRouter.post('/:id/submit', requireAuth, forbidRole('admin'), requireCsrfHeader, validateBody(submitSchema), (req, res) => {
   const attempt = db.prepare(`SELECT * FROM worksheet_attempts WHERE id = ?`).get(Number(req.params.id)) as any;
   if (!attempt || attempt.user_id !== req.userId!) {
     res.status(404).json({ error: 'Worksheet not found.' });

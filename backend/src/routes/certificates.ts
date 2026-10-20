@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { asyncRouter } from '../lib/asyncRouter.js';
 import { db } from '../db/db.js';
 import { requireCsrfHeader } from '../middleware/validate.js';
 
-export const certificatesRouter = Router();
+export const certificatesRouter = asyncRouter();
 
 // Polled once on app load (CertificateAwardPopup.tsx) to announce any certificate the
 // signed-in user hasn't seen yet -- oldest first, so if an admin issued several while the

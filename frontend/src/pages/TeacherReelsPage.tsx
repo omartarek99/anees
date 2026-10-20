@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError, pickText } from '../lib/i18n';
@@ -105,6 +105,11 @@ export function TeacherReelsPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  // The Create / Auto-generate buttons are far below this banner -- bring a new error into view.
+  const formErrorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (formError) formErrorRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [formError]);
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
 
   function loadOptions() {
@@ -333,7 +338,11 @@ export function TeacherReelsPage() {
           {editingId ? t('teacherReels.editTitle') : t('teacherReels.composerTitle')}
         </h3>
         <form onSubmit={handleSubmit}>
-          {formError && <div className="form-error-banner">{formError}</div>}
+          {formError && (
+            <div ref={formErrorRef} className="form-error-banner" role="alert">
+              {formError}
+            </div>
+          )}
 
           <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
             <div className="field" style={{ flex: 1, minWidth: 160 }}>

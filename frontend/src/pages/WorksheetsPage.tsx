@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RiCalculatorLine, RiAtomLine, RiVideoLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
@@ -20,6 +20,8 @@ type GenerateResponse = {
   video?: { id: number; title: string; titleAr: string; authorName: string };
   // The lesson name (درس) the user typed for a general worksheet.
   topic?: string;
+  // The AI couldn't write questions for the typed lesson, so this is a general bank worksheet.
+  aiUnavailable?: boolean;
   questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null }[];
 };
 
@@ -54,6 +56,16 @@ export function WorksheetsPage() {
   const [videos, setVideos] = useState<WorksheetVideo[]>([]);
   // The name of the lesson (درس) or of a video -- the AI writes new questions about it.
   const [lessonName, setLessonName] = useState('');
+  // The Generate button sits at the bottom of the form but the error banner at the top -- bring a
+  // new error into view so a failed click doesn't look like nothing happened.
+  const errorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (error) errorRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [error]);
+  // A new worksheet / its results replace the form: start at the top, not mid-page.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [worksheet, result]);
 
   useEffect(() => {
     api
@@ -151,7 +163,12 @@ export function WorksheetsPage() {
     <div className="stack">
       <Topbar title={t('worksheets.title')} subtitle={t('worksheets.subtitle')} />
 
-      {error && <div className="form-error-banner">{error}</div>}
+      {error && (
+        <div ref={errorRef} className="form-error-banner" role="alert">
+          {error}
+        </div>
+      )}
+      {worksheet?.aiUnavailable && !result && <div className="form-error-banner">{t('worksheets.aiFallbackNote')}</div>}
 
       {!worksheet && (
         <div className="card stack">
@@ -248,9 +265,9 @@ export function WorksheetsPage() {
           <div className="flex-between">
             <h2 style={{ fontSize: 18 }}>
               {subject === 'math' ? (
-                <RiCalculatorLine size={16} style={{ verticalAlign: -3, marginInlineEnd: 4 }} />
+                <RiCalculatorLine size={16} style={{ verticalAlign: -3, marginInlineEnd: 4, display: 'inline-block' }} />
               ) : (
-                <RiAtomLine size={16} style={{ verticalAlign: -3, marginInlineEnd: 4 }} />
+                <RiAtomLine size={16} style={{ verticalAlign: -3, marginInlineEnd: 4, display: 'inline-block' }} />
               )}
               {subject === 'math' ? t('worksheets.math') : t('worksheets.science')} —{' '}
               {t(`worksheets.${difficulty}`)}
@@ -261,25 +278,25 @@ export function WorksheetsPage() {
               )}
               {worksheet.video && (
                 <span className="muted" style={{ fontSize: 14, display: 'block', fontWeight: 600 }}>
-                  <RiVideoLine size={14} style={{ verticalAlign: -2, marginInlineEnd: 4 }} />
+                  <RiVideoLine size={14} style={{ verticalAlign: -2, marginInlineEnd: 4, display: 'inline-block' }} />
                   {t('worksheets.videoTopic', { title: pickText(lang, worksheet.video.title, worksheet.video.titleAr) })}
                   {worksheet.video.authorName ? ` — ${t('worksheets.videoBy', { name: worksheet.video.authorName })}` : ''}
                 </span>
               )}
             </h2>
-            <div className="flex gap-sm">
+            <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
               {/* Printing a worksheet for a class is a teacher task -- students solve it
                   interactively in-app instead, so this stays out of their view. The +10
                   badge mirrors TEACHER_PRINT_POINTS in backend lib/xp.ts -- purely a
                   heads-up before they click, the actual award happens server-side. */}
               {user?.role === 'teacher' && (
-                <span className="flex gap-sm" style={{ alignItems: 'center' }}>
-                  <button className="btn btn-secondary btn-sm" onClick={handlePrint}>
+                <span className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button className="btn btn-secondary btn-sm" onClick={handlePrint} style={{ whiteSpace: 'nowrap' }}>
                     {t('worksheets.print')}
                   </button>
                   <span
                     className="badge badge-gold"
-                    style={{ fontSize: 11 }}
+                    style={{ fontSize: 11, whiteSpace: 'nowrap' }}
                     title={t('worksheets.printPoints', { points: 10 })}
                   >
                     🏆 {t('worksheets.printPoints', { points: 10 })}

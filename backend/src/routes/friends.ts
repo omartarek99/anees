@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { usernameSchema } from '../lib/schemas.js';
 
-export const friendsRouter = Router();
+export const friendsRouter = asyncRouter();
 
 function friendshipKey(a: number, b: number): [number, number] {
   return a < b ? [a, b] : [b, a];

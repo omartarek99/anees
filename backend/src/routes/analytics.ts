@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
 import { validateBody } from '../middleware/validate.js';
 
-export const analyticsRouter = Router();
+export const analyticsRouter = asyncRouter();
 
 // A route path template, not a raw URL -- the frontend sends e.g. "/reels" or "/profile/:username"
 // (never the literal username), so this never becomes a place student PII ends up logged.

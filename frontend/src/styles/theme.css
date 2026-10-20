@@ -1910,3 +1910,9 @@ a:focus-visible {
 :root:not([data-theme='dark']) .auth-shell .card {
   background: rgba(255, 255, 255, 0.9);
 }
+
+/* Placeholder text: the browser default (#757575) is only ~2.8:1 on the dark glass inputs. */
+::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.8;
+}

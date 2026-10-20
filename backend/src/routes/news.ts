@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { requireCsrfHeader, validateBody } from '../middleware/validate.js';
 import { moderateText } from '../lib/moderation.js';
 
-export const newsRouter = Router();
+export const newsRouter = asyncRouter();
 
 newsRouter.get('/', requireAuth, (req, res) => {
   const subjectFilter = String(req.query.subject ?? '');

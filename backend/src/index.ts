@@ -45,7 +45,12 @@ if (isProd) {
   // Fly/Railway). Behind Vercel rewriting /api to this server it is 2 -- with 1, every
   // visitor would appear to share Vercel's IP and the per-IP rate limiters (login, signup)
   // would lock everyone out together. Set TRUST_PROXY_HOPS=2 in that setup.
-  app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 1));
+  const hops = Number.parseInt(process.env.TRUST_PROXY_HOPS ?? '1', 10);
+  if (!Number.isInteger(hops) || hops < 0) {
+    // Number('abc') is NaN, which would silently trust no proxy and put every visitor behind one IP.
+    console.warn(`[config] TRUST_PROXY_HOPS=${JSON.stringify(process.env.TRUST_PROXY_HOPS)} is not a whole number -- using 1.`);
+  }
+  app.set('trust proxy', Number.isInteger(hops) && hops >= 0 ? hops : 1);
   app.use((req, res, next) => {
     if (req.secure || req.get('x-forwarded-proto') === 'https') {
       next();

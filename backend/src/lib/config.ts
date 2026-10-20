@@ -4,3 +4,6 @@
 // other still said Vite's 5173 default) after the frontend's port moved; import this
 // instead of redeclaring the default.
 export const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5190';
+if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_ORIGIN) {
+  console.warn('[config] FRONTEND_ORIGIN is not set in production -- CORS and verification-email links will point at http://localhost:5190.');
+}

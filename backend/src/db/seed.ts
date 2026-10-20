@@ -137,10 +137,10 @@ function setUpProductionAccounts() {
     return;
   }
   if (!/^[a-zA-Z0-9_]{3,20}$/.test(username) || password.length < 12) {
-    // The username is not a secret, so it is shown (JSON-quoted, so spaces/quotes are visible);
-    // the password only as a length.
+    // Only lengths / a character-class check are logged, never the values themselves: a password
+    // pasted into the wrong variable must not end up in the host's log.
     console.warn(
-      `[seed] Admin NOT created. INITIAL_ADMIN_USERNAME = ${JSON.stringify(username)} (${username.length} chars; needs 3-20 of letters/numbers/underscore). ` +
+      `[seed] Admin NOT created. INITIAL_ADMIN_USERNAME has ${username.length} chars (${/^[a-zA-Z0-9_]*$/.test(username) ? 'valid characters' : 'contains characters other than letters/numbers/underscore'}; needs 3-20). ` +
         `INITIAL_ADMIN_PASSWORD has ${password.length} chars (needs at least 12).`
     );
     return;
@@ -937,7 +937,8 @@ export function seed() {
     { username: 'jassim_d', displayName: 'Jassim Al-Dosari', avatar: 'explorer', xp: 980 },
   ];
 
-  for (const s of demoStudents) {
+  // Fake demo students (leaderboard / friends filler) are for laptops only -- never on a public server.
+  for (const s of ALLOW_DEV_ACCOUNTS ? demoStudents : []) {
     const randomPassword = crypto.randomBytes(24).toString('hex');
     const hash = bcrypt.hashSync(randomPassword, 10);
     const demoEmail = `${s.username}@anees.local`;

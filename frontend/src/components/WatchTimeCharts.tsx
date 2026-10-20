@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useLanguage } from '../lib/language-context';
 import { formatWatchTime } from '../lib/format';
 
@@ -36,6 +36,14 @@ export function MonthlyTotalChart({ months, totalsBySecond }: { months: string[]
   const { lang } = useLanguage();
   const gradId = useId();
   const [hovered, setHovered] = useState<number | null>(null);
+  // On a narrow screen the chart scrolls sideways: open on the newest month (the one that matters),
+  // and keep the scroller left-to-right even in Arabic -- in RTL it would start at the far end and
+  // clip the axis labels. The axis and months are drawn left-to-right in both languages anyway.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [months.length]);
 
   const max = Math.max(...totalsBySecond, 1);
   const bandWidth = PLOT_W / months.length;
@@ -44,7 +52,7 @@ export function MonthlyTotalChart({ months, totalsBySecond }: { months: string[]
 
   // minWidth keeps the axis labels at their real size on a phone; the card scrolls sideways instead of shrinking them to ~4px.
   return (
-    <div style={{ overflowX: 'auto' }}>
+    <div ref={scrollRef} dir="ltr" style={{ overflowX: 'auto' }}>
     <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} style={{ width: '100%', minWidth: CHART_W, height: 'auto' }} role="img" aria-label="Monthly total watch time">
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">

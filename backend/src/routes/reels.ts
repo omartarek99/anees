@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -7,7 +7,7 @@ import { awardXp, getPlayerLevel, VIDEO_HALF_WATCH_POINTS, VIDEO_FULL_WATCH_POIN
 import { gradeAnswers } from '../lib/grading.js';
 import { getDoublePointsStatus, DOUBLE_POINTS_MULTIPLIER } from '../lib/doublePoints.js';
 
-export const reelsRouter = Router();
+export const reelsRouter = asyncRouter();
 
 // Polled by the frontend (see DoublePointsNotification.tsx) to pop up a notification the
 // moment the hour's random double-points window opens, without needing any push mechanism.

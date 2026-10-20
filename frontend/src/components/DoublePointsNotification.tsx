@@ -74,7 +74,9 @@ export function DoublePointsNotification() {
         // overlap in either language.
         bottom: 16,
         insetInlineEnd: 16,
-        zIndex: 200,
+        // Just under the cookie-consent banner (90): while a visitor still has to accept/decline,
+        // those buttons must stay reachable -- this toast is dismissible and not urgent.
+        zIndex: 85,
         display: 'flex',
         alignItems: 'center',
         gap: 12,

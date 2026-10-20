@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Router } from 'express';
+import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -7,7 +7,7 @@ import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { awardXp, craftPuzzleTierForXp, CRAFT_PUZZLE_XP_BY_TIER } from '../lib/xp.js';
 import { generateCraftPuzzle } from '../lib/craftPuzzles.js';
 
-export const craftRouter = Router();
+export const craftRouter = asyncRouter();
 
 craftRouter.get('/', requireAuth, (req, res) => {
   const row = db.prepare(`SELECT * FROM craft_saves WHERE user_id = ?`).get(req.userId!) as any;

@@ -43,13 +43,6 @@ if (!userCols.some((c) => c.name === 'role')) {
 if (!userCols.some((c) => c.name === 'grade')) {
   db.exec(`ALTER TABLE users ADD COLUMN grade INTEGER`);
 }
-// School + (teachers) the subject they teach, collected at signup.
-if (!userCols.some((c) => c.name === 'school_name')) {
-  db.exec(`ALTER TABLE users ADD COLUMN school_name TEXT`);
-}
-if (!userCols.some((c) => c.name === 'teacher_subject')) {
-  db.exec(`ALTER TABLE users ADD COLUMN teacher_subject TEXT`);
-}
 // Supabase-backed email verification, added after the initial users table.
 if (!userCols.some((c) => c.name === 'email_verified')) {
   db.exec(`ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0`);
@@ -165,6 +158,15 @@ if (!userColsForModeration.some((c) => c.name === 'banned_until')) {
 // columns (no CHECK constraint), so a simple ADD COLUMN is enough -- no rebuild needed.
 if (!userColsForModeration.some((c) => c.name === 'bio')) {
   db.exec(`ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''`);
+}
+// School + (teachers) the subject they teach, collected at signup. Added here, after the
+// users-table rebuild above (which doesn't carry these columns), so a database that predates the
+// admin role doesn't lose them on its first boot -- and every signup would then fail.
+if (!userColsForModeration.some((c) => c.name === 'school_name')) {
+  db.exec(`ALTER TABLE users ADD COLUMN school_name TEXT`);
+}
+if (!userColsForModeration.some((c) => c.name === 'teacher_subject')) {
+  db.exec(`ALTER TABLE users ADD COLUMN teacher_subject TEXT`);
 }
 if (!userColsForModeration.some((c) => c.name === 'avatar_url')) {
   db.exec(`ALTER TABLE users ADD COLUMN avatar_url TEXT`);

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { asyncRouter } from '../lib/asyncRouter.js';
 import multer from 'multer';
 import { db } from '../db/db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
@@ -22,7 +22,7 @@ import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX, deleteCertific
 
 import type { Request, Response, NextFunction } from 'express';
 
-export const adminRouter = Router();
+export const adminRouter = asyncRouter();
 
 adminRouter.use(requireAuth, requireRole('admin'));
 

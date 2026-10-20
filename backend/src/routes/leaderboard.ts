@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { asyncRouter } from '../lib/asyncRouter.js';
 import { db } from '../db/db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 
-export const leaderboardRouter = Router();
+export const leaderboardRouter = asyncRouter();
 
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { asyncRouter } from '../lib/asyncRouter.js';
 import type { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { db } from '../db/db.js';
@@ -12,7 +12,7 @@ import { supabaseAdmin } from '../lib/supabase.js';
 import { AVATAR_PHOTO_BUCKET, AVATAR_PHOTO_PATH_PREFIX, deleteAvatarPhotoIfAny } from '../lib/avatarPhoto.js';
 import { looksLikeImage } from '../lib/imageValidation.js';
 
-export const usersRouter = Router();
+export const usersRouter = asyncRouter();
 
 // A teacher's authored reels that have an actual video attached, shown as a portfolio on
 // their profile -- visible to any signed-in viewer (student or teacher), not just the
@@ -120,13 +120,19 @@ function profileSummary(user: any) {
   };
 }
 
+// The caller's OWN profile: profileSummary plus the private-to-owner school name (profileSummary only
+// shows it for teachers, publicly). Every self-returning route uses this so a save never blanks it.
+function ownProfile(user: any) {
+  return { ...profileSummary(user), schoolName: user.school_name ?? null };
+}
+
 usersRouter.get('/me', requireAuth, (req, res) => {
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!);
   if (!user) {
     res.status(404).json({ error: 'User not found.' });
     return;
   }
-  res.json({ profile: { ...profileSummary(user), schoolName: (user as any).school_name ?? null } });
+  res.json({ profile: ownProfile(user) });
 });
 
 usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProfileSchema), (req, res) => {
@@ -163,7 +169,7 @@ usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProf
   }
 
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!);
-  res.json({ profile: profileSummary(user) });
+  res.json({ profile: ownProfile(user) });
 });
 
 // JPEG/PNG/WebP only, matching what browsers natively produce from an image picker/camera.
@@ -221,7 +227,7 @@ usersRouter.post('/me/avatar', requireAuth, requireCsrfHeader, handleAvatarUploa
   db.prepare(`UPDATE users SET avatar_url = ? WHERE id = ?`).run(publicUrlData.publicUrl, req.userId!);
 
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!);
-  res.json({ profile: profileSummary(user) });
+  res.json({ profile: ownProfile(user) });
 });
 
 usersRouter.get('/search', requireAuth, (req, res) => {
@@ -248,6 +254,13 @@ usersRouter.get('/search', requireAuth, (req, res) => {
 usersRouter.get('/:username', requireAuth, (req, res) => {
   const user = db.prepare(`SELECT * FROM users WHERE lower(username) = lower(?)`).get(req.params.username);
   if (!user) {
+    res.status(404).json({ error: 'User not found.' });
+    return;
+  }
+  // Admin accounts aren't part of the social side of the app (hidden from search, leaderboard and
+  // friend requests), so only another admin can open their profile.
+  const caller = db.prepare(`SELECT role FROM users WHERE id = ?`).get(req.userId!) as { role: string } | undefined;
+  if ((user as any).role === 'admin' && caller?.role !== 'admin') {
     res.status(404).json({ error: 'User not found.' });
     return;
   }

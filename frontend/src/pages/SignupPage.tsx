@@ -62,6 +62,11 @@ export function SignupPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    // The input's minLength counts spaces, so '  ' passes the browser check -- the server trims it away.
+    if (schoolName.trim().length < 2) {
+      setError(t('auth.schoolInvalid'));
+      return;
+    }
     setSubmitting(true);
     try {
       const result = await signup({
@@ -71,7 +76,7 @@ export function SignupPage() {
         avatarKey,
         role,
         grade: role === 'student' ? Number(grade) : undefined,
-        schoolName,
+        schoolName: schoolName.trim(),
         teacherSubject: role === 'teacher' ? teacherSubject : undefined,
         idDocument: role === 'teacher' ? idDocument ?? undefined : undefined,
         website,

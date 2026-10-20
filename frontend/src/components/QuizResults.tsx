@@ -36,7 +36,7 @@ export function QuizResults({ questions, results }: { questions: QuizQuestion[];
             <p style={{ color: 'var(--success)', fontSize: 14, margin: '4px 0', fontWeight: 700 }}>
               {t('common.correctAnswer')} {q.choices[r.correctIndex]}
             </p>
-            <p className="muted" style={{ fontSize: 14, marginTop: 6 }}>
+            <p className="muted" dir={textDir(pickText(lang, r.explanation, r.explanationAr))} style={{ fontSize: 14, marginTop: 6 }}>
               💡 {pickText(lang, r.explanation, r.explanationAr)}
             </p>
           </div>

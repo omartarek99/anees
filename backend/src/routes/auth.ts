@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { asyncRouter } from '../lib/asyncRouter.js';
 import type { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import multer from 'multer';
@@ -25,7 +25,7 @@ import { isCurrentlyBanned } from '../lib/accountStatus.js';
 import { FRONTEND_ORIGIN } from '../lib/config.js';
 import { encrypt, decrypt, hashForLookup } from '../lib/encryption.js';
 
-export const authRouter = Router();
+export const authRouter = asyncRouter();
 
 const ID_DOCUMENT_BUCKET = 'teacher-id-documents';
 // JPEG/PNG only -- the automated ID check below runs OCR on the raw photo, which needs
@@ -43,7 +43,10 @@ const ID_VERIFICATION_MESSAGES: Record<IdVerificationFailureReason, string> = {
 
 const idDocumentUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  // Signup is unauthenticated and multipart bodies skip express.json's 100kb cap, so bound the
+  // number and size of text fields too -- otherwise a flood of big fields is buffered in memory
+  // before validation ever rejects it.
+  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 20, fieldSize: 10 * 1024, parts: 25 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype in ID_DOCUMENT_MIME_TO_EXT) cb(null, true);
     else cb(new Error('INVALID_ID_DOCUMENT_TYPE'));
@@ -156,26 +159,39 @@ authRouter.post(
     }
     const { idToken, localId } = signUpResult.data;
 
-    const userId = Number(
-      db
-        .prepare(
-          `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, role, grade, firebase_uid, school_name, teacher_subject) VALUES (?,?,?,?,?,?,0,?,?,?,?,?)`
-        )
-        .run(
-          username,
-          encrypt(email),
-          hashForLookup(email),
-          '',
-          displayName,
-          avatarKey,
-          role,
-          role === 'student' ? grade ?? null : null,
-          localId,
-          schoolName,
-          role === 'teacher' ? teacherSubject ?? null : null
-        )
-        .lastInsertRowid
-    );
+    let userId: number;
+    try {
+      userId = Number(
+        db
+          .prepare(
+            `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, role, grade, firebase_uid, school_name, teacher_subject) VALUES (?,?,?,?,?,?,0,?,?,?,?,?)`
+          )
+          .run(
+            username,
+            encrypt(email),
+            hashForLookup(email),
+            '',
+            displayName,
+            avatarKey,
+            role,
+            role === 'student' ? grade ?? null : null,
+            localId,
+            schoolName,
+            role === 'teacher' ? teacherSubject ?? null : null
+          )
+          .lastInsertRowid
+      );
+    } catch (err) {
+      // Two signups for the same username can both pass the SELECT above (Firebase is awaited in
+      // between); the loser hits the UNIQUE constraint here. Free its Firebase account and answer
+      // 409 -- anything else is a real error for the error middleware.
+      await firebaseDeleteUser(idToken);
+      if (String((err as Error)?.message).includes('UNIQUE')) {
+        res.status(409).json({ error: 'That username or email is already taken.' });
+        return;
+      }
+      throw err;
+    }
 
     // Teachers play through the map exactly like students do, so every new account
     // (either role) starts with level 1 unlocked.

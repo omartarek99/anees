@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -6,7 +6,7 @@ import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { awardXp, getPlayerLevel, BOSS_DEFEAT_XP_BONUS, BOSS_PASS_RATIO } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
 
-export const mapRouter = Router();
+export const mapRouter = asyncRouter();
 
 mapRouter.get('/', requireAuth, (req, res) => {
   const levels = db
