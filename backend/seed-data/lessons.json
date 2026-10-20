@@ -1,0 +1,219 @@
+[
+  {
+    "subject": "science",
+    "grade": 5,
+    "title": "السلسلة الغذائية",
+    "titleAr": "",
+    "scriptText": "انواع الحيوانات",
+    "scriptTextAr": "",
+    "videoUrl": "https://rpsviaaboaqinnvlmzpi.supabase.co/storage/v1/object/public/videos/teacher-reels/48-1788790721787.mp4",
+    "durationSec": 11,
+    "questions": []
+  },
+  {
+    "subject": "math",
+    "grade": 5,
+    "title": "جمع الاعداد الاكلية",
+    "titleAr": "",
+    "scriptText": "جمع الاعداد الاكلية",
+    "scriptTextAr": "",
+    "videoUrl": "https://rpsviaaboaqinnvlmzpi.supabase.co/storage/v1/object/public/videos/teacher-reels/53-1788869297072.mp4",
+    "durationSec": 50,
+    "questions": []
+  },
+  {
+    "subject": "math",
+    "grade": 5,
+    "title": "القسمة المطولة",
+    "titleAr": "",
+    "scriptText": "القسمة المطولة",
+    "scriptTextAr": "",
+    "videoUrl": "https://rpsviaaboaqinnvlmzpi.supabase.co/storage/v1/object/public/videos/teacher-reels/54-1788869436552.mp4",
+    "durationSec": 57,
+    "questions": []
+  },
+  {
+    "subject": "science",
+    "grade": 4,
+    "title": "السلسلة الغذائية 2",
+    "titleAr": "",
+    "scriptText": "يركز هذا الجزء على كيفية انتقال الطاقة داخل النظام البيئي عبر المستويات الغذائية المختلفة، وتأثير الاختلال في أحد أطراف السلسلة على التوازن البيئي.1. انتقال الطاقة في السلسلة الغذائيةالمصدر الرئيسي للطاقة: الشمس هي المصدر الأول والأساسي للطاقة على كوكب الأرض.مسار الطاقة: تنتقل الطاقة من الكائنات المنتجة (النباتات) إلى الكائنات المستهلكة (الحيوانات)، ثم إلى الكائنات المحللة (البكتيريا والفطريات).فقدان الطاقة: لا تنتقل الطاقة بالكامل من مستوى لآخر؛ حيث يُفقد جزء كبير منها (حوالي 90%) على شكل حرارة أو طاقة حيوية يستهلكها الكائن في أنشطته اليومية، بينما ينتقل نحو 10% فقط للمستوى التالي.2. مفهوم الشبكة الغذائية (Food Web)التعريف: هي مجموعة من السلاسل الغذائية المتداخلة والمتشابكة في نظام بيئي واحد.الأهمية: تعكس الواقع بشكل أدق؛ لأن معظم الحيوانات لا تتغذى على نوع واحد فقط من الطعام، بل تعتمد على مصادر متعددة.3. التوازن البيئي وتأثير اختلال السلسلةتعتمد الكائنات الحية داخل السلسلة على بعضها البعض بشكل متكامل:اختفاء الكائنات المنتجة: يؤدي إلى جوع وموت المستهلكات الأولية، وبالتالي انهيار باقي السلسلة.انقراض أو اختفاء المفترسات (المستهلكات القمة): يؤدي إلى زيادة أعداد الفرائس (المستهلكات الأولية) بشكل مفرط، مما يسبب القضاء على الغطاء النباتي وتدمير البيئة.دور الكائنات المحللة: تقوم بإعادة التدوير عن طريق تحليل جثث الكائنات الميتة وإعادة العناصر الغذائية (كالنيتروجين والفسفور) إلى التربة لتستفيد منها النباتات مجدداً.ملخص المفاهيم الأساسية:$$\\text{شمس} \\rightarrow \\text{منتجات (نباتات)} \\rightarrow \\text{مستهلكات أولية (أكلات أعشاب)} \\rightarrow \\text{مستهلكات ثانوية (أكلات لحوم)} \\rightarrow \\text{محللات}$$",
+    "scriptTextAr": "",
+    "videoUrl": "https://rpsviaaboaqinnvlmzpi.supabase.co/storage/v1/object/public/videos/teacher-reels/56-1789022292388.mp4",
+    "durationSec": 30,
+    "questions": [
+      {
+        "questionText": "What is the main source of energy for ecosystems on Earth?",
+        "questionTextAr": "ما هو المصدر الرئيسي والأساسي للطاقة في النظام البيئي على كوكب الأرض؟",
+        "choices": [
+          "The Sun",
+          "The Moon",
+          "Water",
+          "Soil"
+        ],
+        "choicesAr": [
+          "الشمس",
+          "القمر",
+          "الماء",
+          "التربة"
+        ],
+        "correctIndex": 0,
+        "explanation": "The Sun is the primary source of energy for all living things in an ecosystem.",
+        "explanationAr": "الشمس هي المصدر الأول والأساسي للطاقة لجميع الكائنات الحية في النظام البيئي.",
+        "xpValue": 15
+      },
+      {
+        "questionText": "How much energy is passed from one level of a food chain to the next level?",
+        "questionTextAr": "كم تبلغ نسبة الطاقة التي تنتقل من مستوى غذائي إلى المستوى الذي يليه؟",
+        "choices": [
+          "About 100%",
+          "About 90%",
+          "About 50%",
+          "About 10%"
+        ],
+        "choicesAr": [
+          "حوالي 100%",
+          "حوالي 90%",
+          "حوالي 50%",
+          "حوالي 10%"
+        ],
+        "correctIndex": 3,
+        "explanation": "Only about 10% of energy moves to the next level, while most of it is lost as heat.",
+        "explanationAr": "تنتقل حوالي 10% فقط من الطاقة إلى المستوى التالي، بينما يُفقد معظمها على شكل حرارة.",
+        "xpValue": 15
+      },
+      {
+        "questionText": "What is the main role of decomposers like bacteria and fungi in an ecosystem?",
+        "questionTextAr": "ما هو الدور الرئيسي للكائنات المحللة مثل البكتيريا والفطريات في النظام البيئي؟",
+        "choices": [
+          "To make food using sunlight",
+          "To hunt other animals",
+          "To break down dead organisms and return nutrients to the soil",
+          "To eat green leaves"
+        ],
+        "choicesAr": [
+          "صنع الغذاء باستخدام ضوء الشمس",
+          "صيد الحيوانات الأخرى",
+          "تحليل جثث الكائنات الميتة وإعادة العناصر الغذائية للتربة",
+          "أكل أوراق الشجر الخضراء"
+        ],
+        "correctIndex": 2,
+        "explanation": "Decomposers break down dead organisms to return nutrients back to the soil for plants to use.",
+        "explanationAr": "تقوم المحللات بتحليل الكائنات الميتة لإعادة العناصر الغذائية الهامة إلى التربة لتستفيد منها النباتات.",
+        "xpValue": 15
+      },
+      {
+        "questionText": "What is a food web?",
+        "questionTextAr": "ما المقصود بالشبكة الغذائية؟",
+        "choices": [
+          "A single straight line showing one pathway of energy",
+          "A group of interconnected food chains in an ecosystem",
+          "A net made by spiders to catch insects",
+          "A system that contains only decomposers"
+        ],
+        "choicesAr": [
+          "خط واحد مستقيم يوضح مساراً واحداً للطاقة",
+          "مجموعة من السلاسل الغذائية المتداخلة والمتشابكة في نظام بيئي واحد",
+          "شبكة يصنعها العنكبوت لاصطياد الحشرات",
+          "نظام بيئي يحتوي على الكائنات المحللة فقط"
+        ],
+        "correctIndex": 1,
+        "explanation": "A food web consists of many overlapping food chains connected together in an ecosystem.",
+        "explanationAr": "تتكون الشبكة الغذائية من عدة سلاسل غذائية متداخلة ومترابطة معاً في نظام بيئي واحد.",
+        "xpValue": 15
+      }
+    ]
+  },
+  {
+    "subject": "math",
+    "grade": 5,
+    "title": "القسمة المطولة 2",
+    "titleAr": "",
+    "scriptText": "عناصر عملية القسمة:المقسوم (Dividend): العدد المراد تقسيمه (يكون تحت رمز القسمة).المقسوم عليه (Divisor): العدد الذي نقسم عليه (يكون على اليسار).ناتج القسمة (Quotient): الإجابة النهائية (تكتب في الأعلى).الباقي (Remainder): ما يتبقى في الأسفل إن لم تقبل القسمة بالتساوي.الخطوات الـ 4 الأساسية (مثال: $75 \\div 3$)1.اقسم (Divide):ابدأ من يسار المقسوم: $7 \\div 3 = 2$ (نكتب 2 في الأعلى فوق الرقم 7).2.اضرب (Multiply):اضرب الناتج في المقسوم عليه: $2 \\times 3 = 6$ (نكتب 6 تحت الرقم 7).3.اطرح (Subtract):اطرح للحصول على المتبقي: $7 - 6 = 1$.4.أنزل الرقم التالي (Bring Down):أنزل الرقم المتبقي (5) بجانب الناتج السلسلي ليصبح العدد الجديد $15$.كرر نفس الخطوات للعدد الجديد $15$:اقسم: $15 \\div 3 = 5$ (اكتب 5 في الأعلى بجانب الـ 2).اضرب: $5 \\times 3 = 15$.اطرح: $15 - 15 = 0$.الناتج النهائي: $25$ وبدون باقي.",
+    "scriptTextAr": "",
+    "videoUrl": "https://rpsviaaboaqinnvlmzpi.supabase.co/storage/v1/object/public/videos/teacher-reels/60-1789455354132.mp4",
+    "durationSec": 60,
+    "questions": [
+      {
+        "questionText": "In a division problem, what is the final answer written at the top called?",
+        "questionTextAr": "في عملية القسمة، ماذا نسمي الإجابة النهائية التي نكتبها في الأعلى؟",
+        "choices": [
+          "Dividend",
+          "Divisor",
+          "Quotient",
+          "Remainder"
+        ],
+        "choicesAr": [
+          "المقسوم",
+          "المقسوم عليه",
+          "ناتج القسمة",
+          "الباقي"
+        ],
+        "correctIndex": 2,
+        "explanation": "The quotient is the final answer written at the top during division.",
+        "explanationAr": "ناتج القسمة هو الإجابة النهائية التي نكتبها في الأعلى أثناء عملية القسمة.",
+        "xpValue": 15
+      },
+      {
+        "questionText": "What is the second step in the 4 basic steps of long division?",
+        "questionTextAr": "ما هي الخطوة الثانية من الخطوات الأربع الأساسية لعملية القسمة؟",
+        "choices": [
+          "Divide",
+          "Multiply",
+          "Subtract",
+          "Bring Down"
+        ],
+        "choicesAr": [
+          "اقسم",
+          "اضرب",
+          "اطرح",
+          "أنزل الرقم التالي"
+        ],
+        "correctIndex": 1,
+        "explanation": "The four steps in order are Divide, Multiply, Subtract, and Bring Down.",
+        "explanationAr": "الخطوات الأربع بالترتيب هي: اقسم، اضرب، اطرح، ثم أنزل الرقم التالي.",
+        "xpValue": 15
+      },
+      {
+        "questionText": "What is the result (quotient) of dividing 75 by 3?",
+        "questionTextAr": "ما هو ناتج قسمة العدد 75 على 3؟",
+        "choices": [
+          "15",
+          "20",
+          "25",
+          "30"
+        ],
+        "choicesAr": [
+          "15",
+          "20",
+          "25",
+          "30"
+        ],
+        "correctIndex": 2,
+        "explanation": "Following the division steps, 75 divided by 3 equals 25 with no remainder.",
+        "explanationAr": "باتباع خطوات القسمة، 75 مقسومة على 3 تساوي 25 وبدون باقي.",
+        "xpValue": 15
+      },
+      {
+        "questionText": "What do we call the number left over at the bottom if a number does not divide evenly?",
+        "questionTextAr": "ماذا نسمي ما يتبقى في الأسفل إذا لم تقبل المسألة القسمة بالتساوي؟",
+        "choices": [
+          "Divisor",
+          "Remainder",
+          "Quotient",
+          "Dividend"
+        ],
+        "choicesAr": [
+          "المقسوم عليه",
+          "الباقي",
+          "ناتج القسمة",
+          "المقسوم"
+        ],
+        "correctIndex": 1,
+        "explanation": "The remainder is what is left over at the bottom when numbers cannot be divided evenly.",
+        "explanationAr": "الباقي هو ما يتبقى في الأسفل إن لم تقبل الأعداد القسمة بالتساوي.",
+        "xpValue": 15
+      }
+    ]
+  }
+]

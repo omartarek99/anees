@@ -1,5 +1,8 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { db } from './db.js';
 import { encrypt, hashForLookup } from '../lib/encryption.js';
 
@@ -109,7 +112,16 @@ const ALLOW_DEV_ACCOUNTS = process.env.NODE_ENV !== 'production' || process.env.
  * not exist yet (the password is never reset on later boots); remove the password variable
  * from the host's settings after the first start. */
 function setUpProductionAccounts() {
-  db.prepare(`UPDATE users SET is_active = 0 WHERE username IN ('dev_student', 'dev_teacher', 'dev_admin')`).run();
+  // dev_admin is always switched off (its password is public and it is an admin). dev_student /
+  // dev_teacher only while they still use their public README password -- the test accounts
+  // created from seed-data/test-accounts.json have their own strong ones and must stay usable.
+  db.prepare(`UPDATE users SET is_active = 0 WHERE username = 'dev_admin'`).run();
+  for (const [name, publicPassword] of [['dev_student', 'devpass123'], ['dev_teacher', 'teachpass123']] as const) {
+    const row = db.prepare(`SELECT id, password_hash FROM users WHERE username = ?`).get(name) as { id: number; password_hash: string } | undefined;
+    if (row && bcrypt.compareSync(publicPassword, row.password_hash)) {
+      db.prepare(`UPDATE users SET is_active = 0 WHERE id = ?`).run(row.id);
+    }
+  }
 
   // Hosting dashboards / Notepad sometimes leave stray spaces, a hidden \r, or wrapping quotes
   // on pasted values -- strip those so a copy-paste slip doesn't silently block the admin.
@@ -144,6 +156,143 @@ function setUpProductionAccounts() {
   console.log(`[seed] Created initial admin account "${username}".`);
 }
 
+// ---------------------------------------------------------------------------
+// Production data setup (runs on every production boot, each part idempotent)
+// ---------------------------------------------------------------------------
+const SEED_DATA_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../seed-data');
+
+function readSeedJson<T>(name: string): T | null {
+  const file = path.join(SEED_DATA_DIR, name);
+  if (!fs.existsSync(file)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf-8')) as T;
+  } catch (err) {
+    console.warn(`[seed] Could not read seed-data/${name}:`, err);
+    return null;
+  }
+}
+
+type TestAccount = {
+  username: string;
+  role: 'student' | 'teacher';
+  displayName: string;
+  avatarKey: string;
+  grade: number | null;
+  schoolName: string;
+  teacherSubject: string | null;
+  // bcrypt hash of a random password -- safe to keep in the repo (the password itself is not).
+  passwordHash: string;
+};
+
+/** Creates the dev_student / dev_teacher test accounts from seed-data/test-accounts.json -- same
+ * usernames as the local dev accounts, but with their own strong passwords instead of the ones
+ * printed in the README. Existing accounts are left untouched (passwords are never reset). */
+function ensureTestAccounts(): void {
+  const accounts = readSeedJson<TestAccount[]>('test-accounts.json');
+  if (!accounts) return;
+  const level1 = db.prepare(`SELECT id FROM map_levels WHERE level_number = 1`).get() as { id: number } | undefined;
+  for (const a of accounts) {
+    if (db.prepare(`SELECT id FROM users WHERE lower(username) = lower(?)`).get(a.username)) continue;
+    const email = `${a.username}@anees.local`;
+    const userId = Number(
+      db
+        .prepare(
+          `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified, school_name, teacher_subject) VALUES (?,?,?,?,?,?,0,0,?,?,1,?,?)`
+        )
+        .run(a.username, encrypt(email), hashForLookup(email), a.passwordHash, a.displayName, a.avatarKey, a.role, a.grade, a.schoolName, a.teacherSubject)
+        .lastInsertRowid
+    );
+    if (level1) {
+      db.prepare(`INSERT OR IGNORE INTO user_level_progress (user_id, map_level_id, status) VALUES (?,?,'available')`).run(userId, level1.id);
+    }
+    console.log(`[seed] Created test account "${a.username}" (${a.role}).`);
+  }
+}
+
+type SeedLesson = {
+  subject: string;
+  grade: number;
+  title: string;
+  titleAr: string;
+  scriptText: string;
+  scriptTextAr: string;
+  videoUrl: string | null;
+  durationSec: number;
+  questions: {
+    questionText: string;
+    questionTextAr: string;
+    choices: string[];
+    choicesAr: string[];
+    correctIndex: number;
+    explanation: string;
+    explanationAr: string;
+    xpValue: number;
+  }[];
+};
+
+/** Imports the lessons (videos + their quiz questions) from seed-data/lessons.json as grade
+ * lessons owned by the dev_teacher account. A lesson whose title + grade already exists for that
+ * teacher is skipped, so this is safe to run on every boot. The video files stay where they are
+ * (Supabase Storage) -- only the lesson records are created here. */
+function importLessons(): void {
+  const lessons = readSeedJson<SeedLesson[]>('lessons.json');
+  if (!lessons || lessons.length === 0) return;
+  const teacher = db.prepare(`SELECT id FROM users WHERE username = 'dev_teacher'`).get() as { id: number } | undefined;
+  if (!teacher) {
+    console.warn('[seed] Lessons not imported: the dev_teacher account does not exist.');
+    return;
+  }
+  const insertReel = db.prepare(
+    `INSERT INTO reels (subject_id, map_level_id, title, title_ar, script_text, script_text_ar, video_url, duration_sec, order_in_level, author_user_id, grade) VALUES (?,?,?,?,?,?,?,?,1,?,?)`
+  );
+  const insertQuestion = db.prepare(
+    `INSERT INTO reel_questions (reel_id, question_text, question_text_ar, choices_json, choices_json_ar, correct_index, explanation, explanation_ar, xp_value, order_in_reel) VALUES (?,?,?,?,?,?,?,?,?,?)`
+  );
+  let imported = 0;
+  for (const l of lessons) {
+    const subject = db.prepare(`SELECT id FROM subjects WHERE key = ?`).get(l.subject) as { id: number } | undefined;
+    // Grade lessons are decoupled from the map but the columns are NOT NULL -- same
+    // placeholder level the teacher composer uses (routes/teacherReels.ts).
+    const level = subject
+      ? (db.prepare(`SELECT id FROM map_levels WHERE subject_id = ? AND kind = 'normal' ORDER BY level_number LIMIT 1`).get(subject.id) as { id: number } | undefined)
+      : undefined;
+    if (!subject || !level) continue;
+    if (db.prepare(`SELECT id FROM reels WHERE author_user_id = ? AND title = ? AND grade = ?`).get(teacher.id, l.title, l.grade)) continue;
+    const reelId = Number(
+      insertReel.run(subject.id, level.id, l.title, l.titleAr, l.scriptText, l.scriptTextAr, l.videoUrl, l.durationSec, teacher.id, l.grade).lastInsertRowid
+    );
+    l.questions.forEach((q, i) => {
+      insertQuestion.run(
+        reelId, q.questionText, q.questionTextAr, JSON.stringify(q.choices), JSON.stringify(q.choicesAr),
+        q.correctIndex, q.explanation, q.explanationAr, q.xpValue, i + 1
+      );
+    });
+    imported++;
+  }
+  if (imported > 0) console.log(`[seed] Imported ${imported} lesson(s) for dev_teacher.`);
+}
+
+/** Runs `fn` once per database, ever -- the marker row in one_time_jobs stops it repeating. */
+function runOnce(name: string, fn: () => void): void {
+  if (db.prepare(`SELECT 1 FROM one_time_jobs WHERE name = ?`).get(name)) return;
+  fn();
+  db.prepare(`INSERT INTO one_time_jobs (name) VALUES (?)`).run(name);
+  console.log(`[seed] One-time job done: ${name}`);
+}
+
+/** Everything that needs the subjects / map levels to exist, so it runs after the content seed. */
+function importProductionData(): void {
+  ensureTestAccounts();
+  importLessons();
+  // Clean slate before launch: everyone (demo students and test accounts included) starts at
+  // zero points, and the point history behind the leaderboards is cleared.
+  runOnce('reset-all-points-2026-10-20', () => {
+    db.exec(`UPDATE users SET total_xp = 0, teacher_points = 0`);
+    db.exec(`DELETE FROM xp_events`);
+    db.exec(`DELETE FROM teacher_point_events`);
+  });
+}
+
 export function seed() {
   if (ALLOW_DEV_ACCOUNTS) {
     ensureDevTeacher();
@@ -155,7 +304,11 @@ export function seed() {
     setUpProductionAccounts();
   }
   const subjectCount = (db.prepare('SELECT COUNT(*) as c FROM subjects').get() as { c: number }).c;
-  if (subjectCount > 0) return; // already seeded
+  if (subjectCount > 0) {
+    // already seeded
+    if (!ALLOW_DEV_ACCOUNTS) importProductionData();
+    return;
+  }
 
   const insertSubject = db.prepare('INSERT INTO subjects (key, name, name_ar, icon) VALUES (?,?,?,?)');
   const mathId = Number(insertSubject.run('math', 'Math', 'الرياضيات', '\u{1F9EE}').lastInsertRowid);
@@ -809,6 +962,9 @@ export function seed() {
   // Level 1 didn't exist yet when ensureDevTeacherProgress() ran at the top of this
   // function on a brand-new database -- now that it's been created above, try again.
   ensureDevTeacherProgress();
+
+  // First boot of a production database: content now exists, so the production data can go in.
+  if (!ALLOW_DEV_ACCOUNTS) importProductionData();
 
   console.log('[seed] Database seeded: subjects, 50 map levels, 10 boss fights, reels, worksheets, news, dev + demo accounts.');
 }

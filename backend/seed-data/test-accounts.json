@@ -1,0 +1,22 @@
+[
+  {
+    "username": "dev_student",
+    "role": "student",
+    "displayName": "Dev Student",
+    "avatarKey": "falcon",
+    "grade": 5,
+    "schoolName": "Anees Test School",
+    "teacherSubject": null,
+    "passwordHash": "$2a$10$FP/hND.lv7O9xIKgHEgnOOgcNqTlGFXUZ4z42cNk0mh4NfoWBeRAG"
+  },
+  {
+    "username": "dev_teacher",
+    "role": "teacher",
+    "displayName": "Dev Teacher",
+    "avatarKey": "explorer",
+    "grade": null,
+    "schoolName": "Anees Test School",
+    "teacherSubject": "math",
+    "passwordHash": "$2a$10$hl0tAxhM9WSFGcFjhO5fqeIwx9nKdLDPKanBll2eWP.wkCYUNOH/C"
+  }
+]

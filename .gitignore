@@ -47,3 +47,9 @@ Thumbs.db
 
 # Ready-to-paste production env block for the hosting dashboard -- contains real secrets
 backend/.env.production
+
+.vercel
+.env*
+
+# Generated passwords for the production test accounts -- never commit
+backend/.test-accounts-passwords.txt

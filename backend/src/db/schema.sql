@@ -323,3 +323,9 @@ CREATE INDEX IF NOT EXISTS idx_page_views_created ON page_views(created_at);
 CREATE INDEX IF NOT EXISTS idx_xp_events_user_time ON xp_events(user_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_progress_user ON user_level_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash);
+
+-- Marker rows for data fixes that must run once per database (see runOnce() in seed.ts).
+CREATE TABLE IF NOT EXISTS one_time_jobs (
+  name TEXT PRIMARY KEY,
+  ran_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
