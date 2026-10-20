@@ -41,7 +41,11 @@ const isProd = process.env.NODE_ENV === 'production';
 // setup for e.g. a Node app behind nginx/Render/Fly/Heroku); `req.secure` alone only sees
 // the proxy's own local HTTP connection to this process, not what the browser used.
 if (isProd) {
-  app.set('trust proxy', 1);
+  // Number of reverse proxies in front of this process. 1 = just the host's own (Render/
+  // Fly/Railway). Behind Vercel rewriting /api to this server it is 2 -- with 1, every
+  // visitor would appear to share Vercel's IP and the per-IP rate limiters (login, signup)
+  // would lock everyone out together. Set TRUST_PROXY_HOPS=2 in that setup.
+  app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 1));
   app.use((req, res, next) => {
     if (req.secure || req.get('x-forwarded-proto') === 'https') {
       next();

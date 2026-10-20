@@ -97,12 +97,45 @@ function ensureDevTeacherProgress() {
   ).run(teacher.id, level1.id);
 }
 
+// The dev_student / dev_teacher / dev_admin accounts have passwords that are printed in the
+// README -- fine on a laptop, a backdoor on a public server (dev_admin is an admin). They are
+// only created when NODE_ENV is not "production" (or ALLOW_DEV_ACCOUNTS=1 is set on purpose).
+const ALLOW_DEV_ACCOUNTS = process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEV_ACCOUNTS === '1';
+
+/** Production only: turns off any dev account a database already has (e.g. a copy of a dev
+ * database), and creates the first real admin from INITIAL_ADMIN_USERNAME /
+ * INITIAL_ADMIN_PASSWORD -- admins can't be created through public signup, so without this a
+ * production site would have no admin at all. The admin is only created if the username does
+ * not exist yet (the password is never reset on later boots); remove the password variable
+ * from the host's settings after the first start. */
+function setUpProductionAccounts() {
+  db.prepare(`UPDATE users SET is_active = 0 WHERE username IN ('dev_student', 'dev_teacher', 'dev_admin')`).run();
+
+  const username = process.env.INITIAL_ADMIN_USERNAME?.trim();
+  const password = process.env.INITIAL_ADMIN_PASSWORD;
+  if (!username || !password) return;
+  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username) || password.length < 12) {
+    console.warn('[seed] INITIAL_ADMIN_USERNAME must be 3-20 letters/numbers/underscores and INITIAL_ADMIN_PASSWORD at least 12 characters -- admin not created.');
+    return;
+  }
+  if (db.prepare(`SELECT id FROM users WHERE lower(username) = lower(?)`).get(username)) return;
+  const email = `${username}@anees.local`;
+  db.prepare(
+    `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+  ).run(username, encrypt(email), hashForLookup(email), bcrypt.hashSync(password, 10), 'Anees Team', 'robot', 0, 0, 'admin', null, 1);
+  console.log(`[seed] Created initial admin account "${username}".`);
+}
+
 export function seed() {
-  ensureDevTeacher();
-  ensureDevAdmin();
-  ensureAdminDisplayName();
-  ensureSeedAccountsVerified();
-  ensureDevTeacherProgress();
+  if (ALLOW_DEV_ACCOUNTS) {
+    ensureDevTeacher();
+    ensureDevAdmin();
+    ensureAdminDisplayName();
+    ensureSeedAccountsVerified();
+    ensureDevTeacherProgress();
+  } else {
+    setUpProductionAccounts();
+  }
   const subjectCount = (db.prepare('SELECT COUNT(*) as c FROM subjects').get() as { c: number }).c;
   if (subjectCount > 0) return; // already seeded
 
@@ -698,24 +731,26 @@ export function seed() {
   );
   const insertXpEvent = db.prepare(`INSERT INTO xp_events (user_id, amount, reason, created_at) VALUES (?,?,?,?)`);
 
-  const devPasswordHash = bcrypt.hashSync('devpass123', 10);
-  const devEmail = 'dev_student@anees.local';
-  const devUserId = Number(
-    insertUser.run(
-      'dev_student',
-      encrypt(devEmail),
-      hashForLookup(devEmail),
-      devPasswordHash,
-      'Dev Student',
-      'falcon',
-      0,
-      0,
-      'student',
-      5,
-      1
-    ).lastInsertRowid
-  );
-  insertProgress.run(devUserId, levelIds.get(1)!, 'available');
+  if (ALLOW_DEV_ACCOUNTS) {
+    const devPasswordHash = bcrypt.hashSync('devpass123', 10);
+    const devEmail = 'dev_student@anees.local';
+    const devUserId = Number(
+      insertUser.run(
+        'dev_student',
+        encrypt(devEmail),
+        hashForLookup(devEmail),
+        devPasswordHash,
+        'Dev Student',
+        'falcon',
+        0,
+        0,
+        'student',
+        5,
+        1
+      ).lastInsertRowid
+    );
+    insertProgress.run(devUserId, levelIds.get(1)!, 'available');
+  }
   // dev_teacher is created by ensureDevTeacher() above (runs on every boot, not just first-seed).
 
   // ---------------------------------------------------------------------

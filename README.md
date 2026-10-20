@@ -133,6 +133,35 @@ isn't actually a decodable image (a corrupt upload, or a spoofed upload trying t
 something else off as a photo) is caught and rejected cleanly rather than crashing the
 server — see [Security & Content Safety](#security--content-safety).
 
+### Deploying (Vercel frontend + a Node host for the backend)
+
+`vercel.json` only builds the **frontend** (static files). The backend is an Express server with a
+SQLite file, video/ID uploads and ffmpeg, so it needs a host that runs a long-lived Node process
+**with a persistent disk** (Render, Railway, Fly.io, a VPS) -- Vercel's serverless functions can't
+keep `backend/data/app.db`. Without a backend, every `/api/*` request on the Vercel site returns a
+404 and login/signup show "Request failed (404)".
+
+1. **Backend host** (Node 22.5+, start command `npm start --prefix backend` after `npm run build --prefix backend`,
+   or `npx tsx src/index.ts`), with a persistent disk mounted at `backend/data`. Environment variables:
+   - `NODE_ENV=production`
+   - `ENCRYPTION_KEY` (64 hex chars -- back it up, never change it), `FIREBASE_API_KEY`,
+     `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`
+   - `FRONTEND_ORIGIN=https://<your-site>.vercel.app` (CORS + the link in verification emails)
+   - `TRUST_PROXY_HOPS=2` when Vercel proxies `/api` to the backend (step 2); `1` if the browser talks to the backend directly
+   - `INITIAL_ADMIN_USERNAME` / `INITIAL_ADMIN_PASSWORD` (12+ chars) -- creates the first admin on the first boot;
+     remove the password variable afterwards. In production the `dev_*` accounts are **never created** (and are
+     deactivated if a copied database has them), because their passwords are public in this README.
+2. **Vercel**: add a rewrite *before* the SPA one in `vercel.json` so the browser keeps talking to one origin
+   (cookies keep working, no CORS):
+   ```json
+   { "source": "/api/:path*", "destination": "https://<your-backend-host>/api/:path*" }
+   ```
+3. **Firebase console -> Authentication -> Settings -> Authorized domains**: add the Vercel domain, or signup
+   fails with "We couldn't send the verification email".
+
+The dev auto-login (`DEV_BYPASS_LOGIN`) is dev-server-only: it is ignored in `vite build`, so a deployed site
+always shows the real login page.
+
 ### Dev utility: deleting a test account
 
 While testing signup, `backend/scripts/delete-user.ts` fully removes one account by
