@@ -75,6 +75,7 @@ export function SignupPage() {
         teacherSubject: role === 'teacher' ? teacherSubject : undefined,
         idDocument: role === 'teacher' ? idDocument ?? undefined : undefined,
         website,
+        lang: lang === 'ar' ? 'ar' : 'en',
       });
       setPendingEmail(result.email);
       setPendingIdToken(result.idToken);
@@ -91,7 +92,7 @@ export function SignupPage() {
     setResending(true);
     setResent(false);
     try {
-      await resendVerification(pendingIdToken);
+      await resendVerification(pendingIdToken, lang === 'ar' ? 'ar' : 'en');
       setResent(true);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';

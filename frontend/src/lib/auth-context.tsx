@@ -41,12 +41,14 @@ type AuthContextValue = {
     idDocument?: File;
     /** Honeypot -- see SignupPage.tsx. Always '' from a real submission. */
     website?: string;
+    /** Language for the verification email. */
+    lang?: 'en' | 'ar';
   }) => Promise<{ email: string; idToken: string }>;
   login: (input: { username: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   verifyEmail: (oobCode: string) => Promise<void>;
-  resendVerification: (idToken: string) => Promise<void>;
+  resendVerification: (idToken: string, lang?: 'en' | 'ar') => Promise<void>;
   dismissWarning: () => Promise<void>;
 };
 
@@ -106,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (input.grade !== undefined) formData.append('grade', String(input.grade));
     if (input.idDocument) formData.append('idDocument', input.idDocument);
     formData.append('website', input.website ?? '');
+    if (input.lang) formData.append('lang', input.lang);
 
     const data = await api.postForm<{ pendingVerification: true; email: string; idToken: string }>(
       '/auth/signup',
@@ -129,8 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   };
 
-  const resendVerification: AuthContextValue['resendVerification'] = async (idToken) => {
-    await api.post('/auth/resend-verification', { idToken });
+  const resendVerification: AuthContextValue['resendVerification'] = async (idToken, lang) => {
+    await api.post('/auth/resend-verification', { idToken, lang });
   };
 
   const dismissWarning = async () => {

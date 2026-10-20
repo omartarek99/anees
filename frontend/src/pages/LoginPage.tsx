@@ -50,7 +50,7 @@ export function LoginPage() {
     setResending(true);
     setResent(false);
     try {
-      await resendVerification(unverifiedIdToken);
+      await resendVerification(unverifiedIdToken, lang === 'ar' ? 'ar' : 'en');
       setResent(true);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';

@@ -105,7 +105,7 @@ authRouter.post(
   handleIdDocumentUpload,
   validateBody(signupSchema),
   async (req, res) => {
-    const { username, email, password, avatarKey, role, grade, schoolName, teacherSubject } = req.body;
+    const { username, email, password, avatarKey, role, grade, schoolName, teacherSubject, lang } = req.body;
     // Nobody enters a display name at signup -- accounts start with their username.
     const displayName: string = req.body.displayName ?? username;
     const idDocument = req.file;
@@ -209,7 +209,7 @@ authRouter.post(
       }
     }
 
-    const sendResult = await firebaseSendVerificationEmail(idToken, verifyEmailContinueUrl);
+    const sendResult = await firebaseSendVerificationEmail(idToken, verifyEmailContinueUrl, lang ?? 'ar');
     if (!sendResult.ok) {
       // Roll back so the username/email is free to retry with instead of being stuck
       // on an account that never got its verification email (and never leave an
@@ -339,7 +339,7 @@ authRouter.post(
   requireCsrfHeader,
   validateBody(resendVerificationSchema),
   async (req, res) => {
-    const { idToken } = req.body;
+    const { idToken, lang } = req.body;
 
     const lookupResult = await firebaseLookup(idToken);
     if (!lookupResult.ok || !lookupResult.data.users[0]) {
@@ -351,7 +351,7 @@ authRouter.post(
       return;
     }
 
-    const sendResult = await firebaseSendVerificationEmail(idToken, verifyEmailContinueUrl);
+    const sendResult = await firebaseSendVerificationEmail(idToken, verifyEmailContinueUrl, lang ?? 'ar');
     if (!sendResult.ok) {
       console.error('Firebase resend failed:', sendResult.error);
       res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });

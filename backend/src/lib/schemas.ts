@@ -64,6 +64,8 @@ export const signupSchema = z
     // human, so anything else here fails the same way any other invalid field would --
     // no separate "you're a bot" response that would tip off a bot script either way.
     website: z.string().max(0, 'Please leave this field blank.').optional().default(''),
+    // Language of the verification email (Firebase's template text can't be edited, only localised).
+    lang: z.enum(['en', 'ar']).optional(),
   })
   .refine((data) => data.role !== 'student' || data.grade !== undefined, {
     message: 'Please enter your grade.',
@@ -85,6 +87,7 @@ export const verifyEmailSchema = z.object({
 
 export const resendVerificationSchema = z.object({
   idToken: z.string().min(1, 'Missing verification token.'),
+  lang: z.enum(['en', 'ar']).optional(),
 });
 
 // The student's 3D character: option ids only, so nothing free-form is ever stored. The lists
