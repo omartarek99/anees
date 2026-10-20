@@ -111,8 +111,11 @@ const ALLOW_DEV_ACCOUNTS = process.env.NODE_ENV !== 'production' || process.env.
 function setUpProductionAccounts() {
   db.prepare(`UPDATE users SET is_active = 0 WHERE username IN ('dev_student', 'dev_teacher', 'dev_admin')`).run();
 
-  const username = process.env.INITIAL_ADMIN_USERNAME?.trim();
-  const password = process.env.INITIAL_ADMIN_PASSWORD;
+  // Hosting dashboards / Notepad sometimes leave stray spaces, a hidden \r, or wrapping quotes
+  // on pasted values -- strip those so a copy-paste slip doesn't silently block the admin.
+  const clean = (v: string | undefined) => v?.trim().replace(/^(['"])(.*)\1$/, '$2').trim();
+  const username = clean(process.env.INITIAL_ADMIN_USERNAME);
+  const password = clean(process.env.INITIAL_ADMIN_PASSWORD);
   // Each branch says what happened (never the values) -- on a hosting dashboard this is the only
   // way to tell "variables not set" from "rejected" from "already exists".
   if (!username || !password) {
@@ -122,7 +125,12 @@ function setUpProductionAccounts() {
     return;
   }
   if (!/^[a-zA-Z0-9_]{3,20}$/.test(username) || password.length < 12) {
-    console.warn('[seed] INITIAL_ADMIN_USERNAME must be 3-20 letters/numbers/underscores and INITIAL_ADMIN_PASSWORD at least 12 characters -- admin not created.');
+    // The username is not a secret, so it is shown (JSON-quoted, so spaces/quotes are visible);
+    // the password only as a length.
+    console.warn(
+      `[seed] Admin NOT created. INITIAL_ADMIN_USERNAME = ${JSON.stringify(username)} (${username.length} chars; needs 3-20 of letters/numbers/underscore). ` +
+        `INITIAL_ADMIN_PASSWORD has ${password.length} chars (needs at least 12).`
+    );
     return;
   }
   if (db.prepare(`SELECT id FROM users WHERE lower(username) = lower(?)`).get(username)) {
