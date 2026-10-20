@@ -138,42 +138,77 @@ export function LandingPage() {
   const { t, lang, setLang } = useLanguage();
   const { user } = useAuth();
   const [active, setActive] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
+  const railRef = useRef<HTMLElement>(null);
 
-  // Right-hand rail: whichever block crosses the middle of the screen is the current step.
-  useEffect(() => {
-    const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && setActive(STEP_IDS.indexOf(e.target.id))),
-      { rootMargin: '-45% 0px -50% 0px' }
-    );
-    STEP_IDS.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) io.observe(el);
-    });
-    return () => io.disconnect();
-  }, []);
-
-  // Parallax: the dune layers lag the scroll at different rates. Off for reduced motion and on phones.
+  // One rAF-throttled scroll handler drives everything that follows the page:
+  //  - the side rail: --f is a continuous 0..3 position between the step headings (the marker slides and
+  //    the filled line grows as you scroll), `active` is the heading currently crossing mid-screen;
+  //  - the hero parallax (--sy), off for reduced motion and on phones.
   useEffect(() => {
     const hero = heroRef.current;
-    if (!hero || window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 900px)').matches) return;
+    const rail = railRef.current;
+    if (!hero || !rail) return;
+    const parallax = !window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 900px)').matches;
+    const els = STEP_IDS.map((id) => document.getElementById(id)!);
     let raf = 0;
+    let current = -1;
     const update = () => {
       raf = 0;
-      hero.style.setProperty('--sy', String(Math.min(window.scrollY, 1400)));
+      if (parallax) hero.style.setProperty('--sy', String(Math.min(window.scrollY, 1400)));
+      const mid = window.innerHeight / 2;
+      const tops = els.map((el) => el.getBoundingClientRect().top);
+      let i = 0;
+      for (let k = 1; k < tops.length; k++) if (tops[k] <= mid) i = k;
+      const span = i + 1 < tops.length ? tops[i + 1] - tops[i] : 0;
+      const f = i + (span > 0 ? Math.min(1, Math.max(0, (mid - tops[i]) / span)) : 0);
+      rail.style.setProperty('--f', f.toFixed(3));
+      if (i !== current) {
+        current = i;
+        setActive(i);
+      }
     };
     const onScroll = () => {
       raf ||= requestAnimationFrame(update);
     };
+    update();
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
     return () => {
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
       cancelAnimationFrame(raf);
     };
   }, []);
 
+  // Intro animation: each story's text (and picture) eases in the first time it scrolls into view.
+  // The hidden starting state only exists once this has run (class js-reveal), so without JS everything
+  // is simply visible. With reduced motion (class js-calm) the same reveal is a plain fade: no sliding,
+  // no scaling -- the parallax stays off for those visitors.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    root.classList.add('js-reveal');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) root.classList.add('js-calm');
+    const io = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          e.target.classList.add('is-in');
+          io.unobserve(e.target);
+        }),
+      { threshold: 0.18, rootMargin: '0px 0px -6% 0px' }
+    );
+    root.querySelectorAll('.landing-story').forEach((el) => io.observe(el));
+    return () => {
+      io.disconnect();
+      root.classList.remove('js-reveal', 'js-calm');
+    };
+  }, []);
+
   return (
-    <div className="landing">
+    <div className="landing" ref={rootRef}>
       <header className="landing-header">
         <Link to="/" className="landing-logo" aria-label={t('brand')}>
           {t('brand')}
@@ -202,6 +237,21 @@ export function LandingPage() {
         </div>
       </header>
 
+      <nav className="landing-steps" aria-label="Sections" ref={railRef}>
+        <span className="landing-steps-track" aria-hidden="true">
+          <span />
+        </span>
+        <ol>
+          {STEP_IDS.map((id, i) => (
+            <li key={id} className={i < active ? 'is-past' : undefined}>
+              <button type="button" aria-current={active === i ? 'step' : undefined} onClick={() => goTo(id)}>
+                {i === 0 ? t('landing.start') : SECTIONS[i - 1].n}
+              </button>
+            </li>
+          ))}
+        </ol>
+      </nav>
+
       <section className="landing-hero" id="top" ref={heroRef}>
         <HeroScene />
         <div className="landing-rail" role="group" aria-label={t('landing.language')}>
@@ -209,21 +259,6 @@ export function LandingPage() {
           <button type="button" lang="en" aria-pressed={lang === 'en'} onClick={() => setLang('en')}>EN</button>
           <button type="button" lang="ar" aria-label="العربية" aria-pressed={lang === 'ar'} onClick={() => setLang('ar')}>ع</button>
         </div>
-
-        <nav className="landing-steps" aria-label="Sections">
-          <span className="landing-steps-track" aria-hidden="true">
-            <span style={{ transform: `translateY(${active * 60}px)` }} />
-          </span>
-          <ol>
-            {STEP_IDS.map((id, i) => (
-              <li key={id}>
-                <button type="button" aria-current={active === i ? 'step' : undefined} onClick={() => goTo(id)}>
-                  {i === 0 ? t('landing.start') : SECTIONS[i - 1].n}
-                </button>
-              </li>
-            ))}
-          </ol>
-        </nav>
 
         <div className="landing-hero-copy">
           <p className="landing-tag">{t('landing.heroTag')}</p>

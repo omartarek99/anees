@@ -245,6 +245,11 @@ html[lang='ar'] .landing-tag {
 .landing-hero-copy > :nth-child(3) {
   animation-delay: 0.16s;
 }
+@keyframes landing-fade {
+  from {
+    opacity: 0;
+  }
+}
 @keyframes landing-rise {
   from {
     opacity: 0;
@@ -288,19 +293,22 @@ html[lang='ar'] .landing-tag {
   border-color: var(--land-accent);
 }
 
-/* Right rail: Start / 01 / 02 / 03 with a sliding marker. */
+/* Side rail: Start / 01 / 02 / 03. Fixed to the vertical middle of the screen so it stays with you; --f
+   (0..3, set from the scroll handler) is the continuous position between the headings, so the marker
+   slides and the filled line grows as you scroll. */
 .landing-steps {
-  position: absolute;
-  z-index: 2;
-  inset-inline-end: var(--land-edge);
-  top: clamp(150px, 20vh, 326px);
+  --f: 0;
+  position: fixed;
+  z-index: 20;
+  inset-inline-end: clamp(10px, 0.9vw, 18px);
+  top: 50%;
+  translate: 0 -50%;
   display: flex;
   flex-direction: row-reverse;
-  gap: 24px;
+  gap: 14px;
   font-weight: 600;
-}
-html[dir='rtl'] .landing-steps {
-  flex-direction: row;
+  font-size: 0.8rem;
+  animation: landing-rail-in 0.9s 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .landing-steps ol {
   display: flex;
@@ -311,28 +319,57 @@ html[dir='rtl'] .landing-steps {
   list-style: none;
   text-align: end;
 }
+.landing-steps li {
+  block-size: 22px;
+  line-height: 22px;
+}
 .landing-steps button {
-  opacity: 0.75;
-  transition: color 0.2s ease, opacity 0.2s ease;
+  opacity: 0.5;
+  transition: color 0.3s ease, opacity 0.3s ease, letter-spacing 0.3s ease;
+}
+.landing-steps .is-past button {
+  opacity: 0.85;
 }
 .landing-steps button[aria-current='step'] {
   opacity: 1;
   color: var(--land-accent);
+  font-weight: 800;
 }
 .landing-steps-track {
   position: relative;
   inline-size: 3px;
   block-size: 240px;
-  background: rgb(246 241 233 / 0.35);
+  background: rgb(246 241 233 / 0.28);
+  border-radius: 2px;
+  overflow: hidden;
+}
+/* The filled part: from the top down to the end of the marker. */
+.landing-steps-track::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(39 170 225 / 0.15), rgb(39 170 225 / 0.65));
+  transform-origin: top;
+  transform: scaleY(calc((var(--f) * 60 + 60) / 240));
 }
 .landing-steps-track span {
   position: absolute;
   inset-inline: 0;
   top: 0;
   block-size: 60px;
+  border-radius: 2px;
   background: var(--land-accent);
-  box-shadow: 0 0 14px rgb(39 170 225 / 0.55);
-  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 14px rgb(39 170 225 / 0.6);
+  transform: translateY(calc(var(--f) * 60px));
+}
+@keyframes landing-rail-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--enter, 16px));
+  }
+}
+html[dir='rtl'] .landing-steps {
+  --enter: -16px;
 }
 
 /* ---------------- Story sections ---------------- */
@@ -525,6 +562,65 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
   color: var(--land-accent);
 }
 
+/* ---------------- Intro animation on scroll ---------------- */
+/* Hidden only while .js-reveal is on the page (added by LandingPage once its observer is running, and
+   never with reduced motion). When a story scrolls into view it gets .is-in and its parts ease in one
+   after another: the tag's rule draws itself, then tag, headline, paragraph, link, picture. */
+.landing-copy > :nth-child(2) { --i: 0; }
+.landing-copy > :nth-child(3) { --i: 1; }
+.landing-copy > :nth-child(4) { --i: 2; }
+.landing-copy > :nth-child(5) { --i: 3; }
+.landing-story img { --i: 2; }
+
+.landing.js-reveal .landing-story .landing-copy > :not(.landing-num),
+.landing.js-reveal .landing-story img {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.9s ease, transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--i, 0) * 120ms);
+}
+.landing.js-reveal .landing-story .landing-num {
+  opacity: 0;
+  transform: translateY(20px) scale(0.94);
+  transition: opacity 1.3s ease, transform 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.landing.js-reveal .landing-story .landing-tag::before {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+}
+html[dir='rtl'] .landing.js-reveal .landing-story .landing-tag::before {
+  transform-origin: right;
+}
+.landing.js-reveal .landing-story.is-in .landing-copy > :not(.landing-num),
+.landing.js-reveal .landing-story.is-in img {
+  opacity: 1;
+  transform: none;
+}
+.landing.js-reveal .landing-story.is-in .landing-num {
+  opacity: 0.1;
+  transform: none;
+}
+.landing.js-reveal .landing-story.is-in .landing-tag::before {
+  transform: scaleX(1);
+}
+
+/* Reduced motion: the same reveal as a plain fade (no sliding / scaling / drawing). */
+.landing.js-calm .landing-story .landing-copy > :not(.landing-num),
+.landing.js-calm .landing-story img,
+.landing.js-calm .landing-story .landing-num,
+.landing.js-calm .landing-story .landing-tag::before {
+  transform: none;
+}
+
+/* Keep the fixed side rail clear of the pictures and footer links. */
+@media (min-width: 1201px) {
+  .landing-story,
+  .landing-footer {
+    padding-inline-end: max(var(--land-edge), 76px);
+  }
+}
+
 /* ---------------- Responsive ---------------- */
 @media (max-width: 1200px) {
   .landing-steps {
@@ -583,9 +679,12 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-hero-copy > *,
   .landing-down {
     animation: none;
+  }
+  .landing-hero-copy > *,
+  .landing-steps {
+    animation-name: landing-fade;
   }
   .landing-layer {
     transform: none;
