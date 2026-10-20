@@ -113,12 +113,22 @@ function setUpProductionAccounts() {
 
   const username = process.env.INITIAL_ADMIN_USERNAME?.trim();
   const password = process.env.INITIAL_ADMIN_PASSWORD;
-  if (!username || !password) return;
+  // Each branch says what happened (never the values) -- on a hosting dashboard this is the only
+  // way to tell "variables not set" from "rejected" from "already exists".
+  if (!username || !password) {
+    console.warn(
+      `[seed] No admin created: INITIAL_ADMIN_USERNAME is ${username ? 'set' : 'MISSING'}, INITIAL_ADMIN_PASSWORD is ${password ? 'set' : 'MISSING'}.`
+    );
+    return;
+  }
   if (!/^[a-zA-Z0-9_]{3,20}$/.test(username) || password.length < 12) {
     console.warn('[seed] INITIAL_ADMIN_USERNAME must be 3-20 letters/numbers/underscores and INITIAL_ADMIN_PASSWORD at least 12 characters -- admin not created.');
     return;
   }
-  if (db.prepare(`SELECT id FROM users WHERE lower(username) = lower(?)`).get(username)) return;
+  if (db.prepare(`SELECT id FROM users WHERE lower(username) = lower(?)`).get(username)) {
+    console.log(`[seed] Account "${username}" already exists -- left unchanged (its password is not reset by this setting).`);
+    return;
+  }
   const email = `${username}@anees.local`;
   db.prepare(
     `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
