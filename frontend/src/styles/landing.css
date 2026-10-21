@@ -1,15 +1,15 @@
 /* Landing page (pages/LandingPage.tsx) -- the "MNTN" Figma layout in Anees's own words and art.
-   Always dark, whatever the app theme. Palette from the Anees brand board (anees-brand-board.netlify.app):
-   Qatari maroon #8a1538, sky blue #27aae1, sand #f6f1e9, on the board's warm dark ground #1b1518.
+   Always dark, whatever the app theme. Palette from the hero artwork: dusk violet #7374a0, sunset peach
+   #e39c75, gold #fcc490, sea blue #274072, cream #fde3b2, on a deep indigo ground #17132e.
    Sizes are the 1920px design's, made fluid with clamp(); positions use logical properties so
    the whole page mirrors in Arabic. */
 
 .landing {
-  --land-maroon: #8a1538;
-  --land-cyan: #27aae1;
-  --land-sand: #f6f1e9;
-  --land-bg: #1b1518;
-  --land-accent: var(--land-cyan); /* tags, links, rails -- readable on the dark ground (~7:1) */
+  --land-ink: #3a2a78; /* the label on the cream button */
+  --land-gold: #f7be72;
+  --land-sand: #fbf2e4;
+  --land-bg: #17132e;
+  --land-accent: var(--land-gold); /* tags, links, rails -- readable on the dark ground (~10:1) */
   --land-serif: var(--font-heading);
   --land-edge: clamp(20px, 4.2vw, 80px);
   min-height: 100vh;
@@ -93,7 +93,7 @@ html[lang='ar'] .landing-logo {
 .landing .landing-btn--solid {
   background: var(--land-sand);
   border-color: var(--land-sand);
-  color: var(--land-maroon);
+  color: var(--land-ink);
 }
 .landing .landing-btn--solid:hover {
   background: var(--land-accent);
@@ -101,7 +101,7 @@ html[lang='ar'] .landing-logo {
   color: var(--land-bg);
 }
 .landing-btn--ghost {
-  border-color: rgb(246 241 233 / 0.4);
+  border-color: rgb(251 242 228 / 0.4);
 }
 .landing-btn--ghost:hover {
   border-color: var(--land-accent);
@@ -117,9 +117,9 @@ html[lang='ar'] .landing-logo {
   /* Sky: the warm dark ground rises into maroon, with a soft glow where the sun went down. Many eased
      stops (not two) so the blend has no visible bands; the grain layer below hides what is left. */
   background:
-    radial-gradient(38% 42% at 80% 16%, rgb(39 170 225 / 0.2) 0%, rgb(39 170 225 / 0.12) 30%, rgb(39 170 225 / 0.05) 60%, transparent 100%),
-    radial-gradient(80% 54% at 30% 62%, rgb(246 241 233 / 0.3) 0%, rgb(214 120 140 / 0.2) 22%, rgb(176 62 98 / 0.12) 45%, rgb(138 21 56 / 0.04) 68%, transparent 100%),
-    linear-gradient(180deg, #1b1518 0%, #22161b 7%, #2c1720 15%, #3b1826 24%, #4f1832 34%, #64173b 44%, #761640 53%, #8a1538 62%, #8a2646 70%, #6e2a40 78%, #4d2433 87%, #2e1b24 95%, #241a1e 100%);
+    radial-gradient(38% 42% at 80% 16%, rgb(115 116 160 / 0.3) 0%, rgb(115 116 160 / 0.16) 30%, rgb(115 116 160 / 0.06) 60%, transparent 100%),
+    radial-gradient(80% 54% at 30% 62%, rgb(252 196 144 / 0.34) 0%, rgb(227 156 117 / 0.22) 22%, rgb(202 123 95 / 0.12) 45%, rgb(165 123 148 / 0.04) 68%, transparent 100%),
+    linear-gradient(180deg, #17132e 0%, #1c1740 8%, #261e57 18%, #34286f 30%, #4a3a82 42%, #6a4f90 54%, #93608f 64%, #b9728b 71%, #8a5a80 79%, #4d3a68 88%, #2a2250 95%, #1d1838 100%);
 }
 /* Fine film grain over the sky (an inline SVG turbulence tile): dithers the gradients so dark blends stay smooth. */
 .landing-hero::before {
@@ -138,37 +138,25 @@ html[lang='ar'] .landing-logo {
   inset: 0;
   z-index: 1;
   background:
-    linear-gradient(180deg, rgb(27 21 24 / 0.38) 0%, rgb(27 21 24 / 0.16) 7%, rgb(27 21 24 / 0.04) 15%, transparent 24%),
-    linear-gradient(180deg, transparent 56%, rgb(27 21 24 / 0.1) 62%, rgb(27 21 24 / 0.3) 70%, rgb(27 21 24 / 0.58) 78%, rgb(27 21 24 / 0.82) 86%, rgb(27 21 24 / 0.95) 93%, var(--land-bg) 100%);
+    radial-gradient(60% 46% at 52% 30%, rgb(23 19 46 / 0.5) 0%, rgb(23 19 46 / 0.28) 55%, transparent 100%),
+    linear-gradient(180deg, rgb(23 19 46 / 0.62) 0%, rgb(23 19 46 / 0.45) 12%, rgb(23 19 46 / 0.22) 28%, rgb(23 19 46 / 0.06) 42%, transparent 52%),
+    linear-gradient(180deg, transparent 50%, rgb(23 19 46 / 0.1) 56%, rgb(23 19 46 / 0.3) 64%, rgb(23 19 46 / 0.58) 73%, rgb(23 19 46 / 0.82) 82%, rgb(23 19 46 / 0.95) 91%, var(--land-bg) 100%);
   pointer-events: none;
 }
 
-.landing-scene {
+/* The hero picture is an ordinary part of the page: it scrolls away with the hero (never fixed, never tiled), drifts a
+   touch slower than the text, fades in when it loads, and its lower edge dissolves into the page ground (::after). */
+.landing-bg {
   position: absolute;
-  inset: 0;
   z-index: 0;
-}
-.landing-layer {
-  position: absolute;
   inset-inline: 0;
-  bottom: 0;
-  width: 100%;
-  height: 74%;
-  will-change: transform;
-}
-.landing-layer--sky {
-  top: 0;
-  bottom: auto;
-  height: 60%;
-}
-.landing-layer--far {
-  transform: translate3d(0, calc(var(--sy, 0) * 0.3px), 0);
-}
-.landing-layer--mid {
-  transform: translate3d(0, calc(var(--sy, 0) * 0.18px), 0);
-}
-.landing-layer--near {
-  transform: translate3d(0, calc(var(--sy, 0) * 0.07px), 0);
+  inset-block-start: -14%;
+  inline-size: 100%;
+  block-size: 114%;
+  object-fit: cover;
+  object-position: 62% 100%;
+  transform: translate3d(0, calc(var(--sy, 0) * 0.1px), 0);
+  animation: landing-fade 1.4s ease both;
 }
 
 .landing-hero-copy {
@@ -192,7 +180,7 @@ html[lang='ar'] .landing-logo {
   text-transform: capitalize;
   text-wrap: balance;
   color: var(--land-sand);
-  text-shadow: 0 2px 28px rgb(27 21 24 / 0.55);
+  text-shadow: 0 2px 28px rgb(23 19 46 / 0.55);
 }
 html[lang='ar'] .landing-hero-copy h1 {
   text-transform: none;
@@ -274,10 +262,15 @@ html[lang='ar'] .landing-tag {
 .landing-rail span {
   writing-mode: vertical-rl;
 }
+/* Both rails float over the bright hero picture with no panel of their own; a soft shadow on the type keeps them legible. */
+.landing-rail,
+.landing-steps {
+  text-shadow: 0 1px 10px rgb(23 19 46 / 0.75);
+}
 .landing-rail button {
   inline-size: 34px;
   block-size: 34px;
-  border: 1.5px solid rgb(246 241 233 / 0.4);
+  border: 1.5px solid rgb(251 242 228 / 0.4);
   border-radius: 50%;
   font-size: 0.8rem;
   font-weight: 700;
@@ -336,7 +329,7 @@ html[lang='ar'] .landing-tag {
   position: relative;
   inline-size: 3px;
   block-size: 240px;
-  background: rgb(246 241 233 / 0.28);
+  background: rgb(251 242 228 / 0.28);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -345,7 +338,7 @@ html[lang='ar'] .landing-tag {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgb(39 170 225 / 0.15), rgb(39 170 225 / 0.65));
+  background: linear-gradient(180deg, rgb(247 190 114 / 0.15), rgb(247 190 114 / 0.65));
   transform-origin: top;
   transform: scaleY(calc((var(--f) * 60 + 60) / 240));
 }
@@ -356,7 +349,7 @@ html[lang='ar'] .landing-tag {
   block-size: 60px;
   border-radius: 2px;
   background: var(--land-accent);
-  box-shadow: 0 0 14px rgb(39 170 225 / 0.6);
+  box-shadow: 0 0 14px rgb(247 190 114 / 0.6);
   transform: translateY(calc(var(--f) * 60px));
 }
 @keyframes landing-rail-in {
@@ -374,7 +367,7 @@ html[dir='rtl'] .landing-steps {
   display: block;
 }
 .landing-story {
-  --glow: 138 21 56; /* maroon; the 2nd story (blue sea art) glows sky-blue instead */
+  --glow: 138 111 209; /* dusk violet; the 2nd story glows peach and the 3rd sea blue */
   --glow-a: 0.34;
   position: relative;
   isolation: isolate;
@@ -390,8 +383,12 @@ html[dir='rtl'] .landing-steps {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
 }
 .landing-stories > :nth-child(2) {
-  --glow: 39 170 225;
-  --glow-a: 0.2;
+  --glow: 240 140 98;
+  --glow-a: 0.26;
+}
+.landing-stories > :nth-child(3) {
+  --glow: 64 118 196;
+  --glow-a: 0.34;
 }
 /* A wide, soft pool of colour behind each picture: a many-stop radial so it fades out with no visible edge. */
 .landing-story::before {
@@ -502,8 +499,8 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
 .landing-footer-wrap {
   position: relative;
   background:
-    radial-gradient(60% 130% at 12% 100%, rgb(138 21 56 / 0.42) 0%, rgb(138 21 56 / 0.3) 22%, rgb(138 21 56 / 0.16) 45%, rgb(138 21 56 / 0.05) 70%, transparent 100%),
-    radial-gradient(45% 110% at 92% 100%, rgb(39 170 225 / 0.14) 0%, rgb(39 170 225 / 0.07) 40%, rgb(39 170 225 / 0.02) 70%, transparent 100%);
+    radial-gradient(60% 130% at 12% 100%, rgb(138 111 209 / 0.42) 0%, rgb(138 111 209 / 0.3) 22%, rgb(138 111 209 / 0.16) 45%, rgb(138 111 209 / 0.05) 70%, transparent 100%),
+    radial-gradient(45% 110% at 92% 100%, rgb(240 140 98 / 0.18) 0%, rgb(240 140 98 / 0.09) 40%, rgb(240 140 98 / 0.03) 70%, transparent 100%);
 }
 .landing-footer-wrap::before {
   content: '';
@@ -511,7 +508,7 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
   inset-inline: 0;
   top: 0;
   block-size: 1px;
-  background: linear-gradient(90deg, transparent, rgb(246 241 233 / 0.18) 30%, rgb(246 241 233 / 0.18) 70%, transparent);
+  background: linear-gradient(90deg, transparent, rgb(251 242 228 / 0.18) 30%, rgb(251 242 228 / 0.18) 70%, transparent);
 }
 .landing-footer {
   display: grid;
@@ -684,8 +681,9 @@ html[dir='rtl'] .landing.js-reveal .landing-story .landing-tag::before {
   .landing-steps {
     animation-name: landing-fade;
   }
-  .landing-layer {
+  .landing-bg {
     transform: none;
+    animation: none;
   }
   .landing-steps-track span,
   .landing-arrow {
