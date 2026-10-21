@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
@@ -29,14 +29,14 @@ export function WarningModal() {
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           className="modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleDismiss}
         >
-          <motion.div
+          <m.div
             className="modal-panel text-center"
             role="alertdialog"
             aria-modal="true"
@@ -54,8 +54,8 @@ export function WarningModal() {
             <button className="btn btn-primary btn-block" style={{ marginTop: 20 }} disabled={dismissing} onClick={handleDismiss}>
               {t('common.dismiss')}
             </button>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

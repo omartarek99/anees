@@ -12,10 +12,15 @@ import {
   RiCertificateFill,
   RiMovie2Line,
 } from '@remixicon/react';
-import LeaderboardIcon from '@mui/icons-material/Leaderboard';
-import PeopleIcon from '@mui/icons-material/People';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
+
+// The two Material icons (Leaderboard, People) as bare paths, rather than bundling @mui for them.
+const PathIcon = ({ d }: { d: string }) => (
+  <svg viewBox="0 0 24 24" width={20} height={20} fill="currentColor" aria-hidden="true">
+    <path d={d} />
+  </svg>
+);
 
 // Emoji for most nav icons (unchanged), or a component for the ones swapped for a real
 // icon -- `currentColor` means it automatically follows .sidebar-icon-btn's own color,
@@ -32,8 +37,8 @@ const GAME_LINKS: SidebarLink[] = [
   { to: '/map', key: 'nav.map', icon: <RiMapFill size={20} /> },
   { to: '/craft', key: 'nav.craft', icon: <RiGamepadLine size={20} /> },
   { to: '/worksheets', key: 'nav.worksheets', icon: <RiFilePaper2Line size={20} /> },
-  { to: '/leaderboard', key: 'nav.leaderboard', icon: <LeaderboardIcon style={{ fontSize: 20 }} /> },
-  { to: '/friends', key: 'nav.friends', icon: <PeopleIcon style={{ fontSize: 20 }} /> },
+  { to: '/leaderboard', key: 'nav.leaderboard', icon: <PathIcon d="M7.5 21H2V9h5.5zm7.25-18h-5.5v18h5.5zM22 11h-5.5v10H22z" /> },
+  { to: '/friends', key: 'nav.friends', icon: <PathIcon d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3m-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3m0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5m8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5" /> },
 ];
 
 // Teacher-only extra, on top of the shared game links above.

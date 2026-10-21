@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
@@ -79,8 +79,8 @@ export function CertificateAwardPopup() {
   return (
     <AnimatePresence>
       {current && palette && (
-        <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={dismiss}>
-          <motion.div
+        <m.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={dismiss}>
+          <m.div
             className="text-center certificate-award-card"
             role="dialog"
             aria-modal="true"
@@ -125,8 +125,8 @@ export function CertificateAwardPopup() {
             <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={dismiss}>
               {t('certificateAward.button')}
             </button>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

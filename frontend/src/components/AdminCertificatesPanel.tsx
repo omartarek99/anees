@@ -253,6 +253,7 @@ export function AdminCertificatesPanel() {
                   <img
                     src={c.imageUrl}
                     alt=""
+                    loading="lazy"
                     style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', objectFit: 'cover', flexShrink: 0 }}
                   />
                   <div>

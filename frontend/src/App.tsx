@@ -20,20 +20,20 @@ import { CookiePolicyPage } from './pages/CookiePolicyPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
-import { HomePage } from './pages/HomePage';
 import { LandingPage } from './pages/LandingPage';
-import { TeacherHomePage } from './pages/TeacherHomePage';
-import { ReelsPage } from './pages/ReelsPage';
-import { MapPage } from './pages/MapPage';
-import { WorksheetsPage } from './pages/WorksheetsPage';
-import { LeaderboardPage } from './pages/LeaderboardPage';
-import { FriendsPage } from './pages/FriendsPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { TeacherReelsPage } from './pages/TeacherReelsPage';
-import { AdminPage } from './pages/AdminPage';
 
-// The Quarry is the only place that needs three.js (~1 MB), so it loads on demand instead of
-// weighing down the first load of every page.
+// Every signed-in page loads on demand, so a visitor on the landing, login or signup pages doesn't
+// download them (the Quarry alone pulls in three.js, ~1 MB).
+const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
+const TeacherHomePage = lazy(() => import('./pages/TeacherHomePage').then((m) => ({ default: m.TeacherHomePage })));
+const ReelsPage = lazy(() => import('./pages/ReelsPage').then((m) => ({ default: m.ReelsPage })));
+const MapPage = lazy(() => import('./pages/MapPage').then((m) => ({ default: m.MapPage })));
+const WorksheetsPage = lazy(() => import('./pages/WorksheetsPage').then((m) => ({ default: m.WorksheetsPage })));
+const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage').then((m) => ({ default: m.LeaderboardPage })));
+const FriendsPage = lazy(() => import('./pages/FriendsPage').then((m) => ({ default: m.FriendsPage })));
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })));
+const TeacherReelsPage = lazy(() => import('./pages/TeacherReelsPage').then((m) => ({ default: m.TeacherReelsPage })));
+const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
 const CraftPage = lazy(() => import('./pages/CraftPage').then((m) => ({ default: m.CraftPage })));
 
 // Navigating to a new page starts at its top (e.g. the Terms link at the bottom of signup).
@@ -45,19 +45,6 @@ function ScrollToTop() {
     if (navType !== 'POP') window.scrollTo(0, 0);
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
-}
-
-// The Quarry's chunk can fail to download (offline, or a stale filename after a redeploy) -- show an
-// error in the page instead of letting the rejected lazy import blank the whole app.
-function CraftRoute() {
-  const { t } = useLanguage();
-  return (
-    <AvatarBoundary fallback={<div className="form-error-banner">{t('messages.loadError')}</div>}>
-      <Suspense fallback={<FullScreenLoader />}>
-        <CraftPage />
-      </Suspense>
-    </AvatarBoundary>
-  );
 }
 
 function PageviewTracker() {
@@ -78,6 +65,7 @@ function FullScreenLoader() {
 
 function ProtectedLayout() {
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
   const { pathname } = useLocation();
   if (loading) return <FullScreenLoader />;
   // A visitor who isn't signed in lands on the public landing page at "/"; any other private URL still goes to login.
@@ -93,7 +81,13 @@ function ProtectedLayout() {
       <div className="app-content-col">
         <main className="app-main">
           <WarningModal />
-          <Outlet />
+          {/* A page's chunk can fail to download (offline, or a stale filename after a redeploy) -- show an
+              error here instead of letting the rejected lazy import blank the whole app. */}
+          <AvatarBoundary fallback={<div className="form-error-banner">{t('messages.loadError')}</div>}>
+            <Suspense fallback={<div className="empty-state"><div className="spinner" /></div>}>
+              <Outlet />
+            </Suspense>
+          </AvatarBoundary>
         </main>
         {!hideFooter && <Footer />}
       </div>
@@ -200,7 +194,7 @@ export default function App() {
                 <Route element={<NoAdmin />}>
                   <Route path="/reels" element={<ReelsPage />} />
                   <Route path="/map" element={<MapPage />} />
-                  <Route path="/craft" element={<CraftRoute />} />
+                  <Route path="/craft" element={<CraftPage />} />
                   <Route path="/worksheets" element={<WorksheetsPage />} />
                   <Route path="/leaderboard" element={<LeaderboardPage />} />
                   <Route path="/friends" element={<FriendsPage />} />

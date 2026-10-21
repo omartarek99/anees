@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth, type Role } from '../lib/auth-context';
 import { ApiError } from '../lib/api';
@@ -130,7 +130,7 @@ export function SignupPage() {
       <form onSubmit={handleSubmit}>
         <AnimatePresence>
           {error && (
-            <motion.div
+            <m.div
               ref={errorRef}
               role="alert"
               className="form-error-banner"
@@ -140,7 +140,7 @@ export function SignupPage() {
               transition={{ duration: 0.2 }}
             >
               {error}
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
@@ -170,7 +170,7 @@ export function SignupPage() {
             as the username and can be changed later from the profile page. */}
         <AnimatePresence initial={false}>
           {role === 'student' && (
-            <motion.div
+            <m.div
               key="student-identity"
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
@@ -183,7 +183,7 @@ export function SignupPage() {
                   {AVATAR_OPTIONS.map((key) => {
                     const chosen = avatarKey === key;
                     return (
-                      <motion.button
+                      <m.button
                         type="button"
                         key={key}
                         onClick={() => setAvatarKey(key)}
@@ -201,12 +201,12 @@ export function SignupPage() {
                         }}
                       >
                         <Avatar avatarKey={key} size={44} />
-                      </motion.button>
+                      </m.button>
                     );
                   })}
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
@@ -260,7 +260,7 @@ export function SignupPage() {
         </div>
         <AnimatePresence initial={false}>
           {role === 'student' && (
-            <motion.div
+            <m.div
               key="student-grade"
               className="field"
               initial={{ opacity: 0, y: -6 }}
@@ -281,10 +281,10 @@ export function SignupPage() {
                 required
                 title={t('auth.gradeHint')}
               />
-            </motion.div>
+            </m.div>
           )}
           {role === 'teacher' && (
-            <motion.div
+            <m.div
               key="teacher-extras"
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
@@ -316,7 +316,7 @@ export function SignupPage() {
                 />
                 <small className="muted">{t('auth.teacherIdHint')}</small>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
         {/* Honeypot -- invisible and unreachable by keyboard/AT for a real person (clipped to

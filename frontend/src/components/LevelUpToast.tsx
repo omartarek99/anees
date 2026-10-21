@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
 
@@ -8,14 +8,14 @@ export function LevelUpToast({ newLevel, onDismiss }: { newLevel: number | null;
   return (
     <AnimatePresence>
       {newLevel !== null && (
-        <motion.div
+        <m.div
           className="modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onDismiss}
         >
-          <motion.div
+          <m.div
             className="text-center"
             role="dialog"
             aria-modal="true"
@@ -40,8 +40,8 @@ export function LevelUpToast({ newLevel, onDismiss }: { newLevel: number | null;
             <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={onDismiss}>
               {t('levelUp.button')}
             </button>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

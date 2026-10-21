@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { motion, MotionConfig } from 'framer-motion';
+import { m, MotionConfig } from 'framer-motion';
 import { useLanguage } from '../lib/language-context';
 
 export function AuthShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
@@ -41,7 +41,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
               />
             </h1>
           </div>
-          <motion.div
+          <m.div
             className="card"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -53,7 +53,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
               {subtitle}
             </p>
             {children}
-          </motion.div>
+          </m.div>
         </div>
       </MotionConfig>
     </div>

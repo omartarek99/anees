@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
 
@@ -12,8 +12,8 @@ export function PointsInfoModal({ open, onClose }: { open: boolean; onClose: () 
   return (
     <AnimatePresence>
       {open && (
-        <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-          <motion.div
+        <m.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+          <m.div
             className="text-center"
             role="dialog"
             aria-modal="true"
@@ -51,8 +51,8 @@ export function PointsInfoModal({ open, onClose }: { open: boolean; onClose: () 
             <button className="btn btn-primary" onClick={onClose}>
               {t('common.close')}
             </button>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

@@ -317,6 +317,8 @@ export function ProfilePage() {
                   <img
                     src={cert.imageUrl}
                     alt={cert.title}
+                    loading="lazy"
+                    decoding="async"
                     style={{ width: '100%', borderRadius: 'var(--radius-sm)', aspectRatio: '4 / 3', objectFit: 'contain', background: 'var(--sand)' }}
                   />
                 </a>
