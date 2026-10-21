@@ -159,6 +159,15 @@ keep `backend/data/app.db`. Without a backend, every `/api/*` request on the Ver
 3. **Firebase console -> Authentication -> Settings -> Authorized domains**: add the Vercel domain, or signup
    fails with "We couldn't send the verification email".
 
+**No persistent disk (e.g. Render's free plan)?** The app folder is wiped on every deploy, which would erase the
+database. In production, when Supabase is configured, the server therefore saves a snapshot of `app.db` to a
+private Supabase Storage bucket (`db-backups`, created automatically) whenever data changed (every 60 s) and when it
+is stopped, and restores it at startup if there is no local database. Nothing to configure; keep the same
+`ENCRYPTION_KEY`. Logs show `[backup] restored the database…` / `[backup] saved the database…`. Limits: a crash can
+lose up to a minute of changes, and a free instance sleeps after inactivity (the first request is slow). A real
+persistent disk (mount path = `backend/data`) is still the more robust choice; with one, the snapshots are just an
+off-site backup. `DB_BACKUP=off` disables it.
+
 **Verification by a 6-digit code (Resend, optional but recommended).** Firebase's default email comes from a shared
 Google address, often lands in spam, and its template can't be edited. With these three variables on the backend host
 the app sends the email itself, from your own domain: after signup the student types a **6-digit code** (valid 10

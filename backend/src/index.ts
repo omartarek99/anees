@@ -3,6 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { seed } from './db/seed.js';
+import { db } from './db/db.js';
+import { startDatabaseBackups } from './lib/dbBackup.js';
 import { apiLimiter } from './middleware/rateLimit.js';
 import { requireAuth } from './middleware/auth.js';
 import { authRouter } from './routes/auth.js';
@@ -21,6 +23,7 @@ import { certificatesRouter } from './routes/certificates.js';
 import { FRONTEND_ORIGIN } from './lib/config.js';
 
 seed();
+startDatabaseBackups(db);
 
 const app = express();
 app.disable('x-powered-by');

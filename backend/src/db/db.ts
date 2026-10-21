@@ -3,12 +3,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { encrypt, decrypt, hashForLookup } from '../lib/encryption.js';
+import { restoreDatabaseIfMissing } from '../lib/dbBackup.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.resolve(__dirname, '../../data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
 const dbPath = path.join(dataDir, 'app.db');
+
+// No persistent disk? Fetch the last snapshot from Supabase before opening (see lib/dbBackup.ts).
+await restoreDatabaseIfMissing(dbPath);
 
 // Production: say plainly whether data survives a deploy. On a host like Render the app folder is
 // wiped on every deploy; only a mounted persistent disk (a separate filesystem) keeps app.db.
