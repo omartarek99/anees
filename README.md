@@ -175,7 +175,11 @@ minutes, 5 wrong tries per code, 60 s between resends) and is verified and logge
 log in gets a "send me a code" button.
 - `RESEND_API_KEY` -- from resend.com (API Keys), with a domain you own verified there (Domains: add the DNS records it shows)
 - `EMAIL_FROM` -- e.g. `Anees <no-reply@your-domain.com>` (must use the verified domain)
-- `FIREBASE_SERVICE_ACCOUNT_JSON` -- the contents of `backend/secrets/firebase-service-account.json` as **one line**
+- `FIREBASE_SERVICE_ACCOUNT_BASE64` -- the contents of `backend/secrets/firebase-service-account.json`, base64-encoded
+  (`node -e "console.log(Buffer.from(JSON.stringify(require('./backend/secrets/firebase-service-account.json'))).toString('base64'))"`).
+  Base64 survives any dashboard; the plain one-line `FIREBASE_SERVICE_ACCOUNT_JSON` also works but its private key's
+  line breaks sometimes get mangled when pasted. The startup log says which method is active (`[mail] Verification by
+  6-digit code is ON/OFF…`)
   (Firebase console -> Project settings -> Service accounts -> Generate new private key). Needed to mark the Firebase
   user verified after the code is accepted; it also lets the admin panel delete Firebase accounts in production.
 

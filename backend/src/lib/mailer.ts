@@ -1,6 +1,6 @@
 import { FRONTEND_ORIGIN } from './config.js';
 import { firebaseSendVerificationEmail } from './firebase.js';
-import { getFirebaseAdminAuth } from './firebaseAdmin.js';
+import { getFirebaseAdminAuth, loadServiceAccount } from './firebaseAdmin.js';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 // e.g.  Anees <no-reply@your-domain.com>  -- the domain must be verified in Resend.
@@ -13,6 +13,17 @@ if (!resendConfigured) {
   console.warn(
     '[mail] RESEND_API_KEY / EMAIL_FROM not set (see README) -- verification emails are sent by ' +
       "Firebase's default template (often lands in spam)."
+  );
+}
+
+// Say at startup which verification method is in effect. It needs BOTH Resend and a usable Firebase
+// admin key, and a half-working setup otherwise just silently falls back to Firebase's link email.
+if (resendConfigured) {
+  const key = loadServiceAccount();
+  console.log(
+    key.ok
+      ? `[mail] Verification by 6-digit code is ON (Resend + Firebase admin key from ${key.source}, project ${key.account.project_id}).`
+      : `[mail] Verification by 6-digit code is OFF -- Resend is set, but the Firebase admin key is unusable: ${key.reason}. Sending Firebase's link email instead.`
   );
 }
 
