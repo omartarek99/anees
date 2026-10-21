@@ -58,7 +58,7 @@ Open **http://localhost:5190**.
 
 > **Troubleshooting — "Request failed (500)" on every page:** the backend isn't running. The Vite proxy answers `/api` with an empty 500 when nothing is listening on port 4000. Check the `backend` terminal output: a missing/invalid `ENCRYPTION_KEY` in `backend/.env`, or a Node version older than 22.5, are the usual causes. `backend/.env` and `backend/secrets/` are git-ignored, so a fresh clone on another machine never has them. If you also copy `backend/data/app.db` across, use the same `ENCRYPTION_KEY` — stored emails are encrypted with it.
 
-> **Note:** `frontend/src/lib/dev-config.ts` has `DEV_BYPASS_LOGIN = true` by default, so a fresh run **skips the login screen** and auto-signs-in as the seeded `dev_student` account. Set it to `false` (or delete its usage in `auth-context.tsx`) to see the real login/signup flow instead.
+> **Note:** a visitor who isn't signed in sees the **landing page** first (at `/`, and always at `/welcome`), with Log in / Sign up buttons. For faster local testing, set `DEV_BYPASS_LOGIN` to `true` in `frontend/src/lib/dev-config.ts`: `npm run dev` then auto-signs-in as the seeded `dev_student` account and skips the landing and login pages.
 
 ### Seed accounts
 
@@ -159,8 +159,8 @@ keep `backend/data/app.db`. Without a backend, every `/api/*` request on the Ver
 3. **Firebase console -> Authentication -> Settings -> Authorized domains**: add the Vercel domain, or signup
    fails with "We couldn't send the verification email".
 
-The dev auto-login (`DEV_BYPASS_LOGIN`) is dev-server-only: it is ignored in `vite build`, so a deployed site
-always shows the real login page.
+The dev auto-login (`DEV_BYPASS_LOGIN`) is off by default and dev-server-only: it is ignored in `vite build`,
+so a deployed site always starts a new visitor on the landing page.
 
 ### Dev utility: deleting a test account
 
