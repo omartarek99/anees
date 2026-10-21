@@ -2,10 +2,13 @@ import { FRONTEND_ORIGIN } from './config.js';
 import { firebaseSendVerificationEmail } from './firebase.js';
 import { getFirebaseAdminAuth, loadServiceAccount } from './firebaseAdmin.js';
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
+// Hosting dashboards / "Add from .env" sometimes leave stray spaces or wrapping quotes on pasted
+// values -- an EMAIL_FROM of "Anees <no-reply@...>" WITH the quotes makes Resend reject every send.
+const clean = (v: string | undefined) => v?.trim().replace(/^(['"])(.*)\1$/, '$2').trim();
+const RESEND_API_KEY = clean(process.env.RESEND_API_KEY);
 // e.g.  Anees <no-reply@your-domain.com>  -- the domain must be verified in Resend.
-const EMAIL_FROM = process.env.EMAIL_FROM;
-const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO;
+const EMAIL_FROM = clean(process.env.EMAIL_FROM);
+const EMAIL_REPLY_TO = clean(process.env.EMAIL_REPLY_TO);
 
 export const resendConfigured = !!(RESEND_API_KEY && EMAIL_FROM);
 
@@ -19,6 +22,8 @@ if (!resendConfigured) {
 // Say at startup which verification method is in effect. It needs BOTH Resend and a usable Firebase
 // admin key, and a half-working setup otherwise just silently falls back to Firebase's link email.
 if (resendConfigured) {
+  // Not secrets: the sender address and the key's length/prefix, to spot a mangled paste.
+  console.log(`[mail] Resend sender: ${JSON.stringify(EMAIL_FROM)} | API key: ${RESEND_API_KEY!.length} chars, starts with "${RESEND_API_KEY!.slice(0, 3)}"`);
   const key = loadServiceAccount();
   console.log(
     key.ok
