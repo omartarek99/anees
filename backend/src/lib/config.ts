@@ -3,4 +3,6 @@
 // Previously each file hardcoded its own fallback and they drifted (one said 5190, the
 // other still said Vite's 5173 default) after the frontend's port moved; import this
 // instead of redeclaring the default.
-export const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5190';
+// No trailing slash: it is used for the CORS allow-list and to build links (".../verify-email"), and a
+// pasted "https://site.vercel.app/" would otherwise give "https://site.vercel.app//verify-email".
+export const FRONTEND_ORIGIN = (process.env.FRONTEND_ORIGIN ?? 'http://localhost:5190').trim().replace(/\/+$/, '');

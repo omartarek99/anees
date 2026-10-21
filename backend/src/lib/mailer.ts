@@ -8,7 +8,9 @@ import { recordIssue } from './diagnostics.js';
 const clean = (v: string | undefined) => v?.trim().replace(/^(['"])(.*)\1$/, '$2').trim();
 const RESEND_API_KEY = clean(process.env.RESEND_API_KEY);
 // e.g.  Anees <no-reply@your-domain.com>  -- the domain must be verified in Resend.
-const EMAIL_FROM = clean(process.env.EMAIL_FROM);
+// A "<no-reply@x.com>" with the name part lost in a paste is rejected by Resend ("Invalid from field");
+// the bare address is valid, so drop the brackets.
+const EMAIL_FROM = clean(process.env.EMAIL_FROM)?.replace(/^<([^<>]+)>$/, '$1');
 const EMAIL_REPLY_TO = clean(process.env.EMAIL_REPLY_TO);
 
 export const resendConfigured = !!(RESEND_API_KEY && EMAIL_FROM);
