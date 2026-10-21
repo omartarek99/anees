@@ -209,6 +209,7 @@ export function WorksheetsPage() {
             <div className="pill-row">
               <button
                 className={`category-pill stat-card-blue${subject === 'math' ? ' selected' : ''}`}
+                aria-pressed={subject === 'math'}
                 onClick={() => setSubject('math')}
               >
                 <span className="category-pill-icon"><RiCalculatorLine size={19} /></span>
@@ -216,6 +217,7 @@ export function WorksheetsPage() {
               </button>
               <button
                 className={`category-pill stat-card-green${subject === 'science' ? ' selected' : ''}`}
+                aria-pressed={subject === 'science'}
                 onClick={() => setSubject('science')}
               >
                 <span className="category-pill-icon"><RiAtomLine size={19} /></span>
@@ -230,12 +232,9 @@ export function WorksheetsPage() {
               {DIFFICULTIES.map((d) => (
                 <button
                   key={d.key}
-                  className={`list-row flex-between ${d.color}`}
-                  style={{
-                    border: difficulty === d.key ? '2px solid currentColor' : '2px solid transparent',
-                    cursor: 'pointer',
-                    width: '100%',
-                  }}
+                  className={`list-row flex-between ${d.color}${difficulty === d.key ? ' selected' : ''}`}
+                  style={{ cursor: 'pointer', width: '100%' }}
+                  aria-pressed={difficulty === d.key}
                   onClick={() => setDifficulty(d.key)}
                 >
                   <span className="flex gap-sm" style={{ alignItems: 'center' }}>

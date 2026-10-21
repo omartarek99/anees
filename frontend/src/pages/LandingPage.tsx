@@ -7,13 +7,13 @@ import '../styles/landing.css';
 // The first page a visitor sees (logged-out "/", and "/welcome" for anyone). Layout and type follow the
 // "MNTN" Figma landing page; the palette is the Anees brand board (maroon / sky blue / sand): a layered
 // hero with the headline, a left rail and a right "Start / 01 / 02 / 03" progress rail, three alternating
-// story sections, a footer. The photography slots use Anees's own map art; the hero is an inline SVG
+// story sections, a footer. The story pictures are Anees's own artwork (teacher, adventure map, student); the hero is an inline SVG
 // (no network, scales crisply).
 
 const SECTIONS = [
-  { id: 'learn', n: '01', key: 's1', img: '/images/landing-learn.jpg' },
-  { id: 'play', n: '02', key: 's2', img: '/images/landing-play.jpg' },
-  { id: 'grow', n: '03', key: 's3', img: '/images/landing-grow.jpg' },
+  { id: 'learn', n: '01', key: 's1', img: '/images/landing-learn.webp' },
+  { id: 'play', n: '02', key: 's2', img: '/images/landing-play.webp' },
+  { id: 'grow', n: '03', key: 's3', img: '/images/landing-grow.webp' },
 ] as const;
 
 const STEP_IDS = ['top', ...SECTIONS.map((s) => s.id)];
@@ -285,7 +285,7 @@ export function LandingPage() {
                 <Arrow />
               </Link>
             </div>
-            <img src={s.img} width={680} height={865} loading="lazy" decoding="async" alt={t(`landing.${s.key}Alt`)} />
+            <img src={s.img} width={566} height={720} loading="lazy" decoding="async" alt={t(`landing.${s.key}Alt`)} />
           </section>
         ))}
       </main>

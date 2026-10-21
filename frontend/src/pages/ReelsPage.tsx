@@ -38,7 +38,7 @@ type FlatReelEntry = {
 };
 
 export function ReelsPage() {
-  const { user, refreshUser } = useAuth();
+  const { refreshUser } = useAuth();
   const { t, lang, dir } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const [rawDetails, setRawDetails] = useState<FlatReelEntry[]>([]);
@@ -247,7 +247,7 @@ export function ReelsPage() {
             whichever slide is currently active. */}
         {activeSlide && activeLike && (
           <ReelActionRail
-            avatarKey={user?.avatarKey ?? 'falcon'}
+            author={activeSlide.author}
             liked={activeLike.liked}
             likeCount={activeLike.count}
             onToggleLike={() => toggleLike(activeSlide.reelId)}

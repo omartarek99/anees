@@ -10,7 +10,7 @@
   --maroon-dark: #4a0e24;
   --maroon: #8a1538;
   --maroon-light: #c22954;
-  --maroon-pale: #fbe7ec;
+  --maroon-pale: #f1dbe5;
 
   /* Secondary accent (XP / coins) */
   --gold: #f0a83a;
@@ -21,26 +21,27 @@
      on the light --gold-light badge fill, and sinks into dark glass. */
   --gold-ink: #7a4e10;
 
-  /* Neutral surfaces — cool pearl: liquid glass reads as glass against a cool, luminous
-     ground, and the maroon + gold brand colours stay in as light orbs behind it (see
-     --body-bg-image) rather than as the page tint. */
-  --sand: #eef1f7;
-  --sand-light: #f5f7fb;
-  --sand-dark: #d3dae8;
+  /* Neutral surfaces — dusk lavender, on the SAME violet hue as dark mode's ground (~262deg), just
+     lifted to a soft, not-glaring lightness. Sharing the hue is what keeps the two themes one
+     website; the ink is the dark theme's ground colour, and the maroon + gold brand colours stay
+     in as soft orbs behind the glass (see --body-bg-image) rather than as the page tint. */
+  --sand: #ded9e8;
+  --sand-light: #e8e4ef;
+  --sand-dark: #c5bed3;
 
-  --ink: #182338;
+  --ink: #21182f;
   /* ponytail: darkened from #6b7590 — WCAG AA contrast fix (was 4.06:1 on light surfaces, now 4.5+).
      Darkened again from #646d86 for the cooler, slightly darker pearl backdrop, which sits
      directly behind footer/muted text. */
-  --ink-soft: #5a627a;
+  --ink-soft: #544b62;
   --white: #ffffff;
 
   /* ponytail: --success/--danger darkened from #2e9e5b/#e0525f — WCAG AA contrast fix
      (as text-on-white or text-on-*-light they measured ~3:1, now 4.5+ in both roles) */
   --success: #237845;
-  --success-light: #e0f5e7;
+  --success-light: #d9eee1;
   --danger: #b3424c;
-  --danger-light: #fce6e8;
+  --danger-light: #f4dce0;
 
   /* Pastel accent set used for stat cards / category pills / badges (translucent, for the glass look) */
   --pastel-blue-ink: #26478a;
@@ -58,7 +59,7 @@
   --radius-btn: 12px;
   --radius-btn-sm: 8px;
 
-  --shadow-lg: 0 20px 44px -16px rgba(36, 52, 96, 0.3);
+  --shadow-lg: 0 20px 44px -16px rgba(43, 27, 70, 0.34);
 
   /* ---- Liquid glass ----
      The material from the "Liquid Glass Foundations" reference: a translucent body, a thick
@@ -67,65 +68,67 @@
      shadow below. The rim lives in the --shadow-3d-* tokens as inset shadows, so every surface
      that already used them (cards, chips, bells, rows, modals, ...) picks it up at once and
      none of it changes an element's size. */
-  --glass-bg: linear-gradient(150deg, rgba(255, 255, 255, 0.66) 0%, rgba(255, 255, 255, 0.34) 100%);
-  --glass-bg-strong: rgba(255, 255, 255, 0.64);
-  --glass-border: rgba(255, 255, 255, 0.85);
+  --glass-bg: linear-gradient(150deg, rgba(249, 247, 253, 0.34) 0%, rgba(249, 247, 253, 0.12) 100%);
+  --glass-bg-strong: rgba(249, 247, 253, 0.5);
+  --glass-border: rgba(249, 247, 253, 0.6);
   --glass-blur: blur(24px) saturate(190%);
   --glass-blur-sm: blur(14px) saturate(170%);
 
   /* Small "light chip" surfaces (icon circles, form inputs, hover washes) that were
      hardcoded to white -- pulled into tokens so dark mode can turn them into light-on-dark
      tints instead of staying jarringly bright on a dark page. */
-  --surface-chip: rgba(255, 255, 255, 0.78);
-  --surface-input: rgba(255, 255, 255, 0.5);
-  --surface-hover: rgba(255, 255, 255, 0.6);
-  --surface-row: rgba(255, 255, 255, 0.42);
-  --podium-bg: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.55) 0deg 4deg, rgba(235, 241, 252, 0.55) 4deg 8deg);
-  --surface-panel: rgba(247, 249, 253, 0.78);
-  --surface-panel-strong: rgba(247, 249, 253, 0.88);
+  --surface-chip: rgba(249, 247, 253, 0.4);
+  --surface-input: rgba(249, 247, 253, 0.3);
+  --surface-hover: rgba(249, 247, 253, 0.38);
+  --surface-row: rgba(249, 247, 253, 0.2);
+  --podium-bg: repeating-conic-gradient(from 0deg, rgba(249, 247, 253, 0.42) 0deg 4deg, rgba(238, 233, 247, 0.42) 4deg 8deg);
+  --surface-panel: rgba(238, 233, 247, 0.78);
+  --surface-panel-strong: rgba(238, 233, 247, 0.88);
 
   /* --glass-blur-lg is the "how frosted" knob for the persistent nav chrome (sidebar/topbar).
      --glass-bg-nav is more opaque than the card tint on purpose: sidebar/topbar are the one
      surface guaranteed to sit over literally any page content, so they carry extra contrast
      headroom that cards -- which only ever sit on the page's own backdrop -- don't need. */
   --glass-blur-lg: blur(26px) saturate(200%);
-  --glass-bg-nav: rgba(255, 255, 255, 0.62);
+  --glass-bg-nav: rgba(238, 233, 247, 0.34);
   /* The sidebar alone is far more see-through than the top bar (a thin fill over a heavy
      blur), so it gets its own token rather than thinning --glass-bg-nav. */
-  --glass-bg-sidebar: rgba(255, 255, 255, 0.26);
+  --glass-bg-sidebar: rgba(249, 247, 253, 0.12);
   /* Specular highlight: a hot corner glow at the top-left plus a faint diagonal sweep and a
      return of light at the opposite corner -- what makes a flat translucent rectangle read as
      a curved sheet of glass. Painted over the surface by the ::before rule on glass elements. */
-  --glass-sheen: radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0) 72%, rgba(255, 255, 255, 0.28) 100%);
-  --shadow-3d-sm: 0 8px 16px -8px rgba(36, 52, 96, 0.28), 0 1px 2px rgba(36, 52, 96, 0.08), inset 0 1.5px 1px rgba(255, 255, 255, 0.95),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.45), inset 0 -2px 3px rgba(255, 255, 255, 0.35);
-  --shadow-3d-md: 0 20px 36px -18px rgba(36, 52, 96, 0.36), 0 2px 8px rgba(36, 52, 96, 0.08), inset 0 2px 2px rgba(255, 255, 255, 0.95),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.5), inset 0 -3px 5px rgba(255, 255, 255, 0.35), inset 0 -18px 32px -22px rgba(110, 140, 205, 0.4);
-  --shadow-3d-lg: 0 32px 56px -24px rgba(36, 52, 96, 0.44), 0 4px 14px rgba(36, 52, 96, 0.1), inset 0 2px 2px rgba(255, 255, 255, 0.95),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.55), inset 0 -3px 6px rgba(255, 255, 255, 0.4), inset 0 -22px 40px -26px rgba(110, 140, 205, 0.45);
+  --glass-sheen: radial-gradient(120% 80% at 0% 0%, rgba(249, 247, 253, 0.5) 0%, rgba(249, 247, 253, 0) 55%),
+    linear-gradient(135deg, rgba(249, 247, 253, 0.2) 0%, rgba(249, 247, 253, 0) 40%, rgba(249, 247, 253, 0) 72%, rgba(249, 247, 253, 0.18) 100%);
+  --shadow-3d-sm: 0 8px 16px -8px rgba(43, 27, 70, 0.3), 0 1px 2px rgba(43, 27, 70, 0.1), inset 0 1.5px 1px rgba(249, 247, 253, 0.8),
+    inset 0 0 0 1px rgba(249, 247, 253, 0.34), inset 0 -2px 3px rgba(249, 247, 253, 0.26);
+  --shadow-3d-md: 0 20px 36px -18px rgba(43, 27, 70, 0.4), 0 2px 8px rgba(43, 27, 70, 0.1), inset 0 2px 2px rgba(249, 247, 253, 0.8),
+    inset 0 0 0 1px rgba(249, 247, 253, 0.38), inset 0 -3px 5px rgba(249, 247, 253, 0.26), inset 0 -18px 32px -22px rgba(130, 112, 215, 0.34);
+  --shadow-3d-lg: 0 32px 56px -24px rgba(43, 27, 70, 0.48), 0 4px 14px rgba(43, 27, 70, 0.12), inset 0 2px 2px rgba(249, 247, 253, 0.8),
+    inset 0 0 0 1px rgba(249, 247, 253, 0.42), inset 0 -3px 6px rgba(249, 247, 253, 0.3), inset 0 -22px 40px -26px rgba(130, 112, 215, 0.38);
   /* Just the rim (no outer shadow), for surfaces that supply their own coloured glow. */
-  --glass-rim: inset 0 2px 2px rgba(255, 255, 255, 0.95), inset 0 0 0 1px rgba(255, 255, 255, 0.5), inset 0 -3px 5px rgba(255, 255, 255, 0.35);
+  --glass-rim: inset 0 2px 2px rgba(249, 247, 253, 0.8), inset 0 0 0 1px rgba(249, 247, 253, 0.38), inset 0 -3px 5px rgba(249, 247, 253, 0.26);
 
-  /* English: Anton for headings (bold, condensed, display-style -- suits this app's
-     playful adventure theme) + Poppins for body. Arabic gets its own pair below since
-     neither font covers Arabic script. */
-  --font-heading: 'Anton', 'Poppins', 'Segoe UI', Tahoma, 'Trebuchet MS', sans-serif;
+  /* English: Playfair Display for headings (the landing page's serif, so the whole site reads as
+     one voice) + Poppins for body. Arabic gets its own pair below since neither font covers
+     Arabic script. */
+  --font-heading: 'Playfair Display', 'Times New Roman', Georgia, serif;
+  --leading-heading: 1.2;
   --font-body: 'Poppins', 'Segoe UI', Tahoma, Geneva, sans-serif;
 
   --sidebar-w: 88px;
 
 
-  /* Glass needs something luminous behind it to refract, so the backdrop is a pearl base with
+  /* Glass needs something luminous behind it to refract, so the backdrop is a lavender base with
      soft colour orbs: the brand maroon and gold, plus a violet and a teal for the cool
-     refractions in the reference. A white bloom in the middle keeps the area behind the
-     content light (muted text sits directly on it and must stay AA). */
-  --body-bg-color: #e9eef7;
-  --body-bg-image: radial-gradient(44% 40% at 8% 12%, rgba(194, 41, 84, 0.26), transparent 70%),
-    radial-gradient(42% 38% at 92% 8%, rgba(240, 168, 58, 0.34), transparent 70%),
-    radial-gradient(48% 44% at 86% 90%, rgba(108, 98, 235, 0.28), transparent 70%),
-    radial-gradient(46% 42% at 6% 92%, rgba(48, 196, 196, 0.3), transparent 70%),
-    radial-gradient(62% 52% at 50% 46%, rgba(255, 255, 255, 0.78), transparent 78%);
+     refractions in the reference -- the same four orbs dark mode uses, softer. A pale bloom in
+     the middle keeps the area behind the content light (muted text sits directly on it and must
+     stay AA). */
+  --body-bg-color: #dad4e5;
+  --body-bg-image: radial-gradient(44% 40% at 8% 12%, rgba(212, 62, 107, 0.24), transparent 70%),
+    radial-gradient(42% 38% at 92% 8%, rgba(240, 168, 58, 0.28), transparent 70%),
+    radial-gradient(48% 44% at 86% 90%, rgba(100, 92, 235, 0.26), transparent 70%),
+    radial-gradient(46% 42% at 6% 92%, rgba(40, 190, 190, 0.22), transparent 70%),
+    radial-gradient(62% 52% at 50% 46%, rgba(249, 247, 253, 0.4), transparent 78%);
 }
 
 /* Arabic: Almarai for headings (a bold Arabic display/UI face) + Noto Sans Arabic for
@@ -135,6 +138,7 @@
 html[lang='ar'] {
   --font-heading: 'Almarai', 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
   --font-body: 'Noto Sans Arabic', 'Segoe UI', Tahoma, Geneva, sans-serif;
+  --leading-heading: 1.4;
 }
 
 /* ================= Dark mode =================
@@ -229,6 +233,8 @@ body {
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 h1,
@@ -236,7 +242,10 @@ h2,
 h3,
 h4 {
   font-family: var(--font-heading);
-  font-weight: 800;
+  font-weight: 700;
+  font-variant-numeric: lining-nums;
+  line-height: var(--leading-heading);
+  text-wrap: balance;
   margin: 0 0 0.4em;
   color: var(--ink);
 }
@@ -333,7 +342,7 @@ svg {
   border-inline-end: 1px solid var(--glass-border);
   /* Hairline top highlight + a faint wide halo instead of the heavy drop shadow, which reads
      as a dirty smudge on a see-through panel. */
-  box-shadow: 0 0 40px rgba(20, 30, 60, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 40px rgba(30, 20, 50, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   z-index: 10;
 }
 
@@ -351,7 +360,7 @@ svg {
   margin-bottom: 28px;
   flex-shrink: 0;
   box-shadow: var(--shadow-3d-sm);
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
 }
 .sidebar-logo:hover {
   transform: scale(1.08) rotate(-4deg);
@@ -379,18 +388,17 @@ svg {
   justify-content: center;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.18s ease, color 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
 }
 .sidebar-icon-btn:hover {
   background: var(--surface-hover);
   color: var(--maroon);
-  transform: translateY(-2px) scale(1.05);
 }
 .sidebar-icon-btn.active {
-  background: linear-gradient(150deg, var(--maroon-light), var(--maroon));
-  color: white;
-  box-shadow: 0 12px 20px -8px color-mix(in srgb, var(--maroon-light) 80%, transparent), inset 0 1.5px 1px rgba(255, 255, 255, 0.46),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  --neu-s: 0.4;
+  background: var(--neu-bg-pressed);
+  color: var(--neu-accent-ink);
+  box-shadow: var(--neu-pressed);
 }
 
 /* ---------------- Quick menu (floating settings, icon-bar side) ---------------- */
@@ -401,8 +409,8 @@ svg {
    middle of the screen (away from the edge) in whichever direction the page reads. */
 .quick-menu {
   position: fixed;
-  bottom: 20px;
-  inset-inline-start: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  inset-inline-start: calc((var(--sidebar-w) - 52px) / 2);
   z-index: 50;
   display: flex;
   flex-direction: row;
@@ -411,26 +419,30 @@ svg {
 }
 
 .quick-menu-btn {
+  --neu-s: 0.6;
   width: 52px;
   height: 52px;
-  border-radius: 50%;
+  border-radius: 16px;
   border: none;
-  background: linear-gradient(150deg, var(--maroon-light), var(--maroon));
+  background: var(--neu-sheen), var(--neu-primary);
   color: white;
   font-size: 21px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 16px 26px -10px color-mix(in srgb, var(--maroon-light) 75%, transparent), inset 0 2px 1.5px rgba(255, 255, 255, 0.46),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.2), inset 0 -3px 5px rgba(255, 255, 255, 0.14);
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease;
+  box-shadow: var(--neu-raised);
+  transition: box-shadow 0.2s var(--ease-out), background-color 0.2s var(--ease-out), filter 0.2s var(--ease-out);
 }
 .quick-menu-btn:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 22px 32px -10px color-mix(in srgb, var(--maroon-light) 90%, transparent), inset 0 2px 1.5px rgba(255, 255, 255, 0.56),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.27), inset 0 -3px 5px rgba(255, 255, 255, 0.17);
+  filter: brightness(var(--neu-hover));
 }
+.quick-menu-btn:active {
+  background: var(--neu-primary-pressed);
+  box-shadow: var(--neu-pressed);
+  filter: none;
+}
+
 
 .quick-menu-panel {
   display: flex;
@@ -542,15 +554,14 @@ svg {
   color: var(--ink);
 }
 .notif-bell {
+  --neu-s: 0.5;
   position: relative;
   width: 42px;
   height: 42px;
-  border-radius: 50%;
-  background: var(--glass-bg-strong);
-  -webkit-backdrop-filter: var(--glass-blur-sm);
-  backdrop-filter: var(--glass-blur-sm);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-3d-sm);
+  border-radius: 13px;
+  background: var(--neu-sheen), var(--neu-bg);
+  border: none;
+  box-shadow: var(--neu-raised);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -559,12 +570,14 @@ svg {
   text-decoration: none;
   color: var(--ink);
   flex-shrink: 0;
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease, color 0.18s ease;
+  transition: box-shadow 0.2s var(--ease-out), background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
 }
 .notif-bell:hover {
-  transform: translateY(-2px) scale(1.06);
-  box-shadow: var(--shadow-3d-md);
   color: var(--maroon);
+}
+.notif-bell:active {
+  background: var(--neu-bg-pressed);
+  box-shadow: var(--neu-pressed);
 }
 .notif-dot {
   position: absolute;
@@ -587,7 +600,7 @@ svg {
   border: none;
   padding: 0;
   cursor: pointer;
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.18s var(--ease-out);
 }
 .reel-rail-btn:hover {
   transform: scale(1.12);
@@ -595,38 +608,130 @@ svg {
 .reel-rail-btn:active {
   transform: scale(0.94);
 }
+.reel-rail-author {
+  display: block;
+  border-radius: 50%;
+  line-height: 0;
+  transition: transform 0.2s var(--ease-out);
+}
+.reel-rail-author:hover {
+  transform: scale(1.08);
+}
+.reel-rail-author:active {
+  transform: scale(0.96);
+}
+.reel-rail-brand {
+  width: 48px;
+  height: 48px;
+  padding: 5px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.reel-rail-brand img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
 .reel-rail-count {
   font-size: 12px;
   font-weight: 800;
   color: var(--ink-soft);
 }
-
-/* ---------------- Buttons ---------------- */
+/* ---------------- Buttons ----------------
+   After the "Online Bike Shopping App" Figma file's icon tiles: a rounded square that grades from lighter
+   at the top to darker at the bottom, a bright 1px rim along the top edge and a darker one along the
+   bottom, and a soft shadow dropped underneath. Pressing flattens it onto a darker fill with the shadow
+   moved inside; disabled is flat with faint text. The accent variants (primary / gold / danger) keep their
+   own colour as the fill and get the same grading. --neu-s scales the shadow so smaller controls get a
+   proportionally smaller drop. */
+:root {
+  --neu-bg: var(--sand-light);
+  --neu-bg-pressed: var(--sand);
+  --neu-ink: #55558a;
+  --neu-accent-ink: var(--maroon);
+  --neu-rim-hi: 0.55; /* the bright top edge, and the dark bottom edge */
+  --neu-rim-lo: 0.16;
+  --neu-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, 0.1) 100%);
+  --neu-lo: 124, 112, 170; /* drop-shadow colour, and how strongly it shows */
+  --neu-lo-k: 1;
+  --neu-hover: 1.03;
+  --neu-primary: #8a1538;
+  --neu-primary-pressed: #740f2e;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+:root[data-theme='dark'] {
+  --neu-bg: #2a2336;
+  --neu-bg-pressed: #211b2c;
+  --neu-ink: #c9c8f0;
+  --neu-accent-ink: color-mix(in srgb, var(--maroon-light) 55%, white);
+  --neu-rim-hi: 0.16;
+  --neu-rim-lo: 0.35;
+  --neu-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, 0.18) 100%);
+  --neu-lo: 0, 0, 0;
+  --neu-lo-k: 1.2;
+  --neu-hover: 1.12;
+  --neu-primary: #b3305a;
+  --neu-primary-pressed: #9c2650;
+}
+/* The shadows (raised / pressed / flat), written once for every raised control. */
+.btn,
+.quick-menu-btn,
+.notif-bell,
+.sidebar-icon-btn,
+.category-pill,
+button.list-row,
+.avatar-choice,
+.a3d-btn,
+.a3d-tab,
+.a3d-choice,
+.a3d-swatch,
+.a3d-close {
+  --neu-s: 0.55;
+  --neu-raised: inset 0 1px 0 rgba(255, 255, 255, var(--neu-rim-hi)),
+    inset 0 -2px 0 rgba(0, 0, 0, var(--neu-rim-lo)),
+    0 calc(16px * var(--neu-s)) calc(28px * var(--neu-s)) calc(-6px * var(--neu-s)) rgba(var(--neu-lo), calc(0.5 * var(--neu-lo-k))),
+    0 calc(2px * var(--neu-s)) calc(4px * var(--neu-s)) rgba(var(--neu-lo), calc(0.22 * var(--neu-lo-k)));
+  --neu-pressed: inset 0 calc(6px * var(--neu-s)) calc(12px * var(--neu-s)) rgba(var(--neu-lo), calc(0.5 * var(--neu-lo-k))),
+    inset 0 -1px 0 rgba(255, 255, 255, calc(var(--neu-rim-hi) * 0.5));
+  --neu-flat: inset 0 1px 0 rgba(255, 255, 255, calc(var(--neu-rim-hi) * 0.6)), 0 1px 2px rgba(var(--neu-lo), calc(0.3 * var(--neu-lo-k)));
+}
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 22px;
+  padding: 12px 26px;
   border-radius: var(--radius-btn);
   border: none;
+  background: var(--neu-sheen), var(--btn-bg, var(--neu-bg));
+  color: var(--btn-ink, var(--neu-ink));
+  box-shadow: var(--neu-raised);
   /* .btn is also put on <a>/<Link> (e.g. the home page's Watch a Reel / Open the Map), which
      would otherwise carry the default link underline into the button label. */
   text-decoration: none;
   font-weight: 700;
   font-size: 15px;
   cursor: pointer;
-  /* A gentle overshoot-then-settle reads as "responsive" rather than "linear" — used across
-     every interactive primitive below for a consistent, more modern feel. */
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease, opacity 0.12s ease,
-    background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  transition: box-shadow 0.2s var(--ease-out), background-color 0.2s var(--ease-out), color 0.2s var(--ease-out), filter 0.2s var(--ease-out);
   min-height: 46px;
 }
+.btn:hover:not(:disabled) {
+  filter: brightness(var(--neu-hover));
+}
 .btn:active:not(:disabled) {
-  transform: translateY(1px) scale(0.97);
+  background: var(--btn-pressed, var(--neu-bg-pressed));
+  box-shadow: var(--neu-pressed);
+  filter: none;
 }
 .btn:disabled {
-  opacity: 0.55;
+  background: var(--neu-bg);
+  box-shadow: var(--neu-flat);
+  color: color-mix(in srgb, var(--neu-ink) 30%, transparent);
   cursor: not-allowed;
 }
 /* Keyboard-focus ring, not a mouse-click ring (:focus-visible skips the latter) — every
@@ -637,213 +742,116 @@ svg {
 .notif-bell:focus-visible,
 .quick-menu-btn:focus-visible,
 .quick-menu-item:focus-visible,
+.switch-btn:focus-visible,
 a:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--white), 0 0 0 6px var(--maroon-light);
 }
-/* Gradient buttons (primary / gold / danger) share the Figma file's button look: a
-   left-to-right gradient and a coloured under-glow (its Register button is
-   `0 22px 45px -22px` of its own pink). On top of that, the glass finish: the fill sits at
-   94% so whatever is behind tints through the backdrop blur, a faint sheen fades out over the
-   top half, and a hairline inner ring catches light along the edge. The ring is an inset
-   shadow rather than a border so it doesn't change the button's size. */
 .btn-primary {
-  --btn-from: var(--maroon-light);
-  --btn-to: var(--maroon);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 50%),
-    linear-gradient(90deg, color-mix(in srgb, var(--btn-from) 94%, transparent), color-mix(in srgb, var(--btn-to) 94%, transparent));
-  -webkit-backdrop-filter: blur(10px) saturate(160%);
-  backdrop-filter: blur(10px) saturate(160%);
-  color: var(--white);
-  box-shadow: 0 18px 34px -18px color-mix(in srgb, var(--maroon-light) 85%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.26);
-}
-.btn-primary:hover:not(:disabled) {
-  box-shadow: 0 24px 40px -18px color-mix(in srgb, var(--maroon-light) 95%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.36);
-  transform: translateY(-2px) scale(1.02);
-}
-/* Dark mode brightens --maroon-light/--maroon for text on dark glass, which would leave white
-   button text on a light pink -- fill the button with the deeper pair instead. */
-:root[data-theme='dark'] .btn-primary {
-  --btn-from: var(--maroon);
-  --btn-to: var(--maroon-dark);
+  --btn-bg: var(--neu-primary);
+  --btn-pressed: var(--neu-primary-pressed);
+  --btn-ink: #fff;
 }
 .btn-gold {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 50%),
-    linear-gradient(90deg, color-mix(in srgb, var(--gold-light) 94%, transparent), color-mix(in srgb, var(--gold) 94%, transparent));
-  -webkit-backdrop-filter: blur(10px) saturate(160%);
-  backdrop-filter: blur(10px) saturate(160%);
-  color: #4a2f00;
-  box-shadow: 0 18px 34px -18px rgba(240, 168, 58, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.44);
+  --btn-bg: #f0a83a;
+  --btn-pressed: #dd9627;
+  --btn-ink: #3d2700;
 }
-.btn-gold:hover:not(:disabled) {
-  box-shadow: 0 24px 40px -18px rgba(240, 168, 58, 1), inset 0 0 0 1px rgba(255, 255, 255, 0.44), inset 0 1px 0 rgba(255, 255, 255, 0.54);
-  transform: translateY(-2px) scale(1.02);
+.btn-danger {
+  /* Fixed colours, not --danger: that token flips to a light pink in dark mode (it's tuned for
+     text on dark glass), which would put white button text on ~2.7:1. */
+  --btn-bg: #b8404f;
+  --btn-pressed: #a3343f;
+  --btn-ink: #fff;
 }
+/* Secondary is the plain raised button with the brand colour on the label. */
 .btn-secondary {
-  background: var(--glass-bg-strong);
-  -webkit-backdrop-filter: var(--glass-blur-sm);
-  backdrop-filter: var(--glass-blur-sm);
-  color: var(--maroon);
-  border: 2px solid var(--maroon);
-  box-shadow: var(--shadow-3d-sm);
+  --btn-ink: var(--neu-accent-ink);
 }
-.btn-secondary:hover:not(:disabled) {
-  background: var(--maroon-pale);
-  box-shadow: var(--shadow-3d-md);
-  transform: translateY(-2px);
-}
-/* Dark mode: --maroon is only ~3.3:1 on dark glass, and even --maroon-light is thin over a pink-tinted
-   card (login/signup) -- a softer pink-white reads clearly on both. */
-:root[data-theme='dark'] .btn-secondary {
-  color: color-mix(in srgb, var(--maroon-light) 55%, white);
-  border-color: color-mix(in srgb, var(--maroon-light) 75%, transparent);
-}
+/* Ghost sits flat until it's reached for, then lifts like any other button. */
 .btn-ghost {
+  --btn-ink: var(--neu-accent-ink);
   background: transparent;
-  color: var(--maroon);
+  box-shadow: none;
 }
 .btn-ghost:hover:not(:disabled) {
-  background: var(--surface-hover);
+  background: var(--neu-sheen), var(--neu-bg);
+  box-shadow: var(--neu-raised);
 }
 .btn-block {
   width: 100%;
 }
 .btn-sm {
-  padding: 8px 16px;
+  --neu-s: 0.4;
+  border-radius: var(--radius-btn-sm);
+  padding: 8px 18px;
   min-height: 36px;
   font-size: 13px;
-  border-radius: var(--radius-btn-sm);
-}
-.btn-danger {
-  /* Fixed colours, not --danger: that token flips to a light pink in dark mode (it's tuned for
-     text on dark glass), which would put white button text on ~2.7:1. */
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 50%),
-    linear-gradient(90deg, rgba(200, 68, 82, 0.94), rgba(168, 50, 63, 0.94));
-  -webkit-backdrop-filter: blur(10px) saturate(160%);
-  backdrop-filter: blur(10px) saturate(160%);
-  color: var(--white);
-  box-shadow: 0 18px 34px -18px rgba(224, 82, 95, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.28);
-}
-.btn-danger:hover:not(:disabled) {
-  box-shadow: 0 24px 40px -18px rgba(224, 82, 95, 0.95), inset 0 0 0 1px rgba(255, 255, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.36);
-  transform: translateY(-2px) scale(1.02);
-}
-
-/* The corner toggles on the auth pages (LanguageToggle / ThemeToggle, `floating`): an opaque
-   white pill. Was an inline style, moved here so the light-mode glass treatment below can
-   restyle it without touching dark mode. */
-.btn-float {
-  background: var(--white);
-  color: var(--maroon);
-  border: 2px solid var(--maroon);
-}
-
-/* ---------------- Light-mode glass buttons ----------------
-   LIGHT MODE ONLY (every selector is gated on :not([data-theme='dark']), so dark mode keeps the
-   gradient buttons defined above, untouched). After the "Liquid Glass UI Kit" reference:
-   translucent tinted glass you can see the page through, with a bright rim, a hot highlight
-   along the top edge, light pooling inside the bottom edge, and a soft coloured cast shadow
-   with a second, offset one for the reflected look.
-   Legibility is the hard part: a see-through fill makes the label's contrast depend on whatever
-   sits behind the button (worst case a pale card). White labels on translucent maroon needed
-   the fill to be ~75% opaque AND dimmed (smoked glass) to pass, which came out as a muddy
-   mauve. So the labels are DARK on luminous tinted glass instead: the tints stay vivid, the fill
-   can be genuinely see-through (~60%), and the contrast is far stronger. Measured worst case
-   over white cards and every backdrop orb: dark maroon on rose glass >= 5.2:1, dark red on red
-   glass >= 5.3:1, dark brown on amber >= 7:1, maroon on clear glass >= 7:1. */
-:root:not([data-theme='dark']) .btn-primary,
-:root:not([data-theme='dark']) .btn-gold,
-:root:not([data-theme='dark']) .btn-danger,
-:root:not([data-theme='dark']) .btn-secondary,
-:root:not([data-theme='dark']) .btn-float,
-:root:not([data-theme='dark']) .quick-menu-btn,
-:root:not([data-theme='dark']) .sidebar-icon-btn.active {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 28%),
-    linear-gradient(90deg, color-mix(in srgb, var(--glass-a) var(--glass-pct), transparent), color-mix(in srgb, var(--glass-b) var(--glass-pct), transparent));
-  -webkit-backdrop-filter: blur(14px) saturate(180%) brightness(var(--glass-shade, 1));
-  backdrop-filter: blur(14px) saturate(180%) brightness(var(--glass-shade, 1));
-  box-shadow: 0 16px 26px -12px var(--glass-cast), 6px 12px 18px -12px color-mix(in srgb, var(--glass-cast) 55%, transparent),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.5), inset 0 1.5px 2px rgba(255, 255, 255, 0.7), inset 0 -8px 14px -8px rgba(255, 255, 255, 0.42);
-}
-/* Rose-ruby glass: primary buttons, the menu button, and the active sidebar tile. */
-:root:not([data-theme='dark']) .btn-primary,
-:root:not([data-theme='dark']) .quick-menu-btn,
-:root:not([data-theme='dark']) .sidebar-icon-btn.active {
-  --glass-a: rgb(228, 70, 112);
-  --glass-b: rgb(198, 46, 92);
-  --glass-pct: 60%;
-  --glass-cast: rgba(196, 40, 84, 0.5);
-  color: #3a0a1c;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
-}
-:root:not([data-theme='dark']) .btn-danger {
-  --glass-a: rgb(230, 70, 78);
-  --glass-b: rgb(204, 50, 60);
-  --glass-pct: 60%;
-  --glass-cast: rgba(204, 50, 60, 0.5);
-  color: #3e0a0e;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
-}
-:root:not([data-theme='dark']) .btn-gold {
-  --glass-a: rgb(240, 168, 58);
-  --glass-b: rgb(255, 205, 110);
-  --glass-pct: 58%;
-  --glass-cast: rgba(240, 168, 58, 0.6);
-  color: #4a2f00;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
-}
-/* Secondary is clear frosted glass: the label is maroon on near-white, so it needs no dimming. */
-:root:not([data-theme='dark']) .btn-secondary {
-  --glass-a: #fff;
-  --glass-b: #fff;
-  --glass-pct: 30%;
-  --glass-cast: rgba(36, 52, 96, 0.3);
-  color: var(--maroon);
-  border: 1.5px solid rgba(138, 21, 56, 0.55);
-}
-/* The auth-page corner toggles sit on the fixed maroon gradient: frosted white glass with a dark
-   maroon label (the backdrop is dark, so the white fill is what the label reads against). */
-:root:not([data-theme='dark']) .btn-float {
-  --glass-a: #fff;
-  --glass-b: #fff;
-  --glass-pct: 58%;
-  --glass-cast: rgba(40, 0, 16, 0.45);
-  color: #4a0e24;
-  border: none;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
-}
-:root:not([data-theme='dark']) .btn-primary:hover:not(:disabled),
-:root:not([data-theme='dark']) .btn-gold:hover:not(:disabled),
-:root:not([data-theme='dark']) .btn-danger:hover:not(:disabled),
-:root:not([data-theme='dark']) .btn-secondary:hover:not(:disabled),
-:root:not([data-theme='dark']) .btn-float:hover:not(:disabled),
-:root:not([data-theme='dark']) .quick-menu-btn:hover {
-  box-shadow: 0 22px 32px -12px var(--glass-cast), 8px 14px 20px -12px color-mix(in srgb, var(--glass-cast) 65%, transparent),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.6), inset 0 1.5px 2px rgba(255, 255, 255, 0.82), inset 0 -8px 14px -8px rgba(255, 255, 255, 0.5);
 }
 /* Buttons on a DARK surface (the reel player's video scrim and its "still watching?" overlay,
-   marked .on-dark) keep the deep gradient button with a white label: a see-through rose fill
-   with a dark label has nothing luminous to sit on there, and would be unreadable. */
-:root:not([data-theme='dark']) .on-dark .btn-primary {
-  --glass-cast: color-mix(in srgb, var(--maroon-light) 85%, transparent);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 50%),
-    linear-gradient(90deg, color-mix(in srgb, var(--maroon-light) 94%, transparent), color-mix(in srgb, var(--maroon) 94%, transparent));
-  -webkit-backdrop-filter: blur(10px) saturate(160%);
-  backdrop-filter: blur(10px) saturate(160%);
-  color: var(--white);
-  text-shadow: none;
-  box-shadow: 0 18px 34px -18px var(--glass-cast), inset 0 0 0 1px rgba(255, 255, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+   marked .on-dark) stay a flat deep-rose fill with a white label: a pale neumorphic pill has no
+   matching surface to sit on there. */
+.on-dark .btn-primary {
+  background: var(--neu-sheen), linear-gradient(90deg, #c22954, #8a1538);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -2px 0 rgba(0, 0, 0, 0.2), 0 10px 22px -10px rgba(194, 41, 84, 0.85);
 }
-:root:not([data-theme='dark']) .on-dark .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 24px 40px -18px color-mix(in srgb, var(--maroon-light) 95%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.36);
+.on-dark .btn-primary:active:not(:disabled) {
+  background: linear-gradient(90deg, #a82149, #740f2e);
+  box-shadow: 0 4px 10px -6px rgba(194, 41, 84, 0.85);
 }
-/* Re-assert the keyboard focus ring, which the box-shadow above would otherwise replace. */
-:root:not([data-theme='dark']) .btn:focus-visible:not(:disabled),
-:root:not([data-theme='dark']) .quick-menu-btn:focus-visible {
-  box-shadow: 0 0 0 3px var(--white), 0 0 0 6px var(--maroon-light);
+.on-dark .btn-primary:disabled {
+  opacity: 0.55;
+}
+
+/* Selection controls (worksheet subject / difficulty, avatar pickers): the same material as the buttons --
+   raised until chosen, then pressed in with a ring in the control's own colour. */
+.category-pill,
+button.list-row {
+  --neu-s: 0.6;
+  border: none;
+  background: var(--neu-sheen), var(--neu-bg);
+  box-shadow: var(--neu-raised);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transition: box-shadow 0.2s var(--ease-out), background-color 0.2s var(--ease-out), filter 0.2s var(--ease-out);
+}
+.category-pill:hover,
+button.list-row:hover {
+  transform: none;
+  filter: brightness(var(--neu-hover));
+  box-shadow: var(--neu-raised);
+}
+.category-pill:active,
+button.list-row:active {
+  transform: none;
+  filter: none;
+  background: var(--neu-bg-pressed);
+  box-shadow: var(--neu-pressed);
+}
+.category-pill.selected,
+button.list-row.selected {
+  transform: none;
+  filter: none;
+  background: var(--neu-bg-pressed);
+  box-shadow: var(--neu-pressed), inset 0 0 0 2px currentColor;
+}
+.avatar-choice {
+  --neu-s: 0.45;
+  display: block;
+  padding: 5px;
+  border: none;
+  border-radius: 50%;
+  background: var(--neu-sheen), var(--neu-bg);
+  box-shadow: var(--neu-raised);
+  line-height: 0;
+  cursor: pointer;
+  transition: box-shadow 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
+}
+.avatar-choice[aria-pressed='true'],
+.badge-circle-wrap[aria-pressed='true'] .avatar-choice {
+  background: var(--neu-bg-pressed);
+  box-shadow: var(--neu-pressed), 0 0 0 2px var(--maroon-light);
 }
 
 /* ---------------- Cards ---------------- */
@@ -872,6 +880,120 @@ a:focus-visible {
   pointer-events: none;
 }
 
+/* ---------------- Student home hero ----------------
+   After the "Travel Website Landing Page" Figma hero: a small accent tag, a large serif headline with a
+   brush flourish, a short lede and the calls to action on one side; a large picture leaning on a soft
+   warm glow on the other. The picture is a cut-out (public/images/home-hero.webp) with no frame, so it sits
+   straight on the page in both themes. The progress cards sit below as their own section. */
+:root {
+  --home-glow: rgba(251, 219, 158, 0.75);
+}
+:root[data-theme='dark'] {
+  --home-glow: rgba(240, 168, 58, 0.22);
+}
+.topbar--bare {
+  justify-content: flex-end;
+  padding: 0 4px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.topbar--bare::before {
+  display: none;
+}
+.home-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+  align-items: center;
+  gap: clamp(16px, 2.5vw, 32px);
+  padding-block: 8px 16px;
+}
+.home-hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+}
+.home-eyebrow {
+  margin: 0;
+  color: var(--gold-ink);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.home-hero-title {
+  margin: 0;
+  font-size: clamp(2.25rem, 4.6vw, 3.6rem);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+.home-swoosh {
+  inline-size: 168px;
+  block-size: 14px;
+  margin-block-start: -8px;
+  color: var(--gold);
+}
+:root[dir='rtl'] .home-swoosh {
+  transform: scaleX(-1);
+}
+.home-hero-lede {
+  max-inline-size: 46ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+.home-hero-art {
+  position: relative;
+  isolation: isolate;
+  margin-inline-end: -24px; /* bleeds into the page's side padding */
+}
+/* A wide pool of warm light behind the figures: a radial fade, so it has no edge to read as a shape. */
+.home-hero-art::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -12% -4%;
+  background: radial-gradient(closest-side, var(--home-glow) 0%, transparent 100%);
+}
+.home-hero-image {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+.home-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-block-start: 8px;
+}
+.home-section-title {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  text-align: center;
+}
+.grid-cards.home-cards {
+  grid-template-columns: repeat(3, minmax(0, 260px));
+  justify-content: center;
+}
+@media (max-width: 900px) {
+  .home-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .home-hero-art {
+    justify-self: center;
+    max-inline-size: 600px;
+    margin-inline-end: 0;
+  }
+  .grid-cards.home-cards {
+    grid-template-columns: minmax(0, 300px);
+  }
+}
+
 /* ---------------- Stat cards ---------------- */
 /* Tinted-glass tiles, after the coloured tiles in the reference: a diagonal wash of the hue
    (set per variant via --tile-a/--tile-b), a thick bright rim, light refracting inside the
@@ -880,7 +1002,7 @@ a:focus-visible {
 .stat-card {
   --tile-a: rgba(255, 255, 255, 0.5);
   --tile-b: rgba(255, 255, 255, 0.3);
-  --tile-glow: rgba(36, 52, 96, 0.35);
+  --tile-glow: rgba(43, 27, 70, 0.35);
   position: relative;
   border-radius: var(--radius-lg);
   padding: 20px;
@@ -916,6 +1038,106 @@ a:focus-visible {
 .stat-card-value {
   font-size: 28px;
   font-weight: 800;
+}
+
+/* ---------------- Market cards (student home) ----------------
+   After the "Blockchain NFT Website" Figma file's NFT card: frosted glass, a picture panel with a corner
+   chip, a creator row (avatar, title, "By @name"), a status line beside a bold value, and the site's own
+   button. The Figma is dark; light mode keeps the structure on lavender glass. Each card takes its tint
+   from .stat-card-<tone>. */
+:root {
+  --market-glass: linear-gradient(139deg, rgba(250, 247, 255, 0.36) 0%, rgba(250, 247, 255, 0.14) 100%);
+  --market-chip: linear-gradient(162deg, rgba(250, 247, 255, 0.5) 0%, rgba(250, 247, 255, 0.28) 100%);
+  --market-border: rgba(255, 255, 255, 0.6);
+}
+:root[data-theme='dark'] {
+  --market-glass: linear-gradient(139deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  /* Smoked, not white-tinted: the chip's label is a light tone ink, which needs a dark pane behind it. */
+  --market-chip: linear-gradient(162deg, rgba(14, 10, 24, 0.62) 0%, rgba(14, 10, 24, 0.44) 100%);
+  --market-border: rgba(255, 255, 255, 0.07);
+}
+.market-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 8px 16px;
+  border-radius: 15px;
+  color: var(--ink);
+  background: var(--market-glass);
+  border: 1px solid var(--market-border);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-3d-sm);
+}
+.market-pic {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: linear-gradient(145deg, var(--tile-a), var(--tile-b));
+  box-shadow: inset 0 -26px 40px -28px var(--tile-glow);
+}
+/* The picture is cropped to a circle with a smooth ring, whatever shape the artwork is. */
+.market-pic img {
+  inline-size: 46%;
+  max-inline-size: 104px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid var(--glass-border);
+  box-shadow: 0 10px 22px -10px rgba(30, 20, 50, 0.55);
+}
+.market-chip {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  padding: 8px 12px;
+  border-start-end-radius: 15px;
+  border-end-start-radius: 15px;
+  background: var(--market-chip);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.market-owner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-inline: 10px;
+}
+.market-title {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+}
+.market-by {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+.market-meta {
+  margin-top: auto; /* a wrapped title in one card must not push its value and button out of line with the others */
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding-inline: 10px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+.market-value {
+  font-family: var(--font-heading);
+  font-variant-numeric: lining-nums;
+  font-size: 1.35rem;
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+}
+/* The card's button is the site's own .btn; it only needs to line up with the rows above it. */
+.market-cta {
+  margin-inline: 10px;
 }
 .stat-card-blue {
   --tile-a: rgba(110, 150, 255, 0.42);
@@ -984,26 +1206,10 @@ a:focus-visible {
   width: 96px;
   padding: 14px 10px;
   border-radius: var(--radius-md);
-  border: 2px solid transparent;
   cursor: pointer;
   font-weight: 700;
   font-size: 13px;
   text-align: center;
-  -webkit-backdrop-filter: var(--glass-blur-sm);
-  backdrop-filter: var(--glass-blur-sm);
-  box-shadow: 0 14px 22px -14px var(--tile-glow, rgba(36, 52, 96, 0.35)), var(--glass-rim);
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.18s ease, box-shadow 0.18s ease;
-}
-.category-pill:hover {
-  transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 20px 28px -14px var(--tile-glow, rgba(36, 52, 96, 0.4)), var(--glass-rim);
-}
-.category-pill:active {
-  transform: translateY(-1px) scale(0.98);
-}
-.category-pill.selected {
-  border-color: currentColor;
-  box-shadow: 0 20px 28px -14px var(--tile-glow, rgba(36, 52, 96, 0.4)), var(--glass-rim);
 }
 .category-pill-icon {
   width: 38px;
@@ -1050,6 +1256,10 @@ a:focus-visible {
   align-items: center;
   gap: 8px;
   width: 82px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
   text-align: center;
 }
 .badge-circle-label {
@@ -1144,7 +1354,7 @@ a:focus-visible {
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   color: var(--ink);
-  box-shadow: inset 0 2px 6px rgba(36, 52, 96, 0.12), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 2px 6px rgba(43, 27, 70, 0.12), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 .field input:focus,
@@ -1152,7 +1362,7 @@ a:focus-visible {
 .field textarea:focus {
   outline: none;
   border-color: var(--maroon);
-  box-shadow: inset 0 2px 6px rgba(36, 52, 96, 0.1), 0 0 0 4px rgba(138, 21, 56, 0.14);
+  box-shadow: inset 0 2px 6px rgba(43, 27, 70, 0.1), 0 0 0 4px rgba(138, 21, 56, 0.14);
 }
 .form-error-banner {
   background: var(--danger-light);
@@ -1183,7 +1393,7 @@ a:focus-visible {
   font-weight: 700;
   font-size: 12px;
   /* A small raised chip: bright upper edge and a short soft shadow, like the reference's pills. */
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.35), 0 4px 8px -4px rgba(36, 52, 96, 0.28);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.35), 0 4px 8px -4px rgba(43, 27, 70, 0.28);
 }
 .badge-gold {
   background: var(--gold-light);
@@ -1236,7 +1446,7 @@ a:focus-visible {
   inset: 0;
   /* Lighter, bluer scrim with a stronger blur than before, so the glass modal on top reads as a
      sheet of glass floating over a defocused page rather than a card on a dark dimmer. */
-  background: rgba(24, 34, 64, 0.38);
+  background: rgba(30, 20, 50, 0.38);
   -webkit-backdrop-filter: blur(12px) saturate(140%);
   backdrop-filter: blur(12px) saturate(140%);
   display: flex;
@@ -1754,7 +1964,7 @@ a:focus-visible {
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--radius-lg);
   padding: 32px 36px;
-  box-shadow: 0 24px 60px rgba(20, 20, 20, 0.35), 0 6px 16px rgba(20, 30, 60, 0.15), inset 0 2px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: 0 24px 60px rgba(20, 20, 20, 0.35), 0 6px 16px rgba(30, 20, 50, 0.15), inset 0 2px 0 rgba(255, 255, 255, 0.35);
   max-width: 380px;
   width: 100%;
 }
@@ -1866,18 +2076,9 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
-body {
-  overflow-x: hidden;
-  overflow-x: clip;
-}
-
 /* The floating menu button (the three lines) lives INSIDE the icon bar: centred in its
    column, bottom of the bar. It used to sit a fixed 20px from the screen edge, which is wider
    than the 64px phone bar, so it hung out of it. */
-.quick-menu {
-  inset-inline-start: calc((var(--sidebar-w) - 52px) / 2);
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-}
 @media (max-width: 720px) {
   .quick-menu {
     inset-inline-start: calc((var(--sidebar-w) - 44px) / 2);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { RiNotification3Fill } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
@@ -7,7 +7,8 @@ import { pickText } from '../lib/i18n';
 import { api } from '../lib/api';
 import { RankBadge } from './RankBadge';
 
-export function Topbar({ title, subtitle }: { title: string; subtitle?: string }) {
+// Without a title the bar is just the XP / level / rank chips and the bell (the home page's hero carries the heading).
+export function Topbar({ title, subtitle }: { title?: ReactNode; subtitle?: string }) {
   const { user } = useAuth();
   const { t, lang } = useLanguage();
   const [pendingRequests, setPendingRequests] = useState(0);
@@ -29,11 +30,13 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
   if (!user) return null;
 
   return (
-    <div className="topbar">
-      <div>
-        <h1 className="topbar-title">{title}</h1>
-        {subtitle && <p className="topbar-subtitle">{subtitle}</p>}
-      </div>
+    <div className={title ? 'topbar' : 'topbar topbar--bare'}>
+      {title && (
+        <div>
+          <h1 className="topbar-title">{title}</h1>
+          {subtitle && <p className="topbar-subtitle">{subtitle}</p>}
+        </div>
+      )}
       <div className="flex gap-sm" style={{ alignItems: 'center' }}>
         {user.role !== 'admin' && (
           <>

@@ -10,16 +10,13 @@
   --land-sand: #f6f1e9;
   --land-bg: #1b1518;
   --land-accent: var(--land-cyan); /* tags, links, rails -- readable on the dark ground (~7:1) */
-  --land-serif: 'Playfair Display', 'Times New Roman', Georgia, serif;
+  --land-serif: var(--font-heading);
   --land-edge: clamp(20px, 4.2vw, 80px);
   min-height: 100vh;
   background: var(--land-bg);
   color: var(--land-sand);
   font-family: var(--font-body);
   overflow-x: clip;
-}
-html[lang='ar'] .landing {
-  --land-serif: var(--font-heading);
 }
 
 .landing a,
@@ -426,6 +423,7 @@ html[dir='rtl'] .landing-steps {
 .landing-story img {
   inline-size: 100%;
   max-inline-size: 566px;
+  block-size: auto; /* the height attribute would otherwise pin the box taller than the artwork and crop its sides */
   aspect-ratio: 566 / 720;
   object-fit: cover;
   justify-self: end;

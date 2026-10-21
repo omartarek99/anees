@@ -204,17 +204,11 @@ export function SignupPage() {
                         key={key}
                         onClick={() => setAvatarKey(key)}
                         title={avatarLabel(key, lang)}
+                        className="avatar-choice"
+                        aria-pressed={chosen}
                         whileTap={{ scale: 0.9 }}
                         animate={{ scale: chosen ? 1.12 : 1 }}
                         transition={{ type: 'spring', stiffness: 260, damping: 16 }}
-                        style={{
-                          background: 'none',
-                          border: chosen ? '3px solid var(--maroon)' : '3px solid transparent',
-                          transition: 'border-color 0.2s ease',
-                          borderRadius: '50%',
-                          padding: 2,
-                          cursor: 'pointer',
-                        }}
                       >
                         <Avatar avatarKey={key} size={44} />
                       </m.button>

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { RiMoonLine, RiSunLine, RiEnglishInput, RiTranslate2, RiUserFill, RiLogoutBoxRLine, RiLogoutBoxLine, RiLockPasswordLine } from '@remixicon/react';
+import { RiUserFill, RiLogoutBoxRLine, RiLogoutBoxLine, RiLockPasswordLine } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useTheme } from '../lib/theme-context';
+import { LanguageSwitch, ThemeSwitch } from './Switch';
 
 /** Floating settings menu, anchored on the same side as the sidebar ("icon bar") --
  * left in English, right in Arabic (see `inset-inline-start` in theme.css). The button
@@ -65,29 +66,19 @@ export function QuickMenu() {
             type="button"
             className="quick-menu-item"
             role="menuitem"
-            onClick={() => {
-              toggleLang();
-              setOpen(false);
-            }}
+            onClick={toggleLang}
           >
-            <span className="quick-menu-icon" aria-hidden>
-              {lang === 'ar' ? <RiEnglishInput size={17} /> : <RiTranslate2 size={17} />}
-            </span>
             {t('common.language')}
+            <LanguageSwitch />
           </button>
           <button
             type="button"
             className="quick-menu-item"
             role="menuitem"
-            onClick={() => {
-              toggleTheme();
-              setOpen(false);
-            }}
+            onClick={toggleTheme}
           >
-            <span className="quick-menu-icon" aria-hidden>
-              {theme === 'dark' ? <RiSunLine size={17} /> : <RiMoonLine size={17} />}
-            </span>
             {themeLabel}
+            <ThemeSwitch />
           </button>
           <button
             type="button"

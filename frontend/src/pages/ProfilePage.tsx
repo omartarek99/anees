@@ -475,9 +475,9 @@ export function ProfilePage() {
                   key={key}
                   onClick={() => changeAvatar(key)}
                   className="badge-circle-wrap"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  aria-pressed={profile.avatarKey === key && !profile.avatarUrl}
                 >
-                  <div style={{ borderRadius: '50%', border: profile.avatarKey === key && !profile.avatarUrl ? '3px solid var(--maroon)' : '3px solid transparent', padding: 2 }}>
+                  <div className="avatar-choice">
                     <Avatar avatarKey={key} size={48} />
                   </div>
                   <span className="badge-circle-label">{avatarLabel(key, lang)}</span>

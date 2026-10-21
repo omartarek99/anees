@@ -407,3 +407,91 @@ button.a3d-mini:hover {
     transition: none;
   }
 }
+
+/* ---------------- Neumorphic controls ----------------
+   Raised until chosen, pressed in (with a gold ring) once chosen: the site's button material, on this
+   modal's dark slate. The tokens are the dark-mode ones, since the modal is dark in both themes. */
+.a3d-modal {
+  --neu-bg: #1e293b;
+  --neu-bg-pressed: #172033;
+  --neu-ink: #e2e8f0;
+  --neu-rim-hi: 0.12;
+  --neu-rim-lo: 0.35;
+  --neu-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, 0.18) 100%);
+  --neu-lo: 0, 0, 0;
+  --neu-lo-k: 1.4;
+  --neu-hover: 1.12;
+}
+.a3d-close,
+.a3d-tab,
+.a3d-choice,
+.a3d-btn-ghost {
+  border: none;
+  background: var(--neu-sheen), var(--neu-bg);
+  color: var(--neu-ink);
+  box-shadow: var(--neu-raised);
+  transition: box-shadow 0.2s var(--ease-out), background-color 0.2s var(--ease-out), color 0.2s var(--ease-out), filter 0.2s var(--ease-out);
+}
+.a3d-close {
+  --neu-s: 0.4;
+  border-radius: 12px;
+}
+.a3d-tabs {
+  border-bottom: none;
+  padding-bottom: 10px;
+}
+.a3d-tab {
+  --neu-s: 0.45;
+  padding: 9px 4px;
+  border-radius: 14px;
+}
+.a3d-choice {
+  --neu-s: 0.5;
+}
+.a3d-btn {
+  --neu-s: 0.5;
+  border-radius: 14px;
+}
+.a3d-btn-ghost:hover:not(:disabled),
+.a3d-close:hover,
+.a3d-tab:hover,
+.a3d-choice:hover {
+  border: none;
+  color: var(--neu-ink);
+  filter: brightness(var(--neu-hover));
+}
+.a3d-tab[aria-selected='true'],
+.a3d-choice[aria-pressed='true'] {
+  border: none;
+  background: var(--neu-bg-pressed);
+  color: #fde68a;
+  text-shadow: none;
+  filter: none;
+  box-shadow: var(--neu-pressed), inset 0 0 0 1.5px #fbbf24;
+}
+.a3d-swatch {
+  --neu-s: 0.35;
+  border: none;
+  box-shadow: var(--neu-raised);
+}
+.a3d-swatch:hover {
+  transform: none;
+  filter: brightness(var(--neu-hover));
+}
+.a3d-swatch[aria-pressed='true'] {
+  transform: none;
+  box-shadow: var(--neu-pressed), 0 0 0 3px #0b1220, 0 0 0 5px #fbbf24;
+}
+.a3d-btn-save {
+  box-shadow: var(--neu-raised);
+  transition: box-shadow 0.2s var(--ease-out), filter 0.2s var(--ease-out);
+}
+.a3d-btn-save:hover:not(:disabled) {
+  transform: none;
+  filter: brightness(1.06);
+  box-shadow: var(--neu-raised);
+}
+.a3d-btn:active:not(:disabled) {
+  filter: none;
+  box-shadow: var(--neu-pressed);
+}

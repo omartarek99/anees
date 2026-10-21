@@ -27,7 +27,7 @@ export function LegalPageShell({ title, lastUpdated, children }: { title: string
           >
             {t('legal.backToApp')}
           </Link>
-          <LanguageToggle floating />
+          <LanguageToggle />
         </div>
         <div className="card" style={{ padding: '32px 28px' }}>
           <h1 style={{ fontSize: 26 }}>{title}</h1>

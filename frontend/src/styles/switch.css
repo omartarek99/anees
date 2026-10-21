@@ -1,0 +1,144 @@
+/* Toggle switches from the "Toggle Buttons" Figma file. Designed at 200x90; every measurement is
+   in design units times --u, so the whole switch scales from this one variable. Positions are
+   percentages of the design (knob 70px at 10px / 120px, decorations by their exported insets). */
+.switch {
+  --u: 0.4px;
+  --t: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: calc(200 * var(--u));
+  height: calc(90 * var(--u));
+  vertical-align: middle;
+  /* The knob travels left <-> right in both languages: the state is the knob's side, not the reading direction. */
+  direction: ltr;
+}
+
+.switch-body,
+.switch-body::after {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  box-shadow: inset 0 calc(6 * var(--u)) calc(8 * var(--u)) calc(3 * var(--u)) rgba(0, 0, 0, 0.25);
+}
+
+/* Sky: dark night underneath, the light day fading in over it. */
+.switch--sky .switch-body {
+  background: linear-gradient(181.655deg, rgb(43, 68, 133) 6.5963%, rgb(175, 202, 255) 96.982%);
+}
+.switch--sky .switch-body::after {
+  content: '';
+  background: linear-gradient(to bottom, #66ffed, #ffeeb2);
+  opacity: 0;
+  transition: opacity var(--t);
+}
+.switch--sky.is-on .switch-body::after {
+  opacity: 1;
+}
+
+/* Flat 3D: grey off, green on. */
+.switch--flat .switch-body {
+  background: #efefef;
+  box-shadow: inset 0 calc(6 * var(--u)) calc(8 * var(--u)) calc(3 * var(--u)) rgba(0, 0, 0, 0.1);
+  transition: background-color var(--t), box-shadow var(--t);
+}
+.switch--flat.is-on .switch-body {
+  background: #76ee59;
+  box-shadow: inset 0 calc(6 * var(--u)) calc(8 * var(--u)) 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Stars (night) and clouds (day) cross-fade with the body. */
+.sw-deco {
+  position: absolute;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--t);
+}
+.sw-deco > span {
+  flex: none;
+}
+.sw-deco img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.switch.is-on .sw-star,
+.switch:not(.is-on) .sw-cloud {
+  opacity: 0;
+}
+
+/* Knob: 70/200 wide, 10/90 from the top, 10/200 from the edge. Each knob image is 82x82 (the knob
+   plus its drop shadow), offset exactly as exported; the off/on images cross-fade. */
+.switch-knob {
+  position: absolute;
+  top: 11.1111%;
+  left: 5%;
+  width: 35%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  transition: left var(--t);
+}
+.switch.is-on .switch-knob {
+  left: 60%;
+}
+.switch-knob img {
+  position: absolute;
+  top: -7.14%;
+  width: 117.14%;
+  height: 117.14%;
+  max-width: none;
+  transition: opacity var(--t);
+}
+.switch-knob .k-off {
+  left: -5.71%;
+}
+.switch-knob .k-on {
+  left: -11.43%;
+  opacity: 0;
+}
+.switch.is-on .k-off {
+  opacity: 0;
+}
+.switch.is-on .k-on {
+  opacity: 1;
+}
+.switch-knob-text {
+  position: relative;
+  font-size: calc(26 * var(--u));
+  font-weight: 800;
+  line-height: 1;
+  color: #3a3a3a;
+  user-select: none;
+}
+
+/* The clickable wrapper used wherever the switch stands alone (corner toggles). */
+.switch-btn {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 999px;
+  line-height: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.switch-btn:hover .switch,
+.quick-menu-item:hover .switch {
+  filter: brightness(1.05);
+}
+
+/* In the quick menu the switch sits at the end of its row. */
+.quick-menu-item .switch {
+  --u: 0.32px;
+  margin-inline-start: auto;
+}
+
+/* Reduced motion: no sliding knob, but the colour/decoration cross-fades stay (they don't travel). */
+@media (prefers-reduced-motion: reduce) {
+  .switch-knob {
+    transition: none;
+  }
+}

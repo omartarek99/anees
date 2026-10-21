@@ -161,8 +161,8 @@ function PublicOnlyLayout() {
   return (
     <div style={{ position: 'relative' }}>
       <div className="flex gap-sm" style={{ position: 'absolute', top: 16, insetInlineEnd: 16, zIndex: 10 }}>
-        <ThemeToggle floating />
-        <LanguageToggle floating />
+        <ThemeToggle />
+        <LanguageToggle />
       </div>
       <Outlet />
       <Footer />

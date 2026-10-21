@@ -1,4 +1,5 @@
 import { RiPokerHeartsFill, RiPokerHeartsLine, RiVolumeMuteFill, RiVolumeUpFill, RiFileLine, RiCalculatorLine, RiAtomLine } from '@remixicon/react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../lib/language-context';
 import { Avatar } from './Avatar';
 
@@ -9,7 +10,7 @@ import { Avatar } from './Avatar';
  * enough width for a video and a whole extra icon column side by side on a phone screen,
  * and that's exactly how TikTok's own mobile app places it too. */
 export function ReelActionRail({
-  avatarKey,
+  author,
   liked,
   likeCount,
   onToggleLike,
@@ -21,7 +22,7 @@ export function ReelActionRail({
   muted,
   onToggleMute,
 }: {
-  avatarKey: string;
+  author: { username: string; displayName: string; avatarKey: string; avatarUrl: string | null } | null;
   liked: boolean;
   likeCount: number;
   onToggleLike: () => void;
@@ -36,7 +37,22 @@ export function ReelActionRail({
   const { t } = useLanguage();
   return (
     <div className="reel-action-rail flex-col flex-center gap-lg" style={{ paddingBottom: 28 }}>
-      <Avatar avatarKey={avatarKey} size={48} />
+      {/* The uploader, at the head of the rail: a link to their profile for a teacher's reel. The built-in
+          lessons have no uploader to point to, so they carry the Anees mark instead. */}
+      {author ? (
+        <Link
+          to={`/profile/${author.username}`}
+          className="reel-rail-author"
+          title={t('reels.lessonBy', { name: author.displayName })}
+          aria-label={t('reels.lessonBy', { name: author.displayName })}
+        >
+          <Avatar avatarKey={author.avatarKey} photoUrl={author.avatarUrl} size={48} />
+        </Link>
+      ) : (
+        <span className="reel-rail-brand" aria-hidden>
+          <img src="/icons/logo-mark.png" alt="" />
+        </span>
+      )}
 
       <button type="button" className="reel-rail-btn" onClick={onToggleLike} aria-label={t(liked ? 'reels.unlike' : 'reels.like')}>
         <span
