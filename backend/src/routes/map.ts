@@ -1,14 +1,13 @@
 import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
-import { requireAuth } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { awardXp, getPlayerLevel, BOSS_DEFEAT_XP_BONUS, BOSS_PASS_RATIO } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
 
 export const mapRouter = asyncRouter();
 
-mapRouter.get('/', requireAuth, (req, res) => {
+mapRouter.get('/', (req, res) => {
   const levels = db
     .prepare(
       `SELECT m.*, s.key as subject_key, s.name as subject_name, s.name_ar as subject_name_ar, s.icon as subject_icon
@@ -52,7 +51,7 @@ function loadLevelWithProgress(userId: number, levelNumber: number) {
   return { level, progress };
 }
 
-mapRouter.get('/boss/:levelNumber', requireAuth, (req, res) => {
+mapRouter.get('/boss/:levelNumber', (req, res) => {
   const levelNumber = Number(req.params.levelNumber);
   const found = loadLevelWithProgress(req.userId!, levelNumber);
   if (!found || found.level.kind !== 'boss') {
@@ -96,7 +95,7 @@ const bossCheckSchema = z.object({
 
 // Real-time single-question grading — lets the arena drop the boss's HP live as each
 // question is answered, without waiting for the end-of-fight /submit to persist progress.
-mapRouter.post('/boss/:levelNumber/check', requireAuth, requireCsrfHeader, validateBody(bossCheckSchema), (req, res) => {
+mapRouter.post('/boss/:levelNumber/check', requireCsrfHeader, validateBody(bossCheckSchema), (req, res) => {
   const levelNumber = Number(req.params.levelNumber);
   const found = loadLevelWithProgress(req.userId!, levelNumber);
   if (!found || found.level.kind !== 'boss') {
@@ -129,7 +128,7 @@ const bossSubmitSchema = z.object({
   answers: z.array(z.object({ questionId: z.number(), choiceIndex: z.number().min(0).max(3) })),
 });
 
-mapRouter.post('/boss/:levelNumber/submit', requireAuth, requireCsrfHeader, validateBody(bossSubmitSchema), (req, res) => {
+mapRouter.post('/boss/:levelNumber/submit', requireCsrfHeader, validateBody(bossSubmitSchema), (req, res) => {
   const levelNumber = Number(req.params.levelNumber);
   const found = loadLevelWithProgress(req.userId!, levelNumber);
   if (!found || found.level.kind !== 'boss') {

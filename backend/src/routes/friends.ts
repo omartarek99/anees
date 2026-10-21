@@ -1,7 +1,6 @@
 import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
-import { requireAuth } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { usernameSchema } from '../lib/schemas.js';
 
@@ -16,7 +15,7 @@ function areFriends(a: number, b: number): boolean {
   return !!db.prepare(`SELECT 1 FROM friendships WHERE user_a_id = ? AND user_b_id = ?`).get(x, y);
 }
 
-friendsRouter.get('/', requireAuth, (req, res) => {
+friendsRouter.get('/', (req, res) => {
   const rows = db
     .prepare(
       `SELECT u.username, u.display_name, u.avatar_key, u.total_xp FROM friendships f
@@ -30,7 +29,7 @@ friendsRouter.get('/', requireAuth, (req, res) => {
   });
 });
 
-friendsRouter.get('/requests', requireAuth, (req, res) => {
+friendsRouter.get('/requests', (req, res) => {
   const incoming = db
     .prepare(
       `SELECT fr.id, u.username, u.display_name, u.avatar_key, fr.created_at FROM friend_requests fr
@@ -54,7 +53,7 @@ friendsRouter.get('/requests', requireAuth, (req, res) => {
 
 const requestSchema = z.object({ toUsername: usernameSchema });
 
-friendsRouter.post('/request', requireAuth, requireCsrfHeader, validateBody(requestSchema), (req, res) => {
+friendsRouter.post('/request', requireCsrfHeader, validateBody(requestSchema), (req, res) => {
   const { toUsername } = req.body as { toUsername: string };
   const target = db.prepare(`SELECT * FROM users WHERE lower(username) = lower(?)`).get(toUsername) as any;
   // Admin accounts can't be friends (no Friends page, hidden from search): a request would sit pending forever.
@@ -100,7 +99,7 @@ friendsRouter.post('/request', requireAuth, requireCsrfHeader, validateBody(requ
   res.status(201).json({ requestId, autoAccepted: false });
 });
 
-friendsRouter.post('/requests/:id/accept', requireAuth, requireCsrfHeader, (req, res) => {
+friendsRouter.post('/requests/:id/accept', requireCsrfHeader, (req, res) => {
   const request = db.prepare(`SELECT * FROM friend_requests WHERE id = ?`).get(Number(req.params.id)) as any;
   if (!request || request.to_user_id !== req.userId! || request.status !== 'pending') {
     res.status(404).json({ error: 'Friend request not found.' });
@@ -112,7 +111,7 @@ friendsRouter.post('/requests/:id/accept', requireAuth, requireCsrfHeader, (req,
   res.json({ ok: true });
 });
 
-friendsRouter.post('/requests/:id/decline', requireAuth, requireCsrfHeader, (req, res) => {
+friendsRouter.post('/requests/:id/decline', requireCsrfHeader, (req, res) => {
   const request = db.prepare(`SELECT * FROM friend_requests WHERE id = ?`).get(Number(req.params.id)) as any;
   if (!request || request.to_user_id !== req.userId! || request.status !== 'pending') {
     res.status(404).json({ error: 'Friend request not found.' });

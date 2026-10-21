@@ -1,7 +1,6 @@
 import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
-import { requireAuth } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { awardXp, getPlayerLevel, VIDEO_HALF_WATCH_POINTS, VIDEO_FULL_WATCH_POINTS, QUIZ_PASS_POINTS, QUIZ_FAIL_POINTS } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
@@ -11,7 +10,7 @@ export const reelsRouter = asyncRouter();
 
 // Polled by the frontend (see DoublePointsNotification.tsx) to pop up a notification the
 // moment the hour's random double-points window opens, without needing any push mechanism.
-reelsRouter.get('/double-points-status', requireAuth, (_req, res) => {
+reelsRouter.get('/double-points-status', (_req, res) => {
   res.json(getDoublePointsStatus());
 });
 
@@ -61,7 +60,7 @@ function loadQuestions(reelId: number) {
 // round trips just to render the feed, and again every time a level completed). This does
 // the same join+filter /map already does, then gathers each level's reels/questions
 // in-process (still N small synchronous SQLite calls, but zero extra HTTP round trips).
-reelsRouter.get('/feed', requireAuth, (req, res) => {
+reelsRouter.get('/feed', (req, res) => {
   const levels = db
     .prepare(`SELECT * FROM map_levels WHERE kind = 'normal' AND status = 'ready' ORDER BY level_number`)
     .all() as any[];
@@ -147,7 +146,7 @@ reelsRouter.get('/feed', requireAuth, (req, res) => {
   res.json(feed);
 });
 
-reelsRouter.get('/level/:levelNumber', requireAuth, (req, res) => {
+reelsRouter.get('/level/:levelNumber', (req, res) => {
   const levelNumber = Number(req.params.levelNumber);
   const level = db.prepare(`SELECT * FROM map_levels WHERE level_number = ?`).get(levelNumber) as any;
   if (!level) {
@@ -219,7 +218,7 @@ const watchSchema = z.object({
 // wall-clock time elapsed since the previous credited call (`updated_at`, small slack for
 // latency) means spamming requests doesn't help -- two calls a second apart can jointly
 // credit at most ~1 second of watch time, no matter what `seconds` either one claims.
-reelsRouter.post('/:reelId/watch', requireAuth, requireCsrfHeader, validateBody(watchSchema), (req, res) => {
+reelsRouter.post('/:reelId/watch', requireCsrfHeader, validateBody(watchSchema), (req, res) => {
   const reelId = Number(req.params.reelId);
   const reel = db.prepare(`SELECT * FROM reels WHERE id = ?`).get(reelId) as any;
   if (!reel) {
@@ -304,7 +303,7 @@ const submitSchema = z.object({
   answers: z.array(z.object({ questionId: z.number(), choiceIndex: z.number().min(0).max(3) })),
 });
 
-reelsRouter.post('/:reelId/submit', requireAuth, requireCsrfHeader, validateBody(submitSchema), (req, res) => {
+reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema), (req, res) => {
   const reelId = Number(req.params.reelId);
   const reel = db.prepare(`SELECT * FROM reels WHERE id = ?`).get(reelId) as any;
   if (!reel) {

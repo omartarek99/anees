@@ -63,16 +63,16 @@ export function teacherVideoUploadPoints(durationSeconds: number): number {
   return Math.floor(counted / 30) * TEACHER_VIDEO_POINTS_PER_30S;
 }
 
+const maxCompletedLevel = db.prepare(
+  `SELECT MAX(m.level_number) as maxLevel
+   FROM user_level_progress p
+   JOIN map_levels m ON p.map_level_id = m.id
+   WHERE p.user_id = ? AND p.status = 'completed'`
+);
+
 /** "Player level" = the map level the student is currently on (highest completed + 1), capped at 50. */
 export function getPlayerLevel(userId: number): number {
-  const row = db
-    .prepare(
-      `SELECT MAX(m.level_number) as maxLevel
-       FROM user_level_progress p
-       JOIN map_levels m ON p.map_level_id = m.id
-       WHERE p.user_id = ? AND p.status = 'completed'`
-    )
-    .get(userId) as { maxLevel: number | null };
+  const row = maxCompletedLevel.get(userId) as { maxLevel: number | null };
   const completedMax = row.maxLevel ?? 0;
   return Math.min(completedMax + 1, 50);
 }

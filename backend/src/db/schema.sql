@@ -323,6 +323,19 @@ CREATE INDEX IF NOT EXISTS idx_page_views_created ON page_views(created_at);
 CREATE INDEX IF NOT EXISTS idx_xp_events_user_time ON xp_events(user_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_progress_user ON user_level_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash);
+-- Foreign-key / lookup columns that were full-table scans. login, signup, friend requests and profile
+-- pages all match on lower(username), which the plain UNIQUE index (BINARY) cannot serve.
+CREATE INDEX IF NOT EXISTS idx_users_username_lower ON users(lower(username));
+CREATE INDEX IF NOT EXISTS idx_reels_level ON reels(map_level_id);
+CREATE INDEX IF NOT EXISTS idx_reel_questions_reel ON reel_questions(reel_id);
+CREATE INDEX IF NOT EXISTS idx_boss_questions_level ON boss_questions(map_level_id);
+CREATE INDEX IF NOT EXISTS idx_friendships_b ON friendships(user_b_id);
+CREATE INDEX IF NOT EXISTS idx_friend_requests_to ON friend_requests(to_user_id);
+CREATE INDEX IF NOT EXISTS idx_certificates_user ON certificates(user_id);
+CREATE INDEX IF NOT EXISTS idx_worksheet_attempts_user ON worksheet_attempts(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_worksheet_prints_user ON worksheet_prints(user_id);
+CREATE INDEX IF NOT EXISTS idx_teacher_point_events_user_time ON teacher_point_events(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_watch_progress_reel ON reel_watch_progress(reel_id);
 
 -- Marker rows for data fixes that must run once per database (see runOnce() in seed.ts).
 CREATE TABLE IF NOT EXISTS one_time_jobs (

@@ -2,7 +2,7 @@ import { asyncRouter } from '../lib/asyncRouter.js';
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { db } from '../db/db.js';
-import { forbidRole, requireAuth, requireRole } from '../middleware/auth.js';
+import { forbidRole, requireRole } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { worksheetAiLimiter } from '../middleware/rateLimit.js';
 import { awardXp, awardTeacherPoints, TEACHER_PRINT_POINTS, WORKSHEET_XP_PER_CORRECT } from '../lib/xp.js';
@@ -56,7 +56,7 @@ function loadVisibleVideo(reelId: number, userId: number) {
   return null;
 }
 
-worksheetsRouter.get('/videos', requireAuth, (req, res) => {
+worksheetsRouter.get('/videos', (req, res) => {
   const user = db.prepare(`SELECT grade FROM users WHERE id = ?`).get(req.userId!) as { grade: number | null } | undefined;
   const rows = db
     .prepare(
@@ -269,7 +269,6 @@ function limitAiWhenAi(req: Request, res: Response, next: NextFunction) {
 
 worksheetsRouter.post(
   '/generate',
-  requireAuth,
   forbidRole('admin'),
   requireCsrfHeader,
   validateBody(generateSchema),
@@ -400,7 +399,7 @@ const submitSchema = z.object({
   answers: z.array(z.object({ questionId: z.number(), choiceIndex: z.number().min(0).max(3) })),
 });
 
-worksheetsRouter.post('/:id/submit', requireAuth, forbidRole('admin'), requireCsrfHeader, validateBody(submitSchema), (req, res) => {
+worksheetsRouter.post('/:id/submit', forbidRole('admin'), requireCsrfHeader, validateBody(submitSchema), (req, res) => {
   const attempt = db.prepare(`SELECT * FROM worksheet_attempts WHERE id = ?`).get(Number(req.params.id)) as any;
   if (!attempt || attempt.user_id !== req.userId!) {
     res.status(404).json({ error: 'Worksheet not found.' });
@@ -439,13 +438,13 @@ worksheetsRouter.post('/:id/submit', requireAuth, forbidRole('admin'), requireCs
 // completing or being cancelled, so this just tracks "the teacher clicked print", which is
 // what "each print he make" means in practice. Teacher-only: students never see the print
 // button in the first place, but the role check here is the real gate.
-worksheetsRouter.post('/print', requireAuth, requireRole('teacher'), requireCsrfHeader, (req, res) => {
+worksheetsRouter.post('/print', requireRole('teacher'), requireCsrfHeader, (req, res) => {
   db.prepare(`INSERT INTO worksheet_prints (user_id) VALUES (?)`).run(req.userId!);
   awardTeacherPoints(req.userId!, TEACHER_PRINT_POINTS, 'worksheet_print');
   res.json({ ok: true });
 });
 
-worksheetsRouter.get('/history', requireAuth, (req, res) => {
+worksheetsRouter.get('/history', (req, res) => {
   const rows = db
     .prepare(
       `SELECT wa.*, s.key as subject_key, s.name as subject_name FROM worksheet_attempts wa

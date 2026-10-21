@@ -1,6 +1,5 @@
 import { asyncRouter } from '../lib/asyncRouter.js';
 import { db } from '../db/db.js';
-import { requireAuth } from '../middleware/auth.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 
 export const leaderboardRouter = asyncRouter();
@@ -11,13 +10,14 @@ const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 // teacher_point_events -- see lib/xp.ts) instead of the student XP board -- they don't
 // earn XP the same way students do, and mixing the two currencies on one board wouldn't
 // mean anything. Which board a caller sees is entirely determined by their own role.
-leaderboardRouter.get('/', requireAuth, (req, res) => {
-  const requester = db.prepare(`SELECT role FROM users WHERE id = ?`).get(req.userId!) as { role: string } | undefined;
-  const isTeacher = requester?.role === 'teacher';
+leaderboardRouter.get('/', (req, res) => {
+  const isTeacher = req.userRole === 'teacher';
 
   const requestedMonth = String(req.query.month ?? '');
   const month = MONTH_PATTERN.test(requestedMonth) ? requestedMonth : null;
-  const monthExpr = month ? `'${month}'` : `strftime('%Y-%m', 'now')`;
+  const monthStart = month ? `'${month}-01'` : `date('now', 'start of month')`;
+  // A range on the raw column (not strftime(...) = ...) so idx_xp_events_user_time can narrow each user's rows to the month.
+  const inMonth = `x.created_at >= ${monthStart} AND x.created_at < date(${monthStart}, '+1 month')`;
 
   // month is validated against MONTH_PATTERN above, safe to interpolate as a literal.
   // pointsTable/pointsColumn/roleFilter are fixed internal constants (never user input),
@@ -32,7 +32,7 @@ leaderboardRouter.get('/', requireAuth, (req, res) => {
       `SELECT u.username, u.display_name, u.avatar_key, u.${pointsColumn} as total_points, COALESCE(SUM(x.amount), 0) as monthly_points
        FROM users u
        JOIN ${pointsTable} x ON x.user_id = u.id
-       WHERE strftime('%Y-%m', x.created_at) = ${monthExpr} AND ${roleFilter}
+       WHERE ${inMonth} AND ${roleFilter}
        GROUP BY u.id
        ORDER BY monthly_points DESC
        LIMIT 20`
@@ -51,7 +51,7 @@ leaderboardRouter.get('/', requireAuth, (req, res) => {
   const meRow = db
     .prepare(
       `SELECT u.username, u.display_name, u.avatar_key, u.${pointsColumn} as total_points, COALESCE(SUM(x.amount), 0) as monthly_points
-       FROM users u LEFT JOIN ${pointsTable} x ON x.user_id = u.id AND strftime('%Y-%m', x.created_at) = ${monthExpr}
+       FROM users u LEFT JOIN ${pointsTable} x ON x.user_id = u.id AND ${inMonth}
        WHERE u.id = ? AND ${roleFilter}
        GROUP BY u.id`
     )
@@ -64,7 +64,7 @@ leaderboardRouter.get('/', requireAuth, (req, res) => {
         `SELECT COUNT(*) + 1 as rank FROM (
            SELECT u.id, COALESCE(SUM(x.amount), 0) as monthly_points
            FROM users u JOIN ${pointsTable} x ON x.user_id = u.id
-           WHERE strftime('%Y-%m', x.created_at) = ${monthExpr} AND ${roleFilter}
+           WHERE ${inMonth} AND ${roleFilter}
            GROUP BY u.id HAVING monthly_points > ?
          )`
       )

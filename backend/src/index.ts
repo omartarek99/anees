@@ -82,20 +82,19 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 // roles for reading; only its own POST/DELETE routes are teacher-gated internally.
 // `/api/teacher-reels` is the one truly teacher-only surface, gated per-route inside
 // its own router.
-const authenticated = [requireAuth];
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
-app.use('/api/reels', ...authenticated, reelsRouter);
-app.use('/api/map', ...authenticated, mapRouter);
-app.use('/api/worksheets', ...authenticated, worksheetsRouter);
-app.use('/api/leaderboard', ...authenticated, leaderboardRouter);
-app.use('/api/friends', ...authenticated, friendsRouter);
+app.use('/api/reels', requireAuth, reelsRouter);
+app.use('/api/map', requireAuth, mapRouter);
+app.use('/api/worksheets', requireAuth, worksheetsRouter);
+app.use('/api/leaderboard', requireAuth, leaderboardRouter);
+app.use('/api/friends', requireAuth, friendsRouter);
 app.use('/api/news', newsRouter);
-app.use('/api/craft', ...authenticated, craftRouter);
+app.use('/api/craft', requireAuth, craftRouter);
 app.use('/api/teacher-reels', teacherReelsRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/analytics', analyticsRouter);
-app.use('/api/certificates', ...authenticated, certificatesRouter);
+app.use('/api/certificates', requireAuth, certificatesRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found.' });

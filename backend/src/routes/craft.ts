@@ -2,14 +2,13 @@ import { randomUUID } from 'node:crypto';
 import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
-import { requireAuth } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { awardXp, craftPuzzleTierForXp, CRAFT_PUZZLE_XP_BY_TIER } from '../lib/xp.js';
 import { generateCraftPuzzle } from '../lib/craftPuzzles.js';
 
 export const craftRouter = asyncRouter();
 
-craftRouter.get('/', requireAuth, (req, res) => {
+craftRouter.get('/', (req, res) => {
   const row = db.prepare(`SELECT * FROM craft_saves WHERE user_id = ?`).get(req.userId!) as any;
   if (!row) {
     res.json({ save: null });
@@ -56,7 +55,7 @@ const saveSchema = z.object({
   food: z.number().int().min(0).max(20).optional(),
 });
 
-craftRouter.post('/save', requireAuth, requireCsrfHeader, validateBody(saveSchema), (req, res) => {
+craftRouter.post('/save', requireCsrfHeader, validateBody(saveSchema), (req, res) => {
   const { version, seed, worldDiff, inventory, playerX, playerY, playerZ, hp, food } = req.body as z.infer<typeof saveSchema>;
   db.prepare(
     `INSERT INTO craft_saves (user_id, version, seed, world_diff_json, inventory_json, player_x, player_y, player_z, hp, food, updated_at)
@@ -88,7 +87,7 @@ function sweepExpiredPuzzles() {
   }
 }
 
-craftRouter.post('/puzzle', requireAuth, requireCsrfHeader, (req, res) => {
+craftRouter.post('/puzzle', requireCsrfHeader, (req, res) => {
   sweepExpiredPuzzles();
   const user = db.prepare(`SELECT total_xp FROM users WHERE id = ?`).get(req.userId!) as { total_xp: number };
   const tier = craftPuzzleTierForXp(user.total_xp);
@@ -100,7 +99,7 @@ craftRouter.post('/puzzle', requireAuth, requireCsrfHeader, (req, res) => {
 
 const answerSchema = z.object({ choice: z.number() });
 
-craftRouter.post('/puzzle/:puzzleId/answer', requireAuth, requireCsrfHeader, validateBody(answerSchema), (req, res) => {
+craftRouter.post('/puzzle/:puzzleId/answer', requireCsrfHeader, validateBody(answerSchema), (req, res) => {
   const pending = pendingPuzzles.get(req.params.puzzleId);
   if (!pending || pending.userId !== req.userId || pending.expiresAt < Date.now()) {
     res.status(404).json({ error: 'Not found.' });
