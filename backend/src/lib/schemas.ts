@@ -85,6 +85,11 @@ export const verifyEmailSchema = z.object({
   oobCode: z.string().min(1, 'Missing verification code.'),
 });
 
+export const verifyOtpSchema = z.object({
+  idToken: z.string().min(1, 'Missing verification token.'),
+  code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code.'),
+});
+
 export const resendVerificationSchema = z.object({
   idToken: z.string().min(1, 'Missing verification token.'),
   lang: z.enum(['en', 'ar']).optional(),

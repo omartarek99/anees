@@ -8,7 +8,7 @@ import { moderateText } from '../lib/moderation.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { authLimiter } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
-import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema } from '../lib/schemas.js';
+import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema } from '../lib/schemas.js';
 import { getPlayerLevel } from '../lib/xp.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
@@ -21,7 +21,9 @@ import {
 } from '../lib/firebase.js';
 import { verifyQatarIdPhoto, type IdVerificationFailureReason } from '../lib/idVerification.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
-import { sendVerificationEmail } from '../lib/mailer.js';
+import { sendVerificationEmail, sendOtpEmail, otpDeliveryAvailable, type SendResult } from '../lib/mailer.js';
+import { createOtp, verifyOtp, clearOtp } from '../lib/otp.js';
+import { getFirebaseAdminAuth } from '../lib/firebaseAdmin.js';
 import { FRONTEND_ORIGIN } from '../lib/config.js';
 import { encrypt, decrypt, hashForLookup } from '../lib/encryption.js';
 
@@ -209,7 +211,16 @@ authRouter.post(
       }
     }
 
-    const sendResult = await sendVerificationEmail({ email, idToken, lang: lang ?? 'ar' });
+    // A typed 6-digit code when Resend + the Firebase service account are set up, otherwise the
+    // verification link (see lib/mailer.ts).
+    const method: 'otp' | 'link' = (await otpDeliveryAvailable()) ? 'otp' : 'link';
+    let sendResult: SendResult;
+    if (method === 'otp') {
+      const otp = createOtp(userId);
+      sendResult = otp.ok ? await sendOtpEmail(email, otp.code, lang ?? 'ar') : { ok: false, error: `OTP_${otp.reason}` };
+    } else {
+      sendResult = await sendVerificationEmail({ email, idToken, lang: lang ?? 'ar' });
+    }
     if (!sendResult.ok) {
       // Roll back so the username/email is free to retry with instead of being stuck
       // on an account that never got its verification email (and never leave an
@@ -225,7 +236,7 @@ authRouter.post(
       db.prepare(`UPDATE users SET id_document_path = ? WHERE id = ?`).run(idDocumentPath, userId);
     }
 
-    res.status(201).json({ pendingVerification: true, email, idToken });
+    res.status(201).json({ pendingVerification: true, email, idToken, method });
   }
 );
 
@@ -288,7 +299,11 @@ authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSche
   const lookupResult = await firebaseLookup(idToken);
   const emailVerified = lookupResult.ok && lookupResult.data.users[0]?.emailVerified;
   if (!emailVerified) {
-    res.status(403).json({ error: 'Please verify your email before logging in.', idToken });
+    res.status(403).json({
+      error: 'Please verify your email before logging in.',
+      idToken,
+      method: (await otpDeliveryAvailable()) ? 'otp' : 'link',
+    });
     return;
   }
 
@@ -351,16 +366,97 @@ authRouter.post(
       return;
     }
 
-    const sendResult = await sendVerificationEmail({ email: lookupResult.data.users[0].email, idToken, lang: lang ?? 'ar' });
+    const accountEmail = lookupResult.data.users[0].email;
+    if (await otpDeliveryAvailable()) {
+      const row = db.prepare(`SELECT id FROM users WHERE email_hash = ?`).get(hashForLookup(accountEmail)) as { id: number } | undefined;
+      if (!row) {
+        res.status(404).json({ error: 'Account not found.' });
+        return;
+      }
+      const otp = createOtp(row.id);
+      if (!otp.ok) {
+        res.status(429).json({
+          error: otp.reason === 'cooldown' ? 'Please wait a minute before requesting another code.' : 'Too many codes requested. Please try again later.',
+        });
+        return;
+      }
+      const sent = await sendOtpEmail(accountEmail, otp.code, lang ?? 'ar');
+      if (!sent.ok) {
+        console.error('Sending the verification code failed:', sent.error);
+        res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
+        return;
+      }
+      res.json({ ok: true, method: 'otp' });
+      return;
+    }
+
+    const sendResult = await sendVerificationEmail({ email: accountEmail, idToken, lang: lang ?? 'ar' });
     if (!sendResult.ok) {
       console.error('Resending the verification email failed:', sendResult.error);
       res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
       return;
     }
 
-    res.json({ ok: true });
+    res.json({ ok: true, method: 'link' });
   }
 );
+
+// Confirms the 6-digit code from the email. The Firebase idToken (from signup, or from the
+// "please verify" login response) proves the caller knows the account's password, so codes
+// can't be guessed for someone else's email -- and each code allows only a few wrong tries.
+authRouter.post('/verify-otp', authLimiter, requireCsrfHeader, validateBody(verifyOtpSchema), async (req, res) => {
+  const { idToken, code } = req.body;
+
+  const lookup = await firebaseLookup(idToken);
+  const fbUser = lookup.ok ? lookup.data.users[0] : undefined;
+  if (!fbUser) {
+    res.status(401).json({ error: 'Your verification session expired. Please log in again.' });
+    return;
+  }
+  const user = db.prepare(`SELECT * FROM users WHERE email_hash = ?`).get(hashForLookup(fbUser.email)) as any;
+  if (!user) {
+    res.status(404).json({ error: 'Account not found.' });
+    return;
+  }
+  if (fbUser.emailVerified && user.email_verified) {
+    res.status(400).json({ error: 'This account is already verified.' });
+    return;
+  }
+
+  const result = verifyOtp(user.id, code);
+  if (result === 'invalid') {
+    res.status(400).json({ error: 'That code is incorrect. Please try again.' });
+    return;
+  }
+  if (result === 'expired') {
+    res.status(400).json({ error: 'That code has expired. Request a new one.' });
+    return;
+  }
+  if (result === 'locked') {
+    res.status(429).json({ error: 'Too many wrong attempts. Request a new code.' });
+    return;
+  }
+
+  const adminAuth = await getFirebaseAdminAuth();
+  if (!adminAuth) {
+    res.status(500).json({ error: "We couldn't verify your account. Please try again shortly." });
+    return;
+  }
+  try {
+    await adminAuth.updateUser(fbUser.localId, { emailVerified: true });
+  } catch (err) {
+    console.error('Marking the Firebase user verified failed:', err);
+    res.status(500).json({ error: "We couldn't verify your account. Please try again shortly." });
+    return;
+  }
+  db.prepare(`UPDATE users SET email_verified = 1 WHERE id = ?`).run(user.id);
+  clearOtp(user.id);
+
+  const { token } = createSession(user.id);
+  res.cookie(SESSION_COOKIE, token, cookieOptions);
+  const updated = db.prepare(`SELECT * FROM users WHERE id = ?`).get(user.id);
+  res.json({ user: publicUser(updated) });
+});
 
 authRouter.post('/logout', requireCsrfHeader, (req, res) => {
   const token = req.cookies?.[SESSION_COOKIE];

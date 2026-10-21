@@ -159,17 +159,18 @@ keep `backend/data/app.db`. Without a backend, every `/api/*` request on the Ver
 3. **Firebase console -> Authentication -> Settings -> Authorized domains**: add the Vercel domain, or signup
    fails with "We couldn't send the verification email".
 
-**Verification emails from your own domain (Resend, optional but recommended).** Firebase's default email comes from
-a shared Google address and often lands in spam, and its template can't be edited. With these three variables on the
-backend host, Firebase only creates the one-time code and the app emails it itself, in Arabic or English, with a link
-straight to `/verify-email` on your site (the app already logs the user in from that link):
-- `RESEND_API_KEY` -- from resend.com (API Keys), and a domain you own verified there (Domains: add the DNS records it shows)
+**Verification by a 6-digit code (Resend, optional but recommended).** Firebase's default email comes from a shared
+Google address, often lands in spam, and its template can't be edited. With these three variables on the backend host
+the app sends the email itself, from your own domain: after signup the student types a **6-digit code** (valid 10
+minutes, 5 wrong tries per code, 60 s between resends) and is verified and logged in. An unverified user who tries to
+log in gets a "send me a code" button.
+- `RESEND_API_KEY` -- from resend.com (API Keys), with a domain you own verified there (Domains: add the DNS records it shows)
 - `EMAIL_FROM` -- e.g. `Anees <no-reply@your-domain.com>` (must use the verified domain)
 - `FIREBASE_SERVICE_ACCOUNT_JSON` -- the contents of `backend/secrets/firebase-service-account.json` as **one line**
-  (Firebase console -> Project settings -> Service accounts -> Generate new private key). Also lets the admin panel
-  delete Firebase accounts in production.
+  (Firebase console -> Project settings -> Service accounts -> Generate new private key). Needed to mark the Firebase
+  user verified after the code is accepted; it also lets the admin panel delete Firebase accounts in production.
 
-Without them the app keeps working and falls back to Firebase's own email.
+Without them the app keeps working and falls back to Firebase's own verification link email.
 
 The dev auto-login (`DEV_BYPASS_LOGIN`) is dev-server-only: it is ignored in `vite build`, so a deployed site
 always shows the real login page.

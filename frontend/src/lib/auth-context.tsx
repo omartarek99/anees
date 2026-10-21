@@ -43,12 +43,15 @@ type AuthContextValue = {
     website?: string;
     /** Language for the verification email. */
     lang?: 'en' | 'ar';
-  }) => Promise<{ email: string; idToken: string }>;
+  }) => Promise<{ email: string; idToken: string; method: 'otp' | 'link' }>;
   login: (input: { username: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   verifyEmail: (oobCode: string) => Promise<void>;
-  resendVerification: (idToken: string, lang?: 'en' | 'ar') => Promise<void>;
+  /** Resolves with how the server verifies: a typed 6-digit code ('otp') or an emailed link. */
+  resendVerification: (idToken: string, lang?: 'en' | 'ar') => Promise<{ method: 'otp' | 'link' }>;
+  /** Confirms the 6-digit code; on success the account is verified and the user is logged in. */
+  verifyOtp: (idToken: string, code: string) => Promise<void>;
   dismissWarning: () => Promise<void>;
 };
 
@@ -110,11 +113,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     formData.append('website', input.website ?? '');
     if (input.lang) formData.append('lang', input.lang);
 
-    const data = await api.postForm<{ pendingVerification: true; email: string; idToken: string }>(
+    const data = await api.postForm<{ pendingVerification: true; email: string; idToken: string; method?: 'otp' | 'link' }>(
       '/auth/signup',
       formData
     );
-    return { email: data.email, idToken: data.idToken };
+    return { email: data.email, idToken: data.idToken, method: data.method ?? 'link' };
   };
 
   const login: AuthContextValue['login'] = async (input) => {
@@ -132,8 +135,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   };
 
+  const verifyOtp: AuthContextValue['verifyOtp'] = async (idToken, code) => {
+    const data = await api.post<{ user: User }>('/auth/verify-otp', { idToken, code });
+    setUser(data.user);
+  };
+
   const resendVerification: AuthContextValue['resendVerification'] = async (idToken, lang) => {
-    await api.post('/auth/resend-verification', { idToken, lang });
+    const data = await api.post<{ ok: true; method?: 'otp' | 'link' }>('/auth/resend-verification', { idToken, lang });
+    return { method: data.method ?? 'link' };
   };
 
   const dismissWarning = async () => {
@@ -143,7 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, signup, login, logout, refreshUser, verifyEmail, resendVerification, dismissWarning }}
+      value={{ user, loading, signup, login, logout, refreshUser, verifyEmail, resendVerification, verifyOtp, dismissWarning }}
     >
       {children}
     </AuthContext.Provider>

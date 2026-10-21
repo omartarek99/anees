@@ -7,6 +7,7 @@ import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { AuthShell } from '../components/AuthShell';
 import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
+import { OtpVerifyForm } from '../components/OtpVerifyForm';
 import { TEACHER_SUBJECTS } from '../lib/teacherSubjects';
 
 /** "By signing up you agree to our Terms and Privacy Policy" with the two names as real links —
@@ -50,6 +51,7 @@ export function SignupPage() {
   const [submitting, setSubmitting] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [pendingIdToken, setPendingIdToken] = useState<string | null>(null);
+  const [pendingMethod, setPendingMethod] = useState<'otp' | 'link'>('link');
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   // The banner sits at the top of a long form but the submit button is at the bottom (on a
@@ -79,6 +81,7 @@ export function SignupPage() {
       });
       setPendingEmail(result.email);
       setPendingIdToken(result.idToken);
+      setPendingMethod(result.method);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
       setError(translateApiError(lang, message));
@@ -100,6 +103,17 @@ export function SignupPage() {
     } finally {
       setResending(false);
     }
+  }
+
+  if (pendingEmail && pendingMethod === 'otp' && pendingIdToken) {
+    return (
+      <AuthShell title={t('auth.otpTitle')} subtitle={t('auth.otpSubtitle', { email: pendingEmail })}>
+        <OtpVerifyForm idToken={pendingIdToken} />
+        <p className="text-center muted" style={{ marginTop: 18 }}>
+          <Link to="/login">{t('auth.backToLogin')}</Link>
+        </p>
+      </AuthShell>
+    );
   }
 
   if (pendingEmail) {
