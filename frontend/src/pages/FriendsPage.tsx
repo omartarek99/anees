@@ -76,7 +76,7 @@ export function FriendsPage() {
     try {
       await api.post(`/friends/requests/${requestId}/${action}`);
       loadRequests();
-      loadFriends();
+      if (action === 'accept') loadFriends(); // declining can't change the friends list
     } catch (err) {
       setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('common.genericError'));
     }

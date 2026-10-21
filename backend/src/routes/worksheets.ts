@@ -443,25 +443,3 @@ worksheetsRouter.post('/print', requireRole('teacher'), requireCsrfHeader, (req,
   awardTeacherPoints(req.userId!, TEACHER_PRINT_POINTS, 'worksheet_print');
   res.json({ ok: true });
 });
-
-worksheetsRouter.get('/history', (req, res) => {
-  const rows = db
-    .prepare(
-      `SELECT wa.*, s.key as subject_key, s.name as subject_name FROM worksheet_attempts wa
-       JOIN subjects s ON wa.subject_id = s.id
-       WHERE wa.user_id = ? AND wa.status = 'submitted'
-       ORDER BY wa.created_at DESC LIMIT 20`
-    )
-    .all(req.userId!) as any[];
-  res.json({
-    history: rows.map((r) => ({
-      id: r.id,
-      subject: r.subject_key,
-      difficulty: r.difficulty,
-      score: r.score,
-      total: r.total,
-      xpEarned: r.xp_earned,
-      createdAt: r.created_at,
-    })),
-  });
-});

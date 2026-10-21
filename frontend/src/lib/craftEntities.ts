@@ -19,7 +19,6 @@ export type Animal = {
   headingTimer: number; // seconds until re-pick
   grounded: boolean;
   hp: number;
-  maxHp: number;
   tamed: boolean;
   hurtUntil: number; // perf.now() ms — brief red flash
   group: THREE.Group;
@@ -70,10 +69,6 @@ export function makeAnimalMesh(kind: AnimalKind): THREE.Group {
       g.add(leg);
     }
   }
-  g.traverse((o) => {
-    o.castShadow = false;
-    o.receiveShadow = false;
-  });
   return g;
 }
 
@@ -89,7 +84,6 @@ export function makeAnimal(kind: AnimalKind, x: number, y: number, z: number): A
     headingTimer: 1 + Math.random() * 3,
     grounded: false,
     hp: PALETTE[kind].hp,
-    maxHp: PALETTE[kind].hp,
     tamed: false,
     hurtUntil: 0,
     group: makeAnimalMesh(kind),

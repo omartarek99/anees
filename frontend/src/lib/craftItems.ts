@@ -219,7 +219,6 @@ const STONEY = new Set<number>([
   EMERALD_ORE,
   GLOWSTONE,
 ]);
-export const ORES = new Set<number>([COAL_ORE, IRON_ORE, GOLD_ORE, REDSTONE_ORE, LAPIS_ORE, DIAMOND_ORE, EMERALD_ORE]);
 
 /** Break-time multiplier for the held tool vs the target block (lower = faster). */
 export function toolMineFactor(toolId: number | undefined, blockId: number): number {

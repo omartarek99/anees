@@ -1,9 +1,9 @@
 import { asyncRouter } from '../lib/asyncRouter.js';
-import type { Request, Response, NextFunction } from 'express';
+import type { Response } from 'express';
 import multer from 'multer';
 import { db } from '../db/db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
-import { requireCsrfHeader, validateBody } from '../middleware/validate.js';
+import { requireCsrfHeader, validateBody, handleUpload } from '../middleware/validate.js';
 import { z } from 'zod';
 import { moderateContent } from '../lib/moderation.js';
 import { supabaseAdmin } from '../lib/supabase.js';
@@ -45,15 +45,7 @@ function looksLikeVideo(buffer: Buffer, mimetype: string): boolean {
   return buffer.length >= 8 && buffer.toString('ascii', 4, 8) === 'ftyp';
 }
 
-function handleVideoUpload(req: Request, res: Response, next: NextFunction) {
-  videoUpload(req, res, (err) => {
-    if (err) {
-      res.status(400).json({ error: 'Please upload a valid video (MP4, WebM, or MOV, under 100MB).' });
-      return;
-    }
-    next();
-  });
-}
+const handleVideoUpload = handleUpload(videoUpload, 'Please upload a valid video (MP4, WebM, or MOV, under 100MB).');
 
 function moderateReelContent(body: {
   title: string;
@@ -125,15 +117,7 @@ teacherReelsRouter.post(
       return;
     }
 
-    // The model can occasionally point correctIndex outside 0-3 despite the schema/prompt --
-    // drop any question that isn't actually usable rather than surface a broken quiz item.
-    const usable = parsed.data.filter((q) => q.correctIndex >= 0 && q.correctIndex <= 3);
-    if (usable.length === 0) {
-      res.status(502).json({ error: "We couldn't generate questions right now. Please try again or add them manually." });
-      return;
-    }
-
-    res.json({ questions: usable });
+    res.json({ questions: parsed.data });
   }
 );
 

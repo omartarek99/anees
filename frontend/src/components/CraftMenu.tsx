@@ -6,7 +6,6 @@ import {
   canCraft,
   invCount,
   type Inv,
-  type Recipe,
   type RecipeCategory,
 } from '../lib/craftItems';
 
@@ -91,7 +90,6 @@ export function CraftMenu({
     [inventory]
   );
 
-  const canMake = (r: Recipe) => canCraft(inventory, r);
 
   return (
     <div
@@ -155,7 +153,7 @@ export function CraftMenu({
       <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
           {recipes.map((r) => {
-            const ok = canMake(r);
+            const ok = canCraft(inventory, r);
             return (
               <div
                 key={r.id}

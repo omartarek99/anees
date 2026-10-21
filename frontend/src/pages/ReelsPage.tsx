@@ -144,14 +144,14 @@ export function ReelsPage() {
   }, []);
 
   async function handleCompleted() {
-    await refreshUser();
     try {
       // One request covers both jobs the old code needed two round trips for: fresh
       // progress/stars on reels already in the feed, and any reel the completion just
       // unlocked. Existing entries keep their position (so the Swiper doesn't jump); newly
       // unlocked ones are appended. Keyed by reel id, not level number -- a level can now
       // hold several reels (the seeded lesson plus any teacher ones).
-      const feed = await api.get<FlatReelEntry[]>('/reels/feed');
+      // Fetched alongside refreshUser (two independent GETs) rather than after it.
+      const [, feed] = await Promise.all([refreshUser(), api.get<FlatReelEntry[]>('/reels/feed')]);
       const byReelId = new Map(feed.map((d) => [d.reel.id, d]));
       setRawDetails((prev) => {
         const refreshed = prev.map((d) => byReelId.get(d.reel.id) ?? d);

@@ -1,11 +1,10 @@
 import { asyncRouter } from '../lib/asyncRouter.js';
-import type { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import multer from 'multer';
 import { db } from '../db/db.js';
 import { createSession, destroySession, SESSION_COOKIE } from '../lib/session.js';
 import { moderateText } from '../lib/moderation.js';
-import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
+import { validateBody, requireCsrfHeader, handleUpload } from '../middleware/validate.js';
 import { authLimiter } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
 import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema } from '../lib/schemas.js';
@@ -53,15 +52,7 @@ const idDocumentUpload = multer({
   },
 }).single('idDocument');
 
-function handleIdDocumentUpload(req: Request, res: Response, next: NextFunction) {
-  idDocumentUpload(req, res, (err) => {
-    if (err) {
-      res.status(400).json({ error: 'Please upload a valid ID (JPG or PNG, under 5MB).' });
-      return;
-    }
-    next();
-  });
-}
+const handleIdDocumentUpload = handleUpload(idDocumentUpload, 'Please upload a valid ID (JPG or PNG, under 5MB).');
 
 const isProd = process.env.NODE_ENV === 'production';
 const cookieOptions = {
@@ -291,12 +282,8 @@ authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSche
 
   const signInResult = await firebaseSignIn(decrypt(user.email), password);
   if (!signInResult.ok) {
-    if (WRONG_CREDENTIALS_ERRORS.has(signInResult.error)) {
-      res.status(401).json({ error: 'Incorrect username or password.' });
-    } else {
-      console.error('Firebase signIn failed:', signInResult.error);
-      res.status(401).json({ error: 'Incorrect username or password.' });
-    }
+    if (!WRONG_CREDENTIALS_ERRORS.has(signInResult.error)) console.error('Firebase signIn failed:', signInResult.error);
+    res.status(401).json({ error: 'Incorrect username or password.' });
     return;
   }
   const { idToken } = signInResult.data;

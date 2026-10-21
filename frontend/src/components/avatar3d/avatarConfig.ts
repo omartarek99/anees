@@ -66,10 +66,6 @@ export const DEFAULT_AVATAR: AvatarConfig = {
   accessory: 'none',
 };
 
-export function sameAvatar(a: AvatarConfig, b: AvatarConfig): boolean {
-  return (Object.keys(a) as (keyof AvatarConfig)[]).every((k) => a[k] === b[k]);
-}
-
 // Browsers cap live WebGL contexts (~8-16 per page; the oldest is silently killed past that),
 // so the 3D character is only ever drawn in one or two places at a time and the probe context
 // used here is released straight away. Cached: it never changes during a page's life.

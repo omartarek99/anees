@@ -1,9 +1,8 @@
 import { asyncRouter } from '../lib/asyncRouter.js';
-import type { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { db } from '../db/db.js';
 import { requireAuth } from '../middleware/auth.js';
-import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
+import { validateBody, requireCsrfHeader, handleUpload } from '../middleware/validate.js';
 import { avatar3dSchema, updateProfileSchema } from '../lib/schemas.js';
 import { moderateText } from '../lib/moderation.js';
 import { getPlayerLevel } from '../lib/xp.js';
@@ -188,15 +187,7 @@ const avatarUpload = multer({
   },
 }).single('photo');
 
-function handleAvatarUpload(req: Request, res: Response, next: NextFunction) {
-  avatarUpload(req, res, (err) => {
-    if (err) {
-      res.status(400).json({ error: 'Please upload a valid photo (JPG, PNG, or WebP, under 5MB).' });
-      return;
-    }
-    next();
-  });
-}
+const handleAvatarUpload = handleUpload(avatarUpload, 'Please upload a valid photo (JPG, PNG, or WebP, under 5MB).');
 
 usersRouter.post('/me/avatar', requireAuth, requireCsrfHeader, handleAvatarUpload, async (req, res) => {
   const photo = req.file;

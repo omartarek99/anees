@@ -146,54 +146,6 @@ reelsRouter.get('/feed', (req, res) => {
   res.json(feed);
 });
 
-reelsRouter.get('/level/:levelNumber', (req, res) => {
-  const levelNumber = Number(req.params.levelNumber);
-  const level = db.prepare(`SELECT * FROM map_levels WHERE level_number = ?`).get(levelNumber) as any;
-  if (!level) {
-    res.status(404).json({ error: 'Level not found.' });
-    return;
-  }
-  if (level.status !== 'ready') {
-    res.json({ comingSoon: true, level: { levelNumber: level.level_number, title: level.title, titleAr: level.title_ar } });
-    return;
-  }
-  const progress = getProgress(req.userId!, level);
-  if (!progress || progress.status === 'locked') {
-    res.status(403).json({ error: 'This level is locked. Complete the previous level first.' });
-    return;
-  }
-
-  // grade IS NULL excludes grade-based reels that happen to be parked on this level's id
-  // as a schema placeholder (see teacherReels.ts) -- those surface via GET /feed instead,
-  // not through any specific map level.
-  const reels = db
-    .prepare(`SELECT * FROM reels WHERE map_level_id = ? AND grade IS NULL ORDER BY order_in_level`)
-    .all(level.id) as any[];
-  if (reels.length === 0) {
-    res.status(404).json({ error: 'No lesson found for this level.' });
-    return;
-  }
-  const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(level.subject_id) as any;
-
-  res.json({
-    comingSoon: false,
-    level: { levelNumber: level.level_number, title: level.title, titleAr: level.title_ar, kind: level.kind },
-    subject: { key: subject.key, name: subject.name, nameAr: subject.name_ar, icon: subject.icon },
-    reels: reels.map((reel) => ({
-      id: reel.id,
-      title: reel.title,
-      titleAr: reel.title_ar,
-      scriptText: reel.script_text,
-      scriptTextAr: reel.script_text_ar,
-      videoUrl: reel.video_url,
-      durationSec: reel.duration_sec,
-      author: loadAuthor(reel.author_user_id),
-      questions: loadQuestions(reel.id),
-    })),
-    progress: { status: progress.status, stars: progress.stars, bestScore: progress.best_score },
-  });
-});
-
 // Matches ReelSlide.tsx's flush cadence (a heartbeat roughly every WATCH_HEARTBEAT_SECONDS
 // while a reel is actively in view, see its own comment) plus slack for request latency and
 // the tail-end flush on scroll-away/unmount -- not a round number chosen for looks.

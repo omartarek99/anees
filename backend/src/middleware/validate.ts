@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, RequestHandler, Response, NextFunction } from 'express';
 import type { ZodTypeAny } from 'zod';
 
 export function validateBody(schema: ZodTypeAny) {
@@ -11,6 +11,15 @@ export function validateBody(schema: ZodTypeAny) {
     req.body = result.data;
     next();
   };
+}
+
+/** Wraps a multer middleware so any upload error (wrong type, too large, ...) becomes one 400 with `message`. */
+export function handleUpload(upload: RequestHandler, message: string): RequestHandler {
+  return (req, res, next) =>
+    upload(req, res, (err?: unknown) => {
+      if (err) res.status(400).json({ error: message });
+      else next();
+    });
 }
 
 /**

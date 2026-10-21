@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RiCalculatorLine, RiAtomLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
@@ -206,8 +206,6 @@ export function ReelSlide({
     }
   }
 
-  const captionPreview = useMemo(() => data.scriptText, [data.scriptText]);
-
   // Scrolling away from a reel collapses its caption again, so it's back to the short form
   // the next time the student lands on it.
   useEffect(() => {
@@ -224,7 +222,7 @@ export function ReelSlide({
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
-  }, [captionPreview, lang, captionExpanded]);
+  }, [data.scriptText, lang, captionExpanded]);
 
   return (
     <div
@@ -375,7 +373,7 @@ export function ReelSlide({
                     }),
               }}
             >
-              {captionPreview}
+              {data.scriptText}
             </p>
             {(captionOverflows || captionExpanded) && (
               <button

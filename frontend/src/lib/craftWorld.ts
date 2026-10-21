@@ -153,10 +153,7 @@ function oreAt(seed: number, x: number, y: number, z: number, deep: boolean): nu
  * threshold. Trunk is kept ≥3 from a chunk edge and leaves within radius 2, so a tree never
  * straddles a chunk boundary. */
 function treeBlockAt(seed: number, x: number, y: number, z: number, biome: Biome): number {
-  if (biome === 'desert' || biome === 'snowy') {
-    // sparse: no trees in desert; snowy handled as plains-lite below
-    if (biome === 'desert') return 0;
-  }
+  if (biome === 'desert') return 0; // snowy is plains-lite below
   const density = biome === 'forest' ? 0.045 : biome === 'snowy' ? 0.012 : 0.02;
   for (let dx = -2; dx <= 2; dx++) {
     for (let dz = -2; dz <= 2; dz++) {

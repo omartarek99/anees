@@ -2,7 +2,7 @@ import { asyncRouter } from '../lib/asyncRouter.js';
 import multer from 'multer';
 import { db } from '../db/db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
-import { requireCsrfHeader, validateBody } from '../middleware/validate.js';
+import { requireCsrfHeader, validateBody, handleUpload } from '../middleware/validate.js';
 import {
   adminSetActiveSchema,
   adminSetRoleSchema,
@@ -20,7 +20,7 @@ import { supabaseAdmin } from '../lib/supabase.js';
 import { looksLikeImage } from '../lib/imageValidation.js';
 import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX, deleteCertificateImageIfAny } from '../lib/certificateImage.js';
 
-import type { Request, Response, NextFunction } from 'express';
+import type { Response } from 'express';
 
 export const adminRouter = asyncRouter();
 
@@ -241,15 +241,7 @@ const certificateImageUpload = multer({
   },
 }).single('image');
 
-function handleCertificateImageUpload(req: Request, res: Response, next: NextFunction) {
-  certificateImageUpload(req, res, (err) => {
-    if (err) {
-      res.status(400).json({ error: 'Please upload a valid image (JPG, PNG, or WebP, under 8MB).' });
-      return;
-    }
-    next();
-  });
-}
+const handleCertificateImageUpload = handleUpload(certificateImageUpload, 'Please upload a valid image (JPG, PNG, or WebP, under 8MB).');
 
 const CERTIFICATE_IMAGE_MIME_TO_EXT: Record<string, string> = {
   'image/jpeg': 'jpg',
