@@ -30,7 +30,7 @@ type AuthContextValue = {
     username: string;
     email: string;
     password: string;
-    /** Not asked at signup any more -- the backend defaults it to the username. */
+    /** The person's name (shown on their profile); the backend falls back to the username if absent. */
     displayName?: string;
     avatarKey: string;
     role: Role;

@@ -1910,3 +1910,65 @@ a:focus-visible {
 :root:not([data-theme='dark']) .auth-shell .card {
   background: rgba(255, 255, 255, 0.9);
 }
+
+/* ---------------- iPhone / small-screen fixes ---------------- */
+/* Stop iOS inflating text after rotation, and never let the page drag sideways. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body {
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+/* The floating menu button (the three lines) lives INSIDE the icon bar: centred in its
+   column, bottom of the bar. It used to sit a fixed 20px from the screen edge, which is wider
+   than the 64px phone bar, so it hung out of it. */
+.quick-menu {
+  inset-inline-start: calc((var(--sidebar-w) - 52px) / 2);
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+}
+@media (max-width: 720px) {
+  .quick-menu {
+    inset-inline-start: calc((var(--sidebar-w) - 44px) / 2);
+  }
+  .quick-menu-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+}
+
+/* iPhone Safari zooms the whole page when a field with a font size under 16px gets focus, and
+   it stays zoomed -- which looks exactly like "the page doesn't fit". 16px stops it. */
+@media (max-width: 720px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* 100vh on iOS is the height with Safari's toolbar hidden, so full-height screens ran past the
+   visible area; dvh follows the toolbar as it collapses and expands. */
+@supports (min-height: 100dvh) {
+  .sidebar,
+  .app-shell,
+  .app-content-col,
+  .auth-shell {
+    min-height: 100dvh !important;
+  }
+}
+
+/* The reels frame is exactly one visible screen tall. 100vh on iPhone Safari is the height with the
+   toolbar hidden -- taller than what is visible, so the bottom of the video (caption, quiz button)
+   was cut off under the toolbar. dvh tracks the toolbar as it collapses and expands. */
+.reels-frame-row {
+  height: 100vh;
+}
+@supports (height: 100dvh) {
+  .reels-frame-row {
+    height: 100dvh;
+  }
+}

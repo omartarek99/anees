@@ -51,8 +51,8 @@ export const signupSchema = z
     username: usernameSchema,
     email: emailSchema,
     password: passwordSchema,
-    // No longer asked at signup -- every account starts with its username as the display
-    // name (changeable later from the profile page). Still accepted so older clients work.
+    // The person's name, entered at signup before the username. Optional only so older clients
+    // keep working -- the server falls back to the username when it is missing.
     displayName: displayNameSchema.optional(),
     avatarKey: avatarKeySchema,
     role: roleSchema,

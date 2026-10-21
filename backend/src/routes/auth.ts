@@ -108,7 +108,7 @@ authRouter.post(
   validateBody(signupSchema),
   async (req, res) => {
     const { username, email, password, avatarKey, role, grade, schoolName, teacherSubject, lang } = req.body;
-    // Nobody enters a display name at signup -- accounts start with their username.
+    // Falls back to the username if the client did not send a name.
     const displayName: string = req.body.displayName ?? username;
     const idDocument = req.file;
 

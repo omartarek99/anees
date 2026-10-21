@@ -293,7 +293,10 @@ export function ReelSlide({
                 playsInline
                 onEnded={handleVideoEnded}
                 onTimeUpdate={handleTimeUpdate}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                // contain, not cover: lesson videos are often landscape screen recordings, and cover
+                // crops them (sides cut off) to fill the tall phone frame. Contain shows the whole
+                // video, letterboxed on the dark background.
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
               />
             ) : (
               <div

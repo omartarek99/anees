@@ -34,6 +34,7 @@ function SignupConsent() {
 export function SignupPage() {
   const { signup, resendVerification } = useAuth();
   const { t, lang } = useLanguage();
+  const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -70,6 +71,7 @@ export function SignupPage() {
         username,
         email,
         password,
+        displayName: displayName.trim(),
         avatarKey,
         role,
         grade: role === 'student' ? Number(grade) : undefined,
@@ -176,8 +178,7 @@ export function SignupPage() {
           </div>
         </div>
 
-        {/* The hero picker is student-only. Nobody enters a display name at signup -- it starts
-            as the username and can be changed later from the profile page. */}
+        {/* The hero picker is student-only. Name + username come right after (both roles). */}
         <AnimatePresence initial={false}>
           {role === 'student' && (
             <motion.div
@@ -220,6 +221,18 @@ export function SignupPage() {
           )}
         </AnimatePresence>
 
+        <div className="field">
+          <label htmlFor="displayName">{t('auth.name')}</label>
+          <input
+            id="displayName"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            required
+            minLength={2}
+            maxLength={40}
+            autoComplete="name"
+          />
+        </div>
         <div className="field">
           <label htmlFor="username">{t('auth.username')}</label>
           <input
