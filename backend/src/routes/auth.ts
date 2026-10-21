@@ -23,6 +23,7 @@ import { verifyQatarIdPhoto, type IdVerificationFailureReason } from '../lib/idV
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
 import { sendVerificationEmail, sendOtpEmail, otpDeliveryAvailable, type SendResult } from '../lib/mailer.js';
 import { createOtp, verifyOtp, clearOtp } from '../lib/otp.js';
+import { recordIssue } from '../lib/diagnostics.js';
 import { getFirebaseAdminAuth } from '../lib/firebaseAdmin.js';
 import { FRONTEND_ORIGIN } from '../lib/config.js';
 import { encrypt, decrypt, hashForLookup } from '../lib/encryption.js';
@@ -152,6 +153,7 @@ authRouter.post(
         res.status(409).json({ error: 'That username or email is already taken.' });
       } else {
         console.error('Firebase signUp failed:', signUpResult.error);
+        recordIssue('firebase-signup', signUpResult.error);
         res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
       }
       return;
@@ -228,6 +230,7 @@ authRouter.post(
       if (idDocumentPath) await supabaseAdmin!.storage.from(ID_DOCUMENT_BUCKET).remove([idDocumentPath]);
       await rollback();
       console.error('Sending the verification email failed:', sendResult.error);
+      recordIssue('verification-email', sendResult.error);
       res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
       return;
     }
@@ -383,6 +386,7 @@ authRouter.post(
       const sent = await sendOtpEmail(accountEmail, otp.code, lang ?? 'ar');
       if (!sent.ok) {
         console.error('Sending the verification code failed:', sent.error);
+        recordIssue('verification-code-resend', sent.error);
         res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
         return;
       }

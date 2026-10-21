@@ -18,6 +18,8 @@ import { decrypt } from '../lib/encryption.js';
 import { getDoublePointsStatus, startDoublePointsNow } from '../lib/doublePoints.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { looksLikeImage } from '../lib/imageValidation.js';
+import { mailStatus } from '../lib/mailer.js';
+import { recentIssues } from '../lib/diagnostics.js';
 import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX, deleteCertificateImageIfAny } from '../lib/certificateImage.js';
 
 import type { Request, Response, NextFunction } from 'express';
@@ -25,6 +27,12 @@ import type { Request, Response, NextFunction } from 'express';
 export const adminRouter = Router();
 
 adminRouter.use(requireAuth, requireRole('admin'));
+
+// Admin-only: how email is configured, and the latest failures that users only see as a generic
+// message. Never returns secrets (only key lengths/prefixes and error codes).
+adminRouter.get('/diagnostics', async (_req, res) => {
+  res.json({ mail: await mailStatus(), recentIssues: recentIssues(), node: process.version, env: process.env.NODE_ENV ?? null });
+});
 
 // Manually kicks off a double-quiz-points window right now, on top of the automatic random
 // one -- e.g. to spotlight it during a live class or demo instead of waiting on chance.

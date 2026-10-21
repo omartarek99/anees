@@ -1,6 +1,7 @@
 import { FRONTEND_ORIGIN } from './config.js';
 import { firebaseSendVerificationEmail } from './firebase.js';
 import { getFirebaseAdminAuth, loadServiceAccount } from './firebaseAdmin.js';
+import { recordIssue } from './diagnostics.js';
 
 // Hosting dashboards / "Add from .env" sometimes leave stray spaces or wrapping quotes on pasted
 // values -- an EMAIL_FROM of "Anees <no-reply@...>" WITH the quotes makes Resend reject every send.
@@ -120,10 +121,12 @@ async function postToResend(to: string, { subject, html, text }: EmailContent): 
     });
     if (!res.ok) {
       const body = (await res.json().catch(() => null)) as { message?: string } | null;
+      recordIssue('resend', `HTTP ${res.status}: ${body?.message ?? 'unknown error'}`);
       return { ok: false, error: `RESEND_${res.status}: ${body?.message ?? 'unknown error'}` };
     }
     return { ok: true };
   } catch (err) {
+    recordIssue('resend', `network: ${err instanceof Error ? err.message : String(err)}`);
     return { ok: false, error: `RESEND_NETWORK: ${err instanceof Error ? err.message : String(err)}` };
   }
 }
@@ -165,4 +168,18 @@ export async function sendVerificationEmail(opts: {
     console.warn("[mail] Resend is configured but there is no Firebase service account -- using Firebase's own email instead.");
   }
   return firebaseSendVerificationEmail(opts.idToken, `${FRONTEND_ORIGIN}/verify-email`, opts.lang);
+}
+
+/** What the admin diagnostics page shows about email: settings (never the secrets themselves). */
+export async function mailStatus() {
+  const key = loadServiceAccount();
+  return {
+    resendConfigured,
+    sender: EMAIL_FROM ?? null,
+    resendKeyLength: RESEND_API_KEY?.length ?? 0,
+    resendKeyPrefix: RESEND_API_KEY?.slice(0, 3) ?? null,
+    firebaseAdminKey: key.ok ? { loaded: true, source: key.source, project: key.account.project_id } : { loaded: false, reason: key.reason },
+    codeVerificationAvailable: await otpDeliveryAvailable(),
+    frontendOrigin: FRONTEND_ORIGIN,
+  };
 }
