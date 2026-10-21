@@ -8,7 +8,7 @@ import { moderateText } from '../lib/moderation.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { authLimiter } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
-import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema } from '../lib/schemas.js';
+import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema, changePasswordSchema, forgotPasswordSchema, resetPasswordSchema } from '../lib/schemas.js';
 import { getPlayerLevel } from '../lib/xp.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
@@ -17,11 +17,12 @@ import {
   firebaseSignIn,
   firebaseLookup,
   firebaseConfirmVerification,
+  firebaseUpdatePassword,
   firebaseDeleteUser,
 } from '../lib/firebase.js';
 import { verifyQatarIdPhoto, type IdVerificationFailureReason } from '../lib/idVerification.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
-import { sendVerificationEmail, sendOtpEmail, otpDeliveryAvailable, type SendResult } from '../lib/mailer.js';
+import { sendVerificationEmail, sendOtpEmail, sendResetOtpEmail, otpDeliveryAvailable, type SendResult } from '../lib/mailer.js';
 import { createOtp, verifyOtp, clearOtp } from '../lib/otp.js';
 import { recordIssue } from '../lib/diagnostics.js';
 import { getFirebaseAdminAuth } from '../lib/firebaseAdmin.js';
@@ -460,6 +461,114 @@ authRouter.post('/verify-otp', authLimiter, requireCsrfHeader, validateBody(veri
   res.cookie(SESSION_COOKIE, token, cookieOptions);
   const updated = db.prepare(`SELECT * FROM users WHERE id = ?`).get(user.id);
   res.json({ user: publicUser(updated) });
+});
+
+// "Forgot password", step 1: email a 6-digit code. Always answers the same ({ ok: true }) whether or
+// not the email belongs to an account, so it can't be used to find out who is registered. Only
+// Firebase accounts (everyone who signed up) have a real mailbox; local accounts (admin, test
+// accounts) use made-up addresses and are never emailed.
+authRouter.post('/forgot-password', authLimiter, requireCsrfHeader, validateBody(forgotPasswordSchema), async (req, res) => {
+  const { email, lang } = req.body as { email: string; lang?: 'en' | 'ar' };
+  const user = db.prepare(`SELECT * FROM users WHERE email_hash = ?`).get(hashForLookup(email)) as any;
+  if (user && user.firebase_uid && user.is_active && (await otpDeliveryAvailable())) {
+    const otp = createOtp(user.id, 'reset');
+    if (otp.ok) {
+      const sent = await sendResetOtpEmail(email, otp.code, lang ?? 'ar');
+      if (!sent.ok) {
+        console.error('Sending the password-reset code failed:', sent.error);
+        recordIssue('password-reset-email', sent.error);
+      }
+    }
+  }
+  res.json({ ok: true });
+});
+
+// "Forgot password", step 2: check the code, set the new password in Firebase, sign out every device.
+authRouter.post('/reset-password', authLimiter, requireCsrfHeader, validateBody(resetPasswordSchema), async (req, res) => {
+  const { email, code, newPassword } = req.body as { email: string; code: string; newPassword: string };
+  const user = db.prepare(`SELECT * FROM users WHERE email_hash = ?`).get(hashForLookup(email)) as any;
+  // Unknown email or a local account: same answer as a wrong code, so nothing is revealed.
+  if (!user || !user.firebase_uid) {
+    res.status(400).json({ error: 'That code is incorrect. Please try again.' });
+    return;
+  }
+  const result = verifyOtp(user.id, code, 'reset');
+  if (result === 'invalid') {
+    res.status(400).json({ error: 'That code is incorrect. Please try again.' });
+    return;
+  }
+  if (result === 'expired') {
+    res.status(400).json({ error: 'That code has expired. Request a new one.' });
+    return;
+  }
+  if (result === 'locked') {
+    res.status(429).json({ error: 'Too many wrong attempts. Request a new code.' });
+    return;
+  }
+
+  const adminAuth = await getFirebaseAdminAuth();
+  if (!adminAuth) {
+    res.status(500).json({ error: "We couldn't change your password. Please try again shortly." });
+    return;
+  }
+  try {
+    await adminAuth.updateUser(user.firebase_uid, { password: newPassword });
+  } catch (err) {
+    console.error('Resetting the Firebase password failed:', err);
+    recordIssue('password-reset', err instanceof Error ? err.message : String(err));
+    res.status(500).json({ error: "We couldn't change your password. Please try again shortly." });
+    return;
+  }
+  clearOtp(user.id, 'reset');
+  db.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(user.id);
+  res.json({ ok: true });
+});
+
+// Change your own password. Accounts that sign in through Firebase (everyone who signed up) have it
+// changed there; local accounts (admin, test accounts) in our own bcrypt column. The current password
+// is always required, and every other session is signed out afterwards.
+authRouter.post('/change-password', authLimiter, requireCsrfHeader, requireAuth, validateBody(changePasswordSchema), async (req, res) => {
+  const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
+  const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!) as any;
+  if (!user) {
+    res.status(404).json({ error: 'Account not found.' });
+    return;
+  }
+  if (currentPassword === newPassword) {
+    res.status(400).json({ error: 'Choose a different password from your current one.' });
+    return;
+  }
+  if (user.role === 'admin' && newPassword.length < 12) {
+    res.status(400).json({ error: 'Admin passwords need at least 12 characters.' });
+    return;
+  }
+
+  if (user.firebase_uid) {
+    const signIn = await firebaseSignIn(decrypt(user.email), currentPassword);
+    if (!signIn.ok) {
+      res.status(401).json({ error: 'Your current password is incorrect.' });
+      return;
+    }
+    const updated = await firebaseUpdatePassword(signIn.data.idToken, newPassword);
+    if (!updated.ok) {
+      console.error('Firebase password update failed:', updated.error);
+      recordIssue('change-password', updated.error);
+      res.status(500).json({ error: "We couldn't change your password. Please try again shortly." });
+      return;
+    }
+  } else {
+    if (!bcrypt.compareSync(currentPassword, user.password_hash)) {
+      res.status(401).json({ error: 'Your current password is incorrect.' });
+      return;
+    }
+    db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(bcrypt.hashSync(newPassword, 10), user.id);
+  }
+
+  // Sign every other device out, keep this one logged in with a fresh session.
+  db.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(user.id);
+  const { token } = createSession(user.id);
+  res.cookie(SESSION_COOKIE, token, cookieOptions);
+  res.json({ ok: true });
 });
 
 authRouter.post('/logout', requireCsrfHeader, (req, res) => {

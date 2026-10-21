@@ -67,6 +67,11 @@ export function firebaseSendVerificationEmail(idToken: string, continueUrl: stri
   );
 }
 
+/** Sets a new password. `idToken` must be a fresh sign-in token (Firebase rejects old ones). */
+export function firebaseUpdatePassword(idToken: string, newPassword: string) {
+  return call<{ localId: string }>('update', { idToken, password: newPassword, returnSecureToken: false });
+}
+
 export function firebaseConfirmVerification(oobCode: string) {
   return call<{ email: string; localId: string }>('update', { oobCode });
 }

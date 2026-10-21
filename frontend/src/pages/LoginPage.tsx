@@ -127,6 +127,9 @@ export function LoginPage() {
             required
           />
         </div>
+        <p style={{ margin: '-4px 0 14px', fontSize: 13.5 }}>
+          <Link to="/forgot-password">{t('auth.forgotPassword')}</Link>
+        </p>
         <button className="btn btn-primary btn-block" type="submit" disabled={submitting}>
           {submitting ? t('auth.loggingIn') : t('auth.loginButton')}
         </button>

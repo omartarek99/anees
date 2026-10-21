@@ -106,6 +106,41 @@ export function otpContent(code: string, lang: 'ar' | 'en'): EmailContent {
   };
 }
 
+/** The "reset your password" email: same look as the verification email, with the code in a box. */
+export function resetOtpContent(code: string, lang: 'ar' | 'en'): EmailContent {
+  const codeBox = `<p dir="ltr" style="text-align:center;margin:26px 0"><span style="display:inline-block;background:#f6f1ea;border:2px dashed #8a1538;border-radius:14px;padding:14px 26px;font-family:Consolas,Menlo,monospace;font-size:36px;font-weight:bold;letter-spacing:10px;color:#8a1538">${code}</span></p>`;
+  if (lang === 'ar') {
+    return {
+      subject: `رمز إعادة تعيين كلمة المرور: ${code}`,
+      html: `<div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;background:#f6f1ea;padding:24px">
+  <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;padding:28px;border:1px solid #eadfd2">
+    <h1 style="color:#8a1538;margin:0 0 12px;font-size:24px">أنيس 🦅</h1>
+    <p style="font-size:16px;color:#222">مرحبًا،</p>
+    <p style="font-size:16px;color:#222;line-height:1.7">وصلنا طلب لإعادة تعيين كلمة مرور حسابك في أنيس. أدخل الرمز التالي في صفحة إعادة التعيين ثم اختر كلمة مرور جديدة:</p>
+    ${codeBox}
+    <p style="font-size:13px;color:#666;line-height:1.7">الرمز صالح لمدة 10 دقائق. لا تشاركه مع أحد، فلن نطلبه منك أبدًا.</p>
+    <p style="font-size:13px;color:#666">إذا لم تطلب ذلك، تجاهل هذه الرسالة وستبقى كلمة مرورك كما هي.</p>
+  </div>
+</div>`,
+      text: `مرحبًا،\n\nرمز إعادة تعيين كلمة مرور حسابك في أنيس: ${code}\n\nأدخله في صفحة إعادة التعيين. الرمز صالح لمدة 10 دقائق، ولا تشاركه مع أحد.\n\nإذا لم تطلب ذلك، تجاهل هذه الرسالة وستبقى كلمة مرورك كما هي.`,
+    };
+  }
+  return {
+    subject: `Your Anees password reset code: ${code}`,
+    html: `<div style="font-family:Arial,Helvetica,sans-serif;background:#f6f1ea;padding:24px">
+  <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;padding:28px;border:1px solid #eadfd2">
+    <h1 style="color:#8a1538;margin:0 0 12px;font-size:24px">Anees 🦅</h1>
+    <p style="font-size:16px;color:#222">Hello,</p>
+    <p style="font-size:16px;color:#222;line-height:1.6">We received a request to reset the password of your Anees account. Enter this code on the reset page, then choose a new password:</p>
+    ${codeBox}
+    <p style="font-size:13px;color:#666;line-height:1.6">The code is valid for 10 minutes. Don't share it with anyone -- we will never ask you for it.</p>
+    <p style="font-size:13px;color:#666">If you didn't ask for this, ignore this email and your password stays the same.</p>
+  </div>
+</div>`,
+    text: `Hello,\n\nYour Anees password reset code: ${code}\n\nEnter it on the reset page. It is valid for 10 minutes. Don't share it with anyone.\n\nIf you didn't ask for this, ignore this email and your password stays the same.`,
+  };
+}
+
 async function postToResend(to: string, { subject, html, text }: EmailContent): Promise<SendResult> {
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -138,6 +173,10 @@ async function postToResend(to: string, { subject, html, text }: EmailContent): 
  * app keeps using the verification link. */
 export async function otpDeliveryAvailable(): Promise<boolean> {
   return resendConfigured && !!(await getFirebaseAdminAuth());
+}
+
+export function sendResetOtpEmail(to: string, code: string, lang: 'ar' | 'en'): Promise<SendResult> {
+  return postToResend(to, resetOtpContent(code, lang));
 }
 
 export function sendOtpEmail(to: string, code: string, lang: 'ar' | 'en'): Promise<SendResult> {

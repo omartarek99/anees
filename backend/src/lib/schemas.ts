@@ -85,6 +85,22 @@ export const verifyEmailSchema = z.object({
   oobCode: z.string().min(1, 'Missing verification code.'),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+  lang: z.enum(['en', 'ar']).optional(),
+});
+
+export const resetPasswordSchema = z.object({
+  email: emailSchema,
+  code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code.'),
+  newPassword: passwordSchema,
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Enter your current password.').max(200),
+  newPassword: passwordSchema,
+});
+
 export const verifyOtpSchema = z.object({
   idToken: z.string().min(1, 'Missing verification token.'),
   code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code.'),

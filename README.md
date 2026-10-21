@@ -172,7 +172,10 @@ off-site backup. `DB_BACKUP=off` disables it.
 Google address, often lands in spam, and its template can't be edited. With these three variables on the backend host
 the app sends the email itself, from your own domain: after signup the student types a **6-digit code** (valid 10
 minutes, 5 wrong tries per code, 60 s between resends) and is verified and logged in. An unverified user who tries to
-log in gets a "send me a code" button.
+log in gets a "send me a code" button. The login page also has **"Forgot your password?"**: the same kind of emailed
+6-digit code (its own table and email template) lets a user choose a new password; the server answers identically for
+unknown emails, and the code can't be used for anything else. Signed-in users (including the admin, who has no profile
+page) can change their password at `/password`, from the ☰ menu.
 - `RESEND_API_KEY` -- from resend.com (API Keys), with a domain you own verified there (Domains: add the DNS records it shows)
 - `EMAIL_FROM` -- e.g. `Anees <no-reply@your-domain.com>` (must use the verified domain)
 - `FIREBASE_SERVICE_ACCOUNT_BASE64` -- the contents of `backend/secrets/firebase-service-account.json`, base64-encoded
