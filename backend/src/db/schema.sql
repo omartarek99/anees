@@ -342,3 +342,26 @@ CREATE TABLE IF NOT EXISTS one_time_jobs (
   name TEXT PRIMARY KEY,
   ran_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Email verification codes (6 digits) -- only an HMAC of the code is stored (see lib/otp.ts).
+CREATE TABLE IF NOT EXISTS email_otps (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  code_hash TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  last_sent_at TEXT NOT NULL,
+  send_count INTEGER NOT NULL DEFAULT 1,
+  window_start TEXT NOT NULL
+);
+
+-- Password-reset codes ("forgot password"): same shape as email_otps but a separate table, so a
+-- code for one purpose can never be used for the other (see lib/otp.ts).
+CREATE TABLE IF NOT EXISTS password_reset_otps (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  code_hash TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  last_sent_at TEXT NOT NULL,
+  send_count INTEGER NOT NULL DEFAULT 1,
+  window_start TEXT NOT NULL
+);

@@ -11,14 +11,15 @@ const BASE_URL = 'https://identitytoolkit.googleapis.com/v1/accounts';
 
 type FirebaseResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
-async function call<T>(op: string, body: Record<string, unknown>): Promise<FirebaseResult<T>> {
+async function call<T>(op: string, body: Record<string, unknown>, locale?: string): Promise<FirebaseResult<T>> {
   if (!FIREBASE_API_KEY) {
     return { ok: false, error: 'NOT_CONFIGURED' };
   }
   try {
     const res = await fetch(`${BASE_URL}:${op}?key=${FIREBASE_API_KEY}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      // X-Firebase-Locale picks the language of Firebase's (non-editable) email template.
+      headers: { 'Content-Type': 'application/json', ...(locale ? { 'X-Firebase-Locale': locale } : {}) },
       body: JSON.stringify(body),
     });
     const data = (await res.json()) as any;
@@ -53,13 +54,22 @@ export function firebaseLookup(idToken: string) {
   });
 }
 
-export function firebaseSendVerificationEmail(idToken: string, continueUrl: string) {
-  return call<{ email: string }>('sendOobCode', {
-    requestType: 'VERIFY_EMAIL',
-    idToken,
-    continueUrl,
-    canHandleCodeInApp: true,
-  });
+export function firebaseSendVerificationEmail(idToken: string, continueUrl: string, locale: 'ar' | 'en' = 'ar') {
+  return call<{ email: string }>(
+    'sendOobCode',
+    {
+      requestType: 'VERIFY_EMAIL',
+      idToken,
+      continueUrl,
+      canHandleCodeInApp: true,
+    },
+    locale
+  );
+}
+
+/** Sets a new password. `idToken` must be a fresh sign-in token (Firebase rejects old ones). */
+export function firebaseUpdatePassword(idToken: string, newPassword: string) {
+  return call<{ localId: string }>('update', { idToken, password: newPassword, returnSecureToken: false });
 }
 
 export function firebaseConfirmVerification(oobCode: string) {

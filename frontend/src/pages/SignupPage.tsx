@@ -7,6 +7,7 @@ import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { AuthShell } from '../components/AuthShell';
 import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
+import { OtpVerifyForm } from '../components/OtpVerifyForm';
 import { TEACHER_SUBJECTS } from '../lib/teacherSubjects';
 
 /** "By signing up you agree to our Terms and Privacy Policy" with the two names as real links —
@@ -33,6 +34,7 @@ function SignupConsent() {
 export function SignupPage() {
   const { signup, resendVerification } = useAuth();
   const { t, lang } = useLanguage();
+  const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,6 +52,7 @@ export function SignupPage() {
   const [submitting, setSubmitting] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [pendingIdToken, setPendingIdToken] = useState<string | null>(null);
+  const [pendingMethod, setPendingMethod] = useState<'otp' | 'link'>('link');
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   // The banner sits at the top of a long form but the submit button is at the bottom (on a
@@ -73,6 +76,7 @@ export function SignupPage() {
         username,
         email,
         password,
+        displayName: displayName.trim(),
         avatarKey,
         role,
         grade: role === 'student' ? Number(grade) : undefined,
@@ -80,9 +84,11 @@ export function SignupPage() {
         teacherSubject: role === 'teacher' ? teacherSubject : undefined,
         idDocument: role === 'teacher' ? idDocument ?? undefined : undefined,
         website,
+        lang: lang === 'ar' ? 'ar' : 'en',
       });
       setPendingEmail(result.email);
       setPendingIdToken(result.idToken);
+      setPendingMethod(result.method);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
       setError(translateApiError(lang, message));
@@ -96,7 +102,7 @@ export function SignupPage() {
     setResending(true);
     setResent(false);
     try {
-      await resendVerification(pendingIdToken);
+      await resendVerification(pendingIdToken, lang === 'ar' ? 'ar' : 'en');
       setResent(true);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
@@ -104,6 +110,17 @@ export function SignupPage() {
     } finally {
       setResending(false);
     }
+  }
+
+  if (pendingEmail && pendingMethod === 'otp' && pendingIdToken) {
+    return (
+      <AuthShell title={t('auth.otpTitle')} subtitle={t('auth.otpSubtitle', { email: pendingEmail })}>
+        <OtpVerifyForm idToken={pendingIdToken} />
+        <p className="text-center muted" style={{ marginTop: 18 }}>
+          <Link to="/login">{t('auth.backToLogin')}</Link>
+        </p>
+      </AuthShell>
+    );
   }
 
   if (pendingEmail) {
@@ -166,8 +183,7 @@ export function SignupPage() {
           </div>
         </div>
 
-        {/* The hero picker is student-only. Nobody enters a display name at signup -- it starts
-            as the username and can be changed later from the profile page. */}
+        {/* The hero picker is student-only. Name + username come right after (both roles). */}
         <AnimatePresence initial={false}>
           {role === 'student' && (
             <m.div
@@ -210,6 +226,18 @@ export function SignupPage() {
           )}
         </AnimatePresence>
 
+        <div className="field">
+          <label htmlFor="displayName">{t('auth.name')}</label>
+          <input
+            id="displayName"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            required
+            minLength={2}
+            maxLength={40}
+            autoComplete="name"
+          />
+        </div>
         <div className="field">
           <label htmlFor="username">{t('auth.username')}</label>
           <input

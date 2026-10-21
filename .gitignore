@@ -53,3 +53,9 @@ backend/.env.production
 
 # Generated passwords for the production test accounts -- never commit
 backend/.test-accounts-passwords.txt
+
+# Ready-to-paste Resend/Firebase-admin env block for the hosting dashboard -- real secrets
+backend/.env.resend
+
+# The Firebase admin key as base64, to paste into the hosting dashboard -- real secret
+backend/.firebase-key-base64.txt

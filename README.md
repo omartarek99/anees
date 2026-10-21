@@ -159,6 +159,35 @@ keep `backend/data/app.db`. Without a backend, every `/api/*` request on the Ver
 3. **Firebase console -> Authentication -> Settings -> Authorized domains**: add the Vercel domain, or signup
    fails with "We couldn't send the verification email".
 
+**No persistent disk (e.g. Render's free plan)?** The app folder is wiped on every deploy, which would erase the
+database. In production, when Supabase is configured, the server therefore saves a snapshot of `app.db` to a
+private Supabase Storage bucket (`db-backups`, created automatically) whenever data changed (every 60 s) and when it
+is stopped, and restores it at startup if there is no local database. Nothing to configure; keep the same
+`ENCRYPTION_KEY`. Logs show `[backup] restored the database…` / `[backup] saved the database…`. Limits: a crash can
+lose up to a minute of changes, and a free instance sleeps after inactivity (the first request is slow). A real
+persistent disk (mount path = `backend/data`) is still the more robust choice; with one, the snapshots are just an
+off-site backup. `DB_BACKUP=off` disables it.
+
+**Verification by a 6-digit code (Resend, optional but recommended).** Firebase's default email comes from a shared
+Google address, often lands in spam, and its template can't be edited. With these three variables on the backend host
+the app sends the email itself, from your own domain: after signup the student types a **6-digit code** (valid 10
+minutes, 5 wrong tries per code, 60 s between resends) and is verified and logged in. An unverified user who tries to
+log in gets a "send me a code" button. The login page also has **"Forgot your password?"**: the same kind of emailed
+6-digit code (its own table and email template) lets a user choose a new password; the server answers identically for
+unknown emails, and the code can't be used for anything else. Signed-in users (including the admin, who has no profile
+page) can change their password at `/password`, from the ☰ menu.
+- `RESEND_API_KEY` -- from resend.com (API Keys), with a domain you own verified there (Domains: add the DNS records it shows)
+- `EMAIL_FROM` -- e.g. `Anees <no-reply@your-domain.com>` (must use the verified domain)
+- `FIREBASE_SERVICE_ACCOUNT_BASE64` -- the contents of `backend/secrets/firebase-service-account.json`, base64-encoded
+  (`node -e "console.log(Buffer.from(JSON.stringify(require('./backend/secrets/firebase-service-account.json'))).toString('base64'))"`).
+  Base64 survives any dashboard; the plain one-line `FIREBASE_SERVICE_ACCOUNT_JSON` also works but its private key's
+  line breaks sometimes get mangled when pasted. The startup log says which method is active (`[mail] Verification by
+  6-digit code is ON/OFF…`)
+  (Firebase console -> Project settings -> Service accounts -> Generate new private key). Needed to mark the Firebase
+  user verified after the code is accepted; it also lets the admin panel delete Firebase accounts in production.
+
+Without them the app keeps working and falls back to Firebase's own verification link email.
+
 The dev auto-login (`DEV_BYPASS_LOGIN`) is off by default and dev-server-only: it is ignored in `vite build`,
 so a deployed site always starts a new visitor on the landing page.
 

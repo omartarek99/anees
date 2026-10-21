@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { RiMoonLine, RiSunLine, RiEnglishInput, RiTranslate2, RiUserFill, RiLogoutBoxRLine, RiLogoutBoxLine } from '@remixicon/react';
+import { RiMoonLine, RiSunLine, RiEnglishInput, RiTranslate2, RiUserFill, RiLogoutBoxRLine, RiLogoutBoxLine, RiLockPasswordLine } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useTheme } from '../lib/theme-context';
@@ -54,6 +54,12 @@ export function QuickMenu() {
               <RiUserFill size={17} />
             </span>
             {t('profile.editProfile')}
+          </NavLink>
+          <NavLink to="/password" className="quick-menu-item" role="menuitem" onClick={() => setOpen(false)}>
+            <span className="quick-menu-icon" aria-hidden>
+              <RiLockPasswordLine size={17} />
+            </span>
+            {t('profile.changePassword')}
           </NavLink>
           <button
             type="button"

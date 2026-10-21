@@ -9,6 +9,8 @@ import { AvatarBoundary } from './components/avatar3d/AvatarBoundary';
 import { LanguageToggle } from './components/LanguageToggle';
 import { ThemeToggle } from './components/ThemeToggle';
 import { QuickMenu } from './components/QuickMenu';
+import { ChangePasswordPage } from './pages/ChangePasswordPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { Footer } from './components/Footer';
 import { WarningModal } from './components/WarningModal';
 import { DoublePointsNotification } from './components/DoublePointsNotification';
@@ -186,6 +188,7 @@ export default function App() {
               <Route element={<PublicOnlyLayout />}>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/verify-email" element={<VerifyEmailPage />} />
               </Route>
 
@@ -206,6 +209,7 @@ export default function App() {
                   <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
                   <Route path="/admin/:tab" element={<AdminPage />} />
                 </Route>
+                <Route path="/password" element={<ChangePasswordPage />} />
                 <Route path="/profile" element={<ProfileHome />} />
                 <Route path="/profile/:username" element={<ProfilePage />} />
               </Route>

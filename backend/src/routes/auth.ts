@@ -7,7 +7,7 @@ import { moderateText } from '../lib/moderation.js';
 import { validateBody, requireCsrfHeader, handleUpload } from '../middleware/validate.js';
 import { authLimiter } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
-import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema } from '../lib/schemas.js';
+import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema, changePasswordSchema, forgotPasswordSchema, resetPasswordSchema } from '../lib/schemas.js';
 import { getPlayerLevel } from '../lib/xp.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
@@ -15,12 +15,16 @@ import {
   firebaseSignUp,
   firebaseSignIn,
   firebaseLookup,
-  firebaseSendVerificationEmail,
   firebaseConfirmVerification,
+  firebaseUpdatePassword,
   firebaseDeleteUser,
 } from '../lib/firebase.js';
 import { verifyQatarIdPhoto, type IdVerificationFailureReason } from '../lib/idVerification.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
+import { sendVerificationEmail, sendOtpEmail, sendResetOtpEmail, otpDeliveryAvailable, type SendResult } from '../lib/mailer.js';
+import { createOtp, verifyOtp, clearOtp } from '../lib/otp.js';
+import { recordIssue } from '../lib/diagnostics.js';
+import { getFirebaseAdminAuth } from '../lib/firebaseAdmin.js';
 import { FRONTEND_ORIGIN } from '../lib/config.js';
 import { encrypt, decrypt, hashForLookup } from '../lib/encryption.js';
 
@@ -99,8 +103,8 @@ authRouter.post(
   handleIdDocumentUpload,
   validateBody(signupSchema),
   async (req, res) => {
-    const { username, email, password, avatarKey, role, grade, schoolName, teacherSubject } = req.body;
-    // Nobody enters a display name at signup -- accounts start with their username.
+    const { username, email, password, avatarKey, role, grade, schoolName, teacherSubject, lang } = req.body;
+    // Falls back to the username if the client did not send a name.
     const displayName: string = req.body.displayName ?? username;
     const idDocument = req.file;
 
@@ -144,6 +148,7 @@ authRouter.post(
         res.status(409).json({ error: 'That username or email is already taken.' });
       } else {
         console.error('Firebase signUp failed:', signUpResult.error);
+        recordIssue('firebase-signup', signUpResult.error);
         res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
       }
       return;
@@ -216,14 +221,24 @@ authRouter.post(
       }
     }
 
-    const sendResult = await firebaseSendVerificationEmail(idToken, verifyEmailContinueUrl);
+    // A typed 6-digit code when Resend + the Firebase service account are set up, otherwise the
+    // verification link (see lib/mailer.ts).
+    const method: 'otp' | 'link' = (await otpDeliveryAvailable()) ? 'otp' : 'link';
+    let sendResult: SendResult;
+    if (method === 'otp') {
+      const otp = createOtp(userId);
+      sendResult = otp.ok ? await sendOtpEmail(email, otp.code, lang ?? 'ar') : { ok: false, error: `OTP_${otp.reason}` };
+    } else {
+      sendResult = await sendVerificationEmail({ email, idToken, lang: lang ?? 'ar' });
+    }
     if (!sendResult.ok) {
       // Roll back so the username/email is free to retry with instead of being stuck
       // on an account that never got its verification email (and never leave an
       // orphaned ID photo sitting in storage either).
       if (idDocumentPath) await supabaseAdmin!.storage.from(ID_DOCUMENT_BUCKET).remove([idDocumentPath]);
       await rollback();
-      console.error('Firebase sendOobCode failed:', sendResult.error);
+      console.error('Sending the verification email failed:', sendResult.error);
+      recordIssue('verification-email', sendResult.error);
       res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
       return;
     }
@@ -232,7 +247,7 @@ authRouter.post(
       db.prepare(`UPDATE users SET id_document_path = ? WHERE id = ?`).run(idDocumentPath, userId);
     }
 
-    res.status(201).json({ pendingVerification: true, email, idToken });
+    res.status(201).json({ pendingVerification: true, email, idToken, method });
   }
 );
 
@@ -291,7 +306,11 @@ authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSche
   const lookupResult = await firebaseLookup(idToken);
   const emailVerified = lookupResult.ok && lookupResult.data.users[0]?.emailVerified;
   if (!emailVerified) {
-    res.status(403).json({ error: 'Please verify your email before logging in.', idToken });
+    res.status(403).json({
+      error: 'Please verify your email before logging in.',
+      idToken,
+      method: (await otpDeliveryAvailable()) ? 'otp' : 'link',
+    });
     return;
   }
 
@@ -342,7 +361,7 @@ authRouter.post(
   requireCsrfHeader,
   validateBody(resendVerificationSchema),
   async (req, res) => {
-    const { idToken } = req.body;
+    const { idToken, lang } = req.body;
 
     const lookupResult = await firebaseLookup(idToken);
     if (!lookupResult.ok || !lookupResult.data.users[0]) {
@@ -354,16 +373,206 @@ authRouter.post(
       return;
     }
 
-    const sendResult = await firebaseSendVerificationEmail(idToken, verifyEmailContinueUrl);
+    const accountEmail = lookupResult.data.users[0].email;
+    if (await otpDeliveryAvailable()) {
+      const row = db.prepare(`SELECT id FROM users WHERE email_hash = ?`).get(hashForLookup(accountEmail)) as { id: number } | undefined;
+      if (!row) {
+        res.status(404).json({ error: 'Account not found.' });
+        return;
+      }
+      const otp = createOtp(row.id);
+      if (!otp.ok) {
+        res.status(429).json({
+          error: otp.reason === 'cooldown' ? 'Please wait a minute before requesting another code.' : 'Too many codes requested. Please try again later.',
+        });
+        return;
+      }
+      const sent = await sendOtpEmail(accountEmail, otp.code, lang ?? 'ar');
+      if (!sent.ok) {
+        console.error('Sending the verification code failed:', sent.error);
+        recordIssue('verification-code-resend', sent.error);
+        res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
+        return;
+      }
+      res.json({ ok: true, method: 'otp' });
+      return;
+    }
+
+    const sendResult = await sendVerificationEmail({ email: accountEmail, idToken, lang: lang ?? 'ar' });
     if (!sendResult.ok) {
-      console.error('Firebase resend failed:', sendResult.error);
+      console.error('Resending the verification email failed:', sendResult.error);
       res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
       return;
     }
 
-    res.json({ ok: true });
+    res.json({ ok: true, method: 'link' });
   }
 );
+
+// Confirms the 6-digit code from the email. The Firebase idToken (from signup, or from the
+// "please verify" login response) proves the caller knows the account's password, so codes
+// can't be guessed for someone else's email -- and each code allows only a few wrong tries.
+authRouter.post('/verify-otp', authLimiter, requireCsrfHeader, validateBody(verifyOtpSchema), async (req, res) => {
+  const { idToken, code } = req.body;
+
+  const lookup = await firebaseLookup(idToken);
+  const fbUser = lookup.ok ? lookup.data.users[0] : undefined;
+  if (!fbUser) {
+    res.status(401).json({ error: 'Your verification session expired. Please log in again.' });
+    return;
+  }
+  const user = db.prepare(`SELECT * FROM users WHERE email_hash = ?`).get(hashForLookup(fbUser.email)) as any;
+  if (!user) {
+    res.status(404).json({ error: 'Account not found.' });
+    return;
+  }
+  if (fbUser.emailVerified && user.email_verified) {
+    res.status(400).json({ error: 'This account is already verified.' });
+    return;
+  }
+
+  const result = verifyOtp(user.id, code);
+  if (result === 'invalid') {
+    res.status(400).json({ error: 'That code is incorrect. Please try again.' });
+    return;
+  }
+  if (result === 'expired') {
+    res.status(400).json({ error: 'That code has expired. Request a new one.' });
+    return;
+  }
+  if (result === 'locked') {
+    res.status(429).json({ error: 'Too many wrong attempts. Request a new code.' });
+    return;
+  }
+
+  const adminAuth = await getFirebaseAdminAuth();
+  if (!adminAuth) {
+    res.status(500).json({ error: "We couldn't verify your account. Please try again shortly." });
+    return;
+  }
+  try {
+    await adminAuth.updateUser(fbUser.localId, { emailVerified: true });
+  } catch (err) {
+    console.error('Marking the Firebase user verified failed:', err);
+    res.status(500).json({ error: "We couldn't verify your account. Please try again shortly." });
+    return;
+  }
+  db.prepare(`UPDATE users SET email_verified = 1 WHERE id = ?`).run(user.id);
+  clearOtp(user.id);
+
+  const { token } = createSession(user.id);
+  res.cookie(SESSION_COOKIE, token, cookieOptions);
+  const updated = db.prepare(`SELECT * FROM users WHERE id = ?`).get(user.id);
+  res.json({ user: publicUser(updated) });
+});
+
+// "Forgot password", step 1: email a 6-digit code. Always answers the same ({ ok: true }) whether or
+// not the email belongs to an account, so it can't be used to find out who is registered. Only
+// Firebase accounts (everyone who signed up) have a real mailbox; local accounts (admin, test
+// accounts) use made-up addresses and are never emailed.
+authRouter.post('/forgot-password', authLimiter, requireCsrfHeader, validateBody(forgotPasswordSchema), async (req, res) => {
+  const { email, lang } = req.body as { email: string; lang?: 'en' | 'ar' };
+  const user = db.prepare(`SELECT * FROM users WHERE email_hash = ?`).get(hashForLookup(email)) as any;
+  if (user && user.firebase_uid && user.is_active && (await otpDeliveryAvailable())) {
+    const otp = createOtp(user.id, 'reset');
+    if (otp.ok) {
+      const sent = await sendResetOtpEmail(email, otp.code, lang ?? 'ar');
+      if (!sent.ok) {
+        console.error('Sending the password-reset code failed:', sent.error);
+        recordIssue('password-reset-email', sent.error);
+      }
+    }
+  }
+  res.json({ ok: true });
+});
+
+// "Forgot password", step 2: check the code, set the new password in Firebase, sign out every device.
+authRouter.post('/reset-password', authLimiter, requireCsrfHeader, validateBody(resetPasswordSchema), async (req, res) => {
+  const { email, code, newPassword } = req.body as { email: string; code: string; newPassword: string };
+  const user = db.prepare(`SELECT * FROM users WHERE email_hash = ?`).get(hashForLookup(email)) as any;
+  // Unknown email or a local account: same answer as a wrong code, so nothing is revealed.
+  if (!user || !user.firebase_uid) {
+    res.status(400).json({ error: 'That code is incorrect. Please try again.' });
+    return;
+  }
+  const result = verifyOtp(user.id, code, 'reset');
+  if (result === 'invalid') {
+    res.status(400).json({ error: 'That code is incorrect. Please try again.' });
+    return;
+  }
+  if (result === 'expired') {
+    res.status(400).json({ error: 'That code has expired. Request a new one.' });
+    return;
+  }
+  if (result === 'locked') {
+    res.status(429).json({ error: 'Too many wrong attempts. Request a new code.' });
+    return;
+  }
+
+  const adminAuth = await getFirebaseAdminAuth();
+  if (!adminAuth) {
+    res.status(500).json({ error: "We couldn't change your password. Please try again shortly." });
+    return;
+  }
+  try {
+    await adminAuth.updateUser(user.firebase_uid, { password: newPassword });
+  } catch (err) {
+    console.error('Resetting the Firebase password failed:', err);
+    recordIssue('password-reset', err instanceof Error ? err.message : String(err));
+    res.status(500).json({ error: "We couldn't change your password. Please try again shortly." });
+    return;
+  }
+  clearOtp(user.id, 'reset');
+  db.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(user.id);
+  res.json({ ok: true });
+});
+
+// Change your own password. Accounts that sign in through Firebase (everyone who signed up) have it
+// changed there; local accounts (admin, test accounts) in our own bcrypt column. The current password
+// is always required, and every other session is signed out afterwards.
+authRouter.post('/change-password', authLimiter, requireCsrfHeader, requireAuth, validateBody(changePasswordSchema), async (req, res) => {
+  const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
+  const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!) as any;
+  if (!user) {
+    res.status(404).json({ error: 'Account not found.' });
+    return;
+  }
+  if (currentPassword === newPassword) {
+    res.status(400).json({ error: 'Choose a different password from your current one.' });
+    return;
+  }
+  if (user.role === 'admin' && newPassword.length < 12) {
+    res.status(400).json({ error: 'Admin passwords need at least 12 characters.' });
+    return;
+  }
+
+  if (user.firebase_uid) {
+    const signIn = await firebaseSignIn(decrypt(user.email), currentPassword);
+    if (!signIn.ok) {
+      res.status(401).json({ error: 'Your current password is incorrect.' });
+      return;
+    }
+    const updated = await firebaseUpdatePassword(signIn.data.idToken, newPassword);
+    if (!updated.ok) {
+      console.error('Firebase password update failed:', updated.error);
+      recordIssue('change-password', updated.error);
+      res.status(500).json({ error: "We couldn't change your password. Please try again shortly." });
+      return;
+    }
+  } else {
+    if (!bcrypt.compareSync(currentPassword, user.password_hash)) {
+      res.status(401).json({ error: 'Your current password is incorrect.' });
+      return;
+    }
+    db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(bcrypt.hashSync(newPassword, 10), user.id);
+  }
+
+  // Sign every other device out, keep this one logged in with a fresh session.
+  db.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(user.id);
+  const { token } = createSession(user.id);
+  res.cookie(SESSION_COOKIE, token, cookieOptions);
+  res.json({ ok: true });
+});
 
 authRouter.post('/logout', requireCsrfHeader, (req, res) => {
   const token = req.cookies?.[SESSION_COOKIE];

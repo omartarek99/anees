@@ -5,6 +5,7 @@ import { ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { AuthShell } from '../components/AuthShell';
+import { OtpVerifyForm } from '../components/OtpVerifyForm';
 
 const UNVERIFIED_ERROR = 'Please verify your email before logging in.';
 
@@ -17,6 +18,9 @@ export function LoginPage() {
   const [rawError, setRawError] = useState<string | null>(null);
   const [bannedUntil, setBannedUntil] = useState<string | null>(null);
   const [unverifiedIdToken, setUnverifiedIdToken] = useState<string | null>(null);
+  const [unverifiedMethod, setUnverifiedMethod] = useState<'otp' | 'link'>('link');
+  // Set once a code has been emailed -- swaps the login form for the code-entry form.
+  const [otpToken, setOtpToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
@@ -36,8 +40,9 @@ export function LoginPage() {
       setError(translateApiError(lang, message));
       setRawError(message);
       if (err instanceof ApiError && err.status === 403) {
-        const body = err.body as { idToken?: string; bannedUntil?: string } | null;
+        const body = err.body as { idToken?: string; bannedUntil?: string; method?: 'otp' | 'link' } | null;
         if (body?.idToken) setUnverifiedIdToken(body.idToken);
+        if (body?.method) setUnverifiedMethod(body.method);
         if (body?.bannedUntil) setBannedUntil(body.bannedUntil);
       }
     } finally {
@@ -50,14 +55,34 @@ export function LoginPage() {
     setResending(true);
     setResent(false);
     try {
-      await resendVerification(unverifiedIdToken);
-      setResent(true);
+      const result = await resendVerification(unverifiedIdToken, lang === 'ar' ? 'ar' : 'en');
+      if (result.method === 'otp') setOtpToken(unverifiedIdToken);
+      else setResent(true);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
       setError(translateApiError(lang, message));
     } finally {
       setResending(false);
     }
+  }
+
+  if (otpToken) {
+    return (
+      <AuthShell title={t('auth.otpTitle')} subtitle={t('auth.otpSubtitleLogin')}>
+        <OtpVerifyForm idToken={otpToken} />
+        <p className="text-center muted" style={{ marginTop: 18 }}>
+          <a
+            href="/login"
+            onClick={(e) => {
+              e.preventDefault();
+              setOtpToken(null);
+            }}
+          >
+            {t('auth.backToLogin')}
+          </a>
+        </p>
+      </AuthShell>
+    );
   }
 
   return (
@@ -72,7 +97,7 @@ export function LoginPage() {
         {rawError === UNVERIFIED_ERROR && unverifiedIdToken && (
           <div className="field">
             <button className="btn btn-secondary btn-block" type="button" onClick={handleResend} disabled={resending}>
-              {resending ? t('auth.resending') : t('auth.resendVerification')}
+              {resending ? t('auth.resending') : t(unverifiedMethod === 'otp' ? 'auth.sendCode' : 'auth.resendVerification')}
             </button>
             {resent && (
               <p className="text-center muted" style={{ marginTop: 8 }}>
@@ -102,6 +127,9 @@ export function LoginPage() {
             required
           />
         </div>
+        <p style={{ margin: '-4px 0 14px', fontSize: 13.5 }}>
+          <Link to="/forgot-password">{t('auth.forgotPassword')}</Link>
+        </p>
         <button className="btn btn-primary btn-block" type="submit" disabled={submitting}>
           {submitting ? t('auth.loggingIn') : t('auth.loginButton')}
         </button>

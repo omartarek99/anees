@@ -1,9 +1,8 @@
-import { readFileSync } from 'node:fs';
 import { db } from '../db/db.js';
 import { supabaseAdmin } from './supabase.js';
 import { decrypt, hashForLookup } from './encryption.js';
 
-const SERVICE_ACCOUNT_PATH = process.env.FIREBASE_SERVICE_ACCOUNT_PATH ?? './secrets/firebase-service-account.json';
+import { getFirebaseAdminAuth } from './firebaseAdmin.js';
 
 export type DeleteUserResult =
   | { found: false }
@@ -14,16 +13,8 @@ export type DeleteUserResult =
 // importing/initializing it eagerly at boot would make the whole app fail to start without
 // a service account file that most of its features never touch.
 async function deleteFirebaseUser(email: string): Promise<string> {
-  let serviceAccount: object;
-  try {
-    serviceAccount = JSON.parse(readFileSync(SERVICE_ACCOUNT_PATH, 'utf-8'));
-  } catch {
-    return `skipped (couldn't read ${SERVICE_ACCOUNT_PATH})`;
-  }
-  const { initializeApp, getApps, cert } = await import('firebase-admin/app');
-  const { getAuth } = await import('firebase-admin/auth');
-  const app = getApps()[0] ?? initializeApp({ credential: cert(serviceAccount) });
-  const auth = getAuth(app);
+  const auth = await getFirebaseAdminAuth();
+  if (!auth) return "skipped (no Firebase service account -- see FIREBASE_SERVICE_ACCOUNT_JSON / _PATH)";
   try {
     const firebaseUser = await auth.getUserByEmail(email);
     await auth.deleteUser(firebaseUser.uid);

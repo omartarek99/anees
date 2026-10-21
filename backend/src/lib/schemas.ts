@@ -51,8 +51,8 @@ export const signupSchema = z
     username: usernameSchema,
     email: emailSchema,
     password: passwordSchema,
-    // No longer asked at signup -- every account starts with its username as the display
-    // name (changeable later from the profile page). Still accepted so older clients work.
+    // The person's name, entered at signup before the username. Optional only so older clients
+    // keep working -- the server falls back to the username when it is missing.
     displayName: displayNameSchema.optional(),
     avatarKey: avatarKeySchema,
     role: roleSchema,
@@ -64,6 +64,8 @@ export const signupSchema = z
     // human, so anything else here fails the same way any other invalid field would --
     // no separate "you're a bot" response that would tip off a bot script either way.
     website: z.string().max(0, 'Please leave this field blank.').optional().default(''),
+    // Language of the verification email (Firebase's template text can't be edited, only localised).
+    lang: z.enum(['en', 'ar']).optional(),
   })
   .refine((data) => data.role !== 'student' || data.grade !== undefined, {
     message: 'Please enter your grade.',
@@ -83,8 +85,30 @@ export const verifyEmailSchema = z.object({
   oobCode: z.string().min(1, 'Missing verification code.'),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+  lang: z.enum(['en', 'ar']).optional(),
+});
+
+export const resetPasswordSchema = z.object({
+  email: emailSchema,
+  code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code.'),
+  newPassword: passwordSchema,
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Enter your current password.').max(200),
+  newPassword: passwordSchema,
+});
+
+export const verifyOtpSchema = z.object({
+  idToken: z.string().min(1, 'Missing verification token.'),
+  code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code.'),
+});
+
 export const resendVerificationSchema = z.object({
   idToken: z.string().min(1, 'Missing verification token.'),
+  lang: z.enum(['en', 'ar']).optional(),
 });
 
 // The student's 3D character: option ids only, so nothing free-form is ever stored. The lists
