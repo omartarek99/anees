@@ -8,11 +8,16 @@ export const authLimiter = rateLimit({
   message: { error: 'Too many attempts. Please wait a few minutes and try again.' },
 });
 
+// For load tests only (loadtest/README.md): one machine firing hundreds of requests a minute would just
+// hit this limit and measure the limiter instead of the app. Never honoured in production.
+const skipForLoadTest = () => process.env.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMITS === '1';
+
 export const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 200,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipForLoadTest,
 });
 
 // Auto-generating quiz questions calls a paid external API (Gemini) per request -- a
