@@ -171,6 +171,20 @@ export function ReelSlide({
     videoRef.current?.play().catch(() => {});
   }
 
+  // Swiper keeps neighbouring slides mounted, so without this a reel you scrolled past kept playing
+  // (muted) in the background and was somewhere mid-video when you came back. Leaving a reel now
+  // pauses and rewinds it, and landing on it always starts it from the beginning.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.currentTime = 0;
+    setWatchProgress(0);
+    loopCountRef.current = 0;
+    setStillWatching(false);
+    if (isActive) v.play().catch(() => {});
+    else v.pause();
+  }, [isActive]);
+
   // Real top-bar timer, driven by the video's own currentTime/duration instead of a fixed
   // cosmetic estimate.
   function handleTimeUpdate(e: React.SyntheticEvent<HTMLVideoElement>) {
