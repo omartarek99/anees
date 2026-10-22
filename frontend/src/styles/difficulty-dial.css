@@ -30,6 +30,11 @@
 .dial-stage.is-dragging {
   cursor: grabbing;
 }
+.dial-stage:focus-visible {
+  border-radius: 50%;
+  outline: 2px solid var(--lv);
+  outline-offset: 4px;
+}
 .dial-stage svg {
   position: absolute;
   inset: 0;
@@ -108,41 +113,6 @@
   font-weight: 800;
 }
 
-/* The three labelled options: the radio group for keyboards and screen readers, and a tap target for everyone. */
-.dial-options {
-  display: flex;
-  gap: 6px;
-  inline-size: 100%;
-}
-.dial-option {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 9px 6px;
-  border: 0;
-  border-radius: var(--radius-btn);
-  background: transparent;
-  color: var(--ink-soft);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
-}
-.dial-option:hover {
-  color: var(--ink);
-}
-.dial-option[aria-checked='true'] {
-  background: var(--surface-chip);
-  color: var(--ink);
-  box-shadow: var(--shadow-3d-sm);
-}
-.dial-option:focus-visible {
-  outline: 2px solid var(--lv);
-  outline-offset: 2px;
-}
 .dial-caption {
   margin: 0;
   color: var(--ink-soft);

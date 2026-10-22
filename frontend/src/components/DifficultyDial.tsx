@@ -21,35 +21,43 @@ function arc(from: number, to: number) {
 }
 const SECTION_PATHS = [0, 1, 2].map((i) => arc(-SWEEP + i * SECTION + GAP / 2, -SWEEP + (i + 1) * SECTION - GAP / 2));
 
-/** A three-position difficulty control: drag (or tap) the dial to turn it, or use the three labelled options below it,
- * which are the real radio group for keyboards and screen readers (the dial itself is a pointer affordance). */
+/** A three-position difficulty control: drag (or tap) the dial to turn it. The dial is a slider for keyboards and
+ * screen readers too: focus it and use the arrow keys, Home and End; its value text is the level's name. */
 export function DifficultyDial<K extends string>({ value, options, onChange, label }: { value: K; options: DialOption<K>[]; onChange: (key: K) => void; label: string }) {
   const { dir } = useLanguage();
   const sign = dir === 'rtl' ? -1 : 1; // the dial is mirrored in Arabic so "harder" still reads from the reading-start side
   const stageRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<number | null>(null); // the live angle while a pointer is down
+  const track = useRef({ last: 0, angle: 0 }); // the pointer's last reading and the knob's angle, for the drag below
   const index = Math.max(0, options.findIndex((o) => o.key === value));
   const current = options[index];
   const angle = drag ?? (index - 1) * SECTION; // logical angle: positive is harder
 
-  function aim(e: PointerEvent<HTMLDivElement>) {
+  function aim(e: PointerEvent<HTMLDivElement>, start = false) {
     const box = stageRef.current!.getBoundingClientRect();
-    const visual = (Math.atan2(e.clientX - (box.left + box.width / 2), box.top + box.height / 2 - e.clientY) * 180) / Math.PI;
-    const a = Math.max(-SWEEP, Math.min(SWEEP, visual * sign));
+    const here = ((Math.atan2(e.clientX - (box.left + box.width / 2), box.top + box.height / 2 - e.clientY) * 180) / Math.PI) * sign;
+    // The knob has two end stops, so it follows how far the pointer has moved from where the knob is, not where the
+    // pointer is. The pointer's angle wraps at the bottom of the dial: reading it directly would make a drag that
+    // goes past the Hard stop jump straight to the Easy stop (and the other way round).
+    const t = track.current;
+    let step = here - t.last;
+    if (step > 180) step -= 360;
+    else if (step < -180) step += 360;
+    const a = Math.max(-SWEEP, Math.min(SWEEP, start ? here : t.angle + step));
+    t.last = here;
+    t.angle = a;
     setDrag(a);
     const next = options[Math.max(0, Math.min(options.length - 1, Math.round(a / SECTION) + 1))];
     if (next.key !== value) onChange(next.key);
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
-    const forward = dir === 'rtl' ? ['ArrowLeft', 'ArrowDown'] : ['ArrowRight', 'ArrowDown'];
-    const back = dir === 'rtl' ? ['ArrowRight', 'ArrowUp'] : ['ArrowLeft', 'ArrowUp'];
-    const step = forward.includes(e.key) ? 1 : back.includes(e.key) ? -1 : 0;
-    if (!step) return;
+    const harder = dir === 'rtl' ? ['ArrowLeft', 'ArrowUp'] : ['ArrowRight', 'ArrowUp'];
+    const easier = dir === 'rtl' ? ['ArrowRight', 'ArrowDown'] : ['ArrowLeft', 'ArrowDown'];
+    const next = e.key === 'Home' ? 0 : e.key === 'End' ? options.length - 1 : harder.includes(e.key) ? index + 1 : easier.includes(e.key) ? index - 1 : null;
+    if (next === null) return;
     e.preventDefault();
-    const next = Math.max(0, Math.min(options.length - 1, index + step));
-    onChange(options[next].key);
-    (e.currentTarget.querySelectorAll('[role="radio"]')[next] as HTMLElement | undefined)?.focus();
+    onChange(options[Math.max(0, Math.min(options.length - 1, next))].key);
   }
 
   return (
@@ -58,10 +66,17 @@ export function DifficultyDial<K extends string>({ value, options, onChange, lab
         ref={stageRef}
         className={`dial-stage${drag !== null ? ' is-dragging' : ''}`}
         style={{ ['--rot' as string]: `${angle * sign}deg` }}
-        aria-hidden="true"
+        role="slider"
+        tabIndex={0}
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={options.length - 1}
+        aria-valuenow={index}
+        aria-valuetext={current.label}
+        onKeyDown={onKeyDown}
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId);
-          aim(e);
+          aim(e, true);
         }}
         onPointerMove={(e) => drag !== null && aim(e)}
         onPointerUp={() => setDrag(null)}
@@ -86,14 +101,6 @@ export function DifficultyDial<K extends string>({ value, options, onChange, lab
         </div>
       </div>
 
-      <div className="dial-options" role="radiogroup" aria-label={label} onKeyDown={onKeyDown}>
-        {options.map((o, i) => (
-          <button key={o.key} type="button" role="radio" aria-checked={i === index} tabIndex={i === index ? 0 : -1} className="dial-option" onClick={() => onChange(o.key)}>
-            <span aria-hidden="true">{o.icon}</span>
-            {o.label}
-          </button>
-        ))}
-      </div>
       <p className="dial-caption" aria-live="polite">
         {current.xp}
       </p>
