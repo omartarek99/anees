@@ -48,7 +48,9 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             style={{ borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }}
           >
-            <h2 style={{ fontSize: 21 }}>{title}</h2>
+            {/* Some screens (login) have no heading of their own -- the logo above is the page's h1 -- so
+                an empty title renders nothing rather than an empty <h2>. */}
+            {title && <h2 style={{ fontSize: 21 }}>{title}</h2>}
             <p className="muted" style={{ marginBottom: 20 }}>
               {subtitle}
             </p>
