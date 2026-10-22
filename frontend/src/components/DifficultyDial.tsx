@@ -2,6 +2,7 @@ import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { useLanguage } from '../lib/language-context';
 import '../styles/difficulty-dial.css';
 
+// `icon` is an image URL (transparent artwork) shown in the dial's centre.
 export type DialOption<K extends string> = { key: K; label: string; xp: string; icon: string };
 
 // The dial from the "Daily UI #007 Button Set" Figma: a ring of tick marks around a raised knob with an indicator
@@ -96,7 +97,7 @@ export function DifficultyDial<K extends string>({ value, options, onChange, lab
           <span className="dial-dot" />
         </div>
         <div className="dial-well">
-          <span className="dial-icon">{current.icon}</span>
+          <img className="dial-icon" src={current.icon} alt="" />
           <span className="dial-name">{current.label}</span>
         </div>
       </div>

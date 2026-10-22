@@ -1232,15 +1232,19 @@ button.list-row.selected {
   text-align: center;
 }
 .category-pill-icon {
-  width: 38px;
-  height: 38px;
+  width: 60px;
+  height: 60px;
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 19px;
   background: var(--surface-chip);
   box-shadow: var(--shadow-3d-sm);
+}
+.category-pill-icon img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
 }
 
 /* ---------------- List rows (news, friends, requests, threads) ---------------- */
@@ -1763,6 +1767,12 @@ button.list-row.selected {
   font-size: 14px;
   margin: 2px 0 0;
   opacity: 0.95;
+}
+.printable-worksheet-icon {
+  width: 1.5em;
+  height: 1.5em;
+  object-fit: contain;
+  vertical-align: -0.45em;
 }
 
 .printable-worksheet-tagline {

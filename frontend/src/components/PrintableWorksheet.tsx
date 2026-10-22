@@ -51,7 +51,7 @@ export function PrintableWorksheet({
               {t('brand')} <span aria-hidden>🦅</span>
             </h1>
             <p>
-              {subjectIcon} {subjectLabel} — {difficultyIcon} {difficultyLabel}
+              <img src={subjectIcon} alt="" className="printable-worksheet-icon" /> {subjectLabel} — <img src={difficultyIcon} alt="" className="printable-worksheet-icon" /> {difficultyLabel}
             </p>
           </div>
         </header>

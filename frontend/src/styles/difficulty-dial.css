@@ -103,9 +103,13 @@
   text-align: center;
   pointer-events: none;
 }
+/* The artwork is bigger than the recessed circle on purpose: it pops out of it, and the dot orbits clear of it. */
 .dial-icon {
-  font-size: clamp(24px, 7vw, 32px);
-  line-height: 1;
+  inline-size: clamp(40px, 15vw, 56px);
+  block-size: clamp(40px, 15vw, 56px);
+  margin: -10px auto -4px;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 3px rgb(0 0 0 / 0.25));
 }
 .dial-name {
   color: var(--ink-soft);
