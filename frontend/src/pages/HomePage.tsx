@@ -6,7 +6,6 @@ import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 import { Topbar } from '../components/Topbar';
 import { AnimatedText } from '../components/AnimatedText';
-import { Avatar } from '../components/Avatar';
 
 type Profile = { levelsCompleted: number; totalXp: number; playerLevel: number };
 
@@ -76,7 +75,6 @@ export function HomePage() {
                 <span className="market-chip">{c.chip}</span>
               </div>
               <div className="market-owner">
-                <Avatar avatarKey={user?.avatarKey ?? 'falcon'} size={40} />
                 <div>
                   <h3 className="market-title">{c.title}</h3>
                   <div className="market-by">
