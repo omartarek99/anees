@@ -318,44 +318,29 @@ export function ReelSlide({
               (see ReelActionRail, rendered by ReelsPage), so this only needs to clear its own
               padding, not reserved space for an overlay. */}
           <div className="on-dark" style={{ position: 'absolute', left: 16, right: 16, bottom: 20, zIndex: 3 }}>
-            <span
-              className="badge"
-              style={{ background: 'rgba(255,255,255,0.18)', color: 'white', marginBottom: 8, backdropFilter: 'blur(6px)' }}
-            >
-              {data.subjectKey === 'math' ? (
-                <RiCalculatorLine size={13} />
-              ) : data.subjectKey === 'science' ? (
-                <RiAtomLine size={13} />
-              ) : (
-                data.subjectIcon
-              )}{' '}
-              {data.subjectName}
-            </span>
-            <h2 style={{ color: 'white', fontSize: 19, margin: '2px 0 6px', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
-            {(data.author || data.scriptText) && (
-              <button
-                type="button"
-                aria-expanded={captionExpanded}
-                onClick={() => setCaptionExpanded((v) => !v)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  marginTop: 2,
-                  color: 'rgba(255,255,255,0.8)',
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                }}
+            {/* Topic on one side, subject on the opposite side of the same line. */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
+              <h2 style={{ flex: 1, minWidth: 0, color: 'white', fontSize: 19, margin: 0, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
+              <span
+                className="badge"
+                style={{ flexShrink: 0, background: 'rgba(255,255,255,0.18)', color: 'white', backdropFilter: 'blur(6px)' }}
               >
-                {captionExpanded ? t('reels.seeLess') : t('reels.seeMore')}
-              </button>
-            )}
+                {data.subjectKey === 'math' ? (
+                  <RiCalculatorLine size={13} />
+                ) : data.subjectKey === 'science' ? (
+                  <RiAtomLine size={13} />
+                ) : (
+                  data.subjectIcon
+                )}{' '}
+                {data.subjectName}
+              </span>
+            </div>
+            {/* The details open ABOVE the See more toggle, so the toggle always sits right over the
+                quiz / next-lesson button below. */}
             {captionExpanded && (
               <div
                 className="no-scrollbar swiper-no-swiping swiper-no-mousewheel"
-                style={{ marginTop: 8, maxHeight: '32vh', overflowY: 'auto', overscrollBehavior: 'contain' }}
+                style={{ marginBottom: 6, maxHeight: '32vh', overflowY: 'auto', overscrollBehavior: 'contain' }}
               >
                 {data.author && (
                   <Link
@@ -372,6 +357,25 @@ export function ReelSlide({
                   {data.scriptText}
                 </p>
               </div>
+            )}
+            {(data.author || data.scriptText) && (
+              <button
+                type="button"
+                aria-expanded={captionExpanded}
+                onClick={() => setCaptionExpanded((v) => !v)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  color: 'rgba(255,255,255,0.8)',
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                }}
+              >
+                {captionExpanded ? t('reels.seeLess') : t('reels.seeMore')}
+              </button>
             )}
             {!data.videoUrl && (
               <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11.5, marginTop: 6 }}>{t('reels.videoComingSoon')}</p>
