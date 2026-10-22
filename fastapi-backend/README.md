@@ -23,7 +23,13 @@ cp .env.example .env
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+API_KEY=
 ```
+
+`API_KEY` is a secret you make up (`python -c "import secrets; print(secrets.token_urlsafe(32))"`).
+Every route except `/health` requires it as an `X-API-Key` header and answers `401` without it, or when
+it is unset on the server -- these routes upload to storage and write to the database with the service
+role key, so they are never left open.
 
 `.env` is git-ignored — never commit it.
 
@@ -34,7 +40,7 @@ uvicorn main:app --reload
 ```
 
 - `GET /health` — liveness check, no Supabase call.
-- `GET /health/supabase` — confirms the Supabase client can reach your project.
+- `GET /health/supabase` — confirms the Supabase client can reach your project (needs `X-API-Key`).
 - `POST /reels/generate` — kicks off reel generation and returns `202 Accepted` immediately;
   see below.
 
@@ -43,6 +49,7 @@ uvicorn main:app --reload
 ```bash
 curl -X POST http://127.0.0.1:8000/reels/generate \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: $API_KEY" \
   -d '{"topic": "Fractions Basics", "difficulty_level": "medium"}'
 ```
 

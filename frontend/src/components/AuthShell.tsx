@@ -28,7 +28,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
                 No backing tile: the logo's dark strokes would sink into the maroon backdrop,
                 so a white outline hugs the artwork itself (stacked drop-shadows follow the
                 alpha edge) with a soft glow behind it. */}
-            <h1 style={{ margin: 0, lineHeight: 0 }}>
+            <h1 className="title-ease" style={{ margin: 0, lineHeight: 0 }}>
               <img
                 src="/icons/logo.png"
                 alt={t('auth.heroTitle')}
@@ -48,7 +48,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             style={{ borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }}
           >
-            <h2 style={{ fontSize: 21 }}>{title}</h2>
+            <h2 className="title-ease" style={{ fontSize: 21 }}>{title}</h2>
             <p className="muted" style={{ marginBottom: 20 }}>
               {subtitle}
             </p>

@@ -51,7 +51,7 @@ export function HomePage() {
               {t('common.level')} {level} · {pickText(lang, user.rankTier.name, user.rankTier.nameAr)}
             </p>
           )}
-          <h1 className="home-hero-title">
+          <h1 className="home-hero-title title-ease">
             <AnimatedText>{t('home.greeting', { name: user?.displayName ?? '' })}</AnimatedText>
           </h1>
           <svg className="home-swoosh" viewBox="0 0 168 14" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" aria-hidden="true">

@@ -533,6 +533,28 @@ svg {
   font-size: 26px;
   margin: 0;
 }
+/* Page headings ease in once as the page mounts (the landing hero and stories have entrances of their own).
+   Reduced motion keeps the ease but only as a fade: no sliding, no blur. */
+@keyframes title-ease-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+  }
+}
+@keyframes title-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.title-ease {
+  animation: title-ease-in 0.8s var(--ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .title-ease {
+    animation-name: title-fade-in;
+  }
+}
 .topbar-subtitle {
   color: var(--ink-soft);
   font-size: 14px;
@@ -2121,4 +2143,31 @@ html {
   .reels-frame-row {
     height: 100dvh;
   }
+}
+
+/* Chart palette. Checked with the dataviz skill's validate_palette.js against the glass card surface in each
+   theme (lightness band, chroma, CVD and normal-vision separation, 3:1 contrast): five categorical slots in a
+   fixed order (a slot belongs to its entity), a violet ordinal ramp for ordered levels (easy -> hard), and a
+   neutral for "other". */
+:root {
+  --viz-1: #c22954;
+  --viz-2: #b87400;
+  --viz-3: #2a78d6;
+  --viz-4: #0f8f66;
+  --viz-5: #6250d6;
+  --viz-ord-1: #9a8de6;
+  --viz-ord-2: #6a58d8;
+  --viz-ord-3: #43349e;
+  --viz-other: #8a8499;
+}
+:root[data-theme='dark'] {
+  --viz-1: #e0527d;
+  --viz-2: #c98500;
+  --viz-3: #3987e5;
+  --viz-4: #199e70;
+  --viz-5: #9085e9;
+  --viz-ord-1: #6a5dc4;
+  --viz-ord-2: #9185e8;
+  --viz-ord-3: #c0b8f7;
+  --viz-other: #8a8499;
 }

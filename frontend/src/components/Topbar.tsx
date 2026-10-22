@@ -33,7 +33,10 @@ export function Topbar({ title, subtitle }: { title?: ReactNode; subtitle?: stri
     <div className={title ? 'topbar' : 'topbar topbar--bare'}>
       {title && (
         <div>
-          <h1 className="topbar-title">{title}</h1>
+          {/* Keyed on a string title so a tab change that only swaps the text (Admin) replays the entrance. */}
+          <h1 key={typeof title === 'string' ? title : undefined} className="topbar-title title-ease">
+            {title}
+          </h1>
           {subtitle && <p className="topbar-subtitle">{subtitle}</p>}
         </div>
       )}

@@ -530,10 +530,11 @@ adminRouter.get('/reports/watch-time/monthly', (req, res) => {
 // daily total for the last 30 days. Intentionally just that: this is a usage-visibility
 // count, not a marketing-analytics product, so it doesn't grow into referrers/devices/funnels.
 adminRouter.get('/analytics/summary', (_req, res) => {
+  const since = `date('now', '-29 days')`;
   const topPaths = db
     .prepare(
       `SELECT path, COUNT(*) as views FROM page_views
-       WHERE created_at >= datetime('now', '-30 days')
+       WHERE created_at >= ${since}
        GROUP BY path ORDER BY views DESC LIMIT 20`
     )
     .all() as { path: string; views: number }[];
@@ -541,7 +542,7 @@ adminRouter.get('/analytics/summary', (_req, res) => {
   const daily = db
     .prepare(
       `SELECT date(created_at) as day, COUNT(*) as views FROM page_views
-       WHERE created_at >= datetime('now', '-30 days')
+       WHERE created_at >= ${since}
        GROUP BY day ORDER BY day ASC`
     )
     .all() as { day: string; views: number }[];
@@ -561,5 +562,28 @@ adminRouter.get('/analytics/summary', (_req, res) => {
       .get() as { c: number }
   ).c;
 
-  res.json({ topPaths, daily, totalViews, quizzesSolved });
+  // Student XP in the same window, by what earned it. The worksheet reasons ('worksheet_easy', ...) fold into
+  // one activity (their difficulty split is its own chart); anything unrecognised lands in 'other'.
+  const xpByActivity = db
+    .prepare(
+      `SELECT CASE WHEN e.reason LIKE 'worksheet_%' THEN 'worksheet'
+                   WHEN e.reason IN ('reel_watch', 'reel_quiz', 'boss_defeat', 'craft_puzzle') THEN e.reason
+                   ELSE 'other' END as activity,
+              SUM(e.amount) as xp
+       FROM xp_events e JOIN users u ON u.id = e.user_id
+       WHERE u.is_seed = 0 AND u.role = 'student' AND e.amount > 0 AND e.created_at >= ${since}
+       GROUP BY activity ORDER BY xp DESC`
+    )
+    .all() as { activity: string; xp: number }[];
+
+  const worksheetsByDifficulty = db
+    .prepare(
+      `SELECT a.difficulty, COUNT(*) as submitted FROM worksheet_attempts a
+       JOIN users u ON u.id = a.user_id
+       WHERE a.status = 'submitted' AND u.is_seed = 0 AND a.created_at >= ${since}
+       GROUP BY a.difficulty`
+    )
+    .all() as { difficulty: string; submitted: number }[];
+
+  res.json({ topPaths, daily, totalViews, quizzesSolved, xpByActivity, worksheetsByDifficulty });
 });
