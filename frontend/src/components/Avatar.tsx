@@ -65,9 +65,11 @@ export function Avatar({ avatarKey, size = 48, photoUrl }: { avatarKey: string; 
           overflow: 'hidden',
         }}
       >
-        <svg viewBox="0 0 24 24" width={size * 0.66} height={size * 0.66} fill="#ffffff" aria-hidden="true" style={{ marginTop: size * 0.08 }}>
-          <circle cx="12" cy="8.2" r="4.3" />
-          <path d="M3.2 22c0-5 3.9-8 8.8-8s8.8 3 8.8 8z" />
+        {/* Fills the whole circle: a large head, and shoulders that run out to the edge (the round
+            frame clips them), like the standard "no photo" avatar. */}
+        <svg viewBox="0 0 24 24" width={size} height={size} fill="#ffffff" aria-hidden="true" style={{ display: 'block' }}>
+          <circle cx="12" cy="9" r="5" />
+          <path d="M-2 26c0-7 5.4-10.4 14-10.4S26 19 26 26z" />
         </svg>
       </div>
     );
