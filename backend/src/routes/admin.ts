@@ -19,6 +19,8 @@ import { getDoublePointsStatus, startDoublePointsNow } from '../lib/doublePoints
 import { supabaseAdmin } from '../lib/supabase.js';
 import { looksLikeImage } from '../lib/imageValidation.js';
 import { mailStatus } from '../lib/mailer.js';
+import { parseRoleFilter, parseGrade, countReportUsers, queryReportRows, reportTotals, monthlyWatch, trailingMonthKeys } from '../lib/reportData.js';
+import { buildReportWorkbook } from '../lib/reportExcel.js';
 import { recentIssues } from '../lib/diagnostics.js';
 import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX, deleteCertificateImageIfAny } from '../lib/certificateImage.js';
 
@@ -408,51 +410,17 @@ adminRouter.delete('/reels/:id', requireCsrfHeader, async (req, res) => {
 // ---------------------------------------------------------------------------------------
 
 adminRouter.get('/reports/watch-time', (req, res) => {
-  const gradeParam = typeof req.query.grade === 'string' ? Number(req.query.grade) : NaN;
+  const role = parseRoleFilter(req.query.role);
+  const grade = parseGrade(req.query.grade);
   const page = Math.max(1, Number(req.query.page) || 1);
 
-  const clauses: string[] = [`u.is_seed = 0`, `u.role = 'student'`];
-  const params: (string | number)[] = [];
-  if (Number.isInteger(gradeParam)) {
-    clauses.push(`u.grade = ?`);
-    params.push(gradeParam);
-  }
-
-  const total = (
-    db.prepare(`SELECT COUNT(*) as c FROM users u WHERE ${clauses.join(' AND ')}`).get(...params) as { c: number }
-  ).c;
+  const total = countReportUsers(role, grade);
   const { page: page_, totalPages } = clampPage(page, total);
+  const rows = queryReportRows(role, grade, PAGE_SIZE, (page_ - 1) * PAGE_SIZE);
 
-  const rows = db
-    .prepare(
-      `SELECT u.id, u.username, u.display_name, u.grade,
-              COALESCE(SUM(rwp.watched_seconds), 0) as total_watched_seconds,
-              COALESCE(SUM(rwp.xp_awarded), 0) as total_watch_xp,
-              COUNT(DISTINCT rwp.reel_id) as reels_watched
-       FROM users u
-       LEFT JOIN reel_watch_progress rwp ON rwp.user_id = u.id
-       WHERE ${clauses.join(' AND ')}
-       GROUP BY u.id
-       ORDER BY total_watched_seconds DESC
-       LIMIT ? OFFSET ?`
-    )
-    .all(...params, PAGE_SIZE, (page_ - 1) * PAGE_SIZE) as any[];
-
-  res.json({
-    students: rows.map((r) => ({
-      userId: r.id,
-      username: r.username,
-      displayName: r.display_name,
-      grade: r.grade,
-      totalWatchedSeconds: Math.round(r.total_watched_seconds),
-      totalWatchXp: r.total_watch_xp,
-      reelsWatched: r.reels_watched,
-    })),
-    total,
-    page: page_,
-    totalPages,
-    pageSize: PAGE_SIZE,
-  });
+  // `users` covers students AND teachers (filter with ?role=student|teacher); `totals` spans everyone
+  // matching the filter, not just this page.
+  res.json({ users: rows, totals: reportTotals(role, grade), total, page: page_, totalPages, pageSize: PAGE_SIZE });
 });
 
 // Monthly watch-time trend -- reel_watch_progress only ever stores each (user, reel)
@@ -460,70 +428,64 @@ adminRouter.get('/reports/watch-time', (req, res) => {
 // was watched *in a given month*. reel_watch_seconds_events can: every credited heartbeat
 // (routes/reels.ts POST /:reelId/watch) logs its own real-seconds row with a real
 // timestamp, independent of how watch points are tiered/awarded.
-function trailingMonthKeys(count: number): string[] {
-  const start = new Date();
-  start.setUTCDate(1);
-  const keys: string[] = [];
-  for (let i = count - 1; i >= 0; i--) {
-    const d = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() - i, 1));
-    keys.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`);
-  }
-  return keys;
-}
-
-// Matches PAGE_SIZE -- the per-student chart is a visual summary, not a replacement for
-// the full paginated table above, so it caps at the same "one page" size rather than
-// growing its own pagination.
-const MONTHLY_STUDENT_CAP = PAGE_SIZE;
+// Matches PAGE_SIZE -- the per-user chart is a visual summary, not a replacement for the full
+// paginated table above, so it caps at the same "one page" size rather than growing its own pagination.
+const MONTHLY_USER_CAP = PAGE_SIZE;
 
 adminRouter.get('/reports/watch-time/monthly', (req, res) => {
-  const gradeParam = typeof req.query.grade === 'string' ? Number(req.query.grade) : NaN;
+  const role = parseRoleFilter(req.query.role);
+  const grade = parseGrade(req.query.grade);
   const monthsParam = Number(req.query.months);
   const monthCount = Number.isInteger(monthsParam) ? Math.min(12, Math.max(1, monthsParam)) : 6;
   const months = trailingMonthKeys(monthCount);
 
-  const clauses: string[] = [`u.is_seed = 0`, `u.role = 'student'`, `ev.created_at >= ?`];
-  const params: (string | number)[] = [`${months[0]}-01 00:00:00`];
-  if (Number.isInteger(gradeParam)) {
-    clauses.push(`u.grade = ?`);
-    params.push(gradeParam);
-  }
-
-  const rows = db
-    .prepare(
-      `SELECT u.id, u.username, u.display_name as displayName, u.grade,
-              strftime('%Y-%m', ev.created_at) as month, SUM(ev.seconds) as seconds
-       FROM reel_watch_seconds_events ev
-       JOIN users u ON u.id = ev.user_id
-       WHERE ${clauses.join(' AND ')}
-       GROUP BY u.id, month`
-    )
-    .all(...params) as { id: number; username: string; displayName: string; grade: number | null; month: string; seconds: number }[];
-
-  const totalsBySecond = new Array(months.length).fill(0);
-  const students = new Map<number, { userId: number; username: string; displayName: string; grade: number | null; monthly: number[] }>();
-
-  for (const row of rows) {
-    const monthIndex = months.indexOf(row.month);
-    if (monthIndex === -1) continue;
-    const seconds = Math.round(row.seconds);
-    totalsBySecond[monthIndex] += seconds;
-    if (!students.has(row.id)) {
-      students.set(row.id, { userId: row.id, username: row.username, displayName: row.displayName, grade: row.grade, monthly: new Array(months.length).fill(0) });
-    }
-    students.get(row.id)!.monthly[monthIndex] = seconds;
-  }
-
-  const ranked = [...students.values()].sort(
-    (a, b) => b.monthly.reduce((s, n) => s + n, 0) - a.monthly.reduce((s, n) => s + n, 0)
-  );
-
+  const { totalsBySecond, users } = monthlyWatch(role, grade, months);
   res.json({
     months,
     totalsBySecond,
-    students: ranked.slice(0, MONTHLY_STUDENT_CAP),
-    studentCount: ranked.length,
+    // Same field names the chart components already use (`students`), now holding teachers too.
+    students: users.slice(0, MONTHLY_USER_CAP),
+    studentCount: users.length,
   });
+});
+
+// Locked, branded Excel version of the report (see lib/reportExcel.ts). Admin-only like everything on
+// this router. ?role=all|student|teacher &grade=N &lang=ar|en
+adminRouter.get('/reports/export.xlsx', async (req, res) => {
+  try {
+    const role = parseRoleFilter(req.query.role);
+    const grade = parseGrade(req.query.grade);
+    const lang = req.query.lang === 'en' ? 'en' : 'ar';
+    const months = trailingMonthKeys(6);
+
+    const rows = queryReportRows(role, grade);
+    const { users: monthlyUsers } = monthlyWatch(role, grade, months);
+    const quizzesSolved = (
+      db.prepare(`SELECT COUNT(*) AS c FROM reel_watch_progress rwp JOIN users u ON u.id = rwp.user_id WHERE rwp.quiz_completed = 1 AND u.is_seed = 0`).get() as { c: number }
+    ).c;
+    const pageViews30d = (
+      db.prepare(`SELECT COUNT(*) AS c FROM page_views WHERE created_at >= datetime('now', '-30 days')`).get() as { c: number }
+    ).c;
+
+    const { buffer, filename } = await buildReportWorkbook({
+      lang,
+      role,
+      grade,
+      rows,
+      totals: reportTotals(role, grade),
+      months,
+      monthlyUsers,
+      quizzesSolved,
+      pageViews30d,
+    });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(buffer);
+  } catch (err) {
+    console.error('Report export failed:', err);
+    res.status(500).json({ error: "We couldn't create the report. Please try again." });
+  }
 });
 
 // First-party pageview analytics (see routes/analytics.ts / schema.sql) -- top paths and a

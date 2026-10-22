@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { RiEyeLine, RiCheckboxCircleLine } from '@remixicon/react';
+import { RiEyeLine, RiCheckboxCircleLine, RiFileExcel2Line } from '@remixicon/react';
 import { api } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { formatWatchTime } from '../lib/format';
@@ -7,14 +7,33 @@ import { Pagination } from './Pagination';
 import { GradeFilterSelect, type GradeFilter } from './GradeFilterSelect';
 import { MonthlyTotalChart, StudentWatchHeatmap, type MonthlyWatchTime } from './WatchTimeCharts';
 
-type WatchTimeStudent = {
+type RoleFilter = 'all' | 'student' | 'teacher';
+
+// Students AND teachers: watch time and worksheets for both, plus uploaded videos / printed
+// worksheets for teachers (see backend lib/reportData.ts).
+type WatchTimeUser = {
   userId: number;
   username: string;
   displayName: string;
+  role: 'student' | 'teacher';
   grade: number | null;
-  totalWatchedSeconds: number;
-  totalWatchXp: number;
+  teacherSubject: string | null;
+  watchedSeconds: number;
   reelsWatched: number;
+  watchPoints: number;
+  worksheetsDone: number;
+  worksheetsPrinted: number;
+  videosUploaded: number;
+  points: number;
+};
+
+type ReportTotals = {
+  students: number;
+  teachers: number;
+  watchedSeconds: number;
+  worksheetsDone: number;
+  worksheetsPrinted: number;
+  videosUploaded: number;
 };
 
 type AnalyticsSummary = {
@@ -24,62 +43,112 @@ type AnalyticsSummary = {
   quizzesSolved: number;
 };
 
-function WatchTimeTable({ gradeFilter }: { gradeFilter: GradeFilter }) {
+function reportQuery(role: RoleFilter, grade: GradeFilter, extra: Record<string, string> = {}) {
+  const params = new URLSearchParams();
+  if (role !== 'all') params.set('role', role);
+  if (grade !== 'all') params.set('grade', grade);
+  for (const [k, v] of Object.entries(extra)) params.set(k, v);
+  return params.toString();
+}
+
+function TotalsStrip({ totals }: { totals: ReportTotals }) {
   const { t } = useLanguage();
-  const [students, setStudents] = useState<WatchTimeStudent[] | null>(null);
+  const items: [string, string | number][] = [
+    [t('admin.reportTotalStudents'), totals.students],
+    [t('admin.reportTotalTeachers'), totals.teachers],
+    [t('admin.reportTotalWatch'), formatWatchTime(totals.watchedSeconds)],
+    [t('admin.reportTotalWsDone'), totals.worksheetsDone],
+    [t('admin.reportTotalWsPrinted'), totals.worksheetsPrinted],
+    [t('admin.reportTotalVideos'), totals.videosUploaded],
+  ];
+  return (
+    <div className="grid-cards" style={{ marginBottom: 16 }}>
+      {items.map(([label, value]) => (
+        <div key={label} className="stat-card stat-card-blue">
+          <div className="stat-card-label">{label}</div>
+          <div className="stat-card-value" style={{ fontSize: 22 }}>{value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: RoleFilter; gradeFilter: GradeFilter }) {
+  const { t } = useLanguage();
+  const [users, setUsers] = useState<WatchTimeUser[] | null>(null);
+  const [totals, setTotals] = useState<ReportTotals | null>(null);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
 
-  // A grade change invalidates the current page number, same as AdminUsersPanel.
-  useEffect(() => setPage(1), [gradeFilter]);
+  // A filter change invalidates the current page number, same as AdminUsersPanel.
+  useEffect(() => setPage(1), [roleFilter, gradeFilter]);
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (gradeFilter !== 'all') params.set('grade', gradeFilter);
-    params.set('page', String(page));
     api
-      .get<{ students: WatchTimeStudent[]; totalPages: number }>(`/admin/reports/watch-time?${params.toString()}`)
+      .get<{ users: WatchTimeUser[]; totals: ReportTotals; totalPages: number }>(
+        `/admin/reports/watch-time?${reportQuery(roleFilter, gradeFilter, { page: String(page) })}`
+      )
       .then((data) => {
-        setStudents(data.students);
+        setUsers(data.users);
+        setTotals(data.totals);
         setTotalPages(data.totalPages);
       })
-      .catch(() => setStudents([]));
-  }, [gradeFilter, page]);
+      .catch(() => setUsers([]));
+  }, [roleFilter, gradeFilter, page]);
+
+  const th = { padding: '6px 8px' } as const;
+  const td = { padding: '6px 8px' } as const;
 
   return (
     <div className="card">
       <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('admin.watchTimeTitle')}</h3>
       <p className="muted" style={{ fontSize: 13, marginTop: 0, marginBottom: 12 }}>{t('admin.watchTimeSubtitle')}</p>
 
-      {!students && (
+      {totals && users && users.length > 0 && <TotalsStrip totals={totals} />}
+
+      {!users && (
         <div className="empty-state">
           <div className="spinner" />
         </div>
       )}
-      {students && students.length === 0 && <p className="muted">{t('admin.watchTimeEmpty')}</p>}
+      {users && users.length === 0 && <p className="muted">{t('admin.watchTimeEmpty')}</p>}
 
-      {students && students.length > 0 && (
+      {users && users.length > 0 && (
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
             <thead>
               <tr style={{ textAlign: 'start' }}>
-                <th style={{ padding: '6px 8px' }}>{t('admin.watchTimeColStudent')}</th>
-                <th style={{ padding: '6px 8px' }}>{t('admin.watchTimeColGrade')}</th>
-                <th style={{ padding: '6px 8px' }}>{t('admin.watchTimeColTime')}</th>
-                <th style={{ padding: '6px 8px' }}>{t('admin.watchTimeColReels')}</th>
-                <th style={{ padding: '6px 8px' }}>{t('admin.watchTimeColXp')}</th>
+                <th style={th}>{t('admin.watchTimeColStudent')}</th>
+                <th style={th}>{t('admin.watchTimeColRole')}</th>
+                <th style={th}>{t('admin.watchTimeColGradeSubject')}</th>
+                <th style={th}>{t('admin.watchTimeColTime')}</th>
+                <th style={th}>{t('admin.watchTimeColReels')}</th>
+                <th style={th}>{t('admin.watchTimeColWsDone')}</th>
+                <th style={th}>{t('admin.watchTimeColWsPrinted')}</th>
+                <th style={th}>{t('admin.watchTimeColVideos')}</th>
+                <th style={th}>{t('admin.watchTimeColPoints')}</th>
               </tr>
             </thead>
             <tbody>
-              {students.map((s) => (
-                <tr key={s.userId} style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-                  <td style={{ padding: '6px 8px' }}>
-                    {s.displayName} <span className="muted"><bdi dir="ltr">@{s.username}</bdi></span>
+              {users.map((u) => (
+                <tr key={u.userId} style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+                  <td style={td}>
+                    {u.displayName} <span className="muted"><bdi dir="ltr">@{u.username}</bdi></span>
                   </td>
-                  <td style={{ padding: '6px 8px' }}>{s.grade ?? '—'}</td>
-                  <td style={{ padding: '6px 8px' }}>{formatWatchTime(s.totalWatchedSeconds)}</td>
-                  <td style={{ padding: '6px 8px' }}>{s.reelsWatched}</td>
-                  <td style={{ padding: '6px 8px' }}>{s.totalWatchXp}</td>
+                  <td style={td}>{u.role === 'teacher' ? t('admin.roleTeacherOption') : t('admin.roleStudentOption')}</td>
+                  <td style={td}>
+                    {u.role === 'teacher'
+                      ? u.teacherSubject
+                        ? t(`auth.subject_${u.teacherSubject}` as 'auth.subject_math')
+                        : '—'
+                      : u.grade ?? '—'}
+                  </td>
+                  <td style={td}>{formatWatchTime(u.watchedSeconds)}</td>
+                  <td style={td}>{u.reelsWatched}</td>
+                  <td style={td}>{u.worksheetsDone}</td>
+                  <td style={td}>{u.role === 'teacher' ? u.worksheetsPrinted : '—'}</td>
+                  <td style={td}>{u.role === 'teacher' ? u.videosUploaded : '—'}</td>
+                  <td style={td}>{u.points}</td>
                 </tr>
               ))}
             </tbody>
@@ -136,18 +205,16 @@ function AnalyticsSummaryCard() {
   );
 }
 
-function MonthlyWatchSection({ gradeFilter }: { gradeFilter: GradeFilter }) {
+function MonthlyWatchSection({ roleFilter, gradeFilter }: { roleFilter: RoleFilter; gradeFilter: GradeFilter }) {
   const { t } = useLanguage();
   const [data, setData] = useState<MonthlyWatchTime | null>(null);
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (gradeFilter !== 'all') params.set('grade', gradeFilter);
     api
-      .get<MonthlyWatchTime>(`/admin/reports/watch-time/monthly?${params.toString()}`)
+      .get<MonthlyWatchTime>(`/admin/reports/watch-time/monthly?${reportQuery(roleFilter, gradeFilter)}`)
       .then(setData)
       .catch(() => setData(null));
-  }, [gradeFilter]);
+  }, [roleFilter, gradeFilter]);
 
   if (!data) {
     return (
@@ -182,21 +249,79 @@ function MonthlyWatchSection({ gradeFilter }: { gradeFilter: GradeFilter }) {
   );
 }
 
+/** Downloads the locked, branded Excel report for the current filters. A plain fetch (not the JSON api
+ * helper) because the response is a file. */
+function ExportButton({ roleFilter, gradeFilter }: { roleFilter: RoleFilter; gradeFilter: GradeFilter }) {
+  const { t, lang } = useLanguage();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function download() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/reports/export.xlsx?${reportQuery(roleFilter, gradeFilter, { lang })}`, {
+        credentials: 'include',
+        headers: { 'X-Requested-With': 'anees' },
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const filename = /filename="([^"]+)"/.exec(res.headers.get('content-disposition') ?? '')?.[1] ?? 'Anees-Report.xlsx';
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError(t('admin.exportError'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="stack" style={{ gap: 4, alignItems: 'flex-start' }}>
+      <button type="button" className="btn btn-primary" onClick={download} disabled={busy}>
+        <RiFileExcel2Line size={17} style={{ verticalAlign: -3, marginInlineEnd: 6 }} />
+        {busy ? t('admin.exporting') : t('admin.exportExcel')}
+      </button>
+      <small className="muted">{t('admin.exportNote')}</small>
+      {error && <small style={{ color: 'var(--danger, #c0392b)' }} role="alert">{error}</small>}
+    </div>
+  );
+}
+
 export function AdminReportsPanel() {
-  // Shared by every watch-time section below -- one filter row scopes the whole group
-  // rather than each chart/table carrying its own duplicate grade select.
+  // Shared by every section below -- one filter row scopes the whole group (and the Excel export)
+  // rather than each chart/table carrying its own duplicate select.
+  const { t } = useLanguage();
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>('all');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
 
   return (
     <div className="stack">
       <AnalyticsSummaryCard />
       <div className="card">
-        <div className="field" style={{ maxWidth: 220, marginBottom: 0 }}>
-          <GradeFilterSelect value={gradeFilter} onChange={setGradeFilter} />
+        <div className="flex gap-md" style={{ flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+          <div className="flex gap-md" style={{ flexWrap: 'wrap' }}>
+            <div className="field" style={{ minWidth: 200, marginBottom: 0 }}>
+              <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as RoleFilter)} aria-label={t('admin.watchTimeColRole')}>
+                <option value="all">{t('admin.reportRoleAll')}</option>
+                <option value="student">{t('admin.reportRoleStudent')}</option>
+                <option value="teacher">{t('admin.reportRoleTeacher')}</option>
+              </select>
+            </div>
+            <div className="field" style={{ maxWidth: 220, marginBottom: 0 }}>
+              <GradeFilterSelect value={gradeFilter} onChange={setGradeFilter} />
+            </div>
+          </div>
+          <ExportButton roleFilter={roleFilter} gradeFilter={gradeFilter} />
         </div>
       </div>
-      <MonthlyWatchSection gradeFilter={gradeFilter} />
-      <WatchTimeTable gradeFilter={gradeFilter} />
+      <MonthlyWatchSection roleFilter={roleFilter} gradeFilter={gradeFilter} />
+      <WatchTimeTable roleFilter={roleFilter} gradeFilter={gradeFilter} />
     </div>
   );
 }
