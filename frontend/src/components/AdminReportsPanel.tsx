@@ -51,16 +51,22 @@ function reportQuery(role: RoleFilter, grade: GradeFilter, extra: Record<string,
   return params.toString();
 }
 
-function TotalsStrip({ totals }: { totals: ReportTotals }) {
+function TotalsStrip({ totals, role }: { totals: ReportTotals; role: 'student' | 'teacher' }) {
   const { t } = useLanguage();
-  const items: [string, string | number][] = [
-    [t('admin.reportTotalStudents'), totals.students],
-    [t('admin.reportTotalTeachers'), totals.teachers],
-    [t('admin.reportTotalWatch'), formatWatchTime(totals.watchedSeconds)],
-    [t('admin.reportTotalWsDone'), totals.worksheetsDone],
-    [t('admin.reportTotalWsPrinted'), totals.worksheetsPrinted],
-    [t('admin.reportTotalVideos'), totals.videosUploaded],
-  ];
+  const items: [string, string | number][] =
+    role === 'teacher'
+      ? [
+          [t('admin.reportTotalTeachers'), totals.teachers],
+          [t('admin.reportTotalWatch'), formatWatchTime(totals.watchedSeconds)],
+          [t('admin.reportTotalWsDone'), totals.worksheetsDone],
+          [t('admin.reportTotalWsPrinted'), totals.worksheetsPrinted],
+          [t('admin.reportTotalVideos'), totals.videosUploaded],
+        ]
+      : [
+          [t('admin.reportTotalStudents'), totals.students],
+          [t('admin.reportTotalWatch'), formatWatchTime(totals.watchedSeconds)],
+          [t('admin.reportTotalWsDone'), totals.worksheetsDone],
+        ];
   return (
     <div className="grid-cards" style={{ marginBottom: 16 }}>
       {items.map(([label, value]) => (
@@ -73,7 +79,7 @@ function TotalsStrip({ totals }: { totals: ReportTotals }) {
   );
 }
 
-function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: RoleFilter; gradeFilter: GradeFilter }) {
+function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: 'student' | 'teacher'; gradeFilter: GradeFilter }) {
   const { t } = useLanguage();
   const [users, setUsers] = useState<WatchTimeUser[] | null>(null);
   const [totals, setTotals] = useState<ReportTotals | null>(null);
@@ -96,15 +102,18 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: RoleFilter; g
       .catch(() => setUsers([]));
   }, [roleFilter, gradeFilter, page]);
 
+  const isTeacher = roleFilter === 'teacher';
   const th = { padding: '6px 8px' } as const;
   const td = { padding: '6px 8px' } as const;
 
   return (
     <div className="card">
-      <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('admin.watchTimeTitle')}</h3>
-      <p className="muted" style={{ fontSize: 13, marginTop: 0, marginBottom: 12 }}>{t('admin.watchTimeSubtitle')}</p>
+      <h3 style={{ fontSize: 16, marginBottom: 4 }}>{isTeacher ? t('admin.watchTimeTeachersSection') : t('admin.watchTimeStudentsSection')}</h3>
+      <p className="muted" style={{ fontSize: 13, marginTop: 0, marginBottom: 12 }}>
+        {isTeacher ? t('admin.watchTimeTeachersSectionSub') : t('admin.watchTimeStudentsSectionSub')}
+      </p>
 
-      {totals && users && users.length > 0 && <TotalsStrip totals={totals} />}
+      {totals && users && users.length > 0 && <TotalsStrip totals={totals} role={roleFilter} />}
 
       {!users && (
         <div className="empty-state">
@@ -119,13 +128,12 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: RoleFilter; g
             <thead>
               <tr style={{ textAlign: 'start' }}>
                 <th style={th}>{t('admin.watchTimeColStudent')}</th>
-                <th style={th}>{t('admin.watchTimeColRole')}</th>
-                <th style={th}>{t('admin.watchTimeColGradeSubject')}</th>
+                <th style={th}>{isTeacher ? t('admin.watchTimeColSubject') : t('admin.watchTimeColGrade')}</th>
                 <th style={th}>{t('admin.watchTimeColTime')}</th>
                 <th style={th}>{t('admin.watchTimeColReels')}</th>
                 <th style={th}>{t('admin.watchTimeColWsDone')}</th>
-                <th style={th}>{t('admin.watchTimeColWsPrinted')}</th>
-                <th style={th}>{t('admin.watchTimeColVideos')}</th>
+                {isTeacher && <th style={th}>{t('admin.watchTimeColWsPrinted')}</th>}
+                {isTeacher && <th style={th}>{t('admin.watchTimeColVideos')}</th>}
                 <th style={th}>{t('admin.watchTimeColPoints')}</th>
               </tr>
             </thead>
@@ -135,7 +143,6 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: RoleFilter; g
                   <td style={td}>
                     {u.displayName} <span className="muted"><bdi dir="ltr">@{u.username}</bdi></span>
                   </td>
-                  <td style={td}>{u.role === 'teacher' ? t('admin.roleTeacherOption') : t('admin.roleStudentOption')}</td>
                   <td style={td}>
                     {u.role === 'teacher'
                       ? u.teacherSubject
@@ -146,8 +153,8 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: RoleFilter; g
                   <td style={td}>{formatWatchTime(u.watchedSeconds)}</td>
                   <td style={td}>{u.reelsWatched}</td>
                   <td style={td}>{u.worksheetsDone}</td>
-                  <td style={td}>{u.role === 'teacher' ? u.worksheetsPrinted : '—'}</td>
-                  <td style={td}>{u.role === 'teacher' ? u.videosUploaded : '—'}</td>
+                  {isTeacher && <td style={td}>{u.worksheetsPrinted}</td>}
+                  {isTeacher && <td style={td}>{u.videosUploaded}</td>}
                   <td style={td}>{u.points}</td>
                 </tr>
               ))}
@@ -205,7 +212,7 @@ function AnalyticsSummaryCard() {
   );
 }
 
-function MonthlyWatchSection({ roleFilter, gradeFilter }: { roleFilter: RoleFilter; gradeFilter: GradeFilter }) {
+function MonthlyWatchSection({ roleFilter, gradeFilter }: { roleFilter: 'student' | 'teacher'; gradeFilter: GradeFilter }) {
   const { t } = useLanguage();
   const [data, setData] = useState<MonthlyWatchTime | null>(null);
 
@@ -251,7 +258,7 @@ function MonthlyWatchSection({ roleFilter, gradeFilter }: { roleFilter: RoleFilt
 
 /** Downloads the locked, branded Excel report for the current filters. A plain fetch (not the JSON api
  * helper) because the response is a file. */
-function ExportButton({ roleFilter, gradeFilter }: { roleFilter: RoleFilter; gradeFilter: GradeFilter }) {
+function ExportButton({ gradeFilter }: { gradeFilter: GradeFilter }) {
   const { t, lang } = useLanguage();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -260,7 +267,7 @@ function ExportButton({ roleFilter, gradeFilter }: { roleFilter: RoleFilter; gra
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/reports/export.xlsx?${reportQuery(roleFilter, gradeFilter, { lang })}`, {
+      const res = await fetch(`/api/admin/reports/export.xlsx?${reportQuery('all', gradeFilter, { lang })}`, {
         credentials: 'include',
         headers: { 'X-Requested-With': 'anees' },
       });
@@ -287,41 +294,40 @@ function ExportButton({ roleFilter, gradeFilter }: { roleFilter: RoleFilter; gra
         <RiFileExcel2Line size={17} style={{ verticalAlign: -3, marginInlineEnd: 6 }} />
         {busy ? t('admin.exporting') : t('admin.exportExcel')}
       </button>
-      <small className="muted">{t('admin.exportNote')}</small>
+      <small className="muted">{t('admin.exportNote')} {t('admin.exportSheetsNote')}</small>
       {error && <small style={{ color: 'var(--danger, #c0392b)' }} role="alert">{error}</small>}
     </div>
   );
 }
 
 export function AdminReportsPanel() {
-  // Shared by every section below -- one filter row scopes the whole group (and the Excel export)
-  // rather than each chart/table carrying its own duplicate select.
+  // The grade filter scopes the student sections and the Excel export's student data; teachers have no
+  // grade, so their sections always show everyone.
   const { t } = useLanguage();
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>('all');
-  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
 
   return (
     <div className="stack">
       <AnalyticsSummaryCard />
       <div className="card">
         <div className="flex gap-md" style={{ flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-          <div className="flex gap-md" style={{ flexWrap: 'wrap' }}>
-            <div className="field" style={{ minWidth: 200, marginBottom: 0 }}>
-              <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as RoleFilter)} aria-label={t('admin.watchTimeColRole')}>
-                <option value="all">{t('admin.reportRoleAll')}</option>
-                <option value="student">{t('admin.reportRoleStudent')}</option>
-                <option value="teacher">{t('admin.reportRoleTeacher')}</option>
-              </select>
-            </div>
+          <div className="stack" style={{ gap: 4 }}>
             <div className="field" style={{ maxWidth: 220, marginBottom: 0 }}>
               <GradeFilterSelect value={gradeFilter} onChange={setGradeFilter} />
             </div>
+            <small className="muted">{t('admin.reportGradeNote')}</small>
           </div>
-          <ExportButton roleFilter={roleFilter} gradeFilter={gradeFilter} />
+          <ExportButton gradeFilter={gradeFilter} />
         </div>
       </div>
-      <MonthlyWatchSection roleFilter={roleFilter} gradeFilter={gradeFilter} />
-      <WatchTimeTable roleFilter={roleFilter} gradeFilter={gradeFilter} />
+
+      <h2 style={{ fontSize: 20, margin: '8px 0 0' }}>{t('admin.reportTotalStudents')}</h2>
+      <MonthlyWatchSection roleFilter="student" gradeFilter={gradeFilter} />
+      <WatchTimeTable roleFilter="student" gradeFilter={gradeFilter} />
+
+      <h2 style={{ fontSize: 20, margin: '16px 0 0' }}>{t('admin.reportTotalTeachers')}</h2>
+      <MonthlyWatchSection roleFilter="teacher" gradeFilter="all" />
+      <WatchTimeTable roleFilter="teacher" gradeFilter="all" />
     </div>
   );
 }

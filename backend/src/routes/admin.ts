@@ -19,7 +19,7 @@ import { getDoublePointsStatus, startDoublePointsNow } from '../lib/doublePoints
 import { supabaseAdmin } from '../lib/supabase.js';
 import { looksLikeImage } from '../lib/imageValidation.js';
 import { mailStatus } from '../lib/mailer.js';
-import { parseRoleFilter, parseGrade, countReportUsers, queryReportRows, reportTotals, monthlyWatch, trailingMonthKeys } from '../lib/reportData.js';
+import { parseRoleFilter, parseGrade, pageViewStats, countReportUsers, queryReportRows, reportTotals, monthlyWatch, trailingMonthKeys } from '../lib/reportData.js';
 import { buildReportWorkbook } from '../lib/reportExcel.js';
 import { recentIssues } from '../lib/diagnostics.js';
 import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX, deleteCertificateImageIfAny } from '../lib/certificateImage.js';
@@ -450,16 +450,19 @@ adminRouter.get('/reports/watch-time/monthly', (req, res) => {
 });
 
 // Locked, branded Excel version of the report (see lib/reportExcel.ts). Admin-only like everything on
-// this router. ?role=all|student|teacher &grade=N &lang=ar|en
+// this router. ?grade=N (students only) &lang=ar|en. Always has separate Students / Teachers /
+// Most-visited-pages sheets, so there is no role filter.
 adminRouter.get('/reports/export.xlsx', async (req, res) => {
   try {
-    const role = parseRoleFilter(req.query.role);
     const grade = parseGrade(req.query.grade);
     const lang = req.query.lang === 'en' ? 'en' : 'ar';
     const months = trailingMonthKeys(6);
 
-    const rows = queryReportRows(role, grade);
-    const { users: monthlyUsers } = monthlyWatch(role, grade, months);
+    const studentRows = queryReportRows('student', grade);
+    const teacherRows = queryReportRows('teacher', null);
+    const monthlyUsers = [...monthlyWatch('student', grade, months).users, ...monthlyWatch('teacher', null, months).users].sort(
+      (a, b) => b.monthly.reduce((s, n) => s + n, 0) - a.monthly.reduce((s, n) => s + n, 0)
+    );
     const quizzesSolved = (
       db.prepare(`SELECT COUNT(*) AS c FROM reel_watch_progress rwp JOIN users u ON u.id = rwp.user_id WHERE rwp.quiz_completed = 1 AND u.is_seed = 0`).get() as { c: number }
     ).c;
@@ -469,10 +472,10 @@ adminRouter.get('/reports/export.xlsx', async (req, res) => {
 
     const { buffer, filename } = await buildReportWorkbook({
       lang,
-      role,
       grade,
-      rows,
-      totals: reportTotals(role, grade),
+      studentRows,
+      teacherRows,
+      pages: pageViewStats(),
       months,
       monthlyUsers,
       quizzesSolved,

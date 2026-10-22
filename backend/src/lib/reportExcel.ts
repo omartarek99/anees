@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
-import type { MonthlyUser, ReportRow, ReportTotals, RoleFilter } from './reportData.js';
+import type { MonthlyUser, PageViewRow, ReportRow } from './reportData.js';
 
 // Builds the admin usage report as a branded, LOCKED .xlsx: every sheet is protected so cells can't
 // be edited, deleted, inserted or reformatted (Excel asks for a password to unprotect; filters,
@@ -23,14 +23,18 @@ const TEXT = {
     gradeWord: 'الصف',
     protectedNote: 'هذا التقرير محمي ولا يمكن تعديله.',
     sheetSummary: 'الملخص',
-    sheetUsers: 'المستخدمون',
+    sheetStudents: 'الطلاب',
+    sheetTeachers: 'المعلمون',
+    sheetPages: 'أكثر الصفحات زيارة',
     sheetMonthly: 'الوقت الشهري',
     indicator: 'المؤشر',
     value: 'القيمة',
     kStudents: 'عدد الطلاب',
     kTeachers: 'عدد المعلمين',
-    kWatch: 'إجمالي وقت المشاهدة',
-    kWsDone: 'أوراق العمل المنجزة',
+    kStudentWatch: 'وقت مشاهدة الطلاب',
+    kTeacherWatch: 'وقت مشاهدة المعلمين',
+    kStudentWs: 'أوراق العمل المنجزة (الطلاب)',
+    kTeacherWs: 'أوراق العمل المنجزة (المعلمون)',
     kWsPrinted: 'أوراق العمل المطبوعة (المعلمون)',
     kVideos: 'الفيديوهات المرفوعة (المعلمون)',
     kQuizzes: 'الاختبارات المحلولة',
@@ -39,7 +43,13 @@ const TEXT = {
     colName: 'الاسم',
     colUsername: 'اسم المستخدم',
     colRole: 'الدور',
-    colGradeSubject: 'الصف / المادة',
+    colGrade: 'الصف',
+    colSubject: 'المادة',
+    colPage: 'الصفحة',
+    colPath: 'المسار',
+    colViews30: 'الزيارات (آخر 30 يومًا)',
+    colShare: 'النسبة',
+    colViewsTotal: 'إجمالي الزيارات',
     colSchool: 'المدرسة',
     colWatch: 'وقت المشاهدة',
     colReels: 'الدروس المشاهدة',
@@ -64,6 +74,29 @@ const TEXT = {
       social: 'الاجتماعيات',
     } as Record<string, string>,
     docTitle: 'أنيس — تقرير الاستخدام',
+    pages: {
+      '/': 'الصفحة الرئيسية',
+      '/login': 'تسجيل الدخول',
+      '/signup': 'إنشاء حساب',
+      '/verify-email': 'تفعيل البريد الإلكتروني',
+      '/privacy': 'سياسة الخصوصية',
+      '/terms': 'الشروط والأحكام',
+      '/cookies': 'سياسة ملفات الكوكيز',
+      '/reels': 'الدروس (الفيديوهات)',
+      '/map': 'خريطة المغامرة',
+      '/craft': 'عالم الكرافت',
+      '/worksheets': 'أوراق العمل',
+      '/leaderboard': 'لوحة المتصدرين',
+      '/friends': 'الأصدقاء',
+      '/profile': 'الملف الشخصي',
+      '/profile/:username': 'ملف مستخدم آخر',
+      '/teacher/reels': 'فيديوهات المعلم',
+      '/admin/users': 'الإدارة: المستخدمون',
+      '/admin/videos': 'الإدارة: الفيديوهات',
+      '/admin/reports': 'الإدارة: التقارير',
+      '/admin/certificates': 'الإدارة: الشهادات',
+      '/404': 'صفحة غير موجودة',
+    } as Record<string, string>,
   },
   en: {
     brand: 'Anees',
@@ -76,14 +109,18 @@ const TEXT = {
     gradeWord: 'Grade',
     protectedNote: 'This report is protected and cannot be edited.',
     sheetSummary: 'Summary',
-    sheetUsers: 'Users',
+    sheetStudents: 'Students',
+    sheetTeachers: 'Teachers',
+    sheetPages: 'Most-visited pages',
     sheetMonthly: 'Monthly watch time',
     indicator: 'Indicator',
     value: 'Value',
     kStudents: 'Students',
     kTeachers: 'Teachers',
-    kWatch: 'Total watch time',
-    kWsDone: 'Worksheets completed',
+    kStudentWatch: 'Student watch time',
+    kTeacherWatch: 'Teacher watch time',
+    kStudentWs: 'Worksheets completed (students)',
+    kTeacherWs: 'Worksheets completed (teachers)',
     kWsPrinted: 'Worksheets printed (teachers)',
     kVideos: 'Videos uploaded (teachers)',
     kQuizzes: 'Quizzes solved',
@@ -92,7 +129,13 @@ const TEXT = {
     colName: 'Name',
     colUsername: 'Username',
     colRole: 'Role',
-    colGradeSubject: 'Grade / Subject',
+    colGrade: 'Grade',
+    colSubject: 'Subject',
+    colPage: 'Page',
+    colPath: 'Path',
+    colViews30: 'Views (last 30 days)',
+    colShare: 'Share',
+    colViewsTotal: 'All-time views',
     colSchool: 'School',
     colWatch: 'Watch time',
     colReels: 'Lessons watched',
@@ -117,6 +160,29 @@ const TEXT = {
       social: 'Social Studies',
     } as Record<string, string>,
     docTitle: 'Anees — Usage report',
+    pages: {
+      '/': 'Home',
+      '/login': 'Log in',
+      '/signup': 'Sign up',
+      '/verify-email': 'Email verification',
+      '/privacy': 'Privacy policy',
+      '/terms': 'Terms',
+      '/cookies': 'Cookie policy',
+      '/reels': 'Lessons (videos)',
+      '/map': 'Adventure map',
+      '/craft': 'Craft world',
+      '/worksheets': 'Worksheets',
+      '/leaderboard': 'Leaderboard',
+      '/friends': 'Friends',
+      '/profile': 'Profile',
+      '/profile/:username': "Another user's profile",
+      '/teacher/reels': 'Teacher videos',
+      '/admin/users': 'Admin: Users',
+      '/admin/videos': 'Admin: Videos',
+      '/admin/reports': 'Admin: Reports',
+      '/admin/certificates': 'Admin: Certificates',
+      '/404': 'Page not found',
+    } as Record<string, string>,
   },
 };
 
@@ -217,14 +283,27 @@ function pageSetup(ws: ExcelJS.Worksheet, headerRow: number) {
 
 export type ReportInput = {
   lang: ReportLang;
-  role: RoleFilter;
+  /** Grade filter -- applies to the students only; teachers have no grade. */
   grade: number | null;
-  rows: ReportRow[];
-  totals: ReportTotals;
+  studentRows: ReportRow[];
+  teacherRows: ReportRow[];
+  pages: PageViewRow[];
   months: string[];
   monthlyUsers: MonthlyUser[];
   quizzesSolved: number;
   pageViews30d: number;
+};
+
+type UserCol = {
+  key: string;
+  header: string;
+  width: number;
+  /** Left/right aligned text instead of centred numbers. */
+  text?: boolean;
+  fmt?: string;
+  value: (r: ReportRow, i: number) => ExcelJS.CellValue;
+  /** Sum this column in the totals row; `time` columns hold fractions of a day. */
+  sum?: (r: ReportRow) => number;
 };
 
 export async function buildReportWorkbook(input: ReportInput): Promise<{ buffer: Buffer; filename: string }> {
@@ -234,9 +313,7 @@ export async function buildReportWorkbook(input: ReportInput): Promise<{ buffer:
   const now = new Date();
   const locale = rtl ? 'ar-QA' : 'en-GB';
   const generated = now.toLocaleString(locale, { dateStyle: 'long', timeStyle: 'short' });
-  const scope =
-    (input.role === 'student' ? T.scopeStudent : input.role === 'teacher' ? T.scopeTeacher : T.scopeAll) +
-    (input.grade !== null ? ` — ${T.gradeWord} ${input.grade}` : '');
+  const scope = T.scopeAll + (input.grade !== null ? ` — ${T.gradeWord} ${input.grade} (${T.student})` : '');
   const subtitle = `${T.generated}: ${generated}   |   ${T.scope}: ${scope}   |   ${T.protectedNote}`;
   const roleLabel = (r: 'student' | 'teacher') => (r === 'teacher' ? T.teacher : T.student);
 
@@ -255,82 +332,115 @@ export async function buildReportWorkbook(input: ReportInput): Promise<{ buffer:
     { rightToLeft: rtl, showGridLines: false, zoomScale: 100, ...extra },
   ];
   const tab = { argb: COLOR.brand };
+  const frozen = view({ state: 'frozen', xSplit: 3, ySplit: 4 });
 
-  // Tab order: Summary, Users, Monthly. The Summary is created first but filled in after the Users sheet,
-  // because its formulas point into it.
+  // Tab order: Summary, Students, Teachers, Most-visited pages, Monthly. The Summary is created first but
+  // filled in last, because its formulas point into the other sheets.
   const summary = wb.addWorksheet(T.sheetSummary, { properties: { tabColor: { argb: COLOR.gold } }, views: view() });
-  const users = wb.addWorksheet(T.sheetUsers, { properties: { tabColor: tab }, views: view({ state: 'frozen', xSplit: 3, ySplit: 4 }) });
-  const userCols = [
-    { header: T.colNo, width: 6 },
-    { header: T.colName, width: 26 },
-    { header: T.colUsername, width: 20 },
-    { header: T.colRole, width: 11 },
-    { header: T.colGradeSubject, width: 22 },
-    { header: T.colSchool, width: 26 },
-    { header: T.colWatch, width: 15 },
-    { header: T.colReels, width: 13 },
-    { header: T.colWatchPts, width: 13 },
-    { header: T.colWsDone, width: 15 },
-    { header: T.colWsPrinted, width: 15 },
-    { header: T.colVideos, width: 13 },
-    { header: T.colUploaded, width: 17 },
-    { header: T.colPoints, width: 13 },
-    { header: T.colJoined, width: 14 },
-  ];
-  const UC = userCols.length;
-  userCols.forEach((c, i) => (users.getColumn(i + 1).width = c.width));
-  styleTitleBlock(users, UC, `${T.brand} — ${T.title}`, subtitle);
-  userCols.forEach((c, i) => (users.getCell(4, i + 1).value = c.header));
-  styleHeaderRow(users, 4, UC);
 
-  const firstData = 5;
-  input.rows.forEach((r, i) => {
-    const row = users.getRow(firstData + i);
-    const gradeSubject = r.role === 'teacher' ? (r.teacherSubject ? T.subjects[r.teacherSubject] ?? r.teacherSubject : '') : r.grade !== null ? `${T.gradeWord} ${r.grade}` : '';
-    row.values = [
-      i + 1,
-      r.displayName,
-      r.username,
-      roleLabel(r.role),
-      gradeSubject,
-      r.schoolName ?? '',
-      r.watchedSeconds / 86400,
-      r.reelsWatched,
-      r.watchPoints,
-      r.worksheetsDone,
-      r.worksheetsPrinted,
-      r.videosUploaded,
-      r.uploadedSeconds / 86400,
-      r.points,
-      new Date(r.joinedAt.replace(' ', 'T') + 'Z'),
-    ];
-    styleBodyRow(row, i, UC, new Set([2, 3, 5, 6]), textAlign);
-    row.getCell(7).numFmt = TIME_FORMAT;
-    row.getCell(13).numFmt = TIME_FORMAT;
-    row.getCell(15).numFmt = 'yyyy-mm-dd';
-    row.getCell(1).font = { name: 'Calibri', size: 10, color: { argb: COLOR.muted } };
-  });
-  const lastData = firstData + Math.max(input.rows.length, 1) - 1;
-  const totalRowNo = lastData + 1;
-  const totalRow = users.getRow(totalRowNo);
-  totalRow.getCell(2).value = T.totals;
-  const sumCol = (col: number, result: number, fmt?: string) => {
-    const L = colLetter(col);
-    const cell = totalRow.getCell(col);
-    cell.value = { formula: `SUM(${L}${firstData}:${L}${lastData})`, result };
-    if (fmt) cell.numFmt = fmt;
+  // ------------------------------------------------------------------ Students / Teachers sheets
+  const joined = (r: ReportRow) => new Date(r.joinedAt.replace(' ', 'T') + 'Z');
+  const common = {
+    no: { key: 'no', header: T.colNo, width: 6, value: (_r: ReportRow, i: number) => i + 1 } as UserCol,
+    name: { key: 'name', header: T.colName, width: 26, text: true, value: (r: ReportRow) => r.displayName } as UserCol,
+    username: { key: 'username', header: T.colUsername, width: 20, text: true, value: (r: ReportRow) => r.username } as UserCol,
+    school: { key: 'school', header: T.colSchool, width: 26, text: true, value: (r: ReportRow) => r.schoolName ?? '' } as UserCol,
+    watch: { key: 'watch', header: T.colWatch, width: 15, fmt: TIME_FORMAT, value: (r: ReportRow) => r.watchedSeconds / 86400, sum: (r: ReportRow) => r.watchedSeconds / 86400 } as UserCol,
+    reels: { key: 'reels', header: T.colReels, width: 13, value: (r: ReportRow) => r.reelsWatched, sum: (r: ReportRow) => r.reelsWatched } as UserCol,
+    watchPts: { key: 'watchPts', header: T.colWatchPts, width: 13, value: (r: ReportRow) => r.watchPoints, sum: (r: ReportRow) => r.watchPoints } as UserCol,
+    wsDone: { key: 'wsDone', header: T.colWsDone, width: 15, value: (r: ReportRow) => r.worksheetsDone, sum: (r: ReportRow) => r.worksheetsDone } as UserCol,
+    points: { key: 'points', header: T.colPoints, width: 13, value: (r: ReportRow) => r.points, sum: (r: ReportRow) => r.points } as UserCol,
+    joined: { key: 'joined', header: T.colJoined, width: 14, fmt: 'yyyy-mm-dd', value: joined } as UserCol,
   };
-  sumCol(7, input.totals.watchedSeconds / 86400, TIME_FORMAT);
-  sumCol(8, input.rows.reduce((s, r) => s + r.reelsWatched, 0));
-  sumCol(9, input.rows.reduce((s, r) => s + r.watchPoints, 0));
-  sumCol(10, input.totals.worksheetsDone);
-  sumCol(11, input.totals.worksheetsPrinted);
-  sumCol(12, input.totals.videosUploaded);
-  sumCol(13, input.rows.reduce((s, r) => s + r.uploadedSeconds, 0) / 86400, TIME_FORMAT);
-  sumCol(14, input.rows.reduce((s, r) => s + r.points, 0));
-  styleTotalsRow(totalRow, UC);
-  users.autoFilter = { from: { row: 4, column: 1 }, to: { row: lastData, column: UC } };
-  pageSetup(users, 4);
+  const studentCols: UserCol[] = [
+    common.no, common.name, common.username,
+    { key: 'grade', header: T.colGrade, width: 12, value: (r) => (r.grade !== null ? `${T.gradeWord} ${r.grade}` : '') },
+    common.school, common.watch, common.reels, common.watchPts, common.wsDone, common.points, common.joined,
+  ];
+  const teacherCols: UserCol[] = [
+    common.no, common.name, common.username,
+    { key: 'subject', header: T.colSubject, width: 22, text: true, value: (r) => (r.teacherSubject ? T.subjects[r.teacherSubject] ?? r.teacherSubject : '') },
+    common.school, common.watch, common.reels, common.watchPts, common.wsDone,
+    { key: 'wsPrinted', header: T.colWsPrinted, width: 15, value: (r) => r.worksheetsPrinted, sum: (r) => r.worksheetsPrinted },
+    { key: 'videos', header: T.colVideos, width: 13, value: (r) => r.videosUploaded, sum: (r) => r.videosUploaded },
+    { key: 'uploaded', header: T.colUploaded, width: 17, fmt: TIME_FORMAT, value: (r) => r.uploadedSeconds / 86400, sum: (r) => r.uploadedSeconds / 86400 },
+    common.points, common.joined,
+  ];
+
+  function addUserSheet(name: string, title: string, rows: ReportRow[], cols: UserCol[]) {
+    const ws = wb.addWorksheet(name, { properties: { tabColor: tab }, views: frozen });
+    const lastCol = cols.length;
+    cols.forEach((c, i) => (ws.getColumn(i + 1).width = c.width));
+    styleTitleBlock(ws, lastCol, `${T.brand} — ${title}`, subtitle);
+    cols.forEach((c, i) => (ws.getCell(4, i + 1).value = c.header));
+    styleHeaderRow(ws, 4, lastCol);
+
+    const first = 5;
+    const textCols = new Set(cols.map((c, i) => (c.text ? i + 1 : 0)).filter(Boolean));
+    rows.forEach((r, i) => {
+      const row = ws.getRow(first + i);
+      row.values = cols.map((c) => c.value(r, i));
+      styleBodyRow(row, i, lastCol, textCols, textAlign);
+      cols.forEach((c, ci) => c.fmt && (row.getCell(ci + 1).numFmt = c.fmt));
+      row.getCell(1).font = { name: 'Calibri', size: 10, color: { argb: COLOR.muted } };
+    });
+    const last = first + Math.max(rows.length, 1) - 1;
+    const totalRow = ws.getRow(last + 1);
+    totalRow.getCell(2).value = T.totals;
+    cols.forEach((c, ci) => {
+      if (!c.sum) return;
+      const L = colLetter(ci + 1);
+      const cell = totalRow.getCell(ci + 1);
+      cell.value = { formula: `SUM(${L}${first}:${L}${last})`, result: rows.reduce((s, r) => s + c.sum!(r), 0) };
+      if (c.fmt) cell.numFmt = c.fmt;
+    });
+    styleTotalsRow(totalRow, lastCol);
+    ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: last, column: lastCol } };
+    pageSetup(ws, 4);
+    /** Absolute range of one column's data rows, for formulas on other sheets. */
+    const range = (key: string) => {
+      const L = colLetter(cols.findIndex((c) => c.key === key) + 1);
+      return `'${name}'!${L}${first}:${L}${last}`;
+    };
+    return { range };
+  }
+
+  const students = addUserSheet(T.sheetStudents, T.sheetStudents, input.studentRows, studentCols);
+  const teachers = addUserSheet(T.sheetTeachers, T.sheetTeachers, input.teacherRows, teacherCols);
+
+  // ------------------------------------------------------------------ Most-visited pages sheet
+  const pagesWs = wb.addWorksheet(T.sheetPages, { properties: { tabColor: tab }, views: view({ state: 'frozen', xSplit: 0, ySplit: 4 }) });
+  const PC = 6;
+  [6, 30, 26, 16, 12, 16].forEach((w, i) => (pagesWs.getColumn(i + 1).width = w));
+  styleTitleBlock(pagesWs, PC, `${T.brand} — ${T.sheetPages}`, subtitle);
+  [T.colNo, T.colPage, T.colPath, T.colViews30, T.colShare, T.colViewsTotal].forEach((h, i) => (pagesWs.getCell(4, i + 1).value = h));
+  styleHeaderRow(pagesWs, 4, PC);
+  const pFirst = 5;
+  const pLast = pFirst + Math.max(input.pages.length, 1) - 1;
+  const pTotalNo = pLast + 1;
+  const views30Total = input.pages.reduce((s, p) => s + p.views30d, 0);
+  input.pages.forEach((p, i) => {
+    const row = pagesWs.getRow(pFirst + i);
+    row.getCell(1).value = i + 1;
+    row.getCell(2).value = T.pages[p.path] ?? p.path;
+    row.getCell(3).value = p.path;
+    row.getCell(4).value = p.views30d;
+    row.getCell(5).value = { formula: `IF($D$${pTotalNo}=0,0,D${pFirst + i}/$D$${pTotalNo})`, result: views30Total === 0 ? 0 : p.views30d / views30Total };
+    row.getCell(6).value = p.viewsTotal;
+    styleBodyRow(row, i, PC, new Set([2, 3]), textAlign);
+    row.getCell(5).numFmt = '0.0%';
+    row.getCell(1).font = { name: 'Calibri', size: 10, color: { argb: COLOR.muted } };
+    // Paths are always left-to-right, even in the Arabic sheet.
+    row.getCell(3).alignment = { vertical: 'middle', horizontal: 'left' };
+  });
+  const pTotals = pagesWs.getRow(pTotalNo);
+  pTotals.getCell(2).value = T.totals;
+  pTotals.getCell(4).value = { formula: `SUM(D${pFirst}:D${pLast})`, result: views30Total };
+  pTotals.getCell(6).value = { formula: `SUM(F${pFirst}:F${pLast})`, result: input.pages.reduce((s, p) => s + p.viewsTotal, 0) };
+  styleTotalsRow(pTotals, PC);
+  pagesWs.autoFilter = { from: { row: 4, column: 1 }, to: { row: pLast, column: PC } };
+  pageSetup(pagesWs, 4);
+  pagesWs.pageSetup.orientation = 'portrait';
 
   // ------------------------------------------------------------------ Summary sheet
   summary.getColumn(1).width = 44;
@@ -339,14 +449,18 @@ export async function buildReportWorkbook(input: ReportInput): Promise<{ buffer:
   summary.getCell(4, 1).value = T.indicator;
   summary.getCell(4, 2).value = T.value;
   styleHeaderRow(summary, 4, 2);
-  const U = (col: number) => `'${T.sheetUsers}'!${colLetter(col)}${firstData}:${colLetter(col)}${lastData}`;
+  const sum = (rows: ReportRow[], f: (r: ReportRow) => number) => rows.reduce((s, r) => s + f(r), 0);
+  const sRows = input.studentRows;
+  const tRows = input.teacherRows;
   const kpis: { label: string; value: ExcelJS.CellValue; fmt?: string }[] = [
-    { label: T.kStudents, value: { formula: `COUNTIF(${U(4)},"${T.student}")`, result: input.totals.students } },
-    { label: T.kTeachers, value: { formula: `COUNTIF(${U(4)},"${T.teacher}")`, result: input.totals.teachers } },
-    { label: T.kWatch, value: { formula: `SUM(${U(7)})`, result: input.totals.watchedSeconds / 86400 }, fmt: TIME_FORMAT },
-    { label: T.kWsDone, value: { formula: `SUM(${U(10)})`, result: input.totals.worksheetsDone } },
-    { label: T.kWsPrinted, value: { formula: `SUM(${U(11)})`, result: input.totals.worksheetsPrinted } },
-    { label: T.kVideos, value: { formula: `SUM(${U(12)})`, result: input.totals.videosUploaded } },
+    { label: T.kStudents, value: { formula: `COUNTA(${students.range('name')})`, result: sRows.length } },
+    { label: T.kTeachers, value: { formula: `COUNTA(${teachers.range('name')})`, result: tRows.length } },
+    { label: T.kStudentWatch, value: { formula: `SUM(${students.range('watch')})`, result: sum(sRows, (r) => r.watchedSeconds) / 86400 }, fmt: TIME_FORMAT },
+    { label: T.kTeacherWatch, value: { formula: `SUM(${teachers.range('watch')})`, result: sum(tRows, (r) => r.watchedSeconds) / 86400 }, fmt: TIME_FORMAT },
+    { label: T.kStudentWs, value: { formula: `SUM(${students.range('wsDone')})`, result: sum(sRows, (r) => r.worksheetsDone) } },
+    { label: T.kTeacherWs, value: { formula: `SUM(${teachers.range('wsDone')})`, result: sum(tRows, (r) => r.worksheetsDone) } },
+    { label: T.kWsPrinted, value: { formula: `SUM(${teachers.range('wsPrinted')})`, result: sum(tRows, (r) => r.worksheetsPrinted) } },
+    { label: T.kVideos, value: { formula: `SUM(${teachers.range('videos')})`, result: sum(tRows, (r) => r.videosUploaded) } },
     { label: T.kQuizzes, value: input.quizzesSolved },
     { label: T.kViews, value: input.pageViews30d },
   ];
@@ -363,7 +477,7 @@ export async function buildReportWorkbook(input: ReportInput): Promise<{ buffer:
   summary.pageSetup.orientation = 'portrait';
 
   // ------------------------------------------------------------------ Monthly sheet
-  const monthly = wb.addWorksheet(T.sheetMonthly, { properties: { tabColor: tab }, views: view({ state: 'frozen', xSplit: 3, ySplit: 4 }) });
+  const monthly = wb.addWorksheet(T.sheetMonthly, { properties: { tabColor: tab }, views: frozen });
   const MC = 4 + input.months.length + 1;
   monthly.getColumn(1).width = 6;
   monthly.getColumn(2).width = 26;
@@ -391,8 +505,8 @@ export async function buildReportWorkbook(input: ReportInput): Promise<{ buffer:
   for (let c = 5; c <= MC; c++) {
     const L = colLetter(c);
     const monthIndex = c - 5;
-    const sum = c === MC ? input.monthlyUsers.reduce((s, u) => s + u.monthly.reduce((a, b) => a + b, 0), 0) : input.monthlyUsers.reduce((s, u) => s + u.monthly[monthIndex], 0);
-    mTotals.getCell(c).value = { formula: `SUM(${L}5:${L}${mLast})`, result: sum / 86400 };
+    const total = c === MC ? input.monthlyUsers.reduce((s, u) => s + u.monthly.reduce((a, b) => a + b, 0), 0) : input.monthlyUsers.reduce((s, u) => s + u.monthly[monthIndex], 0);
+    mTotals.getCell(c).value = { formula: `SUM(${L}5:${L}${mLast})`, result: total / 86400 };
     mTotals.getCell(c).numFmt = TIME_FORMAT;
   }
   styleTotalsRow(mTotals, MC);

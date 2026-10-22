@@ -163,3 +163,18 @@ export function monthlyWatch(role: RoleFilter, grade: number | null, months: str
   const ranked = [...users.values()].sort((a, b) => b.monthly.reduce((s, n) => s + n, 0) - a.monthly.reduce((s, n) => s + n, 0));
   return { totalsBySecond, users: ranked };
 }
+
+export type PageViewRow = { path: string; views30d: number; viewsTotal: number };
+
+/** Every tracked page (see routes/analytics.ts), most-visited in the last 30 days first. */
+export function pageViewStats(): PageViewRow[] {
+  const rows = db
+    .prepare(
+      `SELECT path,
+              COALESCE(SUM(created_at >= datetime('now', '-30 days')), 0) AS views30d,
+              COUNT(*) AS viewsTotal
+       FROM page_views GROUP BY path ORDER BY views30d DESC, viewsTotal DESC, path ASC`
+    )
+    .all() as PageViewRow[];
+  return rows;
+}
