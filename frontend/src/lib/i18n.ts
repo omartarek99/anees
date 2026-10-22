@@ -612,6 +612,7 @@ const en = {
     athlete: 'Athlete',
     robot: 'Robot',
     explorer: 'Explorer',
+    anonymous: 'Anonymous person',
   },
   avatar3d: {
     button: 'Customize character',
@@ -1262,6 +1263,7 @@ const ar: typeof en = {
     athlete: 'الرياضي',
     robot: 'الروبوت',
     explorer: 'المستكشف',
+    anonymous: 'صورة شخص مجهول',
   },
   avatar3d: {
     button: 'تخصيص الشخصية',

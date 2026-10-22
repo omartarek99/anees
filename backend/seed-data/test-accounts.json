@@ -13,7 +13,7 @@
     "username": "dev_teacher",
     "role": "teacher",
     "displayName": "Dev Teacher",
-    "avatarKey": "explorer",
+    "avatarKey": "anonymous",
     "grade": null,
     "schoolName": "Anees Test School",
     "teacherSubject": "math",

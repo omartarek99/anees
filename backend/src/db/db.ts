@@ -255,6 +255,12 @@ if (!worksheetQuestionCols.some((c) => c.name === 'reel_id')) {
 if (!worksheetQuestionCols.some((c) => c.name === 'topic')) {
   db.exec(`ALTER TABLE worksheet_questions ADD COLUMN topic TEXT`);
 }
+// One time: teachers who still have a default emoji picture (and no uploaded photo) get the plain
+// anonymous one. Teachers who uploaded a photo, or picked another hero on purpose, are untouched.
+if (!db.prepare(`SELECT 1 FROM one_time_jobs WHERE name = 'teacher-anonymous-avatar'`).get()) {
+  db.exec(`UPDATE users SET avatar_key = 'anonymous' WHERE role = 'teacher' AND avatar_url IS NULL AND avatar_key IN ('falcon', 'explorer')`);
+  db.exec(`INSERT INTO one_time_jobs (name) VALUES ('teacher-anonymous-avatar')`);
+}
 const worksheetAttemptCols = db.prepare(`PRAGMA table_info(worksheet_attempts)`).all() as { name: string }[];
 if (!worksheetAttemptCols.some((c) => c.name === 'reel_id')) {
   db.exec(`ALTER TABLE worksheet_attempts ADD COLUMN reel_id INTEGER REFERENCES reels(id) ON DELETE SET NULL`);
