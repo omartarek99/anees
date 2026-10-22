@@ -26,7 +26,7 @@ export function HomePage() {
   const pct = (n: number) => `${Math.round((n / 50) * 100)}%`;
   // One market card per stat: its picture, a corner chip, the value, and where to go with it.
   const cards = [
-    { tone: 'blue', icon: 'medal', title: t('common.level'), value: `${level}/50`, chip: pct(level), to: '/map', cta: t('home.openMap') },
+    { tone: 'blue', icon: 'medal', title: t('home.mapProgress'), value: `${level}/50`, chip: pct(level), to: '/map', cta: t('home.openMap') },
     { tone: 'yellow', icon: 'levels', title: t('profile.levelsCompleted'), value: `${completed}/50`, chip: pct(completed), to: '/reels', cta: t('home.watchReel') },
     {
       tone: 'pink',
@@ -83,7 +83,7 @@ export function HomePage() {
                 </div>
               </div>
               <div className="market-meta">
-                <span>{t('home.progress')} 🔥</span>
+                <span>{t('home.progress')}</span>
                 <strong className="market-value">{c.value}</strong>
               </div>
               <Link to={c.to} className="btn btn-primary market-cta">
