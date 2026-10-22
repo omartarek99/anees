@@ -1108,6 +1108,21 @@ button.list-row.selected {
   border: 3px solid var(--glass-border);
   box-shadow: 0 10px 22px -10px rgba(30, 20, 50, 0.55);
 }
+/* Wide scenes fill the whole panel instead of sitting in the circle. */
+.market-pic img.market-pic-fill {
+  inline-size: 100%;
+  max-inline-size: none;
+  block-size: 100%;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: inherit;
+  box-shadow: none;
+}
+/* The light chip's tinted ink washes out on dark artwork; dark mode's chip is already smoked. */
+:root:not([data-theme='dark']) .market-pic-fill + .market-chip {
+  background: linear-gradient(162deg, rgba(14, 10, 24, 0.62) 0%, rgba(14, 10, 24, 0.44) 100%);
+  color: #fff;
+}
 .market-chip {
   position: absolute;
   inset-block-start: 0;
