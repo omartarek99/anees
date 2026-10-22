@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RiCalculatorLine, RiAtomLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
@@ -85,11 +85,9 @@ export function ReelSlide({
   const [error, setError] = useState<string | null>(null);
   const [levelUpValue, setLevelUpValue] = useState<number | null>(null);
   const [watchProgress, setWatchProgress] = useState(0); // 0-1, real playback position of the video itself
+  // Collapsed: only the subject and the topic are shown. "See more" reveals the details (who made the
+  // lesson and its description).
   const [captionExpanded, setCaptionExpanded] = useState(false);
-  // Whether the caption is long enough to be clipped in its collapsed (3-line) state — only
-  // then is the See more / See less toggle shown. Measured from the rendered element.
-  const [captionOverflows, setCaptionOverflows] = useState(false);
-  const captionRef = useRef<HTMLParagraphElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // This reel's own "are you still watching?" check -- local to this slide (not shared
@@ -211,18 +209,6 @@ export function ReelSlide({
   useEffect(() => {
     if (!isActive) setCaptionExpanded(false);
   }, [isActive]);
-
-  // Re-measure whether the collapsed caption is actually clipped (so we know to show the
-  // toggle) whenever the text, language, or viewport changes. Skipped while expanded — the
-  // element isn't clamped then, so there'd be nothing to measure.
-  useLayoutEffect(() => {
-    const el = captionRef.current;
-    if (!el || captionExpanded) return;
-    const measure = () => setCaptionOverflows(el.scrollHeight - el.clientHeight > 2);
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, [data.scriptText, lang, captionExpanded]);
 
   return (
     <div
@@ -346,48 +332,17 @@ export function ReelSlide({
               {data.subjectName}
             </span>
             <h2 style={{ color: 'white', fontSize: 19, margin: '2px 0 6px', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
-            {data.author && (
-              <Link
-                to={`/profile/${data.author.username}`}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, width: 'fit-content', textDecoration: 'none' }}
-              >
-                <Avatar avatarKey={data.author.avatarKey} photoUrl={data.author.avatarUrl} size={22} />
-                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12.5, textShadow: '0 1px 3px rgba(0,0,0,0.5)', textDecoration: 'underline' }}>
-                  {t('reels.lessonBy', { name: data.author.displayName })}
-                </span>
-              </Link>
-            )}
-            <p
-              ref={captionRef}
-              className={captionExpanded ? 'no-scrollbar swiper-no-swiping swiper-no-mousewheel' : undefined}
-              style={{
-                color: 'rgba(255,255,255,0.92)',
-                fontSize: 13.5,
-                lineHeight: 1.4,
-                margin: 0,
-                textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                ...(captionExpanded
-                  ? { maxHeight: '32vh', overflowY: 'auto', overscrollBehavior: 'contain' }
-                  : {
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }),
-              }}
-            >
-              {data.scriptText}
-            </p>
-            {(captionOverflows || captionExpanded) && (
+            {(data.author || data.scriptText) && (
               <button
                 type="button"
+                aria-expanded={captionExpanded}
                 onClick={() => setCaptionExpanded((v) => !v)}
                 style={{
                   background: 'none',
                   border: 'none',
                   padding: 0,
-                  marginTop: 4,
-                  color: 'rgba(255,255,255,0.75)',
+                  marginTop: 2,
+                  color: 'rgba(255,255,255,0.8)',
                   fontSize: 12.5,
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -396,6 +351,27 @@ export function ReelSlide({
               >
                 {captionExpanded ? t('reels.seeLess') : t('reels.seeMore')}
               </button>
+            )}
+            {captionExpanded && (
+              <div
+                className="no-scrollbar swiper-no-swiping swiper-no-mousewheel"
+                style={{ marginTop: 8, maxHeight: '32vh', overflowY: 'auto', overscrollBehavior: 'contain' }}
+              >
+                {data.author && (
+                  <Link
+                    to={`/profile/${data.author.username}`}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, width: 'fit-content', textDecoration: 'none' }}
+                  >
+                    <Avatar avatarKey={data.author.avatarKey} photoUrl={data.author.avatarUrl} size={22} />
+                    <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12.5, textShadow: '0 1px 3px rgba(0,0,0,0.5)', textDecoration: 'underline' }}>
+                      {t('reels.lessonBy', { name: data.author.displayName })}
+                    </span>
+                  </Link>
+                )}
+                <p style={{ color: 'rgba(255,255,255,0.92)', fontSize: 13.5, lineHeight: 1.4, margin: 0, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                  {data.scriptText}
+                </p>
+              </div>
             )}
             {!data.videoUrl && (
               <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11.5, marginTop: 6 }}>{t('reels.videoComingSoon')}</p>
