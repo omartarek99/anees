@@ -254,8 +254,6 @@ export function ReelsPage() {
             questionCount={activeSlide.questions.length}
             onOpenQuiz={() => activeControlsRef.current?.openQuiz()}
             onOpenPointsInfo={() => setPointsInfoOpen(true)}
-            subjectIcon={activeSlide.subjectIcon}
-            subjectKey={activeSlide.subjectKey}
             muted={muted}
             onToggleMute={toggleMute}
           />
