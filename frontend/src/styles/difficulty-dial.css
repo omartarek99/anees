@@ -78,7 +78,7 @@
 }
 .dial-dot {
   position: absolute;
-  inset-block-start: 11%;
+  inset-block-start: 17%;
   left: 50%;
   translate: -50% 0;
   inline-size: 11%;
@@ -93,7 +93,7 @@
 .dial-well {
   --neu-s: 0.8;
   position: absolute;
-  inset: 34%;
+  inset: 37%;
   display: grid;
   place-content: center;
   gap: 2px;
