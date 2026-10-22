@@ -173,12 +173,32 @@ export function monthlyWatch(role: RoleFilter, grade: number | null, months: str
 
 export type PageViewRow = { path: string; views30d: number; viewsTotal: number };
 
+/** "The last 30 days" everywhere (the analytics summary and the Excel export): today plus the 29 days before it,
+ * whole calendar days, so a daily chart of 30 columns covers it exactly. An SQL expression, safe to interpolate. */
+export const SINCE_30_DAYS = `date('now', '-29 days')`;
+
+/** Every reel quiz a real (non-seed) account has ever submitted at least once. quiz_completed is sticky regardless
+ * of score (see schema.sql), so this counts quizzes solved, not just passed. */
+export function quizzesSolvedTotal(): number {
+  return (
+    db
+      .prepare(
+        `SELECT COUNT(*) AS c FROM reel_watch_progress rwp JOIN users u ON u.id = rwp.user_id WHERE rwp.quiz_completed = 1 AND u.is_seed = 0`
+      )
+      .get() as { c: number }
+  ).c;
+}
+
+export function pageViewsLast30Days(): number {
+  return (db.prepare(`SELECT COUNT(*) AS c FROM page_views WHERE created_at >= ${SINCE_30_DAYS}`).get() as { c: number }).c;
+}
+
 /** Every tracked page (see routes/analytics.ts), most-visited in the last 30 days first. */
 export function pageViewStats(): PageViewRow[] {
   const rows = db
     .prepare(
       `SELECT path,
-              COALESCE(SUM(created_at >= datetime('now', '-30 days')), 0) AS views30d,
+              COALESCE(SUM(created_at >= ${SINCE_30_DAYS}), 0) AS views30d,
               COUNT(*) AS viewsTotal
        FROM page_views GROUP BY path ORDER BY views30d DESC, viewsTotal DESC, path ASC`
     )

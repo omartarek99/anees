@@ -25,7 +25,6 @@ import { sendVerificationEmail, sendOtpEmail, sendResetOtpEmail, otpDeliveryAvai
 import { createOtp, verifyOtp, clearOtp } from '../lib/otp.js';
 import { recordIssue } from '../lib/diagnostics.js';
 import { getFirebaseAdminAuth } from '../lib/firebaseAdmin.js';
-import { FRONTEND_ORIGIN } from '../lib/config.js';
 import { encrypt, decrypt, hashForLookup } from '../lib/encryption.js';
 
 export const authRouter = asyncRouter();
@@ -66,8 +65,6 @@ const cookieOptions = {
   path: '/',
   maxAge: 30 * 24 * 60 * 60 * 1000,
 };
-
-const verifyEmailContinueUrl = `${FRONTEND_ORIGIN}/verify-email`;
 
 // Firebase's "wrong credentials" error varies by API version/config.
 const WRONG_CREDENTIALS_ERRORS = new Set(['EMAIL_NOT_FOUND', 'INVALID_PASSWORD', 'INVALID_LOGIN_CREDENTIALS']);

@@ -99,7 +99,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/certificates', requireAuth, certificatesRouter);
 
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({ error: 'Not found.' });
 });
 
