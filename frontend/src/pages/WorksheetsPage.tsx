@@ -7,6 +7,7 @@ import { pickText, translateApiError } from '../lib/i18n';
 import { QuizCard, type QuizAnswer, type QuizQuestion } from '../components/QuizCard';
 import { QuizResults, type ResultItem } from '../components/QuizResults';
 import { Topbar } from '../components/Topbar';
+import { DifficultyDial, type DialOption } from '../components/DifficultyDial';
 import { PrintableWorksheet } from '../components/PrintableWorksheet';
 
 type Subject = 'math' | 'science';
@@ -82,10 +83,10 @@ export function WorksheetsPage() {
       ? null
       : videos.find((v) => [v.title, v.titleAr].some((n) => n && n.trim().toLowerCase() === typedName.toLowerCase())) ?? null;
 
-  const DIFFICULTIES: { key: Difficulty; label: string; xp: string; icon: string; color: string }[] = [
-    { key: 'easy', label: t('worksheets.easy'), xp: t('worksheets.xpPerQuestion', { xp: 5 }), icon: '🌱', color: 'stat-card-green' },
-    { key: 'medium', label: t('worksheets.medium'), xp: t('worksheets.xpPerQuestion', { xp: 10 }), icon: '🔥', color: 'stat-card-yellow' },
-    { key: 'hard', label: t('worksheets.hard'), xp: t('worksheets.xpPerQuestion', { xp: 20 }), icon: '⚡', color: 'stat-card-pink' },
+  const DIFFICULTIES: DialOption<Difficulty>[] = [
+    { key: 'easy', label: t('worksheets.easy'), xp: t('worksheets.xpPerQuestion', { xp: 5 }), icon: '🌱' },
+    { key: 'medium', label: t('worksheets.medium'), xp: t('worksheets.xpPerQuestion', { xp: 10 }), icon: '🔥' },
+    { key: 'hard', label: t('worksheets.hard'), xp: t('worksheets.xpPerQuestion', { xp: 20 }), icon: '⚡' },
   ];
 
   const questions: QuizQuestion[] =
@@ -228,23 +229,7 @@ export function WorksheetsPage() {
 
           <div>
             <label style={{ fontWeight: 700, marginBottom: 8, display: 'block' }}>{t('worksheets.difficulty')}</label>
-            <div className="stack" style={{ gap: 8 }}>
-              {DIFFICULTIES.map((d) => (
-                <button
-                  key={d.key}
-                  className={`list-row flex-between ${d.color}${difficulty === d.key ? ' selected' : ''}`}
-                  style={{ cursor: 'pointer', width: '100%' }}
-                  aria-pressed={difficulty === d.key}
-                  onClick={() => setDifficulty(d.key)}
-                >
-                  <span className="flex gap-sm" style={{ alignItems: 'center' }}>
-                    <span className="list-row-icon">{d.icon}</span>
-                    <span style={{ fontWeight: 700 }}>{d.label}</span>
-                  </span>
-                  <span style={{ fontSize: 13, fontWeight: 700 }}>{d.xp}</span>
-                </button>
-              ))}
-            </div>
+            <DifficultyDial value={difficulty} options={DIFFICULTIES} onChange={setDifficulty} label={t('worksheets.difficulty')} />
           </div>
 
           <button
