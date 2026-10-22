@@ -1125,6 +1125,7 @@ button.list-row.selected {
 .market-owner {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   padding-inline: 10px;
 }
@@ -1138,16 +1139,6 @@ button.list-row.selected {
   letter-spacing: 0.05em;
   color: var(--ink-soft);
 }
-.market-meta {
-  margin-top: auto; /* a wrapped title in one card must not push its value and button out of line with the others */
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  padding-inline: 10px;
-  font-size: 13px;
-  letter-spacing: 0.04em;
-}
 .market-value {
   font-family: var(--font-heading);
   font-variant-numeric: lining-nums;
@@ -1157,6 +1148,7 @@ button.list-row.selected {
 }
 /* The card's button is the site's own .btn; it only needs to line up with the rows above it. */
 .market-cta {
+  margin-top: auto; /* a wrapped title in one card must not push its button out of line with the others */
   margin-inline: 10px;
 }
 .stat-card-blue {
