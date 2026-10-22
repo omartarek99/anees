@@ -54,13 +54,25 @@ Options: `-e TEST_USER=... -e TEST_PASS=...` (default `dev_student` / `devpass12
 
 ## Testing the live site
 
-Blocked by default, because stress-testing production can exhaust the free hosting plans and lock out real
-users. If you really want to, run a gentle `load` profile against the live API with an existing test
-account, and expect 429s from the rate limiter:
+Blocked by default (it needs `-e ALLOW_REMOTE=1`), because load on production can slow the free hosting
+plans for real users. Use a normal test student account, never the admin, and pass the password on the
+command line yourself rather than pasting it anywhere.
+
+Aim at the Render backend directly (`BASE_URL=https://anees-01h6.onrender.com`): that tests the app itself
+and does not burn Vercel's request quota. The site's own `/api` path on Vercel forwards to the same place.
 
 ```powershell
-k6 run -e PROFILE=load -e ALLOW_REMOTE=1 -e BASE_URL=https://aneesv2.vercel.app -e TEST_USER=... -e TEST_PASS=... loadtest/stress.js
+k6 run -e PROFILE=live -e ALLOW_REMOTE=1 -e BASE_URL=https://anees-01h6.onrender.com -e TEST_USER=... -e TEST_PASS=... loadtest/stress.js
+k6 run -e PROFILE=live-stress -e ALLOW_REMOTE=1 -e BASE_URL=https://anees-01h6.onrender.com -e TEST_USER=... -e TEST_PASS=... loadtest/stress.js
 ```
 
-Never point the stress or spike profile at the live site, and never load-test signup, OTP or the AI
-worksheet endpoints: they send real emails and spend Gemini quota.
+| Profile | What it does |
+| --- | --- |
+| `live` | 2 users for 2 minutes (under the 200 requests/minute/IP limit): the real speed of the live pages. |
+| `live-stress` | Ramps to 25 users for 6 minutes, past the limit on purpose: does the site stay up, keep answering and recover? |
+
+Reading the live results: from one computer everything above ~3 users is rejected with 429 (`rate_limited`).
+That is the protection working. What matters is that `app_failures` stays low, requests keep answering
+quickly, and the site is normal again after the ramp-down. Run it when few real students are online.
+
+Never load-test signup, OTP or the AI worksheet endpoints: they send real emails and spend Gemini quota.

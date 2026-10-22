@@ -50,6 +50,26 @@ const PROFILES = {
     ],
     gracefulRampDown: '15s',
   },
+  // --- For the DEPLOYED site (needs -e ALLOW_REMOTE=1). The API allows 200 requests/minute per IP and
+  // production can't switch that off, so one computer can't push real capacity: these two profiles are sized
+  // around that limit instead.
+  // Real latency on the live site: ~2 users, roughly 120 requests/minute, under the limit.
+  live: { executor: 'constant-vus', vus: 2, duration: '2m' },
+  // Pushes past the limit on purpose, to see that the site stays up, keeps answering fast (with 429) and
+  // recovers once the load drops. Expect a high rate_limited share; app_failures should still stay low.
+  'live-stress': {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '1m', target: 2 },
+      { duration: '1m', target: 10 },
+      { duration: '1m', target: 25 },
+      { duration: '1m', target: 25 },
+      { duration: '1m', target: 2 },
+      { duration: '1m', target: 0 },
+    ],
+    gracefulRampDown: '15s',
+  },
   // Sudden burst (e.g. a whole school opens the site in the same minute).
   spike: {
     executor: 'ramping-vus',
