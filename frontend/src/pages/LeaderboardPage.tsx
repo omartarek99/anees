@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { RiArrowLeftSLine, RiArrowRightSLine, RiTrophyFill, RiVipDiamondFill } from '@remixicon/react';
+import { RiArrowLeftSLine, RiArrowRightSLine, RiVipDiamondFill } from '@remixicon/react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -53,11 +53,11 @@ function PodiumColumn({ leader, xpUnit, narrow }: { leader: Leader; xpUnit: stri
       </div>
       <div className="lb-name">{leader.displayName}</div>
       <div className="lb-box">
-        <span className={`lb-trophy lb-trophy--${leader.rank}`}>
-          <RiTrophyFill size={narrow ? 14 : 18} aria-hidden="true" />
-        </span>
+        <div className="lb-medal">
+          <RankBadge tier={leader.rankTier} size={narrow ? 52 : 72} showName={false} />
+        </div>
         <div className="lb-tier">
-          <RankBadge tier={leader.rankTier} size={16} />
+          <RankBadge tier={leader.rankTier} size={32} showIcon={false} />
         </div>
         <div className="lb-value">
           <RiVipDiamondFill size={narrow ? 16 : 22} aria-hidden="true" />
@@ -83,7 +83,7 @@ function LeaderRow({ leader, highlight }: { leader: Leader; highlight: boolean }
         </div>
       </div>
       <div className="lb-col-tier">
-        <RankBadge tier={leader.rankTier} size={20} />
+        <RankBadge tier={leader.rankTier} size={30} />
       </div>
       <div className="lb-points">
         <span className="lb-chip">

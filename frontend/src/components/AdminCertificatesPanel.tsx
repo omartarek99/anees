@@ -201,7 +201,8 @@ export function AdminCertificatesPanel() {
                     opacity: selected ? 1 : 0.78,
                   }}
                 >
-                  🎖️ {t(CERT_TYPE_LABEL_KEY[ct])}
+                  <img src={`/images/ranks/${ct}.webp`} width={24} height={24} alt="" />
+                  {t(CERT_TYPE_LABEL_KEY[ct])}
                 </button>
               );
             })}

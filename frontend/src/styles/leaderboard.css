@@ -107,7 +107,7 @@
   align-items: center;
   min-inline-size: 0;
 }
-/* Each place has its own metal: gold, silver, copper. The tone colours the box, the avatar ring and the trophy. */
+/* Each place has its own metal: gold, silver, copper. The tone colours the box and the avatar ring. */
 .lb-col--1 {
   --lb-tone: 240 168 58;
   --avatar-ring: #f0a83a;
@@ -147,7 +147,7 @@
   inline-size: 100%;
   min-block-size: 200px;
   margin-block-start: 8px;
-  padding: 36px clamp(8px, 1.5vw, 16px) 20px;
+  padding: 20px clamp(8px, 1.5vw, 16px) 20px;
   text-align: center;
 }
 .lb-col--2 .lb-box,
@@ -178,24 +178,9 @@
   -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent);
   mask-image: linear-gradient(180deg, #000 55%, transparent);
 }
-.lb-trophy {
-  display: grid;
-  place-items: center;
-  inline-size: clamp(26px, 3.2vw, 32px);
-  block-size: clamp(26px, 3.2vw, 32px);
-  border-radius: 8px;
-  color: rgb(60 40 10 / 0.7);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55), 0 4px 10px rgb(0 0 0 / 0.18);
-}
-.lb-trophy--1 {
-  background: linear-gradient(160deg, #ffe08a, #f0a83a);
-}
-.lb-trophy--2 {
-  background: linear-gradient(160deg, #f1f2f5, #b9bec9);
-  color: rgb(55 60 72 / 0.7);
-}
-.lb-trophy--3 {
-  background: linear-gradient(160deg, #ecac76, #b0612a);
+.lb-medal {
+  line-height: 0;
+  filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.3));
 }
 .lb-tier {
   position: relative;
@@ -398,7 +383,7 @@
   }
   .lb-box {
     min-block-size: 168px;
-    padding-block-start: 30px;
+    padding-block-start: 16px;
   }
   .lb-col--1 .lb-box {
     min-block-size: 210px;

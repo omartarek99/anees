@@ -51,7 +51,7 @@ export function Topbar({ title, subtitle, actions }: { title?: ReactNode; subtit
               🏅 {user.playerLevel}
             </span>
             <Link to="/profile" className="stat-pill" title={pickText(lang, user.rankTier.name, user.rankTier.nameAr)} aria-label={pickText(lang, user.rankTier.name, user.rankTier.nameAr)}>
-              <RankBadge tier={user.rankTier} size={18} showName={false} />
+              <RankBadge tier={user.rankTier} size={28} showName={false} />
             </Link>
           </>
         )}
