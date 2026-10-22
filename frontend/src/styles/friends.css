@@ -1,0 +1,213 @@
+/* Friends. Laid out after the "VR app UI" Figma feed: one glass panel for the main column (who you are, a rounded
+   search box like its composer, pill buttons, then the cards) and a second glass panel beside it for suggestions,
+   all in the site's own glass tokens so light and dark theme follow the rest of the app. */
+
+.fr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: 20px;
+}
+.fr-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-inline-size: 0;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  backdrop-filter: var(--glass-blur-lg);
+  box-shadow: var(--shadow-3d-md);
+}
+
+/* Who you are, with a count pill at the end (the Figma's "Post" button sits here). */
+.fr-me {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fr-row-text {
+  flex: 1;
+  min-inline-size: 0;
+}
+.fr-name {
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fr-handle {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fr-count {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--surface-chip);
+  border: 1px solid var(--glass-border);
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* The composer-style search box. */
+.fr-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--surface-input);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.08);
+  color: var(--ink-soft);
+  cursor: text;
+}
+.fr-search:focus-within {
+  outline: 2px solid var(--maroon);
+  outline-offset: 2px;
+}
+.fr-search input {
+  flex: 1;
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font: inherit;
+}
+
+/* Pill buttons: the site's own button material, just fully rounded. */
+.btn.fr-pill {
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.fr-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Friend cards: a big rounded avatar tile where the Figma has a post's photo. */
+.fr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+.fr-friend {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-inline-size: 0;
+  padding: 18px 12px 14px;
+  border-radius: 20px;
+  background: var(--surface-row);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-3d-sm);
+  color: inherit;
+  text-align: center;
+  text-decoration: none;
+  transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+}
+.fr-friend:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-3d-md);
+}
+.fr-friend .fr-name,
+.fr-friend .fr-handle {
+  max-inline-size: 100%;
+}
+/* A card has room for a longer name on two lines before it is cut. */
+.fr-friend .fr-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.fr-tile {
+  margin-block-end: 4px;
+  padding: 6px;
+  border-radius: 24px;
+  background: var(--surface-chip);
+  box-shadow: var(--shadow-3d-sm);
+  line-height: 0;
+}
+.fr-xp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-block-end: 6px;
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 800;
+}
+.fr-xp svg {
+  color: var(--gold);
+}
+
+/* Rows: search results, requests and suggestions. */
+.fr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.fr-heading {
+  margin: 0;
+  font-size: 15px;
+}
+.fr-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--surface-row);
+  border: 1px solid var(--glass-border);
+}
+.fr-status {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.fr-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .fr {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .fr-panel {
+    padding: 14px;
+  }
+  .fr-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .fr-row {
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fr-friend {
+    transition: none;
+  }
+}
