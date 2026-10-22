@@ -26,12 +26,11 @@ export function HomePage() {
   const pct = (n: number) => `${Math.round((n / 50) * 100)}%`;
   // One market card per stat: its picture, a corner chip, the value, and where to go with it.
   const cards = [
-    { tone: 'blue', src: '/icons/map-icon.webp', fill: true, title: t('home.mapProgress'), value: `${level}/50`, chip: pct(level), to: '/map', cta: t('home.openMap') },
-    { tone: 'yellow', src: '/icons/levels-icon.png', title: t('profile.levelsCompleted'), value: `${completed}/50`, chip: pct(completed), to: '/reels', cta: t('home.watchReel') },
+    { tone: 'blue', src: '/icons/map-icon.webp', title: t('home.mapProgress'), value: `${level}/50`, chip: pct(level), to: '/map', cta: t('home.openMap') },
+    { tone: 'yellow', src: '/icons/levels-icon.webp', title: t('profile.levelsCompleted'), value: `${completed}/50`, chip: pct(completed), to: '/reels', cta: t('home.watchReel') },
     {
       tone: 'pink',
       src: '/icons/xp-icon.webp',
-      fill: true,
       title: t('profile.totalXp'),
       value: String(profile?.totalXp ?? user?.totalXp ?? 0),
       chip: user ? pickText(lang, user.rankTier.name, user.rankTier.nameAr) : '',
@@ -72,7 +71,7 @@ export function HomePage() {
           {cards.map((c) => (
             <article key={c.tone} className={`market-card stat-card-${c.tone}`}>
               <div className="market-pic">
-                <img src={c.src} className={c.fill ? 'market-pic-fill' : undefined} alt="" />
+                <img src={c.src} alt="" />
                 <span className="market-chip">{c.chip}</span>
               </div>
               <div className="market-owner">
