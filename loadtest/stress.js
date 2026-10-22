@@ -55,6 +55,20 @@ const PROFILES = {
   // around that limit instead.
   // Real latency on the live site: ~2 users, roughly 120 requests/minute, under the limit.
   live: { executor: 'constant-vus', vus: 2, duration: '2m' },
+  // 100 concurrent users on the live site (~7 minutes). Needs the API limit raised on the server first
+  // (API_RATE_LIMIT_PER_MIN, see README), otherwise nearly everything is answered with 429.
+  'live-100': {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '1m', target: 20 },
+      { duration: '1m', target: 50 },
+      { duration: '1m', target: 100 },
+      { duration: '3m', target: 100 },
+      { duration: '1m', target: 0 },
+    ],
+    gracefulRampDown: '15s',
+  },
   // Pushes past the limit on purpose, to see that the site stays up, keeps answering fast (with 429) and
   // recovers once the load drops. Expect a high rate_limited share; app_failures should still stay low.
   'live-stress': {

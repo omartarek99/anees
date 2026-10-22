@@ -12,9 +12,14 @@ export const authLimiter = rateLimit({
 // hit this limit and measure the limiter instead of the app. Never honoured in production.
 const skipForLoadTest = () => process.env.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMITS === '1';
 
+// Requests per minute per IP. Defaults to 200; API_RATE_LIMIT_PER_MIN overrides it (e.g. raised for a short
+// load test of the live site, then removed again). Anything that is not a positive whole number is ignored.
+const configuredApiLimit = Number.parseInt(process.env.API_RATE_LIMIT_PER_MIN ?? '', 10);
+const API_LIMIT_PER_MIN = Number.isInteger(configuredApiLimit) && configuredApiLimit > 0 ? configuredApiLimit : 200;
+
 export const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
-  limit: 200,
+  limit: API_LIMIT_PER_MIN,
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipForLoadTest,

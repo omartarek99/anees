@@ -71,6 +71,15 @@ k6 run -e PROFILE=live-stress -e ALLOW_REMOTE=1 -e BASE_URL=https://anees-01h6.o
 | `live` | 2 users for 2 minutes (under the 200 requests/minute/IP limit): the real speed of the live pages. |
 | `live-stress` | Ramps to 25 users for 6 minutes, past the limit on purpose: does the site stay up, keep answering and recover? |
 
+### 100 users on the live site
+
+From one computer the API limit (200 requests/minute per IP) would answer almost everything with 429, so
+raise it for the length of the test only:
+
+1. Render > the backend service > Environment > add `API_RATE_LIMIT_PER_MIN` = `20000` > Save (Render restarts).
+2. Run: `k6 run -e PROFILE=live-100 -e ALLOW_REMOTE=1 -e BASE_URL=https://anees-01h6.onrender.com -e TEST_USER=... -e TEST_PASS=... loadtest/stress.js`
+3. **Delete the variable again** and save, so the normal 200/minute protection is back.
+
 Reading the live results: from one computer everything above ~3 users is rejected with 429 (`rate_limited`).
 That is the protection working. What matters is that `app_failures` stays low, requests keep answering
 quickly, and the site is normal again after the ramp-down. Run it when few real students are online.
