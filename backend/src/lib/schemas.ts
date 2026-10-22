@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-export const AVATAR_KEYS = ['falcon', 'astronaut', 'knight', 'athlete', 'robot', 'explorer'] as const;
+// 'anonymous' = the plain person silhouette that teachers get by default (not a student hero choice).
+export const AVATAR_KEYS = ['falcon', 'astronaut', 'knight', 'athlete', 'robot', 'explorer', 'anonymous'] as const;
 
 export const usernameSchema = z
   .string()

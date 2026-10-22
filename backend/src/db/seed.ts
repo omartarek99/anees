@@ -51,7 +51,7 @@ function ensureDevTeacher() {
   const email = 'dev_teacher@anees.local';
   db.prepare(
     `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
-  ).run('dev_teacher', encrypt(email), hashForLookup(email), passwordHash, 'Dev Teacher', 'explorer', 0, 0, 'teacher', null, 1);
+  ).run('dev_teacher', encrypt(email), hashForLookup(email), passwordHash, 'Dev Teacher', 'anonymous', 0, 0, 'teacher', null, 1);
   console.log('[seed] Added dev_teacher account to existing database.');
 }
 

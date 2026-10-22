@@ -469,7 +469,8 @@ export function ProfilePage() {
               {uploadingPhoto ? t('profile.uploadingPhoto') : t('profile.changePhoto')}
             </button>
             <div className="flex gap-md" style={{ flexWrap: 'wrap' }}>
-              {AVATAR_OPTIONS.map((key) => (
+              {/* Teachers keep the plain anonymous picture (or upload a photo) -- no emoji heroes. */}
+              {(profile.role === 'teacher' ? [] : AVATAR_OPTIONS).map((key) => (
                 <button
                   type="button"
                   key={key}

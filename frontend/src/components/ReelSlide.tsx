@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RiCalculatorLine, RiAtomLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
@@ -85,11 +85,9 @@ export function ReelSlide({
   const [error, setError] = useState<string | null>(null);
   const [levelUpValue, setLevelUpValue] = useState<number | null>(null);
   const [watchProgress, setWatchProgress] = useState(0); // 0-1, real playback position of the video itself
+  // Collapsed: only the subject and the topic are shown. "See more" reveals the details (who made the
+  // lesson and its description).
   const [captionExpanded, setCaptionExpanded] = useState(false);
-  // Whether the caption is long enough to be clipped in its collapsed (3-line) state — only
-  // then is the See more / See less toggle shown. Measured from the rendered element.
-  const [captionOverflows, setCaptionOverflows] = useState(false);
-  const captionRef = useRef<HTMLParagraphElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // This reel's own "are you still watching?" check -- local to this slide (not shared
@@ -212,18 +210,6 @@ export function ReelSlide({
     if (!isActive) setCaptionExpanded(false);
   }, [isActive]);
 
-  // Re-measure whether the collapsed caption is actually clipped (so we know to show the
-  // toggle) whenever the text, language, or viewport changes. Skipped while expanded — the
-  // element isn't clamped then, so there'd be nothing to measure.
-  useLayoutEffect(() => {
-    const el = captionRef.current;
-    if (!el || captionExpanded) return;
-    const measure = () => setCaptionOverflows(el.scrollHeight - el.clientHeight > 2);
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, [data.scriptText, lang, captionExpanded]);
-
   return (
     <div
       style={{
@@ -332,20 +318,7 @@ export function ReelSlide({
               (see ReelActionRail, rendered by ReelsPage), so this only needs to clear its own
               padding, not reserved space for an overlay. */}
           <div className="on-dark" style={{ position: 'absolute', left: 16, right: 16, bottom: 20, zIndex: 3 }}>
-            <span
-              className="badge"
-              style={{ background: 'rgba(255,255,255,0.18)', color: 'white', marginBottom: 8, backdropFilter: 'blur(6px)' }}
-            >
-              {data.subjectKey === 'math' ? (
-                <RiCalculatorLine size={13} />
-              ) : data.subjectKey === 'science' ? (
-                <RiAtomLine size={13} />
-              ) : (
-                data.subjectIcon
-              )}{' '}
-              {data.subjectName}
-            </span>
-            <h2 style={{ color: 'white', fontSize: 19, margin: '2px 0 6px', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
+            {/* Who added the video -- always visible, above the topic. */}
             {data.author && (
               <Link
                 to={`/profile/${data.author.username}`}
@@ -357,37 +330,46 @@ export function ReelSlide({
                 </span>
               </Link>
             )}
-            <p
-              ref={captionRef}
-              className={captionExpanded ? 'no-scrollbar swiper-no-swiping swiper-no-mousewheel' : undefined}
-              style={{
-                color: 'rgba(255,255,255,0.92)',
-                fontSize: 13.5,
-                lineHeight: 1.4,
-                margin: 0,
-                textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                ...(captionExpanded
-                  ? { maxHeight: '32vh', overflowY: 'auto', overscrollBehavior: 'contain' }
-                  : {
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }),
-              }}
-            >
-              {data.scriptText}
-            </p>
-            {(captionOverflows || captionExpanded) && (
+            {/* Topic on one side, subject on the opposite side of the same line. */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
+              <h2 style={{ flex: 1, minWidth: 0, color: 'white', fontSize: 19, margin: 0, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
+              <span
+                className="badge"
+                style={{ flexShrink: 0, background: 'rgba(255,255,255,0.18)', color: 'white', backdropFilter: 'blur(6px)' }}
+              >
+                {data.subjectKey === 'math' ? (
+                  <RiCalculatorLine size={13} />
+                ) : data.subjectKey === 'science' ? (
+                  <RiAtomLine size={13} />
+                ) : (
+                  data.subjectIcon
+                )}{' '}
+                {data.subjectName}
+              </span>
+            </div>
+            {/* The details open ABOVE the See more toggle, so the toggle always sits right over the
+                quiz / next-lesson button below. */}
+            {captionExpanded && (
+              <div
+                className="no-scrollbar swiper-no-swiping swiper-no-mousewheel"
+                style={{ marginBottom: 6, maxHeight: '32vh', overflowY: 'auto', overscrollBehavior: 'contain' }}
+              >
+                <p style={{ color: 'rgba(255,255,255,0.92)', fontSize: 13.5, lineHeight: 1.4, margin: 0, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                  {data.scriptText}
+                </p>
+              </div>
+            )}
+            {data.scriptText && (
               <button
                 type="button"
+                aria-expanded={captionExpanded}
                 onClick={() => setCaptionExpanded((v) => !v)}
                 style={{
+                  display: 'block',
                   background: 'none',
                   border: 'none',
                   padding: 0,
-                  marginTop: 4,
-                  color: 'rgba(255,255,255,0.75)',
+                  color: 'rgba(255,255,255,0.8)',
                   fontSize: 12.5,
                   fontWeight: 700,
                   cursor: 'pointer',

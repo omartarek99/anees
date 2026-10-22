@@ -168,7 +168,8 @@ authRouter.post(
             hashForLookup(email),
             '',
             displayName,
-            avatarKey,
+            // Teachers don't pick a hero: they start with the plain anonymous picture.
+            role === 'teacher' ? 'anonymous' : avatarKey,
             role,
             role === 'student' ? grade ?? null : null,
             localId,
