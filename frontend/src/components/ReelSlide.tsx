@@ -318,6 +318,18 @@ export function ReelSlide({
               (see ReelActionRail, rendered by ReelsPage), so this only needs to clear its own
               padding, not reserved space for an overlay. */}
           <div className="on-dark" style={{ position: 'absolute', left: 16, right: 16, bottom: 20, zIndex: 3 }}>
+            {/* Who added the video -- always visible, above the topic. */}
+            {data.author && (
+              <Link
+                to={`/profile/${data.author.username}`}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, width: 'fit-content', textDecoration: 'none' }}
+              >
+                <Avatar avatarKey={data.author.avatarKey} photoUrl={data.author.avatarUrl} size={22} />
+                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12.5, textShadow: '0 1px 3px rgba(0,0,0,0.5)', textDecoration: 'underline' }}>
+                  {t('reels.lessonBy', { name: data.author.displayName })}
+                </span>
+              </Link>
+            )}
             {/* Topic on one side, subject on the opposite side of the same line. */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
               <h2 style={{ flex: 1, minWidth: 0, color: 'white', fontSize: 19, margin: 0, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
@@ -335,18 +347,6 @@ export function ReelSlide({
                 {data.subjectName}
               </span>
             </div>
-            {/* Who added the video -- always visible. */}
-            {data.author && (
-              <Link
-                to={`/profile/${data.author.username}`}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, width: 'fit-content', textDecoration: 'none' }}
-              >
-                <Avatar avatarKey={data.author.avatarKey} photoUrl={data.author.avatarUrl} size={22} />
-                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12.5, textShadow: '0 1px 3px rgba(0,0,0,0.5)', textDecoration: 'underline' }}>
-                  {t('reels.lessonBy', { name: data.author.displayName })}
-                </span>
-              </Link>
-            )}
             {/* The details open ABOVE the See more toggle, so the toggle always sits right over the
                 quiz / next-lesson button below. */}
             {captionExpanded && (
