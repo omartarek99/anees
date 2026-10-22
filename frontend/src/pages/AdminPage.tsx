@@ -6,7 +6,7 @@ import { useLanguage } from '../lib/language-context';
 import { Topbar } from '../components/Topbar';
 import { AdminUserRow, type AdminUser } from '../components/AdminUserRow';
 import { AdminVideosPanel } from '../components/AdminVideosPanel';
-import { AdminReportsPanel } from '../components/AdminReportsPanel';
+import { AdminReportsPanel, ExportButton } from '../components/AdminReportsPanel';
 import { AdminCertificatesPanel } from '../components/AdminCertificatesPanel';
 import { Pagination } from '../components/Pagination';
 import { GradeFilterSelect, type GradeFilter } from '../components/GradeFilterSelect';
@@ -115,6 +115,7 @@ const TABS: Tab[] = ['users', 'videos', 'reports', 'certificates'];
 // not by a secondary in-page control.
 export function AdminPage() {
   const { t } = useLanguage();
+  const [reportGrade, setReportGrade] = useState<GradeFilter>('all');
   const { tab: rawTab } = useParams<{ tab: string }>();
   if (!TABS.includes(rawTab as Tab)) return <Navigate to="/admin/users" replace />;
   const tab = rawTab as Tab;
@@ -127,11 +128,11 @@ export function AdminPage() {
 
   return (
     <div className="stack">
-      <Topbar title={t(titleKey)} subtitle={t(subtitleKey)} />
+      <Topbar title={t(titleKey)} subtitle={t(subtitleKey)} actions={tab === 'reports' ? <ExportButton gradeFilter={reportGrade} /> : undefined} />
 
       {tab === 'users' && <AdminUsersPanel />}
       {tab === 'videos' && <AdminVideosPanel />}
-      {tab === 'reports' && <AdminReportsPanel />}
+      {tab === 'reports' && <AdminReportsPanel gradeFilter={reportGrade} onGradeChange={setReportGrade} />}
       {tab === 'certificates' && <AdminCertificatesPanel />}
     </div>
   );
