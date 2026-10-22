@@ -242,7 +242,7 @@ adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSch
 
 const certificateImageUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 8 * 1024 * 1024 },
+  limits: { fileSize: 8 * 1024 * 1024, files: 1, fields: 3, fieldSize: 1024, parts: 4 },
   fileFilter: (_req, file, cb) => {
     if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) cb(null, true);
     else cb(new Error('INVALID_IMAGE_TYPE'));

@@ -48,7 +48,8 @@ function runFfmpeg(inputPath: string, outputPath: string): Promise<{ durationSec
     }, TIMEOUT_MS);
 
     proc.stderr.on('data', (chunk) => {
-      stderr += chunk;
+      // The Duration line is near the top; a hostile file's metadata must not grow this without bound.
+      if (stderr.length < 64 * 1024) stderr += chunk;
     });
     proc.on('error', (err) => {
       clearTimeout(timeout);

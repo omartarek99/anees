@@ -180,7 +180,7 @@ const AVATAR_MIME_TO_EXT: Record<string, string> = {
 
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 0, parts: 2 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype in AVATAR_MIME_TO_EXT) cb(null, true);
     else cb(new Error('INVALID_AVATAR_TYPE'));

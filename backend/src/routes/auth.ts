@@ -96,6 +96,10 @@ function publicUser(user: any) {
   };
 }
 
+// Tesseract is CPU-heavy and signup is public: cap concurrent ID checks so a burst can't pin the server.
+const MAX_CONCURRENT_ID_CHECKS = 2;
+let idChecksRunning = 0;
+
 authRouter.post(
   '/signup',
   authLimiter,
@@ -127,7 +131,17 @@ authRouter.post(
       return;
     }
     if (role === 'teacher' && idDocument) {
-      const verification = await verifyQatarIdPhoto(idDocument.buffer);
+      if (idChecksRunning >= MAX_CONCURRENT_ID_CHECKS) {
+        res.status(503).json({ error: 'We are busy right now. Please try again in a minute.' });
+        return;
+      }
+      idChecksRunning++;
+      let verification: Awaited<ReturnType<typeof verifyQatarIdPhoto>>;
+      try {
+        verification = await verifyQatarIdPhoto(idDocument.buffer);
+      } finally {
+        idChecksRunning--;
+      }
       if (!verification.ok) {
         res.status(400).json({ error: ID_VERIFICATION_MESSAGES[verification.reason] });
         return;

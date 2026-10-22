@@ -3,6 +3,9 @@ import { supabaseAdmin } from './supabase.js';
 import { decrypt, hashForLookup } from './encryption.js';
 
 import { getFirebaseAdminAuth } from './firebaseAdmin.js';
+import { deleteAvatarPhotoIfAny } from './avatarPhoto.js';
+import { deleteCertificateImageIfAny } from './certificateImage.js';
+import { deleteReelVideoIfAny } from './reelVideo.js';
 
 export type DeleteUserResult =
   | { found: false }
@@ -25,8 +28,8 @@ async function deleteFirebaseUser(email: string): Promise<string> {
   }
 }
 
-/** Fully deletes a user: their Supabase-stored ID document (if any), the local DB row, and
- * their Firebase Auth account. Used by both the admin panel's delete action and the
+/** Fully deletes a user: their Supabase-stored files (ID document, profile photo, certificate images, lesson
+ * videos), the lessons and announcements they authored, the local DB row, and their Firebase Auth account. Used by both the admin panel's delete action and the
  * `admin:delete-user` CLI script. */
 async function deleteUserRow(user: any): Promise<DeleteUserResult> {
   let storage: string | undefined;
@@ -38,6 +41,19 @@ async function deleteUserRow(user: any): Promise<DeleteUserResult> {
       storage = 'skipped (SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY not configured)';
     }
   }
+
+  // The photo, certificate images and lesson videos sit in a public bucket, and an authored reel or post would
+  // otherwise stay live with nobody left to take it down (the admin tools only reach reels with an author).
+  await deleteAvatarPhotoIfAny(user.avatar_url);
+  for (const c of db.prepare(`SELECT image_url FROM certificates WHERE user_id = ?`).all(user.id) as { image_url: string | null }[]) {
+    await deleteCertificateImageIfAny(c.image_url);
+  }
+  for (const r of db.prepare(`SELECT video_url FROM reels WHERE author_user_id = ?`).all(user.id) as { video_url: string | null }[]) {
+    await deleteReelVideoIfAny(r.video_url);
+  }
+  // reel_questions and reel_watch_progress cascade on reels(id) -- see schema.sql.
+  db.prepare(`DELETE FROM reels WHERE author_user_id = ?`).run(user.id);
+  db.prepare(`DELETE FROM news_posts WHERE author_user_id = ?`).run(user.id);
 
   db.prepare(`DELETE FROM users WHERE id = ?`).run(user.id);
   const firebase = await deleteFirebaseUser(decrypt(user.email));

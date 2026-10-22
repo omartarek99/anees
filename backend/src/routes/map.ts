@@ -154,7 +154,8 @@ mapRouter.post('/boss/:levelNumber/submit', requireCsrfHeader, validateBody(boss
   let xpEarned = 0;
 
   if (passed) {
-    xpEarned = BOSS_DEFEAT_XP_BONUS;
+    // The bonus is for the first defeat; awardXp ignores 0, so replaying a cleared boss pays nothing.
+    xpEarned = progress.status === 'completed' ? 0 : BOSS_DEFEAT_XP_BONUS;
     awardXp(req.userId!, xpEarned, 'boss_defeat');
     db.prepare(
       `UPDATE user_level_progress SET status = 'completed', stars = 3, best_score = ?, completed_at = datetime('now')

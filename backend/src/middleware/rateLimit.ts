@@ -36,3 +36,14 @@ export const worksheetAiLimiter = rateLimit({
   keyGenerator: (req) => `user:${(req as any).userId ?? 'anon'}`,
   message: { error: 'Too many attempts. Please wait a few minutes and try again.' },
 });
+
+// A teacher's video uploads each hold up to 100MB in memory and run a transcode: per signed-in user,
+// a handful per quarter hour is plenty for real lesson work. Must run after requireAuth.
+export const videoUploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `user:${(req as any).userId ?? 'anon'}`,
+  message: { error: 'Too many attempts. Please wait a few minutes and try again.' },
+});

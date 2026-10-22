@@ -1379,6 +1379,8 @@ const apiErrorMap: Record<string, string> = {
   'Boss level not found.': 'مستوى الحارس غير موجود.',
   'Defeat the previous levels first to challenge this boss.': 'أكمل المستويات السابقة أولاً لتحدي هذا الحارس.',
   'This boss is locked.': 'هذا الحارس مقفل.',
+  'We are busy right now. Please try again in a minute.': 'نحن مشغولون حاليًا. يرجى المحاولة مرة أخرى بعد دقيقة.',
+  'An upload is already in progress. Please wait for it to finish.': 'هناك عملية رفع قيد التنفيذ. يرجى الانتظار حتى تنتهي.',
   'Unknown subject.': 'مادة غير معروفة.',
   'No questions available for this combination yet.': 'لا توجد أسئلة متاحة لهذا الخيار بعد.',
   'Worksheet not found.': 'ورقة العمل غير موجودة.',
