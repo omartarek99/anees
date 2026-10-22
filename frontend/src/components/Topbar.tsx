@@ -8,7 +8,7 @@ import { api } from '../lib/api';
 import { RankBadge } from './RankBadge';
 
 // Without a title the bar is just the XP / level / rank chips and the bell (the home page's hero carries the heading).
-export function Topbar({ title, subtitle }: { title?: ReactNode; subtitle?: string }) {
+export function Topbar({ title, subtitle, actions }: { title?: ReactNode; subtitle?: string; actions?: ReactNode }) {
   const { user } = useAuth();
   const { t, lang } = useLanguage();
   const [pendingRequests, setPendingRequests] = useState(0);
@@ -38,6 +38,7 @@ export function Topbar({ title, subtitle }: { title?: ReactNode; subtitle?: stri
         </div>
       )}
       <div className="flex gap-sm" style={{ alignItems: 'center' }}>
+        {actions}
         {user.role !== 'admin' && (
           <>
             <span className="stat-pill" style={{ color: 'var(--pastel-blue-ink)' }} title={t(user.role === 'teacher' ? 'profile.teacherPoints' : 'common.xpUnit')}>

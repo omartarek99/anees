@@ -50,6 +50,10 @@ export type ReportRow = {
   uploadedSeconds: number;
   /** Total XP for students, teacher points for teachers. */
   points: number;
+  /** Distinct calendar days on which the user actually watched something. */
+  activeDays: number;
+  /** Whole days since the account was created (at least 1), the divisor for the daily/monthly averages. */
+  daysSinceJoined: number;
 };
 
 const SELECT = `
@@ -61,7 +65,8 @@ const SELECT = `
          (SELECT COUNT(*) FROM worksheet_attempts WHERE user_id = u.id AND status = 'submitted') AS worksheets_done,
          (SELECT COUNT(*) FROM worksheet_prints WHERE user_id = u.id) AS worksheets_printed,
          (SELECT COUNT(*) FROM reels WHERE author_user_id = u.id) AS videos_uploaded,
-         COALESCE((SELECT SUM(duration_sec) FROM reels WHERE author_user_id = u.id), 0) AS uploaded_seconds
+         COALESCE((SELECT SUM(duration_sec) FROM reels WHERE author_user_id = u.id), 0) AS uploaded_seconds,
+         (SELECT COUNT(DISTINCT date(created_at)) FROM reel_watch_seconds_events WHERE user_id = u.id) AS active_days
   FROM users u`;
 
 function toRow(r: any): ReportRow {
@@ -82,6 +87,8 @@ function toRow(r: any): ReportRow {
     videosUploaded: r.videos_uploaded,
     uploadedSeconds: Math.round(r.uploaded_seconds),
     points: r.role === 'teacher' ? r.teacher_points ?? 0 : r.total_xp ?? 0,
+    activeDays: r.active_days,
+    daysSinceJoined: Math.max(1, Math.ceil((Date.now() - new Date(r.created_at.replace(' ', 'T') + 'Z').getTime()) / 86_400_000)),
   };
 }
 

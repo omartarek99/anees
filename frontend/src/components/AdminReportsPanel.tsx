@@ -25,6 +25,7 @@ type WatchTimeUser = {
   worksheetsPrinted: number;
   videosUploaded: number;
   points: number;
+  daysSinceJoined: number;
 };
 
 type ReportTotals = {
@@ -130,6 +131,8 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: 'student' | '
                 <th style={th}>{t('admin.watchTimeColStudent')}</th>
                 <th style={th}>{isTeacher ? t('admin.watchTimeColSubject') : t('admin.watchTimeColGrade')}</th>
                 <th style={th}>{t('admin.watchTimeColTime')}</th>
+                <th style={th}>{t('admin.watchTimeColAvgDay')}</th>
+                <th style={th}>{t('admin.watchTimeColAvgMonth')}</th>
                 <th style={th}>{t('admin.watchTimeColReels')}</th>
                 <th style={th}>{t('admin.watchTimeColWsDone')}</th>
                 {isTeacher && <th style={th}>{t('admin.watchTimeColWsPrinted')}</th>}
@@ -151,6 +154,8 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: 'student' | '
                       : u.grade ?? '—'}
                   </td>
                   <td style={td}>{formatWatchTime(u.watchedSeconds)}</td>
+                  <td style={td}>{formatWatchTime(u.watchedSeconds / u.daysSinceJoined)}</td>
+                  <td style={td}>{formatWatchTime(u.watchedSeconds / Math.max(1, u.daysSinceJoined / 30.4375))}</td>
                   <td style={td}>{u.reelsWatched}</td>
                   <td style={td}>{u.worksheetsDone}</td>
                   {isTeacher && <td style={td}>{u.worksheetsPrinted}</td>}
@@ -258,7 +263,7 @@ function MonthlyWatchSection({ roleFilter, gradeFilter }: { roleFilter: 'student
 
 /** Downloads the locked, branded Excel report for the current filters. A plain fetch (not the JSON api
  * helper) because the response is a file. */
-function ExportButton({ gradeFilter }: { gradeFilter: GradeFilter }) {
+export function ExportButton({ gradeFilter }: { gradeFilter: GradeFilter }) {
   const { t, lang } = useLanguage();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -289,35 +294,31 @@ function ExportButton({ gradeFilter }: { gradeFilter: GradeFilter }) {
   }
 
   return (
-    <div className="stack" style={{ gap: 4, alignItems: 'flex-start' }}>
+    <div className="stack" style={{ gap: 4, alignItems: 'flex-end' }}>
       <button type="button" className="btn btn-primary" onClick={download} disabled={busy}>
         <RiFileExcel2Line size={17} style={{ verticalAlign: -3, marginInlineEnd: 6 }} />
         {busy ? t('admin.exporting') : t('admin.exportExcel')}
       </button>
-      <small className="muted">{t('admin.exportNote')} {t('admin.exportSheetsNote')}</small>
       {error && <small style={{ color: 'var(--danger, #c0392b)' }} role="alert">{error}</small>}
     </div>
   );
 }
 
-export function AdminReportsPanel() {
+export function AdminReportsPanel({ gradeFilter, onGradeChange }: { gradeFilter: GradeFilter; onGradeChange: (g: GradeFilter) => void }) {
   // The grade filter scopes the student sections and the Excel export's student data; teachers have no
-  // grade, so their sections always show everyone.
+  // grade, so their sections always show everyone. It lives in AdminPage because the export button sits
+  // in the page header.
   const { t } = useLanguage();
-  const [gradeFilter, setGradeFilter] = useState<GradeFilter>('all');
 
   return (
     <div className="stack">
       <AnalyticsSummaryCard />
       <div className="card">
-        <div className="flex gap-md" style={{ flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-          <div className="stack" style={{ gap: 4 }}>
-            <div className="field" style={{ maxWidth: 220, marginBottom: 0 }}>
-              <GradeFilterSelect value={gradeFilter} onChange={setGradeFilter} />
-            </div>
-            <small className="muted">{t('admin.reportGradeNote')}</small>
+        <div className="stack" style={{ gap: 4 }}>
+          <div className="field" style={{ maxWidth: 220, marginBottom: 0 }}>
+            <GradeFilterSelect value={gradeFilter} onChange={onGradeChange} />
           </div>
-          <ExportButton gradeFilter={gradeFilter} />
+          <small className="muted">{t('admin.reportGradeNote')}</small>
         </div>
       </div>
 
