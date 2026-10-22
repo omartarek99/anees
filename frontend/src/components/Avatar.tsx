@@ -23,9 +23,10 @@ export function avatarLabel(key: string, lang: Lang = 'en'): string {
 // `photoUrl`, when set, shows an uploaded profile photo instead of the stylized emoji
 // avatar -- same circular frame/border/shadow either way, so it drops in anywhere an
 // Avatar already renders (profile page, reel author credit, ...) without new layout.
-export function Avatar({ avatarKey, size = 48, photoUrl }: { avatarKey: string; size?: number; photoUrl?: string | null }) {
+export function Avatar({ avatarKey, size = 48, photoUrl, square = false }: { avatarKey: string; size?: number; photoUrl?: string | null; square?: boolean }) {
   const { lang } = useLanguage();
   const cfg = AVATAR_MAP[avatarKey] ?? AVATAR_MAP.falcon;
+  const radius = square ? Math.round(size * 0.14) : '50%';
   const shadow = `0 ${Math.max(3, size * 0.08)}px ${Math.max(6, size * 0.16)}px rgba(20,30,60,0.3), inset 0 ${Math.max(1, size * 0.05)}px ${Math.max(2, size * 0.08)}px rgba(255,255,255,0.45), inset 0 -${Math.max(1, size * 0.05)}px ${Math.max(3, size * 0.1)}px rgba(0,0,0,0.2)`;
   if (photoUrl) {
     return (
@@ -36,9 +37,9 @@ export function Avatar({ avatarKey, size = 48, photoUrl }: { avatarKey: string; 
         style={{
           width: size,
           height: size,
-          borderRadius: '50%',
+          borderRadius: radius,
           objectFit: 'cover',
-          border: '2px solid var(--gold)',
+          border: '2px solid var(--avatar-ring, var(--gold))',
           flexShrink: 0,
           boxShadow: shadow,
         }}
@@ -54,12 +55,12 @@ export function Avatar({ avatarKey, size = 48, photoUrl }: { avatarKey: string; 
         style={{
           width: size,
           height: size,
-          borderRadius: '50%',
+          borderRadius: radius,
           background: `linear-gradient(150deg, ${cfg.from}, ${cfg.to})`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          border: '2px solid var(--gold)',
+          border: '2px solid var(--avatar-ring, var(--gold))',
           flexShrink: 0,
           boxShadow: shadow,
           overflow: 'hidden',
@@ -79,13 +80,13 @@ export function Avatar({ avatarKey, size = 48, photoUrl }: { avatarKey: string; 
       style={{
         width: size,
         height: size,
-        borderRadius: '50%',
+        borderRadius: radius,
         background: `linear-gradient(150deg, ${cfg.from}, ${cfg.to})`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: size * 0.55,
-        border: '2px solid var(--gold)',
+        border: '2px solid var(--avatar-ring, var(--gold))',
         flexShrink: 0,
         boxShadow: shadow,
       }}

@@ -81,7 +81,6 @@
   --surface-input: rgba(249, 247, 253, 0.3);
   --surface-hover: rgba(249, 247, 253, 0.38);
   --surface-row: rgba(249, 247, 253, 0.2);
-  --podium-bg: repeating-conic-gradient(from 0deg, rgba(249, 247, 253, 0.42) 0deg 4deg, rgba(238, 233, 247, 0.42) 4deg 8deg);
   --surface-panel: rgba(238, 233, 247, 0.78);
   --surface-panel-strong: rgba(238, 233, 247, 0.88);
 
@@ -192,7 +191,6 @@ html[lang='ar'] {
   --surface-input: rgba(255, 255, 255, 0.08);
   --surface-hover: rgba(255, 255, 255, 0.12);
   --surface-row: rgba(255, 255, 255, 0.08);
-  --podium-bg: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.07) 0deg 4deg, rgba(255, 255, 255, 0.03) 4deg 8deg);
   --surface-panel: rgba(26, 20, 38, 0.74);
   --surface-panel-strong: rgba(24, 18, 34, 0.84);
 
@@ -1289,65 +1287,6 @@ button.list-row.selected {
   font-weight: 700;
   color: var(--ink-soft);
   line-height: 1.2;
-}
-
-/* ---------------- Podium (leaderboard) ---------------- */
-.podium-wrap {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 10px;
-  padding: 28px 12px 0;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  border: 1px solid var(--glass-border);
-  background: var(--podium-bg);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-3d-md);
-}
-.podium-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 30%;
-  z-index: 1;
-}
-.podium-avatar-ring {
-  border-radius: 50%;
-  padding: 3px;
-  background: var(--surface-chip);
-  box-shadow: var(--shadow-3d-sm);
-}
-.podium-block {
-  width: 100%;
-  border-radius: 16px 16px 0 0;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 10px;
-  font-weight: 800;
-  font-size: 22px;
-  color: white;
-}
-.podium-1 .podium-block {
-  height: 108px;
-  background: linear-gradient(160deg, #6be0a0, var(--success));
-  box-shadow: 0 6px 16px rgba(46, 158, 91, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.45);
-}
-.podium-2 .podium-block {
-  height: 78px;
-  background: linear-gradient(160deg, #ffcf82, var(--gold));
-  box-shadow: 0 6px 16px rgba(240, 168, 58, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.45);
-}
-.podium-3 .podium-block {
-  height: 58px;
-  /* A fixed rose, not --pastel-pink-ink: that token goes light in dark mode, which would put
-     this block's white numeral on a pale pink. */
-  background: linear-gradient(160deg, #f291a1, #9f4659);
-  box-shadow: 0 6px 16px rgba(192, 84, 107, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.45);
 }
 
 /* ---------------- Forms ---------------- */
