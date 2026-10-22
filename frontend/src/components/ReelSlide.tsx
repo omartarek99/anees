@@ -335,6 +335,18 @@ export function ReelSlide({
                 {data.subjectName}
               </span>
             </div>
+            {/* Who added the video -- always visible. */}
+            {data.author && (
+              <Link
+                to={`/profile/${data.author.username}`}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, width: 'fit-content', textDecoration: 'none' }}
+              >
+                <Avatar avatarKey={data.author.avatarKey} photoUrl={data.author.avatarUrl} size={22} />
+                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12.5, textShadow: '0 1px 3px rgba(0,0,0,0.5)', textDecoration: 'underline' }}>
+                  {t('reels.lessonBy', { name: data.author.displayName })}
+                </span>
+              </Link>
+            )}
             {/* The details open ABOVE the See more toggle, so the toggle always sits right over the
                 quiz / next-lesson button below. */}
             {captionExpanded && (
@@ -342,28 +354,18 @@ export function ReelSlide({
                 className="no-scrollbar swiper-no-swiping swiper-no-mousewheel"
                 style={{ marginBottom: 6, maxHeight: '32vh', overflowY: 'auto', overscrollBehavior: 'contain' }}
               >
-                {data.author && (
-                  <Link
-                    to={`/profile/${data.author.username}`}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, width: 'fit-content', textDecoration: 'none' }}
-                  >
-                    <Avatar avatarKey={data.author.avatarKey} photoUrl={data.author.avatarUrl} size={22} />
-                    <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12.5, textShadow: '0 1px 3px rgba(0,0,0,0.5)', textDecoration: 'underline' }}>
-                      {t('reels.lessonBy', { name: data.author.displayName })}
-                    </span>
-                  </Link>
-                )}
                 <p style={{ color: 'rgba(255,255,255,0.92)', fontSize: 13.5, lineHeight: 1.4, margin: 0, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
                   {data.scriptText}
                 </p>
               </div>
             )}
-            {(data.author || data.scriptText) && (
+            {data.scriptText && (
               <button
                 type="button"
                 aria-expanded={captionExpanded}
                 onClick={() => setCaptionExpanded((v) => !v)}
                 style={{
+                  display: 'block',
                   background: 'none',
                   border: 'none',
                   padding: 0,
