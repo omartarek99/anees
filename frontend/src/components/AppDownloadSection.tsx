@@ -1,19 +1,30 @@
 import { useState } from 'react';
 import { RiAppleFill, RiAndroidFill } from '@remixicon/react';
 import { useLanguage } from '../lib/language-context';
-import { useInstallApp } from '../lib/pwa';
+import { useInstallApp, openShareSheet } from '../lib/pwa';
 
 type Platform = 'ios' | 'android';
 
 /** "Get the app" block at the bottom of the landing page: one button for iPhone and one for Android.
- * Android opens the browser's own install window when it offered one; either button otherwise shows that
- * platform's short "Add to Home Screen" steps. The visitor's own platform opens by default. Hidden once the
- * site is already running as an installed app. */
+ * On an iPhone the button opens the Share sheet straight away (where "Add to Home Screen" is); on Android it opens the
+ * browser's own install window. Anywhere that is not possible (or on the other platform's button) it shows that
+ * platform's short written steps instead. Hidden once the site is already running as an installed app. */
 export function AppDownloadSection() {
   const { t } = useLanguage();
-  const { ios, android, installed, install } = useInstallApp();
-  const [open, setOpen] = useState<Platform | null>(ios ? 'ios' : android ? 'android' : null);
+  const { ios, installed, install } = useInstallApp();
+  // Nothing is expanded until a button is tapped: the tap itself does the installing (Share sheet / install window).
+  const [open, setOpen] = useState<Platform | null>(null);
   if (installed) return null;
+
+  async function onIphone() {
+    if (ios) {
+      // The steps stay visible underneath as a guide for picking "Add to Home Screen" in the sheet.
+      setOpen('ios');
+      await openShareSheet();
+      return;
+    }
+    setOpen((p) => (p === 'ios' ? null : 'ios'));
+  }
 
   async function onAndroid() {
     const opened = await install();
@@ -38,7 +49,7 @@ export function AppDownloadSection() {
               type="button"
               className="landing-store-btn"
               aria-expanded={open === 'ios'}
-              onClick={() => setOpen((p) => (p === 'ios' ? null : 'ios'))}
+              onClick={onIphone}
             >
               <RiAppleFill size={30} aria-hidden />
               <span>

@@ -49,6 +49,20 @@ function isAndroid() {
   return /android/i.test(navigator.userAgent);
 }
 
+/** iPhone has no "install" API, but its Share sheet is where "Add to Home Screen" lives, and the Web Share API opens
+ * that sheet straight from a tap. Resolves true when the sheet was shown (even if the person then closed it),
+ * false when sharing is not available so the caller should show the written steps instead. */
+export async function openShareSheet(): Promise<boolean> {
+  if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') return false;
+  try {
+    await navigator.share({ title: 'Anees أنيس', url: `${window.location.origin}/` });
+    return true;
+  } catch (err) {
+    // Closing the sheet without choosing anything is not a failure.
+    return (err as DOMException).name === 'AbortError';
+  }
+}
+
 export type InstallState = {
   /** Show an "Install app" entry at all: not already installed, and on a phone (or the browser offered a prompt). */
   available: boolean;
