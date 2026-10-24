@@ -28,13 +28,11 @@ export function AppDownloadSection() {
         : null;
 
   return (
-    <section className="landing-app" id="app" aria-labelledby="landing-app-title">
+    <section className="landing-app" id="app" aria-label={t('landing.appTag')}>
       <div className="landing-app-inner">
         <img className="landing-app-logo" src="/icons/logo-mark.png" alt="" width={112} height={112} loading="lazy" decoding="async" />
         <div className="landing-app-copy">
           <p className="landing-tag">{t('landing.appTag')}</p>
-          <h2 id="landing-app-title">{t('landing.appTitle')}</h2>
-          <p className="landing-body">{t('landing.appBody')}</p>
           <div className="landing-store-row">
             <button
               type="button"
