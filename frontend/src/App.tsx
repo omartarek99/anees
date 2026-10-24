@@ -57,6 +57,41 @@ function PageviewTracker() {
   return null;
 }
 
+// Each public page gets its own browser-tab title and search snippet, so Google can tell the login page from
+// the signup page. The text is bilingual on purpose (not tied to the language toggle): Google reads the page in
+// the site's default language, and people search for "Anees login" as often as "تسجيل الدخول". Every other
+// page (the landing page and the signed-in app) keeps the plain site title "Anees".
+const SITE_TITLE = 'Anees';
+const PAGE_META: Record<string, { title: string; description: string }> = {
+  '/login': {
+    title: 'Log in | تسجيل الدخول | Anees',
+    description: 'Log in to Anees to continue your lessons, quizzes and rewards. سجّل الدخول إلى أنيس لمتابعة دروسك واختباراتك ومكافآتك.',
+  },
+  '/signup': {
+    title: 'Sign up | إنشاء حساب | Anees',
+    description: 'Create your Anees account as a student or a teacher. أنشئ حسابك في أنيس كطالب أو معلّم وابدأ التعلّم.',
+  },
+  '/forgot-password': { title: 'Reset password | استعادة كلمة المرور | Anees', description: '' },
+  '/verify-email': { title: 'Verify email | تفعيل البريد | Anees', description: '' },
+  '/privacy': { title: 'Privacy policy | سياسة الخصوصية | Anees', description: '' },
+  '/terms': { title: 'Terms and conditions | الشروط والأحكام | Anees', description: '' },
+  '/cookies': { title: 'Cookie policy | سياسة ملفات تعريف الارتباط | Anees', description: '' },
+};
+let defaultDescription: string | null = null;
+
+function PageMeta() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const meta = PAGE_META[pathname];
+    document.title = meta?.title ?? SITE_TITLE;
+    const tag = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+    if (!tag) return;
+    if (defaultDescription === null) defaultDescription = tag.content;
+    tag.content = meta?.description || defaultDescription;
+  }, [pathname]);
+  return null;
+}
+
 function FullScreenLoader() {
   return (
     <div style={{ height: '100vh' }} className="flex-center">
@@ -177,6 +212,7 @@ export default function App() {
         <LanguageProvider>
           <AuthProvider>
             <PageviewTracker />
+            <PageMeta />
             <ScrollToTop />
             <Routes>
               {/* Public regardless of auth state — a visitor should be able to read these before ever signing up. */}
