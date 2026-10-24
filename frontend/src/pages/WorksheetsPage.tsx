@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { RiVideoLine, RiTranslate2, RiBookOpenLine, RiMoonClearLine, RiEarthLine } from '@remixicon/react';
+import { RiVideoLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -10,28 +10,11 @@ import { Topbar } from '../components/Topbar';
 import { DifficultyDial, type DialOption } from '../components/DifficultyDial';
 import { PrintableWorksheet } from '../components/PrintableWorksheet';
 
-type Subject = 'math' | 'science' | 'english' | 'arabic' | 'islamic' | 'social';
+type Subject = 'math' | 'science';
 type Difficulty = 'easy' | 'medium' | 'hard';
 
-// The artwork for Math, Science and the three difficulty levels (public/images/worksheets/<name>.webp).
+// The artwork for the two subjects and three difficulty levels (public/images/worksheets/<name>.webp).
 const art = (name: string) => `/images/worksheets/${name}.webp`;
-
-// The subject pills. Math and Science keep their artwork; the language and humanities subjects use an icon.
-const SUBJECTS: { key: Subject; color: string; Icon?: typeof RiVideoLine }[] = [
-  { key: 'math', color: 'stat-card-blue' },
-  { key: 'science', color: 'stat-card-green' },
-  { key: 'english', color: 'stat-card-yellow', Icon: RiTranslate2 },
-  { key: 'arabic', color: 'stat-card-pink', Icon: RiBookOpenLine },
-  { key: 'islamic', color: 'stat-card-green', Icon: RiMoonClearLine },
-  { key: 'social', color: 'stat-card-blue', Icon: RiEarthLine },
-];
-const hasArt = (subject: Subject) => subject === 'math' || subject === 'science';
-
-function SubjectIcon({ subject, size }: { subject: Subject; size: number }) {
-  const Icon = SUBJECTS.find((s) => s.key === subject)?.Icon;
-  if (Icon) return <Icon size={size} style={{ verticalAlign: -Math.round(size / 4), marginInlineEnd: 6, display: 'inline-block' }} aria-hidden />;
-  return <img src={art(subject)} alt="" width={size} height={size} style={{ verticalAlign: -7, marginInlineEnd: 6, display: 'inline-block' }} />;
-}
 
 type GenerateResponse = {
   worksheetId: number;
@@ -228,17 +211,22 @@ export function WorksheetsPage() {
           <div>
             <label style={{ fontWeight: 700, marginBottom: 8, display: 'block' }}>{t('worksheets.subject')}</label>
             <div className="pill-row">
-              {SUBJECTS.map(({ key, color, Icon }) => (
-                <button
-                  key={key}
-                  className={`category-pill ${color}${subject === key ? ' selected' : ''}`}
-                  aria-pressed={subject === key}
-                  onClick={() => setSubject(key)}
-                >
-                  <span className="category-pill-icon">{Icon ? <Icon size={22} aria-hidden /> : <img src={art(key)} alt="" />}</span>
-                  {t(`worksheets.${key}` as 'worksheets.math')}
-                </button>
-              ))}
+              <button
+                className={`category-pill stat-card-blue${subject === 'math' ? ' selected' : ''}`}
+                aria-pressed={subject === 'math'}
+                onClick={() => setSubject('math')}
+              >
+                <span className="category-pill-icon"><img src={art('math')} alt="" /></span>
+                {t('worksheets.math')}
+              </button>
+              <button
+                className={`category-pill stat-card-green${subject === 'science' ? ' selected' : ''}`}
+                aria-pressed={subject === 'science'}
+                onClick={() => setSubject('science')}
+              >
+                <span className="category-pill-icon"><img src={art('science')} alt="" /></span>
+                {t('worksheets.science')}
+              </button>
             </div>
           </div>
 
@@ -263,8 +251,8 @@ export function WorksheetsPage() {
         <div className="stack">
           <div className="flex-between">
             <h2 style={{ fontSize: 18 }}>
-              <SubjectIcon subject={subject} size={26} />
-              {t(`worksheets.${subject}` as 'worksheets.math')} —{' '}
+              <img src={art(subject)} alt="" width={26} height={26} style={{ verticalAlign: -7, marginInlineEnd: 6, display: 'inline-block' }} />
+              {subject === 'math' ? t('worksheets.math') : t('worksheets.science')} —{' '}
               {t(`worksheets.${difficulty}`)}
               {worksheet.topic && (
                 <span className="muted" style={{ fontSize: 14, display: 'block', fontWeight: 600 }}>
@@ -307,11 +295,11 @@ export function WorksheetsPage() {
           {user?.role === 'teacher' && (
             <PrintableWorksheet
               subjectLabel={
-                t(`worksheets.${subject}` as 'worksheets.math') +
+                (subject === 'math' ? t('worksheets.math') : t('worksheets.science')) +
                 (worksheet.video ? ` · ${pickText(lang, worksheet.video.title, worksheet.video.titleAr)}` : '') +
                 (worksheet.topic ? ` · ${worksheet.topic}` : '')
               }
-              subjectIcon={hasArt(subject) ? art(subject) : undefined}
+              subjectIcon={art(subject)}
               difficultyLabel={t(`worksheets.${difficulty}`)}
               difficultyIcon={art(difficulty)}
               questions={questions}

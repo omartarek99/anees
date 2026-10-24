@@ -269,13 +269,6 @@ if (!db.prepare(`SELECT 1 FROM one_time_jobs WHERE name = 'welcome-news-all-subj
   );
   db.exec(`INSERT INTO one_time_jobs (name) VALUES ('welcome-news-all-subjects')`);
 }
-// Subjects beyond Math and Science (worksheets, and the video subject list). The seed only creates the first
-// two, so older databases get these on boot; INSERT OR IGNORE keeps it idempotent.
-const insertExtraSubject = db.prepare(`INSERT OR IGNORE INTO subjects (key, name, name_ar, icon) VALUES (?,?,?,?)`);
-insertExtraSubject.run('english', 'English', 'اللغة الإنجليزية', '\u{1F524}');
-insertExtraSubject.run('arabic', 'Arabic', 'اللغة العربية', '\u{1F4D6}');
-insertExtraSubject.run('islamic', 'Islamic Education', 'التربية الإسلامية', '\u{1F54C}');
-insertExtraSubject.run('social', 'Social Studies', 'الاجتماعيات', '\u{1F30D}');
 const worksheetAttemptCols = db.prepare(`PRAGMA table_info(worksheet_attempts)`).all() as { name: string }[];
 if (!worksheetAttemptCols.some((c) => c.name === 'reel_id')) {
   db.exec(`ALTER TABLE worksheet_attempts ADD COLUMN reel_id INTEGER REFERENCES reels(id) ON DELETE SET NULL`);

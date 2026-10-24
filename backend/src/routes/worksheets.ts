@@ -26,13 +26,9 @@ function shuffle<T>(arr: T[]): T[] {
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 
-// Subjects a general worksheet can be written for (rows in the subjects table, see db.ts).
-const WORKSHEET_SUBJECTS = ['math', 'science', 'english', 'arabic', 'islamic', 'social'] as const;
-type WorksheetSubject = (typeof WORKSHEET_SUBJECTS)[number];
-
 const generateSchema = z
   .object({
-    subject: z.enum(WORKSHEET_SUBJECTS).optional(),
+    subject: z.enum(['math', 'science']).optional(),
     difficulty: z.enum(['easy', 'medium', 'hard']),
     // When set, the worksheet is built around this teacher video's topic instead of the
     // shared general pool, and the subject comes from the video itself.
@@ -112,7 +108,6 @@ function questionPayload(q: any) {
 // description/script) or a lesson name the user typed for a general worksheet.
 type AiScope = {
   subjectId: number;
-  subjectKey: string;
   subjectName: string;
   grade: number;
   topic: string;
@@ -158,7 +153,6 @@ async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise
     scriptText: scope.scriptText,
     scriptTextAr: scope.scriptTextAr,
     subjectName: scope.subjectName,
-    subjectKey: scope.subjectKey,
     grade: scope.grade,
     count: QUESTIONS_PER_WORKSHEET,
     topic: scope.topic,
@@ -286,7 +280,7 @@ worksheetsRouter.post(
   async (req, res) => {
     try {
       const { subject, difficulty, reelId, topic: rawTopic } = req.body as {
-        subject?: WorksheetSubject;
+        subject?: 'math' | 'science';
         difficulty: Difficulty;
         reelId?: number;
         topic?: string;
@@ -301,7 +295,6 @@ worksheetsRouter.post(
         const picked = await buildAiQuestions(
           {
             subjectId: reel.subject_id,
-            subjectKey: reel.subject_key,
             subjectName: reel.subject_name,
             grade: reel.grade,
             topic: reel.title,
@@ -351,7 +344,6 @@ worksheetsRouter.post(
         const picked = await buildAiQuestions(
           {
             subjectId: subjectRow.id,
-            subjectKey: subjectRow.key,
             subjectName: subjectRow.name,
             grade: user?.grade ?? 5,
             topic,
