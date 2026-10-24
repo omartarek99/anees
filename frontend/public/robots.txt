@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://aneesv2.vercel.app/sitemap.xml
+Sitemap: https://anees-qa.site/sitemap.xml

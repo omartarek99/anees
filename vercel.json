@@ -4,6 +4,14 @@
   "buildCommand": "npm run build --prefix frontend",
   "outputDirectory": "frontend/dist",
   "framework": null,
+  "redirects": [
+    {
+      "source": "/((?!api/).*)",
+      "has": [{ "type": "host", "value": "aneesv2.vercel.app" }],
+      "destination": "https://anees-qa.site/$1",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/api/:path*", "destination": "https://anees-01h6.onrender.com/api/:path*" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
