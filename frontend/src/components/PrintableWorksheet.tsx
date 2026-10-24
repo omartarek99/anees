@@ -17,7 +17,8 @@ export function PrintableWorksheet({
   questions,
 }: {
   subjectLabel: string;
-  subjectIcon: string;
+  // Math and Science have artwork; the other subjects print their name only.
+  subjectIcon?: string;
   difficultyLabel: string;
   difficultyIcon: string;
   questions: PrintableQuestion[];
@@ -51,7 +52,7 @@ export function PrintableWorksheet({
               {t('brand')} <span aria-hidden>🦅</span>
             </h1>
             <p>
-              <img src={subjectIcon} alt="" className="printable-worksheet-icon" /> {subjectLabel} — <img src={difficultyIcon} alt="" className="printable-worksheet-icon" /> {difficultyLabel}
+              {subjectIcon && <img src={subjectIcon} alt="" className="printable-worksheet-icon" />} {subjectLabel} — <img src={difficultyIcon} alt="" className="printable-worksheet-icon" /> {difficultyLabel}
             </p>
           </div>
         </header>

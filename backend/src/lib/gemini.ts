@@ -46,10 +46,58 @@ const QUESTIONS_RESPONSE_SCHEMA = {
 
 export type GeminiResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
+// Math and Science worksheets are mostly calculation problems; the other subjects get their own kind of practice
+// questions (a grammar worksheet full of arithmetic would make no sense).
+const CALCULATION_SUBJECTS = new Set(['math', 'science']);
+
+function worksheetStyle(subjectKey: string, count: number): string {
+  const common = `- Keep every question SHORT and CLEAR: one short sentence or a short fill-in-the-blank. No long stories.
+- Answer choices must be short (one word, a short phrase or a short sentence).
+- Every question must have exactly ONE clearly correct answer. Double-check every fact, spelling and rule before answering. Do not write ambiguous, trick-like or opinion questions; if unsure, write a simpler, cleaner one.
+- Write all ${count} questions as practice for the topic, mixing the kinds of questions listed above. Do not use calculation problems.
+- In the explanation, give the rule or fact in one short line.
+`;
+  switch (subjectKey) {
+    case 'english':
+      return `QUESTION STYLE (very important -- this is an English language practice worksheet):
+- Mix: grammar (tenses, singular/plural, pronouns, prepositions, articles), vocabulary (meanings, opposites, synonyms), spelling, choosing the correct word to complete a sentence, and word order.
+- The English question and its four choices are written in English. In the Arabic fields, write the instruction in Arabic but keep the English words/sentences being tested in English (do not translate them away).
+${common}
+`;
+    case 'arabic':
+      return `QUESTION STYLE (very important -- this is an Arabic language practice worksheet):
+- Mix: grammar (nominal and verbal sentences, subject and predicate, verb and doer, past/present/imperative verbs), vocabulary (meanings, opposites, synonyms), spelling (hamza, taa marbuta vs taa maftuha, alif maqsura), plurals, and completing a sentence with the right word.
+- The tested Arabic words and sentences must stay in correct Modern Standard Arabic in BOTH the English and Arabic fields (the English fields only translate the instruction, e.g. "Choose the correct plural").
+- Copy every tested Arabic word, sentence and choice CHARACTER FOR CHARACTER the same in the English and the Arabic fields, with correct spelling and full diacritics only where they matter to the question. A typo in either copy makes the question wrong.
+- Stay on the named topic: every question must test that grammar or language point.
+${common}
+`;
+    case 'islamic':
+      return `QUESTION STYLE (very important -- this is an Islamic Education practice worksheet):
+- Cover only well-established, widely agreed basics suitable for the grade: the pillars of Islam and of faith, short well-known surahs and their meanings, the stories of the prophets, good manners and character (akhlaq), cleanliness and prayer basics, Hajj and Ramadan basics, and the life of the Prophet.
+- Be accurate and respectful. Do NOT quote verses or hadith from memory unless certain of the exact text; prefer asking about meanings and well-known facts. Do not write questions on disputed rulings or opinions.
+${common}
+`;
+    case 'social':
+      return `QUESTION STYLE (very important -- this is a Social Studies practice worksheet):
+- Mix: geography (countries, capitals, cities, maps, directions, landforms, climate), history and heritage, community and citizenship, the economy and natural resources, and Qatar and the Gulf region.
+- Use facts a grade-appropriate curriculum would teach, stated simply. Avoid disputed or political opinion questions and avoid facts that change often (populations, rankings) unless the topic names them.
+${common}
+`;
+    default:
+      return `QUESTION STYLE (very important -- this is a practice worksheet):
+- Short practice questions about the topic (facts, vocabulary, completing a statement, matching a term to its meaning).
+${common}
+`;
+  }
+}
+
 export async function generateQuizQuestions(params: {
   scriptText: string;
   scriptTextAr: string;
   subjectName: string;
+  // subjects.key (math, science, english, arabic, islamic, social) -- picks the worksheet style.
+  subjectKey?: string;
   grade: number;
   count: number;
   // Optional -- set when the quiz is for a worksheet tied to a specific video: the lesson's
@@ -112,7 +160,9 @@ ${params.avoidQuestions.map((q) => `- ${q}`).join('\n')}
 `
     : ''
 }${
-  params.style === 'worksheet'
+  params.style === 'worksheet' && !CALCULATION_SUBJECTS.has(params.subjectKey ?? 'math')
+    ? worksheetStyle(params.subjectKey ?? '', params.count)
+    : params.style === 'worksheet'
     ? `QUESTION STYLE (very important -- this is a practice worksheet):
 - About 90% of the questions (at least ${Math.ceil(params.count * 0.9)} of ${params.count}) must be CALCULATION problems: the student works something out with numbers (add, subtract, multiply, divide, fractions, decimals, percentages, units and measurement, comparing/ordering numbers, simple formulas, area/perimeter, time, money...) related to the topic. Not definitions, not recall, not "which statement is true".
 - Keep every question SHORT and CLEAR: one short sentence, or just the expression itself (for example "0.35 + 0.4 = ?" or "What is 3/4 of 20?"). No stories, no long wording, no unnecessary details.
