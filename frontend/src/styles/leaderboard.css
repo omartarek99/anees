@@ -1,0 +1,399 @@
+/* Leaderboard. The layout is the "Leaderboard" Figma community design: a period toggle, a three-box podium on a
+   spotlit stage, a note under it, then a table of rows with a pager. The colours are the site's own glass, maroon
+   and gold tokens, so light and dark theme both follow the rest of the app. */
+
+.lb {
+  --lb-glow: 194 41 84; /* --maroon-light as rgb channels, for the spotlight */
+  --lb-glow-a: 0.2;
+  --lb-dot: rgb(194 41 84 / 0.3);
+  --lb-rule: color-mix(in srgb, var(--ink) 16%, transparent);
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  padding-block: 8px 8px;
+}
+:root[data-theme='dark'] .lb {
+  --lb-glow-a: 0.32;
+  --lb-dot: rgb(255 255 255 / 0.5);
+}
+
+/* The stage: a pool of light from the top centre, with a few stars in it. */
+.lb::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -12px 0 auto;
+  block-size: 520px;
+  border-radius: var(--radius-lg);
+  pointer-events: none;
+  background:
+    radial-gradient(1.5px 1.5px at 9% 34%, var(--lb-dot) 50%, transparent 52%),
+    radial-gradient(1px 1px at 21% 18%, var(--lb-dot) 50%, transparent 52%),
+    radial-gradient(1.5px 1.5px at 33% 52%, var(--lb-dot) 50%, transparent 52%),
+    radial-gradient(1px 1px at 46% 26%, var(--lb-dot) 50%, transparent 52%),
+    radial-gradient(1px 1px at 58% 44%, var(--lb-dot) 50%, transparent 52%),
+    radial-gradient(1.5px 1.5px at 71% 22%, var(--lb-dot) 50%, transparent 52%),
+    radial-gradient(1px 1px at 83% 48%, var(--lb-dot) 50%, transparent 52%),
+    radial-gradient(1.5px 1.5px at 92% 30%, var(--lb-dot) 50%, transparent 52%),
+    radial-gradient(60% 100% at 50% 0%, rgb(var(--lb-glow) / var(--lb-glow-a)) 0%, transparent 72%);
+}
+
+/* ---- Period toggle (segmented control), with a beam of light falling from it ---- */
+.lb-toggle-wrap {
+  position: relative;
+}
+.lb-toggle-wrap::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  inline-size: 110px;
+  block-size: 52px;
+  background: linear-gradient(180deg, rgb(240 168 58 / 0.5), transparent);
+  filter: blur(10px);
+  pointer-events: none;
+}
+:root[dir='rtl'] .lb-toggle-wrap::after {
+  translate: 50% 0;
+}
+.lb-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-btn);
+  background: var(--surface-row);
+  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  backdrop-filter: var(--glass-blur-sm);
+  box-shadow: var(--shadow-3d-sm);
+}
+.lb-toggle button {
+  min-inline-size: 104px;
+  padding: 8px 18px;
+  border: 0;
+  border-radius: calc(var(--radius-btn) - 3px);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+}
+.lb-toggle button:hover {
+  color: var(--ink);
+}
+.lb-toggle button.is-active {
+  background: var(--glass-bg-strong);
+  color: var(--ink);
+  box-shadow: var(--shadow-3d-sm);
+}
+
+/* ---- Podium: three boxes seen from slightly above, the middle one higher ---- */
+.lb-podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(8px, 3vw, 36px);
+  inline-size: min(100%, 880px);
+}
+.lb-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-inline-size: 0;
+}
+/* Each place has its own metal: gold, silver, copper. The tone colours the box and the avatar ring. */
+.lb-col--1 {
+  --lb-tone: 240 168 58;
+  --avatar-ring: #f0a83a;
+}
+.lb-col--2 {
+  --lb-tone: 150 158 178;
+  --avatar-ring: #c4c9d6;
+}
+.lb-col--3 {
+  --lb-tone: 184 102 50;
+  --avatar-ring: #cf7f47;
+}
+.lb-col--2,
+.lb-col--3 {
+  margin-block-start: 26px;
+}
+.lb-avatar {
+  line-height: 0;
+  filter: drop-shadow(0 8px 14px rgb(0 0 0 / 0.25));
+}
+.lb-name {
+  margin-block-start: 10px;
+  max-inline-size: 100%;
+  color: var(--ink);
+  font-size: clamp(14px, 1.7vw, 19px);
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.lb-box {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  inline-size: 100%;
+  min-block-size: 200px;
+  margin-block-start: 8px;
+  padding: 20px clamp(8px, 1.5vw, 16px) 20px;
+  text-align: center;
+}
+.lb-col--2 .lb-box,
+.lb-col--3 .lb-box {
+  margin-block-start: 28px;
+}
+.lb-col--1 .lb-box {
+  min-block-size: 250px;
+}
+/* The top face of the box... */
+.lb-box::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto;
+  block-size: 24px;
+  background: rgb(var(--lb-tone) / 0.72);
+  clip-path: polygon(13% 0, 87% 0, 100% 100%, 0 100%);
+}
+/* ...and its front face, fading out towards the bottom. */
+.lb-box::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 24px 0 0;
+  border-inline: 1px solid rgb(var(--lb-tone) / 0.55);
+  background: linear-gradient(180deg, rgb(var(--lb-tone) / 0.55), rgb(var(--lb-tone) / 0.16) 96%);
+  -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent);
+  mask-image: linear-gradient(180deg, #000 55%, transparent);
+}
+.lb-medal {
+  line-height: 0;
+  filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.3));
+}
+.lb-tier {
+  position: relative;
+  inline-size: 100%;
+  padding-block-end: 12px;
+  display: flex;
+  justify-content: center;
+}
+.lb-tier::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  block-size: 1px;
+  background: linear-gradient(90deg, transparent, var(--lb-rule), transparent);
+}
+.lb-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-block-start: 14px;
+  color: var(--ink);
+  font-size: clamp(18px, 2.4vw, 26px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.lb-value svg {
+  /* A deeper shade of the place's own metal, so the gem reads on its box (gold on gold would vanish). */
+  color: color-mix(in srgb, rgb(var(--lb-tone)) 60%, var(--ink));
+  flex: none;
+}
+.lb-unit {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+}
+/* ---- The note under the podium, then a hairline rule ---- */
+.lb-note {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 7px;
+  max-inline-size: 100%;
+  padding: 9px 18px;
+  border-radius: 10px;
+  background: var(--surface-row);
+  border: 1px solid var(--glass-border);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  backdrop-filter: var(--glass-blur-sm);
+}
+.lb-note b {
+  color: var(--ink);
+}
+.lb-note svg {
+  color: var(--gold);
+}
+.lb-rule {
+  inline-size: min(60%, 340px);
+  block-size: 1px;
+  background: linear-gradient(90deg, transparent, var(--lb-rule), transparent);
+}
+
+/* ---- Table ---- */
+.lb-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  inline-size: min(100%, 980px);
+}
+.lb-head,
+.lb-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 2.4fr) minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  padding-inline: 16px;
+}
+.lb-head {
+  padding-block-end: 2px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.lb-row {
+  min-block-size: 54px;
+  padding-block: 8px;
+  border-radius: 12px;
+  background: var(--surface-row);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-3d-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  backdrop-filter: var(--glass-blur-sm);
+}
+.lb-row--me {
+  background: var(--maroon-pale);
+}
+.lb-rank {
+  color: var(--ink);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.lb-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-inline-size: 0;
+}
+.lb-user-text {
+  min-inline-size: 0;
+}
+.lb-user-name {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lb-handle {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lb-points {
+  justify-self: end;
+}
+.lb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.lb-row--me .lb-chip {
+  background: var(--surface-chip);
+}
+.lb-chip svg {
+  color: var(--gold);
+}
+.lb-yours {
+  margin: 8px 0 0;
+  text-align: center;
+}
+
+/* ---- Pager ---- */
+.lb-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  inline-size: min(100%, 980px);
+}
+.lb-page-btn {
+  display: grid;
+  place-items: center;
+  min-inline-size: 30px;
+  block-size: 30px;
+  padding-inline: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
+}
+.lb-page-btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.lb-page-btn.is-active {
+  background: var(--glass-bg-strong);
+  color: var(--ink);
+  box-shadow: var(--shadow-3d-sm);
+}
+.lb-page-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  .lb {
+    gap: 20px;
+  }
+  .lb-col--2,
+  .lb-col--3 {
+    margin-block-start: 18px;
+  }
+  .lb-col--2 .lb-box,
+  .lb-col--3 .lb-box {
+    margin-block-start: 20px;
+  }
+  .lb-box {
+    min-block-size: 168px;
+    padding-block-start: 16px;
+  }
+  .lb-col--1 .lb-box {
+    min-block-size: 210px;
+  }
+  .lb-head,
+  .lb-row {
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    padding-inline: 12px;
+  }
+  .lb-col-tier {
+    display: none;
+  }
+}

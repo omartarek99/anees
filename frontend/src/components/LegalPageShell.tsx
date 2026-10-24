@@ -30,7 +30,7 @@ export function LegalPageShell({ title, lastUpdated, children }: { title: string
           <LanguageToggle />
         </div>
         <div className="card" style={{ padding: '32px 28px' }}>
-          <h1 style={{ fontSize: 26 }}>{title}</h1>
+          <h1 className="title-ease" style={{ fontSize: 26 }}>{title}</h1>
           <p className="muted" style={{ marginBottom: 24 }}>
             {t('legal.lastUpdated', { date: lastUpdated })}
           </p>

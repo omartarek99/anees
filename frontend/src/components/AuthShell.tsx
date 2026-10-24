@@ -28,7 +28,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
                 No backing tile: the logo's dark strokes would sink into the maroon backdrop,
                 so a white outline hugs the artwork itself (stacked drop-shadows follow the
                 alpha edge) with a soft glow behind it. */}
-            <h1 style={{ margin: 0, lineHeight: 0 }}>
+            <h1 className="title-ease" style={{ margin: 0, lineHeight: 0 }}>
               <img
                 src="/icons/logo.png"
                 alt={t('auth.heroTitle')}
@@ -50,7 +50,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
           >
             {/* Some screens (login) have no heading of their own -- the logo above is the page's h1 -- so
                 an empty title renders nothing rather than an empty <h2>. */}
-            {title && <h2 style={{ fontSize: 21 }}>{title}</h2>}
+            {title && <h2 className="title-ease" style={{ fontSize: 21 }}>{title}</h2>}
             <p className="muted" style={{ marginBottom: 20 }}>
               {subtitle}
             </p>

@@ -150,8 +150,6 @@ reelsRouter.get('/feed', (req, res) => {
 // while a reel is actively in view, see its own comment) plus slack for request latency and
 // the tail-end flush on scroll-away/unmount -- not a round number chosen for looks.
 const MAX_SECONDS_PER_CALL = 15;
-// Same slack, applied to the *elapsed-time* check below -- see its comment.
-const ELAPSED_TIME_SLACK_SECONDS = 5;
 
 const watchSchema = z.object({
   seconds: z.number().min(0).max(MAX_SECONDS_PER_CALL),
@@ -203,7 +201,7 @@ reelsRouter.post('/:reelId/watch', requireCsrfHeader, validateBody(watchSchema),
   // no earlier timestamp to measure real elapsed time against yet, so it falls back to the
   // per-call cap alone (still MAX_SECONDS_PER_CALL, not the old 300s ceiling).
   const elapsedCap = existing
-    ? Math.max(0, (Date.now() - new Date(`${existing.updated_at}Z`).getTime()) / 1000) + ELAPSED_TIME_SLACK_SECONDS
+    ? Math.max(0, (Date.now() - new Date(`${existing.updated_at}Z`).getTime()) / 1000)
     : MAX_SECONDS_PER_CALL;
   const seconds = Math.max(0, Math.min(reportedSeconds, elapsedCap));
 
@@ -229,7 +227,7 @@ reelsRouter.post('/:reelId/watch', requireCsrfHeader, validateBody(watchSchema),
   if (existing) {
     db.prepare(
       `UPDATE reel_watch_progress
-       SET watched_seconds = ?, xp_awarded = ?, loop_watched_seconds = ?, current_loop_tier = ?, updated_at = datetime('now')
+       SET watched_seconds = ?, xp_awarded = ?, loop_watched_seconds = ?, current_loop_tier = ?, updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now')
        WHERE id = ?`
     ).run(newTotalWatched, priorPoints + pointsDelta, loopWatched, loopTier, existing.id);
   } else {

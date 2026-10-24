@@ -57,9 +57,8 @@ const createNewsSchema = z.object({
 newsRouter.post('/', requireAuth, requireRole('teacher'), requireCsrfHeader, validateBody(createNewsSchema), (req, res) => {
   const { title, titleAr, body, bodyAr, icon, subject } = req.body as z.infer<typeof createNewsSchema>;
 
-  const titleCheck = moderateText(title);
-  const bodyCheck = moderateText(body);
-  if (!titleCheck.allowed || !bodyCheck.allowed) {
+  // The Arabic copies and the icon reach students too; blank ones are skipped (moderateText rejects '').
+  if (!([title, titleAr, body, bodyAr, icon].filter((t): t is string => !!t).every((t) => moderateText(t).allowed))) {
     res.status(400).json({ error: 'Please keep your announcement appropriate.' });
     return;
   }

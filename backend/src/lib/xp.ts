@@ -50,8 +50,16 @@ export const TEACHER_VIDEO_POINTS_PER_30S = 10;
 // earns exactly as much as a 90-second one (30 points), not proportionally more.
 export const TEACHER_VIDEO_MAX_COUNTED_SECONDS = 90;
 
+// Printing is unobservable (POST /worksheets/print only records a click), so without a ceiling a script could
+// mint leaderboard points by looping it. 300 is thirty prints, or ten full-length video uploads, a day.
+export const TEACHER_DAILY_POINT_CAP = 300;
+const teacherPointsToday = db.prepare(
+  `SELECT COALESCE(SUM(amount), 0) AS s FROM teacher_point_events WHERE user_id = ? AND created_at >= date('now')`
+);
+
 export function awardTeacherPoints(userId: number, amount: number, reason: string) {
-  if (amount === 0) return;
+  amount = Math.min(amount, TEACHER_DAILY_POINT_CAP - (teacherPointsToday.get(userId) as { s: number }).s);
+  if (amount <= 0) return;
   db.prepare(`INSERT INTO teacher_point_events (user_id, amount, reason) VALUES (?,?,?)`).run(userId, amount, reason);
   db.prepare(`UPDATE users SET teacher_points = teacher_points + ? WHERE id = ?`).run(amount, userId);
 }

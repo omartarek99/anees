@@ -364,7 +364,7 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
               <div className="boss-encourage-banner" style={{ margin: '12px auto', maxWidth: 420 }}>
                 {result.passed ? randomFrom(cheers.victory) : randomFrom(cheers.defeat)}
               </div>
-              {result.passed && (
+              {result.passed && result.xpEarned > 0 && (
                 <p className="badge badge-gold" style={{ fontSize: 15, marginTop: 12 }}>
                   {t('common.xpGained', { xp: result.xpEarned })}
                 </p>

@@ -6,6 +6,7 @@ import { formatWatchTime } from '../lib/format';
 import { Pagination } from './Pagination';
 import { GradeFilterSelect, type GradeFilter } from './GradeFilterSelect';
 import { MonthlyTotalChart, StudentWatchHeatmap, type MonthlyWatchTime } from './WatchTimeCharts';
+import { BarChart, DonutChart, HBarList } from './Charts';
 
 type RoleFilter = 'all' | 'student' | 'teacher';
 
@@ -42,7 +43,30 @@ type AnalyticsSummary = {
   daily: { day: string; views: number }[];
   totalViews: number;
   quizzesSolved: number;
+  xpByActivity: { activity: string; xp: number }[];
+  worksheetsByDifficulty: { difficulty: string; submitted: number }[];
 };
+
+// A palette slot belongs to its activity, so a quiet month never repaints the survivors.
+const ACTIVITIES: Record<string, { labelKey: string; color: string }> = {
+  reel_watch: { labelKey: 'admin.analyticsActivityReelWatch', color: 'var(--viz-1)' },
+  reel_quiz: { labelKey: 'admin.analyticsActivityReelQuiz', color: 'var(--viz-2)' },
+  boss_defeat: { labelKey: 'admin.analyticsActivityBoss', color: 'var(--viz-3)' },
+  craft_puzzle: { labelKey: 'admin.analyticsActivityCraft', color: 'var(--viz-4)' },
+  worksheet: { labelKey: 'admin.analyticsActivityWorksheet', color: 'var(--viz-5)' },
+  other: { labelKey: 'admin.analyticsActivityOther', color: 'var(--viz-other)' },
+};
+const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
+
+/** The last `count` UTC calendar days ending today, oldest first ('YYYY-MM-DD') -- the days the
+ * backend's page_views window covers, so quiet days show as empty columns instead of vanishing. */
+function lastDays(count: number) {
+  return Array.from({ length: count }, (_, i) => new Date(Date.now() - (count - 1 - i) * 86_400_000).toISOString().slice(0, 10));
+}
+
+function dayLabel(day: string, lang: 'en' | 'ar') {
+  return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-QA' : 'en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${day}T00:00:00Z`));
+}
 
 function reportQuery(role: RoleFilter, grade: GradeFilter, extra: Record<string, string> = {}) {
   const params = new URLSearchParams();
@@ -174,7 +198,7 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: 'student' | '
 }
 
 function AnalyticsSummaryCard() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
 
   useEffect(() => {
@@ -183,37 +207,61 @@ function AnalyticsSummaryCard() {
 
   if (!summary) return null;
 
+  const days = lastDays(30);
+  const viewsByDay = new Map(summary.daily.map((d) => [d.day, d.views]));
+  const xpSlices = summary.xpByActivity.map(({ activity, xp }) => {
+    const def = ACTIVITIES[activity] ?? ACTIVITIES.other;
+    return { key: activity, label: t(def.labelKey), value: xp, color: def.color };
+  });
+  const submitted = new Map(summary.worksheetsByDifficulty.map((w) => [w.difficulty, w.submitted]));
+  const difficultySlices = DIFFICULTIES.map((d, i) => ({ key: d, label: t(`worksheets.${d}`), value: submitted.get(d) ?? 0, color: `var(--viz-ord-${i + 1})` })).filter((s) => s.value > 0);
+
   return (
-    <div className="card">
-      <h3 style={{ fontSize: 16, marginBottom: 12 }}>{t('admin.analyticsTitle')}</h3>
-      <div className="grid-cards" style={{ marginBottom: summary.topPaths.length > 0 ? 16 : 0 }}>
-        <div className="stat-card stat-card-blue">
-          <span className="stat-card-icon"><RiEyeLine size={16} /></span>
-          <div className="stat-card-label">{t('admin.analyticsTotalViewsLabel')}</div>
-          <div className="stat-card-value">{summary.totalViews}</div>
+    <>
+      <div className="card">
+        <h3 style={{ fontSize: 16, marginBottom: 12 }}>{t('admin.analyticsTitle')}</h3>
+        <div className="grid-cards" style={{ marginBottom: 16 }}>
+          <div className="stat-card stat-card-blue">
+            <span className="stat-card-icon"><RiEyeLine size={16} /></span>
+            <div className="stat-card-label">{t('admin.analyticsTotalViewsLabel')}</div>
+            <div className="stat-card-value">{summary.totalViews}</div>
+          </div>
+          <div className="stat-card stat-card-green">
+            <span className="stat-card-icon"><RiCheckboxCircleLine size={16} /></span>
+            <div className="stat-card-label">{t('admin.analyticsQuizzesSolvedLabel')}</div>
+            <div className="stat-card-value">{summary.quizzesSolved}</div>
+          </div>
         </div>
-        <div className="stat-card stat-card-green">
-          <span className="stat-card-icon"><RiCheckboxCircleLine size={16} /></span>
-          <div className="stat-card-label">{t('admin.analyticsQuizzesSolvedLabel')}</div>
-          <div className="stat-card-value">{summary.quizzesSolved}</div>
+        <p className="muted" style={{ fontSize: 13, marginBottom: 6 }}>{t('admin.analyticsDailyTitle')}</p>
+        <BarChart
+          labels={days.map((d) => dayLabel(d, lang))}
+          values={days.map((d) => viewsByDay.get(d) ?? 0)}
+          format={(n) => String(Math.round(n))}
+          ariaLabel={t('admin.analyticsDailyTitle')}
+          integer
+        />
+      </div>
+
+      {summary.topPaths.length > 0 && (
+        <div className="card">
+          <h3 style={{ fontSize: 16, marginBottom: 12 }}>{t('admin.analyticsTopPages')}</h3>
+          <HBarList rows={summary.topPaths.slice(0, 10).map((p) => ({ key: p.path, label: <bdi dir="ltr">{p.path}</bdi>, value: p.views }))} />
+        </div>
+      )}
+
+      <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: 28 }}>
+        <div>
+          <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('admin.analyticsActivityTitle')}</h3>
+          <p className="muted" style={{ fontSize: 13, marginTop: 0, marginBottom: 16 }}>{t('admin.analyticsActivitySubtitle')}</p>
+          {xpSlices.length > 0 ? <DonutChart slices={xpSlices} unit={t('common.xpUnit')} ariaLabel={t('admin.analyticsActivityTitle')} /> : <p className="muted">{t('admin.analyticsChartEmpty')}</p>}
+        </div>
+        <div>
+          <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('admin.analyticsWorksheetsTitle')}</h3>
+          <p className="muted" style={{ fontSize: 13, marginTop: 0, marginBottom: 16 }}>{t('admin.analyticsWorksheetsSubtitle')}</p>
+          {difficultySlices.length > 0 ? <DonutChart slices={difficultySlices} unit={t('admin.analyticsWorksheetsUnit')} ariaLabel={t('admin.analyticsWorksheetsTitle')} /> : <p className="muted">{t('admin.analyticsChartEmpty')}</p>}
         </div>
       </div>
-      {summary.topPaths.length > 0 && (
-        <>
-          <p className="muted" style={{ fontSize: 13, marginBottom: 6 }}>{t('admin.analyticsTopPages')}</p>
-          <div className="stack" style={{ gap: 4 }}>
-            {summary.topPaths.map((p) => (
-              <div key={p.path} className="flex" style={{ justifyContent: 'space-between', fontSize: 13.5 }}>
-                <code>
-                  <bdi dir="ltr">{p.path}</bdi>
-                </code>
-                <span className="muted">{p.views}</span>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
+    </>
   );
 }
 

@@ -257,7 +257,7 @@ export function ProfilePage() {
           </div>
 
           <div className="stack" style={{ gap: 4 }}>
-            <RankBadge tier={profile.rankTier} size={26} />
+            <RankBadge tier={profile.rankTier} size={44} />
             {profile.role === 'teacher' ? (
               <span style={{ fontSize: 13, fontWeight: 700 }}>
                 🏆 {profile.teacherPoints} {t('profile.teacherPoints')}

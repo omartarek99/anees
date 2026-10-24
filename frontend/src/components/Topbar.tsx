@@ -33,7 +33,10 @@ export function Topbar({ title, subtitle, actions }: { title?: ReactNode; subtit
     <div className={title ? 'topbar' : 'topbar topbar--bare'}>
       {title && (
         <div>
-          <h1 className="topbar-title">{title}</h1>
+          {/* Keyed on a string title so a tab change that only swaps the text (Admin) replays the entrance. */}
+          <h1 key={typeof title === 'string' ? title : undefined} className="topbar-title title-ease">
+            {title}
+          </h1>
           {subtitle && <p className="topbar-subtitle">{subtitle}</p>}
         </div>
       )}
@@ -48,7 +51,7 @@ export function Topbar({ title, subtitle, actions }: { title?: ReactNode; subtit
               🏅 {user.playerLevel}
             </span>
             <Link to="/profile" className="stat-pill" title={pickText(lang, user.rankTier.name, user.rankTier.nameAr)} aria-label={pickText(lang, user.rankTier.name, user.rankTier.nameAr)}>
-              <RankBadge tier={user.rankTier} size={18} showName={false} />
+              <RankBadge tier={user.rankTier} size={28} showName={false} />
             </Link>
           </>
         )}

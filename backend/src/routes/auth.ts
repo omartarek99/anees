@@ -25,7 +25,6 @@ import { sendVerificationEmail, sendOtpEmail, sendResetOtpEmail, otpDeliveryAvai
 import { createOtp, verifyOtp, clearOtp } from '../lib/otp.js';
 import { recordIssue } from '../lib/diagnostics.js';
 import { getFirebaseAdminAuth } from '../lib/firebaseAdmin.js';
-import { FRONTEND_ORIGIN } from '../lib/config.js';
 import { encrypt, decrypt, hashForLookup } from '../lib/encryption.js';
 
 export const authRouter = asyncRouter();
@@ -67,8 +66,6 @@ const cookieOptions = {
   maxAge: 30 * 24 * 60 * 60 * 1000,
 };
 
-const verifyEmailContinueUrl = `${FRONTEND_ORIGIN}/verify-email`;
-
 // Firebase's "wrong credentials" error varies by API version/config.
 const WRONG_CREDENTIALS_ERRORS = new Set(['EMAIL_NOT_FOUND', 'INVALID_PASSWORD', 'INVALID_LOGIN_CREDENTIALS']);
 
@@ -95,6 +92,10 @@ function publicUser(user: any) {
     warningMessage: user.warning_message ?? null,
   };
 }
+
+// Tesseract is CPU-heavy and signup is public: cap concurrent ID checks so a burst can't pin the server.
+const MAX_CONCURRENT_ID_CHECKS = 2;
+let idChecksRunning = 0;
 
 authRouter.post(
   '/signup',
@@ -127,7 +128,17 @@ authRouter.post(
       return;
     }
     if (role === 'teacher' && idDocument) {
-      const verification = await verifyQatarIdPhoto(idDocument.buffer);
+      if (idChecksRunning >= MAX_CONCURRENT_ID_CHECKS) {
+        res.status(503).json({ error: 'We are busy right now. Please try again in a minute.' });
+        return;
+      }
+      idChecksRunning++;
+      let verification: Awaited<ReturnType<typeof verifyQatarIdPhoto>>;
+      try {
+        verification = await verifyQatarIdPhoto(idDocument.buffer);
+      } finally {
+        idChecksRunning--;
+      }
       if (!verification.ok) {
         res.status(400).json({ error: ID_VERIFICATION_MESSAGES[verification.reason] });
         return;

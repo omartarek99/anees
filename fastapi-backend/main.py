@@ -1,7 +1,9 @@
+import hmac
+import os
 from pathlib import Path
 from typing import Literal
 
-from fastapi import BackgroundTasks, FastAPI
+from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException
 from postgrest.exceptions import APIError
 from pydantic import BaseModel, Field
 
@@ -12,6 +14,16 @@ app = FastAPI(title="Anees API")
 
 ASSETS_DIR = Path(__file__).parent / "assets"
 
+# supabase_client (imported above) has already loaded .env by this point.
+API_KEY = os.environ.get("API_KEY")
+
+
+def require_api_key(x_api_key: str | None = Header(default=None)):
+    """Shared-secret gate for every route that touches Supabase or spends CPU. Fails closed: with
+    API_KEY unset nothing gets through, so a fresh deploy is never open by accident."""
+    if not API_KEY or not x_api_key or not hmac.compare_digest(x_api_key.encode(), API_KEY.encode()):
+        raise HTTPException(status_code=401, detail="Invalid or missing API key.")
+
 
 @app.get("/health")
 def health_check():
@@ -19,7 +31,7 @@ def health_check():
     return {"status": "ok"}
 
 
-@app.get("/health/supabase")
+@app.get("/health/supabase", dependencies=[Depends(require_api_key)])
 def supabase_health_check():
     """Confirms SUPABASE_URL/SUPABASE_ANON_KEY actually authenticate against a live project.
 
@@ -32,7 +44,7 @@ def supabase_health_check():
     except APIError as e:
         if e.code != "PGRST205":  # anything other than "table not found" is a real problem
             raise
-    return {"status": "ok", "supabase_url": str(supabase.supabase_url)}
+    return {"status": "ok"}
 
 
 class ReelGenerationRequest(BaseModel):
@@ -40,7 +52,7 @@ class ReelGenerationRequest(BaseModel):
     difficulty_level: Literal["easy", "medium", "hard"]
 
 
-@app.post("/reels/generate", status_code=202)
+@app.post("/reels/generate", status_code=202, dependencies=[Depends(require_api_key)])
 def request_reel_generation(payload: ReelGenerationRequest, background_tasks: BackgroundTasks):
     """Kicks off reel generation in the background and returns immediately.
 

@@ -19,7 +19,7 @@ import { getDoublePointsStatus, startDoublePointsNow } from '../lib/doublePoints
 import { supabaseAdmin } from '../lib/supabase.js';
 import { looksLikeImage } from '../lib/imageValidation.js';
 import { mailStatus } from '../lib/mailer.js';
-import { parseRoleFilter, parseGrade, pageViewStats, countReportUsers, queryReportRows, reportTotals, monthlyWatch, trailingMonthKeys } from '../lib/reportData.js';
+import { parseRoleFilter, parseGrade, pageViewStats, countReportUsers, queryReportRows, reportTotals, monthlyWatch, trailingMonthKeys, SINCE_30_DAYS, quizzesSolvedTotal, pageViewsLast30Days } from '../lib/reportData.js';
 import { buildReportWorkbook } from '../lib/reportExcel.js';
 import { recentIssues } from '../lib/diagnostics.js';
 import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX, deleteCertificateImageIfAny } from '../lib/certificateImage.js';
@@ -244,7 +244,7 @@ adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSch
 
 const certificateImageUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 8 * 1024 * 1024 },
+  limits: { fileSize: 8 * 1024 * 1024, files: 1, fields: 3, fieldSize: 1024, parts: 4 },
   fileFilter: (_req, file, cb) => {
     if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) cb(null, true);
     else cb(new Error('INVALID_IMAGE_TYPE'));
@@ -463,12 +463,6 @@ adminRouter.get('/reports/export.xlsx', async (req, res) => {
     const monthlyUsers = [...monthlyWatch('student', grade, months).users, ...monthlyWatch('teacher', null, months).users].sort(
       (a, b) => b.monthly.reduce((s, n) => s + n, 0) - a.monthly.reduce((s, n) => s + n, 0)
     );
-    const quizzesSolved = (
-      db.prepare(`SELECT COUNT(*) AS c FROM reel_watch_progress rwp JOIN users u ON u.id = rwp.user_id WHERE rwp.quiz_completed = 1 AND u.is_seed = 0`).get() as { c: number }
-    ).c;
-    const pageViews30d = (
-      db.prepare(`SELECT COUNT(*) AS c FROM page_views WHERE created_at >= datetime('now', '-30 days')`).get() as { c: number }
-    ).c;
 
     const { buffer, filename } = await buildReportWorkbook({
       lang,
@@ -478,8 +472,8 @@ adminRouter.get('/reports/export.xlsx', async (req, res) => {
       pages: pageViewStats(),
       months,
       monthlyUsers,
-      quizzesSolved,
-      pageViews30d,
+      quizzesSolved: quizzesSolvedTotal(),
+      pageViews30d: pageViewsLast30Days(),
     });
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -498,7 +492,7 @@ adminRouter.get('/analytics/summary', (_req, res) => {
   const topPaths = db
     .prepare(
       `SELECT path, COUNT(*) as views FROM page_views
-       WHERE created_at >= datetime('now', '-30 days')
+       WHERE created_at >= ${SINCE_30_DAYS}
        GROUP BY path ORDER BY views DESC LIMIT 20`
     )
     .all() as { path: string; views: number }[];
@@ -506,25 +500,35 @@ adminRouter.get('/analytics/summary', (_req, res) => {
   const daily = db
     .prepare(
       `SELECT date(created_at) as day, COUNT(*) as views FROM page_views
-       WHERE created_at >= datetime('now', '-30 days')
+       WHERE created_at >= ${SINCE_30_DAYS}
        GROUP BY day ORDER BY day ASC`
     )
     .all() as { day: string; views: number }[];
 
   const totalViews = daily.reduce((sum, d) => sum + d.views, 0);
 
-  // Every reel quiz a real (non-seed) account has ever submitted at least once --
-  // quiz_completed is sticky regardless of score (see schema.sql), so this counts attempts
-  // solved, not just passed ones.
-  const quizzesSolved = (
-    db
-      .prepare(
-        `SELECT COUNT(*) as c FROM reel_watch_progress rwp
-         JOIN users u ON u.id = rwp.user_id
-         WHERE rwp.quiz_completed = 1 AND u.is_seed = 0`
-      )
-      .get() as { c: number }
-  ).c;
+  // Student XP in the same window, by what earned it. The worksheet reasons ('worksheet_easy', ...) fold into
+  // one activity (their difficulty split is its own chart); anything unrecognised lands in 'other'.
+  const xpByActivity = db
+    .prepare(
+      `SELECT CASE WHEN e.reason LIKE 'worksheet_%' THEN 'worksheet'
+                   WHEN e.reason IN ('reel_watch', 'reel_quiz', 'boss_defeat', 'craft_puzzle') THEN e.reason
+                   ELSE 'other' END as activity,
+              SUM(e.amount) as xp
+       FROM xp_events e JOIN users u ON u.id = e.user_id
+       WHERE u.is_seed = 0 AND u.role = 'student' AND e.amount > 0 AND e.created_at >= ${SINCE_30_DAYS}
+       GROUP BY activity ORDER BY xp DESC`
+    )
+    .all() as { activity: string; xp: number }[];
 
-  res.json({ topPaths, daily, totalViews, quizzesSolved });
+  const worksheetsByDifficulty = db
+    .prepare(
+      `SELECT a.difficulty, COUNT(*) as submitted FROM worksheet_attempts a
+       JOIN users u ON u.id = a.user_id
+       WHERE a.status = 'submitted' AND u.is_seed = 0 AND a.created_at >= ${SINCE_30_DAYS}
+       GROUP BY a.difficulty`
+    )
+    .all() as { difficulty: string; submitted: number }[];
+
+  res.json({ topPaths, daily, totalViews, quizzesSolved: quizzesSolvedTotal(), xpByActivity, worksheetsByDifficulty });
 });

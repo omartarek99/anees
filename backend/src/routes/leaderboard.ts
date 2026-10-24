@@ -79,6 +79,14 @@ leaderboardRouter.get('/', (req, res) => {
     };
   }
 
+  const participants = (
+    db
+      .prepare(
+        `SELECT COUNT(DISTINCT u.id) as c FROM users u JOIN ${pointsTable} x ON x.user_id = u.id WHERE ${inMonth} AND ${roleFilter}`
+      )
+      .get() as { c: number }
+  ).c;
+
   const inTop20 = leaders.some((l) => l.username === meRow?.username);
-  res.json({ month: month ?? 'current', leaders, me, inTop20, isTeacherBoard: isTeacher });
+  res.json({ month: month ?? 'current', leaders, me, inTop20, participants, isTeacherBoard: isTeacher });
 });

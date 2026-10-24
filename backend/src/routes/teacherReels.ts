@@ -1,5 +1,5 @@
 import { asyncRouter } from '../lib/asyncRouter.js';
-import type { Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
 import { db } from '../db/db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
@@ -12,7 +12,7 @@ import { compressVideo } from '../lib/videoCompression.js';
 import { awardTeacherPoints, teacherVideoUploadPoints } from '../lib/xp.js';
 import { VIDEO_BUCKET, VIDEO_PATH_PREFIX, deleteReelVideoIfAny } from '../lib/reelVideo.js';
 import { generateQuizQuestions } from '../lib/gemini.js';
-import { aiGenerationLimiter } from '../middleware/rateLimit.js';
+import { aiGenerationLimiter, videoUploadLimiter } from '../middleware/rateLimit.js';
 
 export const teacherReelsRouter = asyncRouter();
 
@@ -23,7 +23,7 @@ const ACCEPTED_VIDEO_MIME_TYPES = new Set(['video/mp4', 'video/webm', 'video/qui
 
 const videoUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 },
+  limits: { fileSize: 100 * 1024 * 1024, files: 1, fields: 0, parts: 2 },
   fileFilter: (_req, file, cb) => {
     if (ACCEPTED_VIDEO_MIME_TYPES.has(file.mimetype)) cb(null, true);
     else cb(new Error('INVALID_VIDEO_TYPE'));
@@ -47,17 +47,36 @@ function looksLikeVideo(buffer: Buffer, mimetype: string): boolean {
 
 const handleVideoUpload = handleUpload(videoUpload, 'Please upload a valid video (MP4, WebM, or MOV, under 100MB).');
 
+// An upload sits in memory (up to 100MB) and is then transcoded, so one at a time per teacher and three across
+// the server keeps RAM and ffmpeg bounded however many requests arrive. Runs before multer buffers anything.
+const uploadsInFlight = new Set<number>();
+function limitConcurrentUploads(req: Request, res: Response, next: NextFunction) {
+  const userId = req.userId!;
+  if (uploadsInFlight.has(userId) || uploadsInFlight.size >= 3) {
+    res.status(429).json({ error: 'An upload is already in progress. Please wait for it to finish.' });
+    return;
+  }
+  uploadsInFlight.add(userId);
+  res.once('close', () => uploadsInFlight.delete(userId));
+  next();
+}
+
 function moderateReelContent(body: {
   title: string;
+  titleAr: string;
   scriptText: string;
-  questions: { questionText: string; explanation: string; choices: string[] }[];
+  scriptTextAr: string;
+  questions: { questionText: string; questionTextAr: string; explanation: string; explanationAr: string; choices: string[]; choicesAr: string[] }[];
 }): boolean {
+  // The Arabic copies reach students too; they default to '' when left blank, and moderateContent rejects '', so skip those.
   const texts = [
     body.title,
+    body.titleAr,
     body.scriptText,
-    ...body.questions.flatMap((q) => [q.questionText, q.explanation, ...q.choices]),
+    body.scriptTextAr,
+    ...body.questions.flatMap((q) => [q.questionText, q.questionTextAr, q.explanation, q.explanationAr, ...q.choices, ...q.choicesAr]),
   ];
-  return texts.every((t) => moderateContent(t).allowed);
+  return texts.filter(Boolean).every((t) => moderateContent(t).allowed);
 }
 
 function getOwnReel(id: number, userId: number) {
@@ -346,6 +365,8 @@ teacherReelsRouter.post(
   requireAuth,
   requireRole('teacher'),
   requireCsrfHeader,
+  videoUploadLimiter,
+  limitConcurrentUploads,
   handleVideoUpload,
   async (req, res) => {
     const reel = getOwnReel(Number(req.params.id), req.userId!);

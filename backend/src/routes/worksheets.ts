@@ -81,6 +81,10 @@ worksheetsRouter.get('/videos', (req, res) => {
 });
 
 function createAttempt(userId: number, subjectId: number, difficulty: Difficulty, reelId: number | null, questionIds: number[]) {
+  db.prepare(
+    `DELETE FROM worksheet_attempts WHERE user_id = ? AND status = 'generated'
+       AND id NOT IN (SELECT id FROM worksheet_attempts WHERE user_id = ? AND status = 'generated' ORDER BY id DESC LIMIT 9)`
+  ).run(userId, userId);
   return Number(
     db
       .prepare(

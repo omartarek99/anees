@@ -171,8 +171,8 @@ export function MapPage() {
       )}
 
       {levels && (
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div ref={mapRef} style={{ position: 'relative', width: '100%', maxWidth: MAP_WIDTH, margin: '0 auto', height: IMAGE_ZONES_HEIGHT * scale }}>
+        <div className="card" style={{ padding: 0, overflow: 'hidden', width: 'fit-content', maxWidth: '100%', margin: '0 auto' }}>
+          <div ref={mapRef} style={{ position: 'relative', width: MAP_WIDTH, maxWidth: '100%', height: IMAGE_ZONES_HEIGHT * scale }}>
           {/* Pinned to the physical left: in RTL a wider-than-parent box would otherwise overflow leftwards and the scale() would land off-centre. */}
           <div style={{ position: 'absolute', left: 0, top: 0, width: MAP_WIDTH, height: IMAGE_ZONES_HEIGHT, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
             {IMAGE_ZONES.map((zone, i) => (

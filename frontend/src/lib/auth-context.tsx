@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api, ApiError } from './api';
 import { DEV_BYPASS_LOGIN, DEV_ACCOUNT } from './dev-config';
 import type { RankTier } from '../components/RankBadge';
@@ -60,6 +61,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const refreshUser = useCallback(async () => {
     try {
@@ -127,6 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await api.post('/auth/logout');
+    // Both updates land in one render, so ProtectedLayout shows the landing page at "/" instead of bouncing the
+    // signed-out user from whatever private page they were on to /login.
+    navigate('/', { replace: true });
     setUser(null);
   };
 
