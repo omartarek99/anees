@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client';
 import { LazyMotion, MotionConfig, domAnimation } from 'framer-motion';
 import App from './App';
 import './styles/theme.css';
+import { initPwa } from './lib/pwa';
+
+initPwa();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -2114,3 +2114,150 @@ html {
   --viz-ord-3: #c0b8f7;
   --viz-other: #8a8499;
 }
+
+/* ================= Phone app shell =================
+   On a phone the side icon bar becomes a bottom tab bar, like a native app, and the layout respects the notch
+   and the home-indicator (env(safe-area-inset-*), enabled by viewport-fit=cover in index.html). It also behaves
+   like an app when installed to the home screen (display-mode: standalone). Kept at the END of this file so it
+   wins over the earlier phone rules above. */
+
+/* The "Install app" help text under the Install button. */
+.install-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 4px 6px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.install-steps strong {
+  font-size: 13.5px;
+}
+.install-steps--landing {
+  margin: 12px 0 0;
+  max-width: 320px;
+  background: rgba(255, 255, 255, 0.14);
+  color: inherit;
+}
+
+/* No grey flash on tap and no double-tap-to-zoom delay on controls: part of feeling like an app. */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+a,
+select,
+label,
+.sidebar-icon-btn,
+.category-pill {
+  touch-action: manipulation;
+}
+
+@media (max-width: 720px) {
+  :root {
+    --tabbar-h: 62px;
+    --app-bottom-pad: calc(var(--tabbar-h) + 28px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* The icon bar, moved to the bottom edge. */
+  .sidebar {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    inset-inline: 0;
+    width: 100%;
+    height: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px));
+    min-height: 0 !important;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 8px env(safe-area-inset-bottom, 0px);
+    /* room for the menu button on the end side of the bar */
+    padding-inline-end: 62px;
+    border-inline-end: 0;
+    border-top: 1px solid var(--glass-border);
+    box-shadow: 0 -8px 28px rgba(30, 20, 50, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    z-index: 40;
+  }
+  .sidebar-logo {
+    display: none;
+  }
+  .sidebar-nav {
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    gap: 0;
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+  }
+  .sidebar-icon-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 54px;
+    width: auto;
+    height: 46px;
+    font-size: 19px;
+  }
+  /* Inactive tabs must stay readable on the pale light-mode bar. */
+  .sidebar-icon-btn:not(.active) {
+    color: var(--ink);
+    opacity: 0.72;
+  }
+
+  /* Page content: clear the tab bar, and the status bar / notch when installed. */
+  .app-main {
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    padding-bottom: var(--app-bottom-pad);
+  }
+  .reels-bleed {
+    margin-top: calc(-20px - env(safe-area-inset-top, 0px));
+    margin-bottom: calc(-1 * var(--app-bottom-pad));
+  }
+
+  /* Reels: exactly the visible area between the top and the tab bar. */
+  .reels-frame-row {
+    height: calc(100vh - var(--tabbar-h) - env(safe-area-inset-bottom, 0px));
+  }
+  @supports (height: 100dvh) {
+    .reels-frame-row {
+      height: calc(100dvh - var(--tabbar-h) - env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  /* The menu button sits at the end of the tab bar and its panel opens upward, above the bar. */
+  .quick-menu {
+    inset-inline-start: auto;
+    inset-inline-end: 10px;
+    bottom: calc(9px + env(safe-area-inset-bottom, 0px));
+    flex-direction: column-reverse;
+    align-items: flex-end;
+  }
+  .quick-menu-panel {
+    max-width: calc(100vw - 20px);
+  }
+
+  /* Things that float at the bottom of the screen must clear the tab bar when it is there. */
+  body:has(.sidebar) .cookie-consent-banner {
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px);
+  }
+
+  /* Comfortable thumb targets and no accidental text selection on the chrome. */
+  .sidebar,
+  .quick-menu-btn {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Installed as an app: no pull-to-refresh bounce chaining, and the page owns the safe areas. */
+@media (display-mode: standalone) {
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+}

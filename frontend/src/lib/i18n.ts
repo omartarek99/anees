@@ -627,6 +627,13 @@ const en = {
     title: 'You earned a certificate!',
     button: 'Awesome! 🎉',
   },
+  pwa: {
+    install: 'Install the app',
+    iosTitle: 'Install on iPhone',
+    iosSteps: 'Open this site in Safari, tap the Share button, choose "Add to Home Screen", then tap Add.',
+    androidTitle: 'Install on Android',
+    androidSteps: 'Open the browser menu (the three dots), then tap "Install app" or "Add to Home screen".',
+  },
   landing: {
     navLessons: 'Lessons',
     navAdventure: 'Adventure',
@@ -1332,6 +1339,13 @@ const ar: typeof en = {
   certificateAward: {
     title: 'لقد حصلت على شهادة!',
     button: 'رائع! 🎉',
+  },
+  pwa: {
+    install: 'تثبيت التطبيق',
+    iosTitle: 'التثبيت على الآيفون',
+    iosSteps: 'افتح الموقع في متصفح Safari، ثم اضغط زر المشاركة، واختر «إضافة إلى الشاشة الرئيسية»، ثم اضغط «إضافة».',
+    androidTitle: 'التثبيت على الأندرويد',
+    androidSteps: 'افتح قائمة المتصفح (النقاط الثلاث)، ثم اضغط «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».',
   },
   landing: {
     navLessons: 'الدروس',

@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useTheme } from '../lib/theme-context';
 import { LanguageSwitch, ThemeSwitch } from './Switch';
+import { InstallAppButton } from './InstallAppButton';
 
 /** Floating settings menu, anchored on the same side as the sidebar ("icon bar") --
  * left in English, right in Arabic (see `inset-inline-start` in theme.css). The button
@@ -80,6 +81,7 @@ export function QuickMenu() {
             {themeLabel}
             <ThemeSwitch />
           </button>
+          <InstallAppButton onDone={() => setOpen(false)} />
           <button
             type="button"
             className="quick-menu-item"
