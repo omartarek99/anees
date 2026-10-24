@@ -39,7 +39,7 @@ const CONTENT = {
     {
       heading: "5. Children's Privacy",
       body: [
-        'Anees is built for students, most of whom are children. We deliberately collect the minimum needed to run the app and do not show ads or allow public messaging between students.',
+        'Anees is built for 5th-grade students, most of whom are children. We deliberately collect the minimum needed to run the app and do not show ads or allow public messaging between students.',
         'This project has not gone through a formal children\'s-privacy compliance review (e.g. COPPA in the US, GDPR-K in the EU/UK). If this app is ever deployed for real students outside of local development/testing, get that review done first, including a real parental-consent flow before collecting any child\'s data.',
       ],
     },
@@ -98,7 +98,7 @@ const CONTENT = {
     {
       heading: '٥. خصوصية الأطفال',
       body: [
-        'صُمم أنيس للطلاب، ومعظمهم أطفال. نجمع عمدًا الحد الأدنى اللازم لتشغيل التطبيق، ولا نعرض إعلانات ولا نسمح بمراسلة عامة بين الطلاب.',
+        'صُمم أنيس لطلاب الصف الخامس، ومعظمهم أطفال. نجمع عمدًا الحد الأدنى اللازم لتشغيل التطبيق، ولا نعرض إعلانات ولا نسمح بمراسلة عامة بين الطلاب.',
         'لم يخضع هذا المشروع لمراجعة امتثال رسمية لخصوصية الأطفال (مثل قانون COPPA الأمريكي أو GDPR-K الأوروبي/البريطاني). إذا تم نشر هذا التطبيق يومًا لطلاب حقيقيين خارج نطاق التطوير المحلي، يجب إجراء تلك المراجعة أولاً، بما في ذلك آلية حقيقية لموافقة ولي الأمر قبل جمع أي بيانات لطفل.',
       ],
     },
