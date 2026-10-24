@@ -54,6 +54,9 @@ export type InstallState = {
   available: boolean;
   /** iPhone/iPad: no install prompt exists, so show the manual steps. */
   ios: boolean;
+  android: boolean;
+  /** Already running as an installed app. */
+  installed: boolean;
   /** Opens the browser's own install dialog when it has offered one; resolves false if there is none (show the steps). */
   install: () => Promise<boolean>;
 };
@@ -75,6 +78,8 @@ export function useInstallApp(): InstallState {
   return {
     available: !standalone && (phone || deferredPrompt !== null),
     ios,
+    android: typeof window !== 'undefined' && isAndroid(),
+    installed: standalone,
     install: async () => {
       if (!deferredPrompt) return false;
       const evt = deferredPrompt;

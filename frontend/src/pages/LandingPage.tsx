@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
-import { InstallAppButton } from '../components/InstallAppButton';
+import { AppDownloadSection } from '../components/AppDownloadSection';
 import '../styles/landing.css';
 
 // The first page a visitor sees (logged-out "/", and "/welcome" for anyone). Layout and type follow the
@@ -197,6 +197,8 @@ export function LandingPage() {
         ))}
       </main>
 
+      <AppDownloadSection />
+
       <footer className="landing-footer-wrap">
         <div className="landing-footer">
         <div className="landing-footer-brand">
@@ -205,7 +207,6 @@ export function LandingPage() {
           <div className="landing-actions">
             <Link to="/signup" className="landing-btn landing-btn--solid">{t('landing.signup')}</Link>
             <Link to="/login" className="landing-btn landing-btn--ghost">{t('landing.login')}</Link>
-            <InstallAppButton variant="landing" />
           </div>
           <small>{t('landing.copyright')}</small>
         </div>
