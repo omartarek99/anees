@@ -261,6 +261,14 @@ if (!db.prepare(`SELECT 1 FROM one_time_jobs WHERE name = 'teacher-anonymous-ava
   db.exec(`UPDATE users SET avatar_key = 'anonymous' WHERE role = 'teacher' AND avatar_url IS NULL AND avatar_key IN ('falcon', 'explorer')`);
   db.exec(`INSERT INTO one_time_jobs (name) VALUES ('teacher-anonymous-avatar')`);
 }
+// One time: the seeded welcome post no longer says the site is only for Math and Science. Only touches
+// the post if it still has the original seeded wording.
+if (!db.prepare(`SELECT 1 FROM one_time_jobs WHERE name = 'welcome-news-all-subjects'`).get()) {
+  db.prepare(`UPDATE news_posts SET body = replace(body, ?, ?), body_ar = replace(body_ar, ?, ?) WHERE title = 'Welcome to Anees! 🦅'`).run(
+    "Get ready for an epic journey through Math and Science! Watch", "Get ready for an epic learning journey across every subject! Watch", "استعدوا لرحلة ملحمية عبر الرياضيات والعلوم! شاهدوا", "استعدوا لرحلة تعليمية ملحمية في جميع المواد! شاهدوا"
+  );
+  db.exec(`INSERT INTO one_time_jobs (name) VALUES ('welcome-news-all-subjects')`);
+}
 const worksheetAttemptCols = db.prepare(`PRAGMA table_info(worksheet_attempts)`).all() as { name: string }[];
 if (!worksheetAttemptCols.some((c) => c.name === 'reel_id')) {
   db.exec(`ALTER TABLE worksheet_attempts ADD COLUMN reel_id INTEGER REFERENCES reels(id) ON DELETE SET NULL`);

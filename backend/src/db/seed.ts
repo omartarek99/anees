@@ -825,8 +825,8 @@ export function seed() {
     null,
     'Welcome to Anees! 🦅',
     'مرحبًا بكم في أنيس! 🦅',
-    "Get ready for an epic journey through Math and Science! Watch bite-sized lesson reels, answer quizzes to earn XP, and battle a boss every 5 levels on the 50-level adventure map. Let's begin!",
-    'استعدوا لرحلة ملحمية عبر الرياضيات والعلوم! شاهدوا دروسًا قصيرة، وأجيبوا عن الاختبارات لكسب نقاط الخبرة، وواجهوا وحشًا كل 5 مستويات على خريطة المغامرة المكونة من 50 مستوى. لنبدأ!',
+    "Get ready for an epic learning journey across every subject! Watch bite-sized lesson reels, answer quizzes to earn XP, and battle a boss every 5 levels on the 50-level adventure map. Let's begin!",
+    'استعدوا لرحلة تعليمية ملحمية في جميع المواد! شاهدوا دروسًا قصيرة، وأجيبوا عن الاختبارات لكسب نقاط الخبرة، وواجهوا وحشًا كل 5 مستويات على خريطة المغامرة المكونة من 50 مستوى. لنبدأ!',
     '🦅',
     daysAgo(14)
   );

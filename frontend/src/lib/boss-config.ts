@@ -236,7 +236,7 @@ export function computeBossHp(config: BossConfig, resultsSoFar: boolean[], total
 }
 
 export const ENCOURAGEMENT_AR = {
-  start: ['استعد للمعركة يا بطل! 🛡️', 'أظهر مهاراتك في الرياضيات والعلوم!', 'حان وقت المواجهة! أنت مستعد!'],
+  start: ['استعد للمعركة يا بطل! 🛡️', 'أظهر مهاراتك!', 'حان وقت المواجهة! أنت مستعد!'],
   correct: ['أحسنت! ضربة موفقة! 💥', 'رائع! استمر هكذا! 🔥', 'ضربة قوية! الوحش يتراجع!', 'ممتاز! تقدم رائع!', 'هكذا يا بطل! 👏', 'إجابة رائعة! واصل الهجوم!'],
   wrong: ['لا بأس، حاول التركيز في السؤال القادم!', 'كن حذرًا في إجابتك القادمة!', 'لا تستسلم، فكّر جيدًا!', 'كل بطل يخطئ أحيانًا، أكمل بقوة!'],
   lowHp: ['الوحش على وشك الهزيمة! ضربة أخيرة! ⚡', 'اقتربت من النصر! استمر!', 'إنه يترنح! لا تتوقف الآن!'],
@@ -245,7 +245,7 @@ export const ENCOURAGEMENT_AR = {
 };
 
 export const ENCOURAGEMENT_EN: typeof ENCOURAGEMENT_AR = {
-  start: ['Get ready for battle, champion! 🛡️', 'Show off your Math & Science skills!', "It's showdown time! You've got this!"],
+  start: ['Get ready for battle, champion! 🛡️', 'Show off your skills!', "It's showdown time! You've got this!"],
   correct: ['Nice hit! 💥', 'Awesome! Keep it up! 🔥', 'A mighty blow! The monster is backing off!', 'Excellent! Great progress!', "That's the spirit, champion! 👏", 'Great answer! Keep attacking!'],
   wrong: ["It's okay, focus on the next question!", 'Be careful with your next answer!', "Don't give up, think it through!", 'Every hero slips sometimes -- keep going strong!'],
   lowHp: ['The monster is almost beaten! One last strike! ⚡', "Victory is close! Don't stop!", "It's wobbling! Don't stop now!"],

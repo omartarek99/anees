@@ -34,7 +34,7 @@ const CONTENT = {
     {
       heading: '5. Educational Content',
       body: [
-        'Lesson and quiz content is written to be factually accurate for a 5th-grade Math & Science curriculum, but Anees is a learning tool, not a substitute for a teacher or an official curriculum. Map levels beyond the first 10 are shown as "Coming Soon" and are not yet real lesson content.',
+        'Lesson and quiz content is written to be factually accurate, but Anees is a learning tool, not a substitute for a teacher or an official curriculum. Map levels beyond the first 10 are shown as "Coming Soon" and are not yet real lesson content.',
       ],
     },
     {
@@ -85,7 +85,7 @@ const CONTENT = {
     {
       heading: '٥. المحتوى التعليمي',
       body: [
-        'محتوى الدروس والاختبارات مكتوب ليكون دقيقًا لمنهج الرياضيات والعلوم للصف الخامس، لكن أنيس أداة تعليمية وليس بديلاً عن معلم أو منهج رسمي. مستويات الخريطة بعد أول ١٠ مستويات معروضة كـ"قريبًا" وليست محتوى دروس فعلي بعد.',
+        'محتوى الدروس والاختبارات مكتوب ليكون دقيقًا، لكن أنيس أداة تعليمية وليس بديلاً عن معلم أو منهج رسمي. مستويات الخريطة بعد أول ١٠ مستويات معروضة كـ"قريبًا" وليست محتوى دروس فعلي بعد.',
       ],
     },
     {

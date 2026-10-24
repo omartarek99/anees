@@ -1,7 +1,7 @@
 <div align="center">
   <img src="frontend/public/icons/icon-512.png" width="96" height="96" alt="Anees logo" />
   <h1>Anees 🦅</h1>
-  <p><strong>A Qatari-themed Math &amp; Science learning platform for 5th-grade students</strong></p>
+  <p><strong>A Qatari-themed learning platform for students, covering every subject</strong></p>
 </div>
 
 Students watch short lesson "reels" in a TikTok-style, full-screen vertical swipe feed, answer quizzes to earn XP, climb a 50-level 2D adventure map, defeat Guardian bosses every 5 levels, generate difficulty-tiered practice worksheets, add friends, and dig/build/craft in a Minecraft-style survival mini-game (the Quarry). Teachers get the same account as a student, plus the ability to author their own video lessons and post announcements. Admins get a dedicated dashboard to manage every account on the platform. Fully bilingual (Arabic/English, RTL-aware) with a light and dark theme.

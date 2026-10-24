@@ -46,7 +46,7 @@ export function verificationContent(link: string, lang: 'ar' | 'en'): EmailConte
   <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;padding:28px;border:1px solid #eadfd2">
     <h1 style="color:#8a1538;margin:0 0 12px;font-size:24px">أنيس 🦅</h1>
     <p style="font-size:16px;color:#222">مرحبًا،</p>
-    <p style="font-size:16px;color:#222;line-height:1.7">شكرًا لتسجيلك في منصة أنيس لتعلّم الرياضيات والعلوم. اضغط على الزر التالي لتفعيل حسابك:</p>
+    <p style="font-size:16px;color:#222;line-height:1.7">شكرًا لتسجيلك في منصة أنيس التعليمية. اضغط على الزر التالي لتفعيل حسابك:</p>
     <p style="text-align:center;margin:26px 0"><a href="${link}" style="display:inline-block;background:#8a1538;color:#ffffff;padding:13px 32px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:16px">تفعيل الحساب</a></p>
     <p style="font-size:13px;color:#666;line-height:1.7">إذا لم يعمل الزر، انسخ الرابط التالي والصقه في المتصفح:<br><span dir="ltr" style="word-break:break-all;color:#8a1538">${link}</span></p>
     <p style="font-size:13px;color:#666">إذا لم تطلب إنشاء هذا الحساب، يمكنك تجاهل هذه الرسالة.</p>
@@ -61,7 +61,7 @@ export function verificationContent(link: string, lang: 'ar' | 'en'): EmailConte
   <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;padding:28px;border:1px solid #eadfd2">
     <h1 style="color:#8a1538;margin:0 0 12px;font-size:24px">Anees 🦅</h1>
     <p style="font-size:16px;color:#222">Hello,</p>
-    <p style="font-size:16px;color:#222;line-height:1.6">Thanks for joining Anees, the Math &amp; Science learning platform. Click the button below to activate your account:</p>
+    <p style="font-size:16px;color:#222;line-height:1.6">Thanks for joining Anees, the learning platform. Click the button below to activate your account:</p>
     <p style="text-align:center;margin:26px 0"><a href="${link}" style="display:inline-block;background:#8a1538;color:#ffffff;padding:13px 32px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:16px">Verify my account</a></p>
     <p style="font-size:13px;color:#666;line-height:1.6">If the button doesn't work, copy and paste this link into your browser:<br><span style="word-break:break-all;color:#8a1538">${link}</span></p>
     <p style="font-size:13px;color:#666">If you didn't create this account, you can ignore this email.</p>

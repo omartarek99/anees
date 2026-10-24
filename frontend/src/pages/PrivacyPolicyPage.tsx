@@ -9,7 +9,7 @@ const CONTENT = {
     {
       heading: '1. Overview',
       body: [
-        'Anees is an educational Math & Science app for 5th-grade students. This page explains what information the app collects, why, and how it is handled. Anees is currently a local development project, not a publicly hosted service — this policy describes how the app behaves and is the template to keep in place (and review with a lawyer) before any real public launch.',
+        'Anees is an educational app for students. This page explains what information the app collects, why, and how it is handled. Anees is currently a local development project, not a publicly hosted service — this policy describes how the app behaves and is the template to keep in place (and review with a lawyer) before any real public launch.',
       ],
     },
     {
@@ -68,7 +68,7 @@ const CONTENT = {
     {
       heading: '١. نظرة عامة',
       body: [
-        'أنيس هو تطبيق تعليمي في الرياضيات والعلوم لطلاب الصف الخامس. توضح هذه الصفحة ما هي المعلومات التي يجمعها التطبيق، ولماذا، وكيف يتم التعامل معها. أنيس حاليًا مشروع تطوير محلي وليس خدمة عامة مستضافة — تصف هذه السياسة سلوك التطبيق الحالي، وهي نموذج ينبغي مراجعته مع محامٍ قبل أي إطلاق عام حقيقي.',
+        'أنيس هو تطبيق تعليمي للطلاب. توضح هذه الصفحة ما هي المعلومات التي يجمعها التطبيق، ولماذا، وكيف يتم التعامل معها. أنيس حاليًا مشروع تطوير محلي وليس خدمة عامة مستضافة — تصف هذه السياسة سلوك التطبيق الحالي، وهي نموذج ينبغي مراجعته مع محامٍ قبل أي إطلاق عام حقيقي.',
       ],
     },
     {

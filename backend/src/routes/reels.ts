@@ -55,7 +55,7 @@ function loadQuestions(reelId: number) {
 }
 
 // Returns every currently-playable reel (unlocked normal levels, plus any grade-based
-// teacher reels matching the caller's own grade) in one response — the frontend used to
+// teacher reels matching the caller's own grade, or all of them for a teacher) in one response — the frontend used to
 // fetch /map, then fire one /reels/level/:n request per unlocked level in parallel (N+1
 // round trips just to render the feed, and again every time a level completed). This does
 // the same join+filter /map already does, then gathers each level's reels/questions
@@ -104,23 +104,20 @@ reelsRouter.get('/feed', (req, res) => {
     }
   }
 
-  // Grade-based teacher lessons, decoupled from the map/level system entirely -- every reel
-  // tagged with the caller's own grade, always available (nothing to unlock, no lock state).
-  // Teachers don't set a grade at signup, so grade-matching alone would show them nothing --
-  // a teacher also sees any grade-based lesson they authored themselves, so they can find
-  // and preview what they just published. Deduplicated by reel id since a teacher previewing
-  // their own reel could otherwise match both clauses.
-  const user = db.prepare(`SELECT grade FROM users WHERE id = ?`).get(req.userId!) as { grade: number | null };
+  // Grade-based teacher lessons, decoupled from the map/level system entirely, always available
+  // (nothing to unlock, no lock state). A student gets every lesson tagged with their own grade.
+  // Teachers don't set a grade at signup, so they see every grade-based lesson from every grade and
+  // every teacher -- the same full library a student is shown, not just the ones they uploaded.
+  const user = db.prepare(`SELECT grade, role FROM users WHERE id = ?`).get(req.userId!) as { grade: number | null; role: string };
   const gradeReelsById = new Map<number, any>();
-  if (user?.grade) {
+  if (user?.role === 'teacher') {
+    for (const reel of db.prepare(`SELECT * FROM reels WHERE grade IS NOT NULL ORDER BY id`).all() as any[]) {
+      gradeReelsById.set(reel.id, reel);
+    }
+  } else if (user?.grade) {
     for (const reel of db.prepare(`SELECT * FROM reels WHERE grade = ? ORDER BY id`).all(user.grade) as any[]) {
       gradeReelsById.set(reel.id, reel);
     }
-  }
-  for (const reel of db
-    .prepare(`SELECT * FROM reels WHERE grade IS NOT NULL AND author_user_id = ? ORDER BY id`)
-    .all(req.userId!) as any[]) {
-    gradeReelsById.set(reel.id, reel);
   }
   for (const reel of gradeReelsById.values()) {
     const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(reel.subject_id) as any;
