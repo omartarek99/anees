@@ -13,7 +13,7 @@ const CONTENT = {
     {
       heading: '2. Who Can Use Anees',
       body: [
-        'Anees is designed for 5th-grade students and their teachers. Signup requires choosing an account type (student or teacher); students also select a grade.',
+        'Anees is designed for students and their teachers. Signup requires choosing an account type (student or teacher); students also select a grade.',
         'A parent, guardian, or teacher should be involved in setting up a child\'s account.',
       ],
     },
@@ -64,7 +64,7 @@ const CONTENT = {
     {
       heading: '٢. من يمكنه استخدام أنيس',
       body: [
-        'صُمم أنيس لطلاب الصف الخامس ومعلميهم. يتطلب التسجيل اختيار نوع الحساب (طالب أو معلم)؛ ويختار الطلاب أيضًا صفهم الدراسي.',
+        'صُمم أنيس للطلاب ومعلميهم. يتطلب التسجيل اختيار نوع الحساب (طالب أو معلم)؛ ويختار الطلاب أيضًا صفهم الدراسي.',
         'ينبغي أن يشارك أحد الوالدين أو ولي الأمر أو المعلم في إعداد حساب الطفل.',
       ],
     },
