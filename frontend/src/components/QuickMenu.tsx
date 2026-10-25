@@ -43,6 +43,7 @@ export function QuickMenu() {
         type="button"
         className="quick-menu-btn"
         aria-label={t('common.menu')}
+        data-tour="menu"
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
