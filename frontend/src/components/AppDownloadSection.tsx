@@ -1,21 +1,31 @@
 import { useState } from 'react';
-import { RiAndroidFill } from '@remixicon/react';
+import { RiAppleFill, RiAndroidFill } from '@remixicon/react';
 import { useLanguage } from '../lib/language-context';
 import { useInstallApp } from '../lib/pwa';
 
-/** "Get the app" block at the bottom of the landing page: one Android button. It opens the browser's own install
- * window straight away; when the browser has not offered one it shows the short written steps instead. Hidden
- * on iPhone/iPad (websites cannot install there) and once the site is already running as an installed app. */
+type Platform = 'ios' | 'android';
+
+/** "Get the app" block at the bottom of the landing page: one button for iPhone and one for Android.
+ * Android opens the browser's own install window when it offered one; either button otherwise shows that
+ * platform's short "Add to Home Screen" steps. The visitor's own platform opens by default. Hidden once the
+ * site is already running as an installed app. */
 export function AppDownloadSection() {
   const { t } = useLanguage();
-  const { installed, unsupported, install } = useInstallApp();
-  const [showSteps, setShowSteps] = useState(false);
-  if (installed || unsupported) return null;
+  const { ios, android, installed, install } = useInstallApp();
+  const [open, setOpen] = useState<Platform | null>(ios ? 'ios' : android ? 'android' : null);
+  if (installed) return null;
 
   async function onAndroid() {
     const opened = await install();
-    if (!opened) setShowSteps((v) => !v);
+    if (!opened) setOpen((p) => (p === 'android' ? null : 'android'));
   }
+
+  const steps =
+    open === 'ios'
+      ? { title: t('pwa.iosTitle'), text: t('pwa.iosSteps') }
+      : open === 'android'
+        ? { title: t('pwa.androidTitle'), text: t('pwa.androidSteps') }
+        : null;
 
   return (
     <section className="landing-app" id="app" aria-label={t('landing.appTag')}>
@@ -24,7 +34,19 @@ export function AppDownloadSection() {
         <div className="landing-app-copy">
           <p className="landing-tag">{t('landing.appTag')}</p>
           <div className="landing-store-row">
-            <button type="button" className="landing-store-btn" aria-expanded={showSteps} onClick={onAndroid}>
+            <button
+              type="button"
+              className="landing-store-btn"
+              aria-expanded={open === 'ios'}
+              onClick={() => setOpen((p) => (p === 'ios' ? null : 'ios'))}
+            >
+              <RiAppleFill size={30} aria-hidden />
+              <span>
+                <small>{t('pwa.installOn')}</small>
+                <strong>{t('pwa.iphone')}</strong>
+              </span>
+            </button>
+            <button type="button" className="landing-store-btn" aria-expanded={open === 'android'} onClick={onAndroid}>
               <RiAndroidFill size={30} aria-hidden />
               <span>
                 <small>{t('pwa.installOn')}</small>
@@ -32,10 +54,10 @@ export function AppDownloadSection() {
               </span>
             </button>
           </div>
-          {showSteps && (
+          {steps && (
             <div className="landing-app-steps" role="note">
-              <h3>{t('pwa.androidTitle')}</h3>
-              <p>{t('pwa.androidSteps')}</p>
+              <h3>{steps.title}</h3>
+              <p>{steps.text}</p>
             </div>
           )}
         </div>
