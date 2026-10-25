@@ -2245,6 +2245,10 @@ label,
   body:has(.sidebar) .cookie-consent-banner {
     bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 10px);
   }
+  /* the double-points notice (inline bottom: 16px) must not sit on top of the tab bar either */
+  .double-points-toast {
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 14px) !important;
+  }
 
   /* Comfortable thumb targets and no accidental text selection on the chrome. */
   .sidebar,
@@ -2263,29 +2267,77 @@ label,
 }
 
 /* ---------------- First-run guide (components/GuideHost.tsx) ----------------
-   Same frosted-glass window and buttons as the admin warning (.modal-panel, .btn). The icon tour adds a spotlight ring
-   on the icon, a big window that zooms out of it, and two little bubbles between them (a cloud trail). */
+   Same frosted-glass window and buttons as the admin warning (.modal-panel, .btn). The icon tour adds a pulsing spotlight
+   ring on the icon, a big window that zooms out of it, floating bubbles between them (a cloud trail), step dots,
+   content that rises in piece by piece, and confetti at the end. */
 .guide-overlay {
   z-index: 130;
 }
-.guide-logo {
-  display: block;
-  margin-inline: auto;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.85);
-  padding: 6px;
-  box-shadow: var(--shadow-3d-md);
+.guide-welcome {
+  position: relative;
+  overflow: hidden;
 }
-.guide-icon {
+/* a soft glow behind the top of the window */
+.guide-welcome::before,
+.guide-pop::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  block-size: 4px;
+  background: linear-gradient(90deg, var(--maroon), var(--gold) 60%, var(--maroon-light));
+  opacity: 0.95;
+}
+.guide-halo {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 72px;
-  block-size: 72px;
+  margin-top: 6px;
+}
+.guide-halo::before {
+  content: '';
+  position: absolute;
+  inset: -14px;
   border-radius: 50%;
-  background: var(--maroon-pale);
-  color: var(--maroon);
+  background: radial-gradient(closest-side, rgba(240, 168, 58, 0.45), transparent 72%);
+  animation: guide-glow 2.4s ease-in-out infinite;
+}
+.guide-logo {
+  position: relative;
+  display: block;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 7px;
   box-shadow: var(--shadow-3d-md);
+  animation: guide-bob 3.2s ease-in-out infinite;
+}
+.guide-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 78px;
+  block-size: 78px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--maroon-light), var(--maroon));
+  color: #fff;
+  box-shadow: var(--shadow-3d-md);
+  animation: guide-bob 3.2s ease-in-out infinite;
+}
+.guide-metas {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+.guide-metas span {
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: var(--surface-chip);
+  border: 1px solid var(--glass-border);
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .guide-layer {
@@ -2293,36 +2345,68 @@ label,
   inset: 0;
   z-index: 130;
 }
-/* The spotlight: a bright ring around the icon; its huge shadow is the dimmed rest of the page. */
+/* The spotlight: a bright ring around the icon (its huge shadow is the dimmed rest of the page) that keeps pulsing. */
 .guide-spot {
   position: fixed;
   border: 3px solid #fff;
   border-radius: 20px;
-  box-shadow: 0 0 0 9999px rgba(30, 20, 50, 0.52), 0 0 24px 4px rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 0 9999px rgba(30, 20, 50, 0.52), 0 0 26px 4px rgba(255, 255, 255, 0.5);
   pointer-events: none;
-  transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+  transition: top 0.3s cubic-bezier(0.22, 1, 0.36, 1), left 0.3s cubic-bezier(0.22, 1, 0.36, 1), width 0.3s ease, height 0.3s ease;
+}
+.guide-spot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  border-radius: inherit;
+  animation: guide-pulse 1.7s ease-out infinite;
 }
 .guide-pop {
   position: fixed;
   z-index: 131;
   max-width: none;
   max-height: none;
-  overflow: visible;
+  overflow: hidden;
   border-radius: 38px;
-  padding: 26px 30px 22px;
+  padding: 28px 30px 22px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
+}
+.guide-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.guide-head-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.guide-badge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 52px;
+  block-size: 52px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, var(--maroon-light), var(--maroon));
+  color: #fff;
+  box-shadow: var(--shadow-3d-md);
+  animation: guide-wiggle 0.8s 0.25s ease-in-out both;
 }
 .guide-pop h2 {
   margin: 0;
-  font-size: 1.45rem;
-  line-height: 1.3;
+  font-size: 1.5rem;
+  line-height: 1.25;
 }
 .guide-pop p {
   margin: 0;
-  font-size: 1.02rem;
+  font-size: 1.03rem;
   line-height: 1.75;
 }
 .guide-chip {
@@ -2330,20 +2414,48 @@ label,
   border-radius: 99px;
   background: var(--gold-light);
   color: var(--gold-dark);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 800;
+}
+/* step dots: the current one stretches; every dot jumps to its step */
+.guide-progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+.guide-pip {
+  inline-size: 8px;
+  block-size: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: var(--glass-border);
+  cursor: pointer;
+  transition: inline-size 0.3s ease, background-color 0.3s ease;
+}
+.guide-pip.is-done {
+  background: var(--gold);
+}
+.guide-pip.is-on {
+  inline-size: 26px;
+  background: linear-gradient(90deg, var(--maroon-light), var(--gold));
+}
+.guide-pip:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
 }
 .guide-actions {
   display: flex;
   align-items: center;
   gap: 8px;
   inline-size: 100%;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 .guide-grow {
   flex: 1;
 }
-/* little bubbles between the icon and the window */
+/* little bubbles between the icon and the window; each one also floats a little */
 .guide-dot {
   position: fixed;
   z-index: 131;
@@ -2354,8 +2466,94 @@ label,
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
+.guide-dot-float {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  animation: guide-bob 2.4s ease-in-out infinite;
+}
+
+.guide-rise {
+  animation: guide-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.guide-confetti {
+  position: fixed;
+  left: 50%;
+  top: 62%;
+  z-index: 140;
+  pointer-events: none;
+}
+.guide-piece {
+  position: absolute;
+  border-radius: 2px;
+}
+
+@keyframes guide-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes guide-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+@keyframes guide-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes guide-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+@keyframes guide-wiggle {
+  0% {
+    transform: rotate(0) scale(0.6);
+  }
+  45% {
+    transform: rotate(-12deg) scale(1.12);
+  }
+  70% {
+    transform: rotate(8deg) scale(1);
+  }
+  100% {
+    transform: rotate(0) scale(1);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  .guide-spot {
+  .guide-spot,
+  .guide-pip {
     transition: none;
+  }
+  .guide-spot::after,
+  .guide-halo::before,
+  .guide-logo,
+  .guide-icon,
+  .guide-dot-float,
+  .guide-badge,
+  .guide-rise {
+    animation: none;
   }
 }
