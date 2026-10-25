@@ -82,6 +82,7 @@ export function Sidebar() {
             end={link.end}
             title={t(link.key)}
             aria-label={t(link.key)}
+            data-tour={link.to}
             className={({ isActive }) => `sidebar-icon-btn${isActive ? ' active' : ''}`}
           >
             <span aria-hidden>{link.icon}</span>

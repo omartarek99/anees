@@ -16,6 +16,7 @@ import { WarningModal } from './components/WarningModal';
 import { DoublePointsNotification } from './components/DoublePointsNotification';
 import { CertificateAwardPopup } from './components/CertificateAwardPopup';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
+import { GuideHost } from './components/GuideHost';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsPage } from './pages/TermsPage';
 import { CookiePolicyPage } from './pages/CookiePolicyPage';
@@ -129,6 +130,7 @@ function ProtectedLayout() {
         {!hideFooter && <Footer />}
       </div>
       <QuickMenu />
+      <GuideHost />
       {/* Admin has no quiz/gameplay surface of its own -- nothing for this to announce there. */}
       {user.role !== 'admin' && <DoublePointsNotification />}
       {/* Certificates are only ever issued to students/teachers (routes/admin.ts rejects

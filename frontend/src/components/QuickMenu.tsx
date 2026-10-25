@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { RiUserFill, RiLogoutBoxRLine, RiLogoutBoxLine, RiLockPasswordLine } from '@remixicon/react';
+import { RiUserFill, RiLogoutBoxRLine, RiLogoutBoxLine, RiLockPasswordLine, RiQuestionLine } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useTheme } from '../lib/theme-context';
 import { LanguageSwitch, ThemeSwitch } from './Switch';
 import { InstallAppButton } from './InstallAppButton';
+import { replayGuide } from '../lib/guide';
 
 /** Floating settings menu, anchored on the same side as the sidebar ("icon bar") --
  * left in English, right in Arabic (see `inset-inline-start` in theme.css). The button
@@ -15,7 +16,7 @@ import { InstallAppButton } from './InstallAppButton';
 export function QuickMenu() {
   const { t, lang, toggleLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -43,6 +44,7 @@ export function QuickMenu() {
         type="button"
         className="quick-menu-btn"
         aria-label={t('common.menu')}
+        data-tour="menu"
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
@@ -82,6 +84,22 @@ export function QuickMenu() {
             <ThemeSwitch />
           </button>
           <InstallAppButton onDone={() => setOpen(false)} />
+          {user && (
+            <button
+              type="button"
+              className="quick-menu-item"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                replayGuide(user);
+              }}
+            >
+              <span className="quick-menu-icon" aria-hidden>
+                <RiQuestionLine size={17} />
+              </span>
+              {t('guide.replay')}
+            </button>
+          )}
           <button
             type="button"
             className="quick-menu-item"
