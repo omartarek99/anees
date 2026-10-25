@@ -53,7 +53,7 @@ const spring = { type: 'spring', stiffness: 260, damping: 20 } as const;
 /** Each piece of a window rises in, one after the other. */
 const rise = (i: number) => ({ style: { animationDelay: `${0.18 + i * 0.07}s` }, className: 'guide-rise' });
 
-function Welcome({ steps, onStart, onSkip }: { steps: number; onStart: () => void; onSkip: () => void }) {
+function Welcome({ onStart, onSkip }: { onStart: () => void; onSkip: () => void }) {
   const g = useGuideText();
   return createPortal(
     <m.div className="modal-overlay guide-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -76,14 +76,10 @@ function Welcome({ steps, onStart, onSkip }: { steps: number; onStart: () => voi
         <p {...rise(1)} style={{ fontSize: 15.5, lineHeight: 1.65, margin: '8px 0 0', ...rise(1).style }}>
           {g('welcomeBody')}
         </p>
-        <div {...rise(2)} className="guide-rise guide-metas" style={rise(2).style}>
-          <span>{g('metaSteps', { n: steps })}</span>
-          <span>{g('metaTime')}</span>
-        </div>
-        <button type="button" className="btn btn-primary btn-block guide-rise" style={{ marginTop: 22, ...rise(3).style }} onClick={onStart} autoFocus>
+        <button type="button" className="btn btn-primary btn-block guide-rise" style={{ marginTop: 22, ...rise(2).style }} onClick={onStart} autoFocus>
           {g('start')}
         </button>
-        <button type="button" className="btn btn-ghost btn-block guide-rise" style={{ marginTop: 8, ...rise(4).style }} onClick={onSkip}>
+        <button type="button" className="btn btn-ghost btn-block guide-rise" style={{ marginTop: 8, ...rise(3).style }} onClick={onSkip}>
           {g('skipNow')}
         </button>
       </m.div>
@@ -386,7 +382,7 @@ export function GuideHost() {
   return (
     <>
       {celebrate && <Confetti onDone={() => setCelebrate(false)} />}
-      {phase === 'welcome' && <Welcome steps={tourStops(user.role).length} onStart={() => setPhase('steps')} onSkip={() => end()} />}
+      {phase === 'welcome' && <Welcome onStart={() => setPhase('steps')} onSkip={() => end()} />}
       {phase === 'steps' && <Steps stops={tourStops(user.role)} index={index} setIndex={setIndex} onEnd={end} />}
       {phase === 'idle' && intro && (
         <PageIntro

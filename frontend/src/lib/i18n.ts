@@ -629,9 +629,7 @@ const en = {
   },
   guide: {
     welcomeTitle: "Welcome to Anees!",
-    welcomeBody: "A quick tour of the icons and pages. It takes about a minute.",
-    metaSteps: "{n} steps",
-    metaTime: "About a minute",
+    welcomeBody: "A quick tour of the icons and pages.",
     start: "Start the tour",
     skipNow: "Skip for now",
     skip: "Skip",
@@ -1389,9 +1387,7 @@ const ar: typeof en = {
   },
   guide: {
     welcomeTitle: "أهلاً بك في أنيس!",
-    welcomeBody: "جولة سريعة تعرّفك على الأيقونات والصفحات، تستغرق دقيقة واحدة.",
-    metaSteps: "{n} خطوات",
-    metaTime: "دقيقة واحدة",
+    welcomeBody: "جولة سريعة تعرّفك على الأيقونات والصفحات.",
     start: "ابدأ الجولة",
     skipNow: "تخطي الآن",
     skip: "تخطي",

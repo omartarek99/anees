@@ -2325,20 +2325,6 @@ label,
   box-shadow: var(--shadow-3d-md);
   animation: guide-bob 3.2s ease-in-out infinite;
 }
-.guide-metas {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 14px;
-}
-.guide-metas span {
-  padding: 4px 12px;
-  border-radius: 99px;
-  background: var(--surface-chip);
-  border: 1px solid var(--glass-border);
-  font-size: 0.82rem;
-  font-weight: 700;
-}
 
 .guide-layer {
   position: fixed;
