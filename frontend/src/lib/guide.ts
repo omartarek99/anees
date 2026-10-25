@@ -2,7 +2,7 @@ import type { Role, User } from './auth-context';
 
 // The first-run guide: a short tour that lights up each icon in the menu bar with a pop-out window, plus a one-time
 // "what is this page" window the first time each page is opened. Only accounts created in the last week get it
-// automatically (older accounts do not suddenly get a tour); anyone can run it again from the menu. What a person
+// automatically (older accounts do not suddenly get a tour). What a person
 // has already seen is remembered in this browser, per account.
 
 export const GUIDE_EVENT = 'anees:guide';
@@ -39,14 +39,6 @@ export const tourDone = (userId: number) => read(key(userId, 'tour')) === '1';
 export const finishTour = (userId: number) => write(key(userId, 'tour'), '1');
 export const pageSeen = (userId: number, pageId: string) => read(key(userId, `page_${pageId}`)) === '1';
 export const markPageSeen = (userId: number, pageId: string) => write(key(userId, `page_${pageId}`), '1');
-
-/** "Show the guide" in the menu: switch it on, forget what was seen, and start the tour again. */
-export function replayGuide(user: User) {
-  write(key(user.id, 'state'), 'on');
-  write(key(user.id, 'tour'), null);
-  for (const id of Object.values(PAGE_IDS)) write(key(user.id, `page_${id}`), null);
-  window.dispatchEvent(new Event(GUIDE_EVENT));
-}
 
 /** Route -> the id used for that page's texts (guide.page_<id>_b) and its "seen" flag. */
 export const PAGE_IDS: Record<string, string> = {
