@@ -67,7 +67,8 @@ reelsRouter.get('/feed', (req, res) => {
   const progressRows = db.prepare(`SELECT * FROM user_level_progress WHERE user_id = ?`).all(req.userId!) as any[];
   const progressByLevelId = new Map(progressRows.map((p) => [p.map_level_id, p]));
 
-  const feed: any[] = [];
+  // Built-in map lessons, in level order. They go AFTER the teachers' videos below (see the end of this handler).
+  const levelFeed: any[] = [];
 
   for (const level of levels) {
     const progress = progressByLevelId.get(level.id) ??
@@ -84,7 +85,7 @@ reelsRouter.get('/feed', (req, res) => {
     const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(level.subject_id) as any;
 
     for (const reel of reels) {
-      feed.push({
+      levelFeed.push({
         comingSoon: false,
         level: { levelNumber: level.level_number, title: level.title, titleAr: level.title_ar, kind: level.kind },
         subject: { key: subject.key, name: subject.name, nameAr: subject.name_ar, icon: subject.icon },
@@ -119,9 +120,12 @@ reelsRouter.get('/feed', (req, res) => {
       gradeReelsById.set(reel.id, reel);
     }
   }
-  for (const reel of gradeReelsById.values()) {
+  // Newest upload first: ids only ever grow, so the highest id is the most recent video. A video uploaded a minute
+  // ago is the first thing anyone opening Reels sees, then older ones, oldest last.
+  const gradeFeed: any[] = [];
+  for (const reel of [...gradeReelsById.values()].sort((a, b) => b.id - a.id)) {
     const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(reel.subject_id) as any;
-    feed.push({
+    gradeFeed.push({
       comingSoon: false,
       level: { levelNumber: -reel.id, title: 'Grade Lesson', titleAr: null, kind: 'normal' },
       subject: { key: subject.key, name: subject.name, nameAr: subject.name_ar, icon: subject.icon },
@@ -140,7 +144,7 @@ reelsRouter.get('/feed', (req, res) => {
     });
   }
 
-  res.json(feed);
+  res.json([...gradeFeed, ...levelFeed]);
 });
 
 // Matches ReelSlide.tsx's flush cadence (a heartbeat roughly every WATCH_HEARTBEAT_SECONDS
