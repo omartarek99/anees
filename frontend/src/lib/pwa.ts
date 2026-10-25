@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 
-// Installing the site to the home screen (a PWA). Android Chrome hands the page a "beforeinstallprompt" event it
-// can trigger from its own button; iPhone has no such prompt, so there the app shows the Share -> Add to Home
-// Screen steps instead.
+// Installing the site to the home screen (a PWA) -- Android only. Android Chrome hands the page a
+// "beforeinstallprompt" event that a button can trigger to open the browser's own install window. (iPhone offers
+// websites no equivalent, so the install buttons are not shown there.)
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -49,29 +49,14 @@ function isAndroid() {
   return /android/i.test(navigator.userAgent);
 }
 
-/** iPhone has no "install" API, but its Share sheet is where "Add to Home Screen" lives, and the Web Share API opens
- * that sheet straight from a tap. Resolves true when the sheet was shown (even if the person then closed it),
- * false when sharing is not available so the caller should show the written steps instead. */
-export async function openShareSheet(): Promise<boolean> {
-  if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') return false;
-  try {
-    await navigator.share({ title: 'Anees أنيس', url: `${window.location.origin}/` });
-    return true;
-  } catch (err) {
-    // Closing the sheet without choosing anything is not a failure.
-    return (err as DOMException).name === 'AbortError';
-  }
-}
-
 export type InstallState = {
-  /** Show an "Install app" entry at all: not already installed, and on a phone (or the browser offered a prompt). */
+  /** Show the install entry in the app's menu: on Android (or when the browser offered a prompt), not yet installed. */
   available: boolean;
-  /** iPhone/iPad: no install prompt exists, so show the manual steps. */
-  ios: boolean;
-  android: boolean;
   /** Already running as an installed app. */
   installed: boolean;
-  /** Opens the browser's own install dialog when it has offered one; resolves false if there is none (show the steps). */
+  /** iPhone/iPad: websites cannot offer an install there, so no install button is shown. */
+  unsupported: boolean;
+  /** Opens the browser's own install window when it has offered one; resolves false if there is none (show the steps). */
   install: () => Promise<boolean>;
 };
 
@@ -87,13 +72,12 @@ export function useInstallApp(): InstallState {
 
   const standalone = typeof window !== 'undefined' && isStandalone();
   const ios = typeof window !== 'undefined' && isIos();
-  const phone = typeof window !== 'undefined' && (ios || isAndroid());
+  const android = typeof window !== 'undefined' && isAndroid();
 
   return {
-    available: !standalone && (phone || deferredPrompt !== null),
-    ios,
-    android: typeof window !== 'undefined' && isAndroid(),
+    available: !standalone && !ios && (android || deferredPrompt !== null),
     installed: standalone,
+    unsupported: ios,
     install: async () => {
       if (!deferredPrompt) return false;
       const evt = deferredPrompt;

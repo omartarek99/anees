@@ -630,10 +630,7 @@ const en = {
   pwa: {
     install: 'Install the app',
     installOn: 'Install on',
-    iphone: 'iPhone',
     android: 'Android',
-    iosTitle: 'Install on iPhone',
-    iosSteps: 'Open this site in Safari, tap the Share button, choose "Add to Home Screen", then tap Add.',
     androidTitle: 'Install on Android',
     androidSteps: 'Open the browser menu (the three dots), then tap "Install app" or "Add to Home screen".',
   },
@@ -1347,10 +1344,7 @@ const ar: typeof en = {
   pwa: {
     install: 'تثبيت التطبيق',
     installOn: 'ثبّت على',
-    iphone: 'آيفون',
     android: 'أندرويد',
-    iosTitle: 'التثبيت على الآيفون',
-    iosSteps: 'افتح الموقع في متصفح Safari، ثم اضغط زر المشاركة، واختر «إضافة إلى الشاشة الرئيسية»، ثم اضغط «إضافة».',
     androidTitle: 'التثبيت على الأندرويد',
     androidSteps: 'افتح قائمة المتصفح (النقاط الثلاث)، ثم اضغط «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».',
   },
