@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
+import { m } from 'framer-motion';
 import {
   RiHome2Line,
   RiVideoFill,
@@ -18,24 +19,25 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { GUIDE_EVENT, PAGE_IDS, finishTour, guideEnabled, markPageSeen, pageSeen, tourDone, tourStops, type TourStop } from '../lib/guide';
 
-// First-run guide for new accounts (rules in lib/guide.ts): a welcome card, then each icon in the menu bar is lit
-// up with a shadowed pop-out that says what it is, then -- the first time a page is opened -- a short window
-// describing that page. Mounted once in the signed-in layout (App.tsx).
+// First-run guide for new accounts (rules in lib/guide.ts): a welcome window, then each icon in the menu bar is lit
+// up while a big frosted-glass window zooms out of it (with a trail of little bubbles, like a cloud) and says what
+// it is, then -- the first time a page is opened -- a window describing that page. The windows use the same glass
+// panel and buttons as the admin warning window (WarningModal.tsx). Mounted once in the signed-in layout (App.tsx).
 
 const PAGE_ICONS: Record<string, ReactNode> = {
-  home: <RiHome2Line size={28} />,
-  reels: <RiVideoFill size={28} />,
-  map: <RiMapFill size={28} />,
-  craft: <RiGamepadLine size={28} />,
-  worksheets: <RiFilePaper2Line size={28} />,
-  leaderboard: <RiBarChartBoxFill size={28} />,
-  friends: <RiGroupFill size={28} />,
-  profile: <RiUserFill size={28} />,
-  myReels: <RiMovie2Line size={28} />,
-  adminReports: <RiBarChartBoxFill size={28} />,
-  adminUsers: <RiGroupFill size={28} />,
-  adminVideos: <RiFilmFill size={28} />,
-  adminCertificates: <RiCertificateFill size={28} />,
+  home: <RiHome2Line size={34} />,
+  reels: <RiVideoFill size={34} />,
+  map: <RiMapFill size={34} />,
+  craft: <RiGamepadLine size={34} />,
+  worksheets: <RiFilePaper2Line size={34} />,
+  leaderboard: <RiBarChartBoxFill size={34} />,
+  friends: <RiGroupFill size={34} />,
+  profile: <RiUserFill size={34} />,
+  myReels: <RiMovie2Line size={34} />,
+  adminReports: <RiBarChartBoxFill size={34} />,
+  adminUsers: <RiGroupFill size={34} />,
+  adminVideos: <RiFilmFill size={34} />,
+  adminCertificates: <RiCertificateFill size={34} />,
 };
 
 type Tr = (key: string, vars?: Record<string, string | number>) => string;
@@ -44,27 +46,48 @@ function useGuideText(): Tr {
   return (key, vars) => (t as unknown as Tr)(`guide.${key}`, vars);
 }
 
+const spring = { type: 'spring', stiffness: 260, damping: 20 } as const;
+
 function Welcome({ onStart, onSkip }: { onStart: () => void; onSkip: () => void }) {
   const g = useGuideText();
   return createPortal(
-    <div className="guide-layer guide-layer--dim" role="dialog" aria-modal="true" aria-labelledby="guide-welcome-title">
-      <div className="guide-card">
-        <img className="guide-logo" src="/icons/logo-mark.png" alt="" width={64} height={64} />
-        <h3 id="guide-welcome-title">{g('welcomeTitle')}</h3>
-        <p>{g('welcomeBody')}</p>
-        <button type="button" className="guide-primary guide-block" onClick={onStart} autoFocus>
+    <m.div className="modal-overlay guide-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <m.div
+        className="modal-panel text-center"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="guide-welcome-title"
+        style={{ maxWidth: 420 }}
+        initial={{ scale: 0.9, opacity: 0, y: 12 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        transition={spring}
+      >
+        <img className="guide-logo" src="/icons/logo-mark.png" alt="" width={72} height={72} />
+        <h2 id="guide-welcome-title" style={{ fontSize: 23, marginTop: 10 }}>
+          {g('welcomeTitle')}
+        </h2>
+        <p style={{ fontSize: 15.5, lineHeight: 1.6, margin: '6px 0 0' }}>{g('welcomeBody')}</p>
+        <button type="button" className="btn btn-primary btn-block" style={{ marginTop: 22 }} onClick={onStart} autoFocus>
           {g('start')}
         </button>
-        <button type="button" className="guide-link" onClick={onSkip}>
+        <button type="button" className="btn btn-ghost btn-block" style={{ marginTop: 8 }} onClick={onSkip}>
           {g('skipNow')}
         </button>
-      </div>
-    </div>,
+      </m.div>
+    </m.div>,
     document.body
   );
 }
 
-type PopPlacement = { top: number; left: number; side: 'top' | 'start' | 'end'; arrow: number };
+type Layout = {
+  top: number;
+  left: number;
+  side: 'top' | 'start' | 'end';
+  /** icon centre relative to the window: where it zooms out from */
+  ox: number;
+  oy: number;
+  dots: { x: number; y: number; size: number }[];
+};
 
 function Steps({ stops, index, setIndex, onEnd }: { stops: TourStop[]; index: number; setIndex: (i: number) => void; onEnd: () => void }) {
   const { t } = useLanguage();
@@ -72,7 +95,7 @@ function Steps({ stops, index, setIndex, onEnd }: { stops: TourStop[]; index: nu
   const stop = stops[index];
   const last = index === stops.length - 1;
   const [rect, setRect] = useState<DOMRect | null>(null);
-  const [pop, setPop] = useState<PopPlacement | null>(null);
+  const [layout, setLayout] = useState<Layout | null>(null);
   const popRef = useRef<HTMLDivElement>(null);
 
   const measure = useCallback(() => {
@@ -90,8 +113,8 @@ function Steps({ stops, index, setIndex, onEnd }: { stops: TourStop[]; index: nu
       else onEnd();
       return;
     }
+    setLayout(null);
     setRect(r);
-    setPop(null);
     const update = () => {
       const next = measure();
       if (next) setRect(next);
@@ -105,27 +128,42 @@ function Steps({ stops, index, setIndex, onEnd }: { stops: TourStop[]; index: nu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, measure]);
 
-  // Place the pop-out next to the icon: above it on a phone (bottom tab bar), beside it on the side bar.
+  // Put the window near the icon -- not touching it: above it on a phone (bottom tab bar), beside it on the side bar --
+  // and line up the little bubbles between the two.
   useLayoutEffect(() => {
     if (!rect || !popRef.current) return;
     const w = popRef.current.offsetWidth;
     const h = popRef.current.offsetHeight;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const gap = 18;
+    const gap = 58;
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
     const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+    let top: number, left: number, side: Layout['side'];
     if (cy > vh * 0.55) {
-      const left = clamp(cx - w / 2, 16, vw - w - 16);
-      setPop({ top: rect.top - 6 - gap - h, left, side: 'top', arrow: clamp(cx - left, 24, w - 24) });
+      side = 'top';
+      left = clamp(cx - w / 2, 14, vw - w - 14);
+      top = clamp(rect.top - 6 - gap - h, 14, vh);
     } else if (cx < vw / 2) {
-      const top = clamp(cy - h / 2, 16, vh - h - 16);
-      setPop({ top, left: rect.right + 6 + gap, side: 'end', arrow: clamp(cy - top, 24, h - 24) });
+      side = 'end';
+      top = clamp(cy - h / 2, 14, vh - h - 14);
+      left = rect.right + 6 + gap;
     } else {
-      const top = clamp(cy - h / 2, 16, vh - h - 16);
-      setPop({ top, left: rect.left - 6 - gap - w, side: 'start', arrow: clamp(cy - top, 24, h - 24) });
+      side = 'start';
+      top = clamp(cy - h / 2, 14, vh - h - 14);
+      left = rect.left - 6 - gap - w;
     }
+    // two bubbles, small near the icon and bigger near the window
+    const dots: Layout['dots'] = [];
+    const sizes = [12, 20];
+    sizes.forEach((size, i) => {
+      const dist = 18 + i * 22;
+      if (side === 'top') dots.push({ x: cx, y: rect.top - 6 - dist, size });
+      else if (side === 'end') dots.push({ x: rect.right + 6 + dist, y: cy, size });
+      else dots.push({ x: rect.left - 6 - dist, y: cy, size });
+    });
+    setLayout({ top, left, side, ox: cx - left, oy: cy - top, dots });
   }, [rect, index]);
 
   useEffect(() => {
@@ -136,36 +174,48 @@ function Steps({ stops, index, setIndex, onEnd }: { stops: TourStop[]; index: nu
 
   if (!rect) return null;
   const title = stop.id === 'menu' ? t('common.menu') : t(`nav.${stop.id}` as 'nav.home');
-  const width = Math.min(320, window.innerWidth - 32);
+  const width = Math.min(400, window.innerWidth - 28);
 
   return createPortal(
     <div className="guide-layer" role="dialog" aria-modal="true" aria-label={g('tourLabel')}>
       <div className="guide-spot" style={{ top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12 }} />
-      <div
+      {layout?.dots.map((d, i) => (
+        <m.span
+          key={`${index}-${i}`}
+          className="guide-dot"
+          style={{ left: d.x - d.size / 2, top: d.y - d.size / 2, width: d.size, height: d.size }}
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: i * 0.06, ...spring }}
+        />
+      ))}
+      <m.div
         ref={popRef}
-        className="guide-pop"
-        data-side={pop?.side ?? 'top'}
-        style={{ width, top: pop?.top ?? -9999, left: pop?.left ?? -9999, visibility: pop ? 'visible' : 'hidden', ['--arrow' as string]: `${pop?.arrow ?? 0}px` }}
+        key={index}
+        className="modal-panel guide-pop"
+        style={{ width, top: layout?.top ?? -9999, left: layout?.left ?? -9999, transformOrigin: layout ? `${layout.ox}px ${layout.oy}px` : '50% 50%' }}
+        initial={{ scale: 0.05, opacity: 0 }}
+        animate={layout ? { scale: 1, opacity: 1 } : { scale: 0.05, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 220, damping: 22 }}
       >
-        <span className="guide-arrow" aria-hidden="true" />
         <span className="guide-chip">{g('stepOf', { n: index + 1, total: stops.length })}</span>
-        <h3>{title}</h3>
+        <h2>{title}</h2>
         <p>{g(`step_${stop.id}`)}</p>
         <div className="guide-actions">
-          <button type="button" className="guide-link" onClick={onEnd}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onEnd}>
             {g('skip')}
           </button>
           <span className="guide-grow" />
           {index > 0 && (
-            <button type="button" className="guide-ghost" onClick={() => setIndex(index - 1)}>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setIndex(index - 1)}>
               {g('back')}
             </button>
           )}
-          <button type="button" className="guide-primary" onClick={() => (last ? onEnd() : setIndex(index + 1))} autoFocus>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => (last ? onEnd() : setIndex(index + 1))} autoFocus>
             {last ? g('finish') : g('next')}
           </button>
         </div>
-      </div>
+      </m.div>
     </div>,
     document.body
   );
@@ -181,18 +231,30 @@ function PageIntro({ id, onClose }: { id: string; onClose: () => void }) {
   }, [onClose]);
   const title = id === 'profile' ? g('profileTitle') : t(`nav.${id}` as 'nav.home');
   return createPortal(
-    <div className="guide-layer guide-layer--dim" role="dialog" aria-modal="true" aria-labelledby="guide-intro-title" onClick={onClose}>
-      <div className="guide-card" onClick={(e) => e.stopPropagation()}>
+    <m.div className="modal-overlay guide-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={onClose}>
+      <m.div
+        className="modal-panel text-center"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="guide-intro-title"
+        style={{ maxWidth: 420 }}
+        initial={{ scale: 0.9, opacity: 0, y: 12 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        transition={spring}
+        onClick={(e) => e.stopPropagation()}
+      >
         <span className="guide-icon" aria-hidden="true">
           {PAGE_ICONS[id]}
         </span>
-        <h3 id="guide-intro-title">{title}</h3>
-        <p>{g(`page_${id}`)}</p>
-        <button type="button" className="guide-primary guide-block" onClick={onClose} autoFocus>
+        <h2 id="guide-intro-title" style={{ fontSize: 22, marginTop: 10 }}>
+          {title}
+        </h2>
+        <p style={{ fontSize: 15.5, lineHeight: 1.6, margin: '6px 0 0' }}>{g(`page_${id}`)}</p>
+        <button type="button" className="btn btn-primary btn-block" style={{ marginTop: 22 }} onClick={onClose} autoFocus>
           {g('gotIt')}
         </button>
-      </div>
-    </div>,
+      </m.div>
+    </m.div>,
     document.body
   );
 }
