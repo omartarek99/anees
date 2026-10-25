@@ -397,6 +397,11 @@ const en = {
     playNow: 'Click to play',
     aria: '3D adventure map. Drag to explore, or pick a level from the list below.',
     levelList: 'Levels',
+    views: 'Camera view',
+    viewEagle: 'Eagle eye',
+    viewAdventure: 'Adventure',
+    viewWalk: 'First person',
+    hintWalk: 'Scroll or press ↑ ↓ to walk the road · drag to look around',
   },
   story: {
     introTitle: 'The Treasure of the Pearl of Light',
@@ -468,7 +473,6 @@ const en = {
   },
   craft: {
     title: "The Builder's Quarry",
-    subtitle: 'Explore an endless world — mine ores, craft tools, food and potions, and solve rune puzzles for bonus XP.',
     moveHint: 'Click to look · WASD move · Space jump · hold left-click to dig · G to use / build / eat · F for the crafting menu · 1–9 pick a slot',
     digHintTouch: 'Drag to look · joystick to move · ⛏ dig · ✋ use / build / eat · 🧰 crafting · tap a slot to pick it',
     clickToPlay: '🖱️ Click to look around',
@@ -1231,6 +1235,11 @@ const ar: typeof en = {
     playNow: 'انقر للعب',
     aria: 'خريطة المغامرة ثلاثية الأبعاد. اسحب للاستكشاف أو اختر مستوى من القائمة أدناه.',
     levelList: 'المستويات',
+    views: 'زاوية الكاميرا',
+    viewEagle: 'عين النسر',
+    viewAdventure: 'المغامرة',
+    viewWalk: 'منظور الشخص الأول',
+    hintWalk: 'مرّر أو اضغط ↑ ↓ للمشي على الطريق · اسحب للنظر حولك',
   },
   story: {
     introTitle: 'كنز لؤلؤة النور',
@@ -1302,7 +1311,6 @@ const ar: typeof en = {
   },
   craft: {
     title: 'محجر البنّائين',
-    subtitle: 'استكشف عالمًا لا نهائيًا — نقّب عن المعادن، اصنع الأدوات والطعام والجرعات، وحلّ ألغاز الرموز لنقاط خبرة إضافية.',
     moveHint: 'اضغط للنظر · WASD للحركة · مسافة للقفز · اضغط مطولاً بالزر الأيسر للحفر · G للاستخدام / البناء / الأكل · F لقائمة الصناعة · 1–9 لاختيار خانة',
     digHintTouch: 'اسحب للنظر · العصا للحركة · ⛏ للحفر · ✋ للاستخدام / البناء / الأكل · 🧰 للصناعة · انقر خانة لاختيارها',
     clickToPlay: '🖱️ اضغط للنظر حولك',

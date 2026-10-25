@@ -32,11 +32,11 @@ map3d/
   MapNodes.tsx      the interaction layer: invisible hit volumes -> hover / click
   nodes/            NodeVisual: what a level node looks like in each state
   zones/            one module per zone: landscape, scenery, atmosphere (+ the ZoneModule contract in types.ts)
-  CameraRig.tsx     orbit camera with limits, pan clamp, fly-to, wheel travel
+  CameraRig.tsx     the camera: orbit views (adventure / eagle eye) with limits, pan clamp, fly-to, wheel travel, and first person
   Atmosphere.tsx    sky, fog and light blended between zones (no shadow maps)
   ZoneLayer.tsx     draws the zones near the camera, hides the rest
   Overlays.tsx      zone signs and the node tooltip (DOM, via drei <Html>)
-  MapHud.tsx        zone buttons, "My level", the hint (real DOM buttons)
+  MapHud.tsx        zone buttons, "My level", the view switcher, the hint (real DOM buttons)
   AdventureMap3D.tsx  the component the page uses: levels in, "open level N" out
   Map2D.tsx         the old flat map, kept only as the no-WebGL fallback
 ```
@@ -88,15 +88,31 @@ glow, padlocks and which stretch of road is lit; nothing is rebuilt.
 
 ## Camera and scrolling
 
-An orbit camera (drei `MapControls`): left-drag / one finger pans on the ground plane, right-drag / two fingers tilt
-(23-69 degrees from the vertical) and turn (+-40 degrees), Ctrl + wheel or a trackpad pinch zooms (14-74 blocks). The target
-is clamped to the map every frame, and the map opens on the player's current level. `rig.focus(x, z, distance)` glides anywhere.
+An orbit camera (drei `MapControls`): left-drag / one finger pans on the ground plane, right-drag / two fingers tilt and turn
+(+-40 degrees), Ctrl + wheel or a trackpad pinch zooms. The target is clamped to the map every frame, and the map opens on the
+player's current level. `rig.focus(x, z, distance)` glides anywhere.
+
+**Three views** (the switcher beside "My level"; the choice is kept in `localStorage` as `anees_map_view`). Their limits live in
+`VIEWS` in `CameraRig.tsx`:
+
+| View | Look | Distance (blocks) |
+| --- | --- | --- |
+| Adventure (default) | three-quarter angle, 23-69 degrees from the vertical | 54, zoom 18-92 |
+| Eagle eye | nearly straight down, the whole route as a plan | 108, zoom 70-150 |
+| First person | eyes 1.9 blocks above the road, 62 degree lens | the wheel or the up / down keys walk the road, a drag looks around |
+
+Switching between the orbit views glides the distance and tilt; to and from first person the camera moves over 0.8 s (instantly
+with reduced motion). First person walks along `PATH_POINTS` (an index that eases to a goal), starts at the road point nearest
+where the map was looking, and returns to the orbit view looking at the spot where the walker stands. While walking, the controls'
+target follows the walker, so the sky, level of detail and zone buttons keep working. The view change runs in a layout effect:
+the next frame already runs in the new mode and would move the target before an ordinary effect could read it.
 
 The plain **wheel travels along the map** (down = towards level 50, about 8 blocks a notch), like scrolling the old tall page. It is
 never a scroll trap: at either end of the map the wheel is handed back to the page, so the page scrolls on. The listener is
 capture-phase and non-passive, so it runs before the camera controls (which would zoom) and only prevents the default while the
-map actually moves. The map is sized to fit the first screen, and on phones part of the page stays outside it so a touch
-can still scroll the page.
+map actually moves. A wheel event that arrives while a mouse button is held (the inertia tail of a trackpad scroll) is swallowed,
+so it cannot pull the camera against a drag. The map is sized to fit the first screen, and on phones part of the page stays
+outside it so a touch can still scroll the page.
 
 ## Authoring
 
@@ -117,7 +133,7 @@ The scene is deliberately light:
 * **Draws on demand**: `frameloop="demand"`; frames are requested by the camera controls, by hover changes, and by a 20 fps
   ambient tick for the few things that move by themselves. The tick stops when the map is off screen or the tab is hidden, and
   does not run at all for visitors with reduced motion.
-* **One mesh per concern**: terrain is one merged mesh per zone (two quads per cliff face, no normals), the road is one merged
+* **One mesh per concern**: terrain is one merged mesh per zone (two quads per cliff face, no normals, colours softened by a 3x3 blur so the blocks blend), the road is one merged
   ribbon, a zone's static props are baked into one solid + one glow mesh (`bake()` / `<Baked/>`), and zones far from the camera are hidden.
 * **Level of detail** for the 50 nodes: only those near where the camera looks get the number, stars, beacon and animation; the
   rest draw as a bare pad with no per-frame work.
@@ -130,7 +146,7 @@ The scene is deliberately light:
 
 `http://localhost:5190/dev/map3d` (dev server only, not in the production build, no login). Parameters: `done=N` (levels
 1..N completed, N+1 playable), `zone=desert|0-4`, `node=N`, `x= z=`, `dist=`, `polar=` (degrees from straight down), `az=`
-(degrees), `still=1`, `full=1`.
+(degrees), `view=adventure|eagle|walk`, `still=1`, `full=1`.
 
 ## Migration checklist (2D -> 3D), as done here
 

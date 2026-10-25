@@ -1,4 +1,5 @@
 import { Suspense, lazy, useMemo } from 'react';
+import type { ViewMode } from '../map3d/CameraRig';
 import { nodeXZ, ZONES } from '../map3d/layout';
 import type { ApiLevel } from '../map3d/schema';
 
@@ -7,6 +8,7 @@ import type { ApiLevel } from '../map3d/schema';
 //   done=N      levels 1..N completed, N+1 playable, the rest locked (default 6)
 //   zone=key|0-4  look at the middle of a zone      node=N  look at a level      x=&z=  look at a ground position
 //   dist= polar= az=   camera distance (blocks), tilt from straight down (degrees), turn (degrees)
+//   view=adventure|eagle|walk   the camera view to open in (default adventure; the player's saved choice is ignored here)
 //   still=1     no ambient animation (steady screenshots)      full=1  fill the whole window
 const AdventureMap3D = lazy(() => import('../map3d/AdventureMap3D'));
 
@@ -50,11 +52,14 @@ export function MapPreviewPage() {
     return view;
   }, [q]);
 
+  const view = q.get('view');
+  const mode: ViewMode = view === 'eagle' || view === 'walk' ? view : 'adventure';
+
   return (
     <div style={{ padding: q.get('full') ? 0 : 16 }}>
       {q.get('full') && <style>{'.map3d{block-size:100vh !important;border-radius:0 !important;border:0 !important}'}</style>}
       <Suspense fallback={null}>
-        <AdventureMap3D levels={levels} onOpen={(n) => console.log('open level', n)} still={q.get('still') === '1' ? true : undefined} initialView={initialView} />
+        <AdventureMap3D levels={levels} onOpen={(n) => console.log('open level', n)} still={q.get('still') === '1' ? true : undefined} initialView={initialView} initialMode={mode} />
       </Suspense>
     </div>
   );

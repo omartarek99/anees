@@ -4,7 +4,8 @@
 .map3d {
   position: relative;
   inline-size: 100%;
-  block-size: clamp(480px, 78vh, 820px);
+  /* the page header and the story panel above take ~300px: the whole map fits the first screen */
+  block-size: clamp(460px, calc(100vh - 300px), 820px);
   border-radius: var(--radius-md);
   overflow: hidden;
   border: 1.5px solid var(--glass-border);
@@ -77,8 +78,49 @@
   outline: 3px solid var(--gold);
   outline-offset: 2px;
 }
-.map3d-here {
+.map3d-side {
   margin-inline-start: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+.map3d-views {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--glass-border);
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  backdrop-filter: var(--glass-blur-sm);
+  box-shadow: var(--shadow-3d-sm);
+  pointer-events: auto;
+}
+.map3d-views button {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.map3d-views button:hover {
+  background: var(--surface-hover);
+}
+.map3d-views button.is-active {
+  background: var(--gold);
+  color: #2b1b00;
+}
+.map3d-views button:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 1px;
 }
 .map3d-hint {
   position: absolute;
@@ -175,6 +217,13 @@
 }
 
 @media (max-width: 640px) {
+  .map3d-views button {
+    padding: 6px 10px;
+    font-size: 0;
+  }
+  .map3d-views button span {
+    font-size: 16px;
+  }
   .map3d {
     block-size: clamp(420px, 72vh, 640px);
   }

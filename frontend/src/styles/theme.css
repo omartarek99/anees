@@ -531,6 +531,12 @@ svg {
   font-size: 26px;
   margin: 0;
 }
+/* The Builder's Quarry: just the title, centred, with no bar around it. */
+.craft-title {
+  font-size: 26px;
+  margin: 0;
+  text-align: center;
+}
 /* Page headings ease in once as the page mounts (the landing hero and stories have entrances of their own).
    Reduced motion keeps the ease but only as a fade: no sliding, no blur. */
 @keyframes title-ease-in {

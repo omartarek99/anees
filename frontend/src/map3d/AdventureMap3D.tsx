@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MutableRefObject } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { Frustum, Matrix4 } from 'three';
+import { Frustum, Matrix4, Vector3 } from 'three';
 import type * as THREE from 'three';
 import { isLowPower } from '../components/avatar3d/avatarConfig';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 import { Atmosphere } from './Atmosphere';
-import { CameraRig, DEFAULT_VIEW, type InitialView, type RigApi } from './CameraRig';
+import { CameraRig, orbitOf, type InitialView, type RigApi, type ViewMode } from './CameraRig';
 import { pathBaseY } from './ground';
 import { buildWorld, currentNodeId } from './layout';
 import { MapHud } from './MapHud';
@@ -36,9 +36,26 @@ export interface AdventureMap3DProps {
   still?: boolean;
   /** Where the camera starts (defaults: the player's current level, from the front). Used by the dev preview. */
   initialView?: Partial<InitialView>;
+  /** The view to open in (default: the one the player last chose, else the adventure view). Used by the dev preview. */
+  initialMode?: ViewMode;
 }
 
 const PAN_STEP = 8;
+/** Blocks walked per press of an arrow key in first person. */
+const WALK_STEP = 6;
+
+// The view the player last chose is remembered in this browser.
+const VIEW_KEY = 'anees_map_view';
+const VIEWS: readonly ViewMode[] = ['eagle', 'adventure', 'walk'];
+function readMode(): ViewMode {
+  try {
+    const v = localStorage.getItem(VIEW_KEY);
+    if (VIEWS.includes(v as ViewMode)) return v as ViewMode;
+  } catch {
+    // private mode: the default view
+  }
+  return 'adventure';
+}
 /** Blocks travelled per pixel of wheel scroll: about 8 blocks a notch, like paging through the old tall map. */
 const WHEEL_BLOCKS_PER_PX = 0.08;
 /** Ambient motion (clouds, birds, the beacon) is redrawn this often: smooth enough, a fraction of the cost of 60 fps. */
@@ -65,7 +82,7 @@ function AmbientClock({ active }: { active: boolean }) {
 }
 
 /** DEV only: tells a test page the scene has drawn, and lets it read the camera, the cost and steer the rig. */
-function DevSignal({ rig }: { rig: MutableRefObject<RigApi | null> }) {
+function DevSignal({ rig, mode }: { rig: MutableRefObject<RigApi | null>; mode: MutableRefObject<ViewMode> }) {
   const { camera, controls, gl, scene, invalidate } = useThree();
   useEffect(() => {
     const c = controls as unknown as { target: THREE.Vector3; getPolarAngle(): number; getAzimuthalAngle(): number };
@@ -101,7 +118,7 @@ function DevSignal({ rig }: { rig: MutableRefObject<RigApi | null> }) {
         ctx.readPixels(0, 0, 1, 1, ctx.RGBA, ctx.UNSIGNED_BYTE, new Uint8Array(4)); // forces the GPU to finish
         return (performance.now() - t0) / 10;
       },
-      camera: () => ({ x: c.target.x, z: c.target.z, dist: camera.position.distanceTo(c.target), polar: c.getPolarAngle(), azimuth: c.getAzimuthalAngle() }),
+      camera: () => ({ x: c.target.x, ty: c.target.y, z: c.target.z, dir: camera.getWorldDirection(new Vector3()).toArray(), dist: camera.position.distanceTo(c.target), polar: c.getPolarAngle(), azimuth: c.getAzimuthalAngle(), mode: mode.current, eye: camera.position.toArray(), fov: (camera as THREE.PerspectiveCamera).fov }),
     };
     // the loop only draws on demand: give it a few frames, then announce
     let n = 0;
@@ -113,11 +130,11 @@ function DevSignal({ rig }: { rig: MutableRefObject<RigApi | null> }) {
       }
     }, 120);
     return () => window.clearInterval(id);
-  }, [camera, controls, gl, scene, invalidate, rig]);
+  }, [camera, controls, gl, scene, invalidate, rig, mode]);
   return null;
 }
 
-export default function AdventureMap3D({ levels, onOpen, onContextLost, still: stillProp, initialView }: AdventureMap3DProps) {
+export default function AdventureMap3D({ levels, onOpen, onContextLost, still: stillProp, initialView, initialMode }: AdventureMap3DProps) {
   const { t, lang } = useLanguage();
   const world = useMemo(() => buildWorld(levels, (_zone, x, z) => pathBaseY(x, z)), [levels]);
   const root = useRef<HTMLDivElement>(null);
@@ -125,6 +142,9 @@ export default function AdventureMap3D({ levels, onOpen, onContextLost, still: s
   const [hovered, setHovered] = useState<number | null>(null);
   const [flash, setFlash] = useState<number | null>(null);
   const [zone, setZone] = useState(0);
+  const [mode, setMode] = useState<ViewMode>(() => initialMode ?? readMode());
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
   const lowPower = useMemo(() => isLowPower(), []);
   const reduceMotion = useMemo(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches, []);
   const still = stillProp ?? reduceMotion;
@@ -132,7 +152,8 @@ export default function AdventureMap3D({ levels, onOpen, onContextLost, still: s
   const myLevel = useMemo(() => currentNodeId(world), [world]);
   const initial = useMemo<InitialView>(() => {
     const n = world.nodes[myLevel - 1];
-    return { x: n.position[0] * 0.4, z: n.position[2], ...DEFAULT_VIEW, ...initialView };
+    const o = orbitOf(mode);
+    return { x: n.position[0] * 0.4, z: n.position[2], distance: o.distance, polar: o.polar, azimuth: 0, ...initialView };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -147,10 +168,23 @@ export default function AdventureMap3D({ levels, onOpen, onContextLost, still: s
     const el = root.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      if (e.ctrlKey || e.metaKey) return;
+      if (e.buttons) {
+        // a drag is under way: the tail of a trackpad or smooth-scrolling wheel must not pull the camera against it
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+      }
+      if (e.ctrlKey || e.metaKey) {
+        // zoom: left to the camera controls (also a trackpad pinch); first person has none, but must not zoom the page
+        if (modeRef.current === 'walk') {
+          e.stopPropagation();
+          e.preventDefault();
+        }
+        return;
+      }
       e.stopPropagation(); // the camera controls would zoom
       const px = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1;
-      if (e.deltaX) rig.current?.pan(e.deltaX * px * WHEEL_BLOCKS_PER_PX, 0);
+      if (e.deltaX && modeRef.current !== 'walk') rig.current?.pan(e.deltaX * px * WHEEL_BLOCKS_PER_PX, 0);
       if (rig.current?.travel(e.deltaY * px * WHEEL_BLOCKS_PER_PX) || (e.deltaX && !e.deltaY)) e.preventDefault();
     };
     el.addEventListener('wheel', onWheel, { capture: true, passive: false });
@@ -170,14 +204,33 @@ export default function AdventureMap3D({ levels, onOpen, onContextLost, still: s
     else onOpen(id);
   }
 
-  function focusNode(id: number, distance = 36) {
+  function focusNode(id: number, distance?: number) {
     const n = world.nodes[id - 1];
     rig.current?.focus(n.position[0] * 0.4, n.position[2], distance);
+  }
+
+  function chooseView(next: ViewMode) {
+    setMode(next);
+    try {
+      localStorage.setItem(VIEW_KEY, next);
+    } catch {
+      // private mode: it just will not be remembered
+    }
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (e.target !== e.currentTarget) return; // the HUD buttons and the level list keep their own keys
     const k = e.key;
+    if (mode === 'walk') {
+      // first person: up / down walk the road, left / right turn the head
+      if (k === 'ArrowUp' || k === 'w' || k === 'W') rig.current?.travel(WALK_STEP);
+      else if (k === 'ArrowDown' || k === 's' || k === 'S') rig.current?.travel(-WALK_STEP);
+      else if (k === 'ArrowLeft' || k === 'a' || k === 'A') rig.current?.look(0.25);
+      else if (k === 'ArrowRight' || k === 'd' || k === 'D') rig.current?.look(-0.25);
+      else return;
+      e.preventDefault();
+      return;
+    }
     const dz = k === 'ArrowUp' ? -PAN_STEP : k === 'ArrowDown' ? PAN_STEP : 0;
     const dx = k === 'ArrowLeft' ? -PAN_STEP : k === 'ArrowRight' ? PAN_STEP : 0;
     if (dx || dz) rig.current?.pan(dx, dz);
@@ -207,7 +260,7 @@ export default function AdventureMap3D({ levels, onOpen, onContextLost, still: s
       >
         <AmbientClock active={!still} />
         <Atmosphere />
-        <CameraRig api={rig} bounds={world.bounds} initial={initial} onZone={setZone} />
+        <CameraRig api={rig} bounds={world.bounds} initial={initial} mode={mode} instant={still} onZone={setZone} />
         <ZoneLayer zones={world.zones} still={still} />
         <PathRibbon world={world} still={still} />
         <MapNodes nodes={world.nodes} hoveredId={hovered} still={still} onHover={setHovered} onSelect={select} />
@@ -230,15 +283,22 @@ export default function AdventureMap3D({ levels, onOpen, onContextLost, still: s
             </div>
           </NodeTip>
         )}
-        {import.meta.env.DEV && <DevSignal rig={rig} />}
+        {import.meta.env.DEV && <DevSignal rig={rig} mode={modeRef} />}
       </Canvas>
 
       <MapHud
         zoneNames={zoneNames}
         activeZone={zone}
-        onZone={(i) => focusNode(world.zones[i].nodeIds[0], 40)}
+        onZone={(i) => focusNode(world.zones[i].nodeIds[0])}
         onMyLevel={() => focusNode(myLevel)}
-        labels={{ zones: t('map.zones'), myLevel: t('map.myLevel'), hint: t('map.hint') }}
+        view={mode}
+        views={[
+          { key: 'eagle', icon: '🦅', label: t('map.viewEagle') },
+          { key: 'adventure', icon: '🗺️', label: t('map.viewAdventure') },
+          { key: 'walk', icon: '🚶', label: t('map.viewWalk') },
+        ]}
+        onView={chooseView}
+        labels={{ zones: t('map.zones'), myLevel: t('map.myLevel'), views: t('map.views'), hint: t(mode === 'walk' ? 'map.hintWalk' : 'map.hint') }}
       />
 
       {/* The same levels as real buttons, for keyboards and screen readers: the 3D scene itself is pointer-driven. */}

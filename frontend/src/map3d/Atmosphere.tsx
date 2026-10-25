@@ -44,7 +44,7 @@ export function Atmosphere() {
     };
   }, [scene, moods]);
 
-  useFrame(({ controls }) => {
+  useFrame(({ controls, camera }) => {
     const target = (controls as { target?: THREE.Vector3 } | null)?.target;
     if (!target || !sun.current || !ambient.current || !hemi.current) return;
     const z = target.z;
@@ -67,7 +67,12 @@ export function Atmosphere() {
       a = b = moods[i];
     }
     (scene.background as THREE.Color).copy(a.sky).lerp(b.sky, w);
-    (scene.fog as THREE.Fog).color.copy(a.fog).lerp(b.fog, w);
+    const fog = scene.fog as THREE.Fog;
+    fog.color.copy(a.fog).lerp(b.fog, w);
+    // the haze starts further out the higher the camera is, and close by when walking on the road
+    const d = camera.position.distanceTo(target);
+    fog.near = Math.max(45, d * 0.9 + 20);
+    fog.far = fog.near + 150;
     sun.current.color.copy(a.sun).lerp(b.sun, w);
     sun.current.intensity = lerp(a.sunIntensity, b.sunIntensity, w);
     ambient.current.color.copy(a.ambient).lerp(b.ambient, w);

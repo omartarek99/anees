@@ -7,7 +7,7 @@ import type { MapZone } from './schema';
 // Draws every zone's ground and scenery. A zone far from where the camera looks is hidden, so only the one or two zones
 // on screen are ever sent to the GPU.
 
-const REACH = 100; // blocks beyond a zone's ends at which it still draws
+const REACH = 160; // blocks beyond a zone's ends at which it still draws (the eagle view sees far)
 
 function ZoneSlot({ zone, still }: { zone: MapZone; still: boolean }) {
   const group = useRef<THREE.Group>(null);

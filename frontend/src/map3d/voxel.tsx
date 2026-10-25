@@ -103,7 +103,7 @@ function merge(boxes: readonly Box[], jitter: number): THREE.BufferGeometry | nu
   return merged;
 }
 
-function buildVoxelGeometry(boxes: readonly Box[], jitter = 0.04): VoxelGeometry {
+function buildVoxelGeometry(boxes: readonly Box[], jitter = 0.025): VoxelGeometry {
   return { solid: merge(boxes.filter((b) => !b.glow), jitter), glow: merge(boxes.filter((b) => b.glow), 0) };
 }
 
@@ -112,7 +112,7 @@ export interface VoxelModel {
 }
 
 /** Declares a structure. The boxes are built (and merged) the first time it is drawn, then shared by every copy. */
-export function defineModel(build: () => Box[], jitter = 0.04): VoxelModel {
+export function defineModel(build: () => Box[], jitter = 0.025): VoxelModel {
   let cache: VoxelGeometry | null = null;
   return { get: () => (cache ??= buildVoxelGeometry(build(), jitter)) };
 }

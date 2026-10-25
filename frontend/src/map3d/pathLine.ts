@@ -17,7 +17,7 @@ export interface PathPoint {
   zone: ZoneKey;
 }
 
-const PATH_STEP = 0.5;
+export const PATH_STEP = 0.5;
 
 export const PATH_POINTS: readonly PathPoint[] = (() => {
   const curve = new THREE.CatmullRomCurve3(

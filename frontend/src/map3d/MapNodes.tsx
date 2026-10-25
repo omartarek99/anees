@@ -15,7 +15,7 @@ const HIT = { pad: { r: 2.9, h: 3.2, spireR: 1.3, spireH: 6.5 }, arena: { r: 4.6
 /** A click that moved this many pixels between press and release was a pan, not a click. */
 const CLICK_SLOP = 6;
 
-/** Nodes farther than this (blocks, on the ground) from where the camera looks draw as a cheap stand-in. */
+/** Nodes farther than this (blocks, on the ground) from where the camera looks draw as a cheap stand-in; it grows when the camera is high. */
 const NEAR = 62;
 
 interface SlotProps {
@@ -62,10 +62,11 @@ const NodeSlot = memo(function NodeSlot({ node, hovered, still, far, onHover, on
 export function MapNodes({ nodes, hoveredId, still, onHover, onSelect }: { nodes: readonly MapNode[]; hoveredId: number | null; still: boolean; onHover: (id: number | null) => void; onSelect: (id: number) => void }) {
   // which nodes are near the camera's target; every one starts "far" so the first frame is cheap, and the near ones fill in
   const [near, setNear] = useState('');
-  useFrame(({ controls }) => {
+  useFrame(({ controls, camera }) => {
     const t = (controls as { target?: THREE.Vector3 } | null)?.target;
     if (!t) return;
-    const key = nodes.filter((n) => Math.hypot(n.position[0] - t.x, n.position[2] - t.z) < NEAR).map((n) => n.id).join(',');
+    const reach = Math.max(NEAR, camera.position.distanceTo(t) * 1.15);
+    const key = nodes.filter((n) => Math.hypot(n.position[0] - t.x, n.position[2] - t.z) < reach).map((n) => n.id).join(',');
     if (key !== near) setNear(key);
   });
   const nearIds = new Set(near ? near.split(',').map(Number) : []);

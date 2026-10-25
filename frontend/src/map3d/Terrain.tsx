@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import { hash2 } from './math';
+import { clamp, hash2 } from './math';
 import { groundHeight } from './ground';
 import { MAP_BOUNDS } from './layout';
 import { voxelMaterial } from './voxel';
@@ -15,6 +15,12 @@ export type TopColor = (x: number, z: number, height: number) => string;
 export type SideColor = (x: number, z: number, depth: number, topHex: string) => string;
 
 const SKIRT = -8; // beyond the map's edge the ground drops away to here, so there is never a see-through gap
+
+// Colour softening: the weights of a 3x3 blend (they sum to 1), and the little per-block brightness variation left on top.
+const SOFT_CENTRE = 0.34;
+const SOFT_EDGE = 0.12;
+const SOFT_CORNER = 0.045;
+const JITTER = 0.03;
 
 const colorCache = new Map<string, THREE.Color>();
 const toColor = (hex: string) => {
@@ -67,14 +73,45 @@ function buildHeightfieldGeometry({ zone, top, side = defaultSide, pad = 10, hei
   }
   const hAt = (ix: number, iz: number) => (ix < x0 || ix >= x1 ? SKIRT : hs[(iz - z0 + 1) * cols + (ix - x0)]);
 
+  // Each column's own top colour, then softened: blended with its neighbours so the sand, grass and snow melt into each other
+  // instead of speckling block by block (the heights stay stepped, that is the voxel look).
+  const rows = z1 - z0;
+  const own = new Float32Array(cols * rows * 3);
+  for (let iz = z0; iz < z1; iz++) {
+    for (let ix = x0; ix < x1; ix++) {
+      const c = toColor(top(ix + 0.5, iz + 0.5, hAt(ix, iz)));
+      const o = ((iz - z0) * cols + (ix - x0)) * 3;
+      own[o] = c.r;
+      own[o + 1] = c.g;
+      own[o + 2] = c.b;
+    }
+  }
+  const soft = new Float32Array(own.length);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      for (let ch = 0; ch < 3; ch++) {
+        let sum = 0;
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const w = dr === 0 && dc === 0 ? SOFT_CENTRE : dr === 0 || dc === 0 ? SOFT_EDGE : SOFT_CORNER;
+            sum += w * own[(clamp(r + dr, 0, rows - 1) * cols + clamp(c + dc, 0, cols - 1)) * 3 + ch];
+          }
+        }
+        soft[(r * cols + c) * 3 + ch] = sum;
+      }
+    }
+  }
+  const blended = new THREE.Color();
+
   for (let iz = z0; iz < z1; iz++) {
     for (let ix = x0; ix < x1; ix++) {
       const cx = ix + 0.5;
       const cz = iz + 0.5;
       const y = hAt(ix, iz);
-      const topHex = top(cx, cz, y);
-      const k = 1 + (hash2(ix, iz, 7) - 0.5) * 0.08;
-      const rgb = toColor(topHex);
+      const o = ((iz - z0) * cols + (ix - x0)) * 3;
+      const rgb = blended.setRGB(soft[o], soft[o + 1], soft[o + 2]);
+      const topHex = `#${rgb.getHexString()}`;
+      const k = 1 + (hash2(ix, iz, 7) - 0.5) * JITTER;
       quad([ix, y, iz + 1], [ix + 1, y, iz + 1], [ix + 1, y, iz], [ix, y, iz], rgb, k);
 
       // sides, only where the neighbour is lower: an edge band, then the body down to the neighbour

@@ -5,7 +5,6 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
-import { Topbar } from '../components/Topbar';
 import { CraftMenu } from '../components/CraftMenu';
 import {
   CHUNK,
@@ -1423,7 +1422,7 @@ export function CraftPage() {
 
   return (
     <div className="stack">
-      <Topbar title={t('craft.title')} subtitle={t('craft.subtitle')} />
+      <h1 className="craft-title title-ease">{t('craft.title')}</h1>
 
       {loadError && <div className="form-error-banner">{loadError}</div>}
       {saveError && !loadError && <div className="form-error-banner">{t('craft.saveError')}</div>}
