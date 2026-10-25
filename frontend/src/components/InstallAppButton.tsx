@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RiDownloadLine } from '@remixicon/react';
 import { useLanguage } from '../lib/language-context';
-import { useInstallApp, openIosGuide } from '../lib/pwa';
+import { useInstallApp, openShareSheet } from '../lib/pwa';
 
 /** "Install app" entry: opens the browser's own install dialog on Android/Chrome; on iPhone (and when the
  * browser offered no prompt) it shows the short manual steps. Renders nothing once the app is installed or on a
@@ -13,10 +13,10 @@ export function InstallAppButton({ variant = 'menu', onDone }: { variant?: 'menu
   if (!available) return null;
 
   async function onClick() {
-    // iPhone: show the guide overlay (a page cannot open "Add to Home Screen" itself).
+    // iPhone: open the Share sheet straight away (that is where "Add to Home Screen" is); the steps stay visible as a guide.
     if (ios) {
-      openIosGuide();
-      onDone?.();
+      setShowSteps(true);
+      await openShareSheet();
       return;
     }
     const opened = await install();

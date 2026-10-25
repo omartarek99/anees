@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { RiAppleFill, RiAndroidFill } from '@remixicon/react';
 import { useLanguage } from '../lib/language-context';
-import { useInstallApp, openIosGuide } from '../lib/pwa';
+import { useInstallApp, openShareSheet } from '../lib/pwa';
 
 type Platform = 'ios' | 'android';
 
 /** "Get the app" block at the bottom of the landing page: one button for iPhone and one for Android.
- * On an iPhone the button opens the on-screen guide pointing at Safari's Share button (a page cannot open "Add to Home
- * Screen" itself); on Android it opens the browser's own install window. Anywhere that is not possible (or on the other platform's button) it shows that
+ * On an iPhone the button opens the Share sheet straight away (where "Add to Home Screen" is); on Android it opens the
+ * browser's own install window. Anywhere that is not possible (or on the other platform's button) it shows that
  * platform's short written steps instead. Hidden once the site is already running as an installed app. */
 export function AppDownloadSection() {
   const { t } = useLanguage();
@@ -16,9 +16,11 @@ export function AppDownloadSection() {
   const [open, setOpen] = useState<Platform | null>(null);
   if (installed) return null;
 
-  function onIphone() {
+  async function onIphone() {
     if (ios) {
-      openIosGuide();
+      // The steps stay visible underneath as a guide for picking "Add to Home Screen" in the sheet.
+      setOpen('ios');
+      await openShareSheet();
       return;
     }
     setOpen((p) => (p === 'ios' ? null : 'ios'));
