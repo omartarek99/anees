@@ -49,18 +49,41 @@ function isAndroid() {
   return /android/i.test(navigator.userAgent);
 }
 
-/** iPhone has no "install" API, but its Share sheet is where "Add to Home Screen" lives, and the Web Share API opens
- * that sheet straight from a tap. Resolves true when the sheet was shown (even if the person then closed it),
- * false when sharing is not available so the caller should show the written steps instead. */
-export async function openShareSheet(): Promise<boolean> {
-  if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') return false;
-  try {
-    await navigator.share({ title: 'Anees أنيس', url: `${window.location.origin}/` });
-    return true;
-  } catch (err) {
-    // Closing the sheet without choosing anything is not a failure.
-    return (err as DOMException).name === 'AbortError';
-  }
+/** iPhone has no "install" API, and the Share sheet a page opens from code leaves out "Add to Home Screen" (it only
+ * appears behind Safari's own Share button). So the app shows a guide overlay instead; any install button opens it
+ * with openIosGuide() and the single <IosInstallGuideHost/> near the root renders it. */
+let guideOpen = false;
+export function openIosGuide() {
+  guideOpen = true;
+  notify();
+}
+export function useIosGuide(): [boolean, () => void] {
+  const [, rerender] = useState(0);
+  useEffect(() => {
+    const fn = () => rerender((n) => n + 1);
+    listeners.add(fn);
+    return () => {
+      listeners.delete(fn);
+    };
+  }, []);
+  return [
+    guideOpen,
+    () => {
+      guideOpen = false;
+      notify();
+    },
+  ];
+}
+
+/** Real Safari (not Chrome/Firefox/Edge for iOS or an in-app browser such as Instagram's), where "Add to Home Screen" is reliable. */
+export function isIosSafari() {
+  const ua = navigator.userAgent;
+  return /safari/i.test(ua) && !/crios|fxios|edgios|opios|gsa\/|fban|fbav|instagram|line\/|twitter|snapchat|tiktok/i.test(ua);
+}
+
+/** iPad Safari keeps its Share button at the top right instead of the bottom centre. */
+export function isIpad() {
+  return /ipad/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
 export type InstallState = {

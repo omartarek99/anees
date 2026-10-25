@@ -16,6 +16,7 @@ import { WarningModal } from './components/WarningModal';
 import { DoublePointsNotification } from './components/DoublePointsNotification';
 import { CertificateAwardPopup } from './components/CertificateAwardPopup';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
+import { IosInstallGuideHost } from './components/IosInstallGuide';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsPage } from './pages/TermsPage';
 import { CookiePolicyPage } from './pages/CookiePolicyPage';
@@ -213,6 +214,7 @@ export default function App() {
           <AuthProvider>
             <PageviewTracker />
             <PageMeta />
+            <IosInstallGuideHost />
             <ScrollToTop />
             <Routes>
               {/* Public regardless of auth state — a visitor should be able to read these before ever signing up. */}
