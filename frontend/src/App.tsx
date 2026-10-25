@@ -37,6 +37,8 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ defa
 const TeacherReelsPage = lazy(() => import('./pages/TeacherReelsPage').then((m) => ({ default: m.TeacherReelsPage })));
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
 const CraftPage = lazy(() => import('./pages/CraftPage').then((m) => ({ default: m.CraftPage })));
+// Dev-only: the 3D map with made-up progress and no login (see the page). Not part of the production build.
+const MapPreviewPage = import.meta.env.DEV ? lazy(() => import('./pages/MapPreviewPage').then((m) => ({ default: m.MapPreviewPage }))) : null;
 
 // Navigating to a new page starts at its top (e.g. the Terms link at the bottom of signup).
 // Back/forward (POP) keep the browser's own scroll restoration.
@@ -220,6 +222,16 @@ export default function App() {
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/cookies" element={<CookiePolicyPage />} />
               <Route path="/welcome" element={<LandingPage />} />
+              {MapPreviewPage && (
+                <Route
+                  path="/dev/map3d"
+                  element={
+                    <Suspense fallback={null}>
+                      <MapPreviewPage />
+                    </Suspense>
+                  }
+                />
+              )}
 
               <Route element={<PublicOnlyLayout />}>
                 <Route path="/login" element={<LoginPage />} />
