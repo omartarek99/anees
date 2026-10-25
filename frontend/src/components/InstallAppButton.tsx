@@ -1,21 +1,20 @@
 import { useState } from 'react';
 import { RiDownloadLine } from '@remixicon/react';
 import { useLanguage } from '../lib/language-context';
-import { useInstallApp } from '../lib/pwa';
+import { useInstallApp, downloadApk } from '../lib/pwa';
 
-/** "Install app" entry: opens the browser's own install dialog on Android/Chrome; on iPhone (and when the
- * browser offered no prompt) it shows the short manual steps. Renders nothing once the app is installed or on a
+/** "Install app" entry: downloads the Android app file in one tap; on iPhone it shows the short manual steps. Renders nothing once the app is installed or on a
  * desktop browser with no install offer. `variant` only changes the look to suit the surrounding menu. */
 export function InstallAppButton({ variant = 'menu', onDone }: { variant?: 'menu' | 'landing'; onDone?: () => void }) {
   const { t } = useLanguage();
-  const { available, ios, install } = useInstallApp();
+  const { available, ios } = useInstallApp();
   const [showSteps, setShowSteps] = useState(false);
   if (!available) return null;
 
-  async function onClick() {
-    const opened = await install();
-    if (opened) onDone?.();
-    else setShowSteps((v) => !v);
+  function onClick() {
+    // Android: download the app file right away; iPhone has no app file, so it just shows the steps.
+    if (!ios) downloadApk();
+    setShowSteps(true);
   }
 
   const steps = ios ? t('pwa.iosSteps') : t('pwa.androidSteps');

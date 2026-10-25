@@ -1,23 +1,23 @@
 import { useState } from 'react';
 import { RiAppleFill, RiAndroidFill } from '@remixicon/react';
 import { useLanguage } from '../lib/language-context';
-import { useInstallApp } from '../lib/pwa';
+import { useInstallApp, downloadApk } from '../lib/pwa';
 
 type Platform = 'ios' | 'android';
 
 /** "Get the app" block at the bottom of the landing page: one button for iPhone and one for Android.
- * Android opens the browser's own install window when it offered one; either button otherwise shows that
- * platform's short "Add to Home Screen" steps. The visitor's own platform opens by default. Hidden once the
- * site is already running as an installed app. */
+ * Android downloads the APK file in one tap (and shows how to open it); iPhone shows the "Add to Home Screen" steps,
+ * since Apple allows no app file outside the App Store. The visitor's own platform opens by default. Hidden once
+ * the site is already running as an installed app. */
 export function AppDownloadSection() {
   const { t } = useLanguage();
-  const { ios, android, installed, install } = useInstallApp();
+  const { ios, android, installed } = useInstallApp();
   const [open, setOpen] = useState<Platform | null>(ios ? 'ios' : android ? 'android' : null);
   if (installed) return null;
 
-  async function onAndroid() {
-    const opened = await install();
-    if (!opened) setOpen((p) => (p === 'android' ? null : 'android'));
+  function onAndroid() {
+    downloadApk();
+    setOpen('android'); // the short "open the file" guide appears under the buttons
   }
 
   const steps =

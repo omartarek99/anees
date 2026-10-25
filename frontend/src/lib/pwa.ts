@@ -49,6 +49,20 @@ function isAndroid() {
   return /android/i.test(navigator.userAgent);
 }
 
+/** The Android app file (a Trusted Web Activity wrapper around the site, built with Bubblewrap and signed with
+ * our own key). Served from /downloads/ with a download header (see vercel.json). */
+export const APK_URL = '/downloads/anees.apk';
+
+/** Starts the APK download straight away (no new tab, no page change). */
+export function downloadApk() {
+  const a = document.createElement('a');
+  a.href = APK_URL;
+  a.download = 'Anees.apk';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 export type InstallState = {
   /** Show an "Install app" entry at all: not already installed, and on a phone (or the browser offered a prompt). */
   available: boolean;

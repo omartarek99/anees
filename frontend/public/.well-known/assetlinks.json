@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "site.aneesqa.app",
+      "sha256_cert_fingerprints": [
+        "8C:D3:2E:51:7D:0C:07:3A:B9:C4:F4:22:3C:54:8A:25:38:3C:3B:3A:D2:57:9E:D2:2C:7D:0C:BE:22:E2:B1:4A"
+      ]
+    }
+  }
+]

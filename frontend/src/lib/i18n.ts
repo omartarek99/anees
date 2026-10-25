@@ -635,7 +635,7 @@ const en = {
     iosTitle: 'Install on iPhone',
     iosSteps: 'Open this site in Safari, tap the Share button, choose "Add to Home Screen", then tap Add.',
     androidTitle: 'Install on Android',
-    androidSteps: 'Open the browser menu (the three dots), then tap "Install app" or "Add to Home screen".',
+    androidSteps: 'The app file is downloading. Open it from your notifications or Downloads, and if Android asks, allow installing from this browser, then tap Install.',
   },
   landing: {
     navLessons: 'Lessons',
@@ -1352,7 +1352,7 @@ const ar: typeof en = {
     iosTitle: 'التثبيت على الآيفون',
     iosSteps: 'افتح الموقع في متصفح Safari، ثم اضغط زر المشاركة، واختر «إضافة إلى الشاشة الرئيسية»، ثم اضغط «إضافة».',
     androidTitle: 'التثبيت على الأندرويد',
-    androidSteps: 'افتح قائمة المتصفح (النقاط الثلاث)، ثم اضغط «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».',
+    androidSteps: 'يتم الآن تحميل ملف التطبيق. افتحه من الإشعارات أو من التنزيلات، وإذا طلب أندرويد السماح بالتثبيت من هذا المتصفح فاسمح له، ثم اضغط «تثبيت».',
   },
   landing: {
     navLessons: 'الدروس',
