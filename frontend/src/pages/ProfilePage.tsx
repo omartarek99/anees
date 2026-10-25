@@ -10,6 +10,7 @@ import { ProfileAvatar3D } from '../components/ProfileAvatar3D';
 import type { AvatarConfig } from '../components/avatar3d/avatarConfig';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
+import { VictoryShield } from '../components/VictoryShield';
 import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, certPillBackground, type CertificateType } from '../lib/certificateTiers';
 
 type TeacherVideo = {
@@ -33,6 +34,7 @@ type Certificate = {
 type Profile = {
   username: string;
   displayName: string;
+  hasShield?: boolean;
   avatarKey: string;
   avatarUrl: string | null;
   // The student's customised 3D character; null until they save one.
@@ -193,7 +195,13 @@ export function ProfilePage() {
 
   return (
     <div className="stack">
-      <Topbar title={profile.displayName} subtitle={`${LRI}@${profile.username}${PDI} · ${t('profile.joined', { date: joinedDate })}`} />
+      <Topbar
+        title={
+          <>
+            {profile.displayName}
+            {profile.hasShield && <VictoryShield size={26} />}
+          </>
+        } subtitle={`${LRI}@${profile.username}${PDI} · ${t('profile.joined', { date: joinedDate })}`} />
 
       {(profile.schoolName || profile.teacherSubject) && (
         <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
@@ -409,7 +417,10 @@ export function ProfilePage() {
               </div>
             ) : (
               <div className="flex-between">
-                <span>{profile.displayName}</span>
+                <span>
+                  {profile.displayName}
+                  {profile.hasShield && <VictoryShield size={18} />}
+                </span>
                 <button className="btn btn-secondary btn-sm" onClick={() => setEditingName(true)}>
                   {t('common.change')}
                 </button>

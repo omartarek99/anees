@@ -14,6 +14,7 @@ import { MapNodes } from './MapNodes';
 import { NodeTip, ZoneBanners } from './Overlays';
 import { PathRibbon } from './PathRibbon';
 import type { ApiLevel, MapNode } from './schema';
+import { milestoneAt, worldOf } from './story';
 import { ZoneLayer } from './ZoneLayer';
 import './zones'; // registers every zone's landscape before anything asks for a ground height
 import '../styles/map3d.css';
@@ -219,6 +220,12 @@ export default function AdventureMap3D({ levels, onOpen, onContextLost, still: s
                 {tipNode.meshType === 'arena' ? ` · ${t('map.bossTag')}` : ''}
               </b>
               <span>{titleOf(tipNode)}</span>
+              <small>{t('story.world', { n: worldOf(tipNode.id) + 1, name: t(`story.world${worldOf(tipNode.id)}`) })}</small>
+              {milestoneAt(tipNode.id) && (
+                <small className="map3d-tip-prize">
+                  {t(`story.guard${tipNode.id}`)}: {t('story.guardianReward', { item: t(`story.${milestoneAt(tipNode.id)!.id}`) })}
+                </small>
+              )}
               <em>{isLocked(tipNode) ? t('map.locked') : tipNode.state === 'completed' ? t('map.completed') : t('map.playNow')}</em>
             </div>
           </NodeTip>

@@ -2543,3 +2543,171 @@ label,
     animation: none;
   }
 }
+
+/* ---------------- Adventure map story (components/StoryPanel.tsx) ---------------- */
+.story-bar {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-panel);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-3d-lg);
+}
+.story-keys {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.story-keys em {
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.story-pips {
+  display: inline-flex;
+  gap: 5px;
+}
+.story-pips i {
+  inline-size: 14px;
+  block-size: 14px;
+  border-radius: 50%;
+  background: var(--surface-chip);
+  border: 1.5px solid var(--glass-border);
+}
+.story-pips i.is-on {
+  background: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
+}
+.story-bag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.story-bag li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: var(--surface-chip);
+  border: 1px solid var(--glass-border);
+  font-size: 0.85rem;
+  font-weight: 700;
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+.story-bag li.is-owned {
+  opacity: 1;
+  filter: none;
+  border-color: var(--gold);
+}
+.story-next {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+.story-window {
+  text-align: center;
+}
+.story-window-art {
+  display: grid;
+  place-items: center;
+}
+.story-art {
+  inline-size: min(100%, 300px);
+  block-size: auto;
+}
+.story-art-tall {
+  inline-size: min(100%, 260px);
+}
+.story-window-emoji {
+  font-size: 3.4rem;
+  line-height: 1;
+}
+.riddle-window {
+  max-width: 560px;
+}
+.riddle-sub {
+  display: inline-block;
+  margin: 0 0 6px !important;
+  padding: 2px 12px;
+  border-radius: 99px;
+  background: var(--surface-chip);
+  border: 1px solid var(--glass-border);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.riddle-q {
+  font-weight: 700;
+}
+.riddle-map {
+  max-block-size: 46vh;
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  margin: 0 auto 10px;
+}
+.riddle-spot {
+  cursor: pointer;
+  outline: none;
+}
+.riddle-spot:hover .riddle-halo,
+.riddle-spot:focus-visible .riddle-halo {
+  opacity: 0.95;
+  stroke: var(--maroon);
+  stroke-width: 2.6;
+}
+.riddle-status {
+  margin: 0 0 12px !important;
+  font-weight: 700;
+}
+.riddle-status.is-wrong {
+  color: #c0392b;
+}
+.riddle-status.is-right {
+  color: #2e8b57;
+}
+.riddle-hint {
+  margin: 0 0 12px !important;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+.story-tries {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.story-tries.is-waiting {
+  color: var(--maroon);
+}
+.victory-shield {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-inline-start: 6px;
+  filter: drop-shadow(0 1px 3px rgba(240, 168, 58, 0.6));
+}
+.battle-wait {
+  text-align: center;
+  padding: 28px;
+}
+.battle-wait-clock {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  margin: 10px 0 18px;
+}
+.story-window h2 {
+  margin: 10px 0 8px;
+}
+.story-window p {
+  margin: 0 0 18px;
+  line-height: 1.7;
+}

@@ -22,6 +22,8 @@ export type User = {
   teacherSubject: string | null;
   createdAt: string;
   warningMessage: string | null;
+  /** Won the treasure battle (level 50 of the adventure map). */
+  hasShield?: boolean;
 };
 
 type AuthContextValue = {

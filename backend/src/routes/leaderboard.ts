@@ -1,6 +1,7 @@
 import { asyncRouter } from '../lib/asyncRouter.js';
 import { db } from '../db/db.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
+import { shieldSql } from '../lib/battle.js';
 
 export const leaderboardRouter = asyncRouter();
 
@@ -29,7 +30,7 @@ leaderboardRouter.get('/', (req, res) => {
 
   const rows = db
     .prepare(
-      `SELECT u.username, u.display_name, u.avatar_key, u.${pointsColumn} as total_points, COALESCE(SUM(x.amount), 0) as monthly_points
+      `SELECT u.username, u.display_name, u.avatar_key, u.${pointsColumn} as total_points, COALESCE(SUM(x.amount), 0) as monthly_points, ${shieldSql('u.id')} as has_shield
        FROM users u
        JOIN ${pointsTable} x ON x.user_id = u.id
        WHERE ${inMonth} AND ${roleFilter}
@@ -46,11 +47,12 @@ leaderboardRouter.get('/', (req, res) => {
     avatarKey: r.avatar_key,
     xp: r.monthly_points,
     rankTier: tierFor(r.total_points),
+    hasShield: !!r.has_shield,
   }));
 
   const meRow = db
     .prepare(
-      `SELECT u.username, u.display_name, u.avatar_key, u.${pointsColumn} as total_points, COALESCE(SUM(x.amount), 0) as monthly_points
+      `SELECT u.username, u.display_name, u.avatar_key, u.${pointsColumn} as total_points, COALESCE(SUM(x.amount), 0) as monthly_points, ${shieldSql('u.id')} as has_shield
        FROM users u LEFT JOIN ${pointsTable} x ON x.user_id = u.id AND ${inMonth}
        WHERE u.id = ? AND ${roleFilter}
        GROUP BY u.id`
@@ -76,6 +78,7 @@ leaderboardRouter.get('/', (req, res) => {
       avatarKey: meRow.avatar_key,
       xp: meRow.monthly_points,
       rankTier: tierFor(meRow.total_points),
+      hasShield: !!meRow.has_shield,
     };
   }
 

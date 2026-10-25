@@ -7,9 +7,10 @@ import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { Avatar } from '../components/Avatar';
 import { Topbar } from '../components/Topbar';
+import { VictoryShield } from '../components/VictoryShield';
 import '../styles/friends.css';
 
-type Friend = { username: string; displayName: string; avatarKey: string; totalXp: number };
+type Friend = { username: string; displayName: string; avatarKey: string; totalXp: number; hasShield?: boolean };
 type FriendRequest = { requestId: number; username: string; displayName: string; avatarKey: string; createdAt: string };
 type Person = { username: string; displayName: string; avatarKey: string };
 
@@ -141,7 +142,10 @@ export function FriendsPage() {
           <header className="fr-me">
             <Avatar avatarKey={user?.avatarKey ?? 'falcon'} size={44} />
             <div className="fr-row-text">
-              <div className="fr-name">{user?.displayName}</div>
+              <div className="fr-name">
+                {user?.displayName}
+                {user?.hasShield && <VictoryShield size={16} />}
+              </div>
               <div className="fr-handle">
                 <bdi dir="ltr">@{user?.username}</bdi>
               </div>
@@ -197,7 +201,10 @@ export function FriendsPage() {
                         <span className="fr-tile">
                           <Avatar avatarKey={f.avatarKey} size={72} square />
                         </span>
-                        <span className="fr-name">{f.displayName}</span>
+                        <span className="fr-name">
+                          {f.displayName}
+                          {f.hasShield && <VictoryShield size={16} />}
+                        </span>
                         <span className="fr-handle">
                           <bdi dir="ltr">@{f.username}</bdi>
                         </span>

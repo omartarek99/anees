@@ -1,6 +1,7 @@
 import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
+import { shieldSql } from '../lib/battle.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { usernameSchema } from '../lib/schemas.js';
 
@@ -18,14 +19,14 @@ function areFriends(a: number, b: number): boolean {
 friendsRouter.get('/', (req, res) => {
   const rows = db
     .prepare(
-      `SELECT u.username, u.display_name, u.avatar_key, u.total_xp FROM friendships f
+      `SELECT u.username, u.display_name, u.avatar_key, u.total_xp, ${shieldSql('u.id')} as has_shield FROM friendships f
        JOIN users u ON u.id = CASE WHEN f.user_a_id = ? THEN f.user_b_id ELSE f.user_a_id END
        WHERE f.user_a_id = ? OR f.user_b_id = ?
        ORDER BY u.display_name`
     )
     .all(req.userId!, req.userId!, req.userId!) as any[];
   res.json({
-    friends: rows.map((r) => ({ username: r.username, displayName: r.display_name, avatarKey: r.avatar_key, totalXp: r.total_xp })),
+    friends: rows.map((r) => ({ username: r.username, displayName: r.display_name, avatarKey: r.avatar_key, totalXp: r.total_xp, hasShield: !!r.has_shield })),
   });
 });
 

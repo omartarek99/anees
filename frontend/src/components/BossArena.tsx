@@ -5,6 +5,7 @@ import { useLanguage } from '../lib/language-context';
 import { pickText, translateApiError } from '../lib/i18n';
 import { QuizResults, type ResultItem } from './QuizResults';
 import { BossArt } from './BossArt';
+import { formatHms, useCountdown, type BattleStatus } from '../lib/battle';
 import { getBossConfig, computeBossHp, ENCOURAGEMENT_AR, ENCOURAGEMENT_EN, randomFrom } from '../lib/boss-config';
 
 type BossDetail = {
@@ -22,7 +23,39 @@ type BossSubmitResult = {
   xpEarned: number;
   leveledUp: boolean;
   newPlayerLevel: number;
+  battle?: BattleStatus;
 };
+
+/** The server answers 429 with `lockedUntil` while the player is waiting out their three lost fights. */
+const lockOf = (err: unknown): string | null => (err instanceof ApiError && err.status === 429 ? ((err.body as { lockedUntil?: string } | null)?.lockedUntil ?? null) : null);
+
+function WaitClock({ until }: { until: string }) {
+  const { t } = useLanguage();
+  const left = useCountdown(until);
+  return (
+    <p style={{ fontWeight: 700 }}>
+      {t('story.waitBody')} <span dir="ltr" role="timer">{formatHms(left ?? 0)}</span>
+    </p>
+  );
+}
+
+function BattleWait({ until, onClose }: { until: string; onClose: () => void }) {
+  const { t } = useLanguage();
+  const left = useCountdown(until, onClose);
+  return (
+    <div className="battle-wait">
+      <div style={{ fontSize: 44 }}>⏳</div>
+      <h2>{t('story.waitTitle')}</h2>
+      <p className="muted">{t('story.waitBody')}</p>
+      <div className="battle-wait-clock" role="timer">
+        {formatHms(left ?? 0)}
+      </div>
+      <button className="btn btn-primary" onClick={onClose}>
+        {t('boss.backToMap')}
+      </button>
+    </div>
+  );
+}
 
 type CheckResponse = { isCorrect: boolean; correctIndex: number; explanation: string; explanationAr: string };
 
@@ -76,6 +109,7 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
 
   const [detail, setDetail] = useState<BossDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lockedUntil, setLockedUntil] = useState<string | null>(null);
   const [qIndex, setQIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<CheckResponse | null>(null);
@@ -96,7 +130,7 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
     api
       .get<BossDetail>(`/map/boss/${levelNumber}`)
       .then(setDetail)
-      .catch((err) => setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('boss.loadError')));
+      .catch((err) => (lockOf(err) ? setLockedUntil(lockOf(err)) : setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('boss.loadError'))));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [levelNumber]);
 
@@ -159,7 +193,8 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
         setBanner(randomFrom(cheers.wrong));
       }
     } catch (err) {
-      setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('boss.loadError'));
+      if (lockOf(err)) setLockedUntil(lockOf(err));
+      else setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('boss.loadError'));
     } finally {
       setChecking(false);
     }
@@ -179,7 +214,8 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
       setBanner(res.passed ? randomFrom(cheers.victory) : randomFrom(cheers.defeat));
       await refreshUser();
     } catch (err) {
-      setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('boss.loadError'));
+      if (lockOf(err)) setLockedUntil(lockOf(err));
+      else setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('boss.loadError'));
     } finally {
       setSubmitting(false);
     }
@@ -194,13 +230,15 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
       <div className="boss-arena-panel" role="dialog" aria-modal="true" aria-label={detail ? pickText(lang, detail.level.title, detail.level.titleAr) : undefined} onClick={(e) => e.stopPropagation()}>
         {error && <div className="form-error-banner">{error}</div>}
 
-        {!detail && !error && (
+        {lockedUntil && <BattleWait until={lockedUntil} onClose={onClose} />}
+
+        {!detail && !error && !lockedUntil && (
           <div className="empty-state">
             <div className="spinner" />
           </div>
         )}
 
-        {detail?.comingSoon && (
+        {detail?.comingSoon && !lockedUntil && (
           <div className="text-center" style={{ padding: 28 }}>
             <div style={{ fontSize: 44 }}>🚧</div>
             <h2>{levelTitle}</h2>
@@ -211,7 +249,7 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
           </div>
         )}
 
-        {detail && !detail.comingSoon && !result && (
+        {detail && !detail.comingSoon && !result && !lockedUntil && (
           <>
             <div
               className="boss-encourage-banner boss-banner-transition"
@@ -342,7 +380,7 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
           </>
         )}
 
-        {detail && result && (
+        {detail && result && !lockedUntil && (
           <div className="stack" style={{ padding: 24 }}>
             <div className="text-center">
               <div
@@ -370,6 +408,7 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
                 </p>
               )}
               {!result.passed && <p className="muted" style={{ marginTop: 12 }}>{t('boss.reviewRetry')}</p>}
+              {!result.passed && result.battle && (result.battle.lockedUntil ? <WaitClock until={result.battle.lockedUntil} /> : <p style={{ fontWeight: 700 }}>{`${t('story.tries')}: ${t('story.triesLeft', { n: result.battle.triesLeft })}`}</p>)}
             </div>
             <QuizResults
               questions={questions.map((q) => ({ id: q.id, text: pickText(lang, q.text, q.textAr), choices: lang === 'ar' && q.choicesAr?.length ? q.choicesAr : q.choices }))}

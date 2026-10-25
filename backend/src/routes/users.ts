@@ -6,6 +6,7 @@ import { validateBody, requireCsrfHeader, handleUpload } from '../middleware/val
 import { avatar3dSchema, updateProfileSchema } from '../lib/schemas.js';
 import { moderateText } from '../lib/moderation.js';
 import { getPlayerLevel } from '../lib/xp.js';
+import { hasShield } from '../lib/battle.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { AVATAR_PHOTO_BUCKET, AVATAR_PHOTO_PATH_PREFIX, deleteAvatarPhotoIfAny } from '../lib/avatarPhoto.js';
@@ -114,6 +115,7 @@ function profileSummary(user: any) {
     videosCount: videos?.length ?? 0,
     worksheetsPrintedCount: worksheetsPrinted.c,
     joinedAt: user.created_at,
+    hasShield: hasShield(user.id),
     videos,
     certificates: userCertificates(user.id),
   };

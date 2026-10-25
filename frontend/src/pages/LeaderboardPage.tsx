@@ -6,9 +6,10 @@ import { useLanguage } from '../lib/language-context';
 import { Avatar } from '../components/Avatar';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
+import { VictoryShield } from '../components/VictoryShield';
 import '../styles/leaderboard.css';
 
-type Leader = { rank: number; username: string; displayName: string; avatarKey: string; xp: number; rankTier: RankTier };
+type Leader = { rank: number; username: string; displayName: string; avatarKey: string; xp: number; rankTier: RankTier; hasShield?: boolean };
 
 type LeaderboardResponse = {
   month: string;
@@ -51,7 +52,10 @@ function PodiumColumn({ leader, xpUnit, narrow }: { leader: Leader; xpUnit: stri
       <div className="lb-avatar">
         <Avatar avatarKey={leader.avatarKey} size={narrow ? 56 : 78} square />
       </div>
-      <div className="lb-name">{leader.displayName}</div>
+      <div className="lb-name">
+        {leader.displayName}
+        {leader.hasShield && <VictoryShield size={16} />}
+      </div>
       <div className="lb-box">
         <div className="lb-medal">
           <RankBadge tier={leader.rankTier} size={narrow ? 52 : 72} showName={false} />
@@ -76,7 +80,10 @@ function LeaderRow({ leader, highlight }: { leader: Leader; highlight: boolean }
       <div className="lb-user">
         <Avatar avatarKey={leader.avatarKey} size={34} />
         <div className="lb-user-text">
-          <div className="lb-user-name">{leader.displayName}</div>
+          <div className="lb-user-name">
+            {leader.displayName}
+            {leader.hasShield && <VictoryShield size={16} />}
+          </div>
           <div className="lb-handle">
             <bdi dir="ltr">@{leader.username}</bdi>
           </div>

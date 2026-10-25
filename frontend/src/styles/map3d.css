@@ -140,6 +140,14 @@
 .map3d-tip span {
   font-weight: 700;
 }
+.map3d-tip small {
+  font-size: 11.5px;
+  opacity: 0.8;
+}
+.map3d-tip small.map3d-tip-prize {
+  color: #f4c46b;
+  opacity: 1;
+}
 .map3d-tip em {
   font-style: normal;
   font-size: 12px;

@@ -5,9 +5,11 @@ import { useLanguage } from '../lib/language-context';
 import { AvatarBoundary } from '../components/avatar3d/AvatarBoundary';
 import { canUseWebGL } from '../components/avatar3d/avatarConfig';
 import { BossArena } from '../components/BossArena';
+import { StoryPanel } from '../components/StoryPanel';
 import { Topbar } from '../components/Topbar';
 import { Map2D } from '../map3d/Map2D';
 import type { ApiLevel } from '../map3d/schema';
+import type { BattleStatus } from '../lib/battle';
 
 // The 3D scene (three.js and the map's code) loads only when the map is opened.
 const AdventureMap3D = lazy(() => import('../map3d/AdventureMap3D'));
@@ -16,6 +18,7 @@ export function MapPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [levels, setLevels] = useState<ApiLevel[] | null>(null);
+  const [battle, setBattle] = useState<BattleStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [bossModalLevel, setBossModalLevel] = useState<number | null>(null);
   // A browser that cannot give WebGL (or loses it) gets the flat map instead.
@@ -23,8 +26,11 @@ export function MapPage() {
 
   function load() {
     api
-      .get<{ levels: ApiLevel[] }>('/map')
-      .then((data) => setLevels(data.levels))
+      .get<{ levels: ApiLevel[]; battle?: BattleStatus }>('/map')
+      .then((data) => {
+        setLevels(data.levels);
+        setBattle(data.battle ?? null);
+      })
       .catch(() => setError(t('map.loadError')));
   }
 
@@ -52,6 +58,8 @@ export function MapPage() {
           <div className="spinner" />
         </div>
       )}
+
+      {levels && <StoryPanel levels={levels} battle={battle} onBattleOver={load} />}
 
       {levels &&
         (flat ? (

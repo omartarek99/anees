@@ -365,3 +365,11 @@ CREATE TABLE IF NOT EXISTS password_reset_otps (
   send_count INTEGER NOT NULL DEFAULT 1,
   window_start TEXT NOT NULL
 );
+
+-- Boss battles: three tries, then a 24-hour wait counted from the moment of the last loss (see lib/battle.ts).
+CREATE TABLE IF NOT EXISTS battle_status (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  fails INTEGER NOT NULL DEFAULT 0,
+  window_start TEXT,
+  locked_until TEXT
+);

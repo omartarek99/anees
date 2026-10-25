@@ -4,6 +4,7 @@ import { db } from '../db/db.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { awardXp, getPlayerLevel, BOSS_DEFEAT_XP_BONUS, BOSS_PASS_RATIO } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
+import { getBattleStatus, recordBattleLoss } from '../lib/battle.js';
 
 export const mapRouter = asyncRouter();
 
@@ -39,7 +40,7 @@ mapRouter.get('/', (req, res) => {
     };
   });
 
-  res.json({ levels: result, playerLevel: getPlayerLevel(req.userId!) });
+  res.json({ levels: result, playerLevel: getPlayerLevel(req.userId!), battle: getBattleStatus(req.userId!) });
 });
 
 function loadLevelWithProgress(userId: number, levelNumber: number) {
@@ -49,6 +50,15 @@ function loadLevelWithProgress(userId: number, levelNumber: number) {
     .prepare(`SELECT * FROM user_level_progress WHERE user_id = ? AND map_level_id = ?`)
     .get(userId, level.id) as any;
   return { level, progress };
+}
+
+// Three lost fights, then a 24-hour wait from the last loss (lib/battle.ts). Replaying a boss that is already cleared costs nothing.
+function waitingForBattle(userId: number, progress: any, res: any): boolean {
+  if (progress?.status === 'completed') return false;
+  const battle = getBattleStatus(userId);
+  if (!battle.lockedUntil) return false;
+  res.status(429).json({ error: 'You are out of tries. Come back when the wait is over.', lockedUntil: battle.lockedUntil, battle });
+  return true;
 }
 
 mapRouter.get('/boss/:levelNumber', (req, res) => {
@@ -67,6 +77,7 @@ mapRouter.get('/boss/:levelNumber', (req, res) => {
     res.status(403).json({ error: 'Defeat the previous levels first to challenge this boss.' });
     return;
   }
+  if (waitingForBattle(req.userId!, progress, res)) return;
 
   const questions = db
     .prepare(
@@ -85,6 +96,7 @@ mapRouter.get('/boss/:levelNumber', (req, res) => {
       choicesAr: JSON.parse(q.choices_json_ar),
     })),
     progress: { status: progress.status, stars: progress.stars },
+    battle: getBattleStatus(req.userId!),
   });
 });
 
@@ -107,6 +119,7 @@ mapRouter.post('/boss/:levelNumber/check', requireCsrfHeader, validateBody(bossC
     res.status(403).json({ error: 'This boss is locked.' });
     return;
   }
+  if (waitingForBattle(req.userId!, progress, res)) return;
 
   const { questionId, choiceIndex } = req.body as { questionId: number; choiceIndex: number };
   const question = db.prepare(`SELECT * FROM boss_questions WHERE id = ? AND map_level_id = ?`).get(questionId, level.id) as any;
@@ -140,6 +153,7 @@ mapRouter.post('/boss/:levelNumber/submit', requireCsrfHeader, validateBody(boss
     res.status(403).json({ error: 'This boss is locked.' });
     return;
   }
+  if (waitingForBattle(req.userId!, progress, res)) return;
 
   const questions = db.prepare(`SELECT * FROM boss_questions WHERE map_level_id = ?`).all(level.id) as any[];
   const { answers } = req.body as { answers: { questionId: number; choiceIndex: number }[] };
@@ -175,6 +189,7 @@ mapRouter.post('/boss/:levelNumber/submit', requireCsrfHeader, validateBody(boss
       }
     }
   } else {
+    if (progress.status !== 'completed') recordBattleLoss(req.userId!);
     db.prepare(`UPDATE user_level_progress SET best_score = ? WHERE user_id = ? AND map_level_id = ?`).run(
       Math.max(correctCount, progress.best_score ?? 0),
       req.userId!,
@@ -192,5 +207,6 @@ mapRouter.post('/boss/:levelNumber/submit', requireCsrfHeader, validateBody(boss
     xpEarned,
     leveledUp: levelAfterXp > levelBeforeXp,
     newPlayerLevel: levelAfterXp,
+    battle: getBattleStatus(req.userId!),
   });
 });

@@ -9,6 +9,7 @@ import { authLimiter } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
 import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema, changePasswordSchema, forgotPasswordSchema, resetPasswordSchema } from '../lib/schemas.js';
 import { getPlayerLevel } from '../lib/xp.js';
+import { hasShield } from '../lib/battle.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import {
@@ -90,6 +91,7 @@ function publicUser(user: any) {
     teacherSubject: user.teacher_subject ?? null,
     createdAt: user.created_at,
     warningMessage: user.warning_message ?? null,
+    hasShield: hasShield(user.id),
   };
 }
 
