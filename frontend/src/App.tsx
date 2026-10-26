@@ -142,7 +142,7 @@ function ProtectedLayout() {
   );
 }
 
-// Students still land straight on Reels right after signing in (see PublicOnlyLayout below) —
+// Students and teachers still land straight on Reels right after signing in (see PublicOnlyLayout below) —
 // but "/" itself, and the sidebar's Home icon that points there, needs to be a real, distinct
 // homepage to navigate back to, not just another way to reach Reels. Admin has no gameplay
 // home at all — its whole account exists to manage other accounts, so "/" just forwards
@@ -194,9 +194,8 @@ function ProfileHome() {
 function PublicOnlyLayout() {
   const { user, loading } = useAuth();
   if (loading) return <FullScreenLoader />;
-  // First page after signing in: students land on Reels, admins land on the admin panel,
-  // teachers land on Home.
-  if (user) return <Navigate to={user.role === 'student' ? '/reels' : user.role === 'admin' ? '/admin' : '/'} replace />;
+  // First page after signing in: students and teachers land on Reels, admins land on the admin panel.
+  if (user) return <Navigate to={user.role === 'admin' ? '/admin' : '/reels'} replace />;
   return (
     <div style={{ position: 'relative' }}>
       <div className="flex gap-sm" style={{ position: 'absolute', top: 16, insetInlineEnd: 16, zIndex: 10 }}>
