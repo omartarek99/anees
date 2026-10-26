@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, type ElementRef, type MutableRefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, type ElementRef, type MutableRefObject } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { MapControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -135,6 +135,13 @@ export function CameraRig({
   const blend = useRef<{ t: number; kind: 'toWalk' | 'toOrbit'; from: Pose; dest?: Pose } | null>(null);
 
   modeRef.current = mode;
+
+  // The player took the wheel. Must keep its identity: MapControls re-runs its connect effect when this prop changes, and the
+  // cleanup (controls.dispose) strips the document pointer listeners, so a re-render in the middle of a drag (a hover change,
+  // say) would leave the controls with a stale pointer that kills every later drag.
+  const onStart = useCallback(() => {
+    goal.current = null;
+  }, []);
 
   const poseNow = (): Pose => ({ pos: camera.position.clone(), quat: camera.quaternion.clone(), fov: camera.fov, near: camera.near });
 
@@ -412,9 +419,7 @@ export function CameraRig({
       minAzimuthAngle={-0.7}
       maxAzimuthAngle={0.7}
       zoomSpeed={0.8}
-      onStart={() => {
-        goal.current = null; // the player took the wheel
-      }}
+      onStart={onStart}
     />
   );
 }

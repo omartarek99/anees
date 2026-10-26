@@ -111,7 +111,10 @@ The plain **wheel travels along the map** (down = towards level 50, about 8 bloc
 never a scroll trap: at either end of the map the wheel is handed back to the page, so the page scrolls on. The listener is
 capture-phase and non-passive, so it runs before the camera controls (which would zoom) and only prevents the default while the
 map actually moves. A wheel event that arrives while a mouse button is held (the inertia tail of a trackpad scroll) is swallowed,
-so it cannot pull the camera against a drag. The map is sized to fit the first screen, and on phones part of the page stays
+so it cannot pull the camera against a drag. Keep every callback handed to `MapControls` (`onStart`) stable: drei re-runs its
+connect effect when one changes, and the cleanup (`controls.dispose()`) removes the document pointer listeners, so a re-render in
+the middle of a drag (the zone chip updating as the view crosses a seam) would leave the controls with a stale pointer and
+every later drag would be dead. The map is sized to fit the first screen, and on phones part of the page stays
 outside it so a touch can still scroll the page.
 
 ## Authoring
