@@ -458,45 +458,47 @@ export function ProfilePage() {
             )}
           </div>
 
-          <div className="field">
-            <label>{t('profile.avatar')}</label>
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) uploadPhoto(file);
-              }}
-            />
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              style={{ width: 'fit-content', marginBottom: 10 }}
-              onClick={() => photoInputRef.current?.click()}
-              disabled={uploadingPhoto}
-            >
-              {uploadingPhoto ? t('profile.uploadingPhoto') : t('profile.changePhoto')}
-            </button>
-            <div className="flex gap-md" style={{ flexWrap: 'wrap' }}>
-              {/* Teachers keep the plain anonymous picture (or upload a photo) -- no emoji heroes. */}
-              {(profile.role === 'teacher' ? [] : AVATAR_OPTIONS).map((key) => (
-                <button
-                  type="button"
-                  key={key}
-                  onClick={() => changeAvatar(key)}
-                  className="badge-circle-wrap"
-                  aria-pressed={profile.avatarKey === key && !profile.avatarUrl}
-                >
-                  <div className="avatar-choice">
-                    <Avatar avatarKey={key} size={48} />
-                  </div>
-                  <span className="badge-circle-label">{avatarLabel(key, lang)}</span>
-                </button>
-              ))}
+          {/* Teachers have no hero to pick and keep the plain picture: nothing to change down here for them. */}
+          {profile.role !== 'teacher' && (
+            <div className="field">
+              <label>{t('profile.avatar')}</label>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) uploadPhoto(file);
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ width: 'fit-content', marginBottom: 10 }}
+                onClick={() => photoInputRef.current?.click()}
+                disabled={uploadingPhoto}
+              >
+                {uploadingPhoto ? t('profile.uploadingPhoto') : t('profile.changePhoto')}
+              </button>
+              <div className="flex gap-md" style={{ flexWrap: 'wrap' }}>
+                {AVATAR_OPTIONS.map((key) => (
+                  <button
+                    type="button"
+                    key={key}
+                    onClick={() => changeAvatar(key)}
+                    className="badge-circle-wrap"
+                    aria-pressed={profile.avatarKey === key && !profile.avatarUrl}
+                  >
+                    <div className="avatar-choice">
+                      <Avatar avatarKey={key} size={48} />
+                    </div>
+                    <span className="badge-circle-label">{avatarLabel(key, lang)}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
