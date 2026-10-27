@@ -216,54 +216,140 @@ function ShieldBody({ u, delay }: { u: string; delay: number }) {
   );
 }
 
-const MAP_SPARKS = [[34, 44, 1], [200, 36, 0.8], [58, 160, 0.9], [188, 150, 1.1], [120, 22, 0.7]] as const;
+/** A golden key drawn around (0, 0), pointing right: a round bow with a hole, a shaft and two teeth. About 52 wide. */
+function Key({ u, scale = 1 }: { u: string; scale?: number }) {
+  return (
+    <g transform={`scale(${scale})`}>
+      <rect x="-5" y="-3.2" width="31" height="6.4" rx="2.6" fill={`url(#${u}gold)`} stroke="#8a5a12" strokeWidth="1.6" />
+      <rect x="15" y="3" width="5" height="9" rx="1.2" fill={`url(#${u}gold)`} stroke="#8a5a12" strokeWidth="1.4" />
+      <rect x="22.5" y="3" width="4" height="6.5" rx="1.2" fill={`url(#${u}gold)`} stroke="#8a5a12" strokeWidth="1.4" />
+      <circle cx="-14" cy="0" r="10" fill={`url(#${u}gold)`} stroke="#8a5a12" strokeWidth="2" />
+      <circle cx="-14" cy="0" r="4.4" fill="#2b1a0a" />
+      <path d="M-20 -6 Q-14 -11 -8 -6" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" opacity="0.7" />
+    </g>
+  );
+}
 
-/** A chest opens and half of a treasure map rises out of it. */
-export function ChestReveal({ half }: { half: 'a' | 'b' }) {
+/** Confetti pieces thrown out of an opened gift. */
+const CONFETTI = Array.from({ length: 16 }, (_, i) => {
+  const a = (i / 16) * Math.PI * 2;
+  const d = 62 + (i % 4) * 16;
+  return { x: Math.cos(a) * d, y: Math.sin(a) * d * 0.8 - 26, r: i * 57, color: ['#f7c948', '#e8456b', '#4aa3df', '#7ed957', '#fff'][i % 5], w: 5 + (i % 3) * 2 };
+});
+
+/** A gift for beating a guardian: the box drops in, shakes, its lid and bow fly off in a burst of confetti and a golden key rises, spinning. */
+export function KeyGiftArt() {
   const u = useUid();
   return (
-    <svg className="story-art" viewBox="0 0 240 210" aria-hidden="true">
+    <svg className="story-art" viewBox="0 0 240 230" aria-hidden="true">
       <Defs u={u} />
-      <Rays u={u} cx={120} cy={104} r={110} delay={0.7} />
-      <g transform="translate(120 140)">
-        <m.g initial={{ scale: 0.82, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 220, damping: 14 }}>
-          <ChestBack u={u} delay={0.1} />
-          {/* the map rises, then floats */}
-          <m.g initial={{ y: 12, opacity: 0 }} animate={{ y: -62, opacity: 1 }} transition={{ delay: 0.9, duration: 0.9, type: 'spring', damping: 14 }}>
-            <m.g animate={{ y: [0, -5, 0], rotate: [-1.5, 1.5, -1.5] }} transition={{ delay: 2, duration: 3, ...loop }}>
-              <MapHalf u={u} side={half} delay={1.2} />
+      <defs>
+        <linearGradient id={`${u}box`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#e8456b" />
+          <stop offset="1" stopColor="#8a1538" />
+        </linearGradient>
+      </defs>
+      <Rays u={u} cx={120} cy={110} r={112} delay={1.9} />
+      <ellipse cx="120" cy="206" rx="52" ry="8" fill="#000" opacity="0.28" />
+      {/* the box falls in with a bounce, then shakes */}
+      <m.g initial={{ y: -190, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 150, damping: 9, delay: 0.1 }}>
+        <m.g animate={{ rotate: [0, -5, 5, -4, 4, -2, 0], y: [0, -3, 0] }} transition={{ delay: 1, duration: 0.7 }} style={{ originX: '120px', originY: '200px' }}>
+          <g transform="translate(120 140)" filter={`url(#${u}shadow)`}>
+            {/* the key rises out of the box */}
+            <m.g initial={{ y: 8, opacity: 0, scale: 0.4 }} animate={{ y: -78, opacity: 1, scale: 1.5 }} transition={{ delay: 1.85, duration: 0.9, type: 'spring', damping: 12 }}>
+              <m.g animate={{ y: [0, -6, 0], rotate: [-28, -20, -28] }} transition={{ delay: 2.8, duration: 2.8, ...loop }}>
+                <m.g animate={{ scaleX: [1, 0.2, 1, 0.2, 1] }} transition={{ delay: 2.2, duration: 3, ...loop }}>
+                  <Key u={u} />
+                </m.g>
+              </m.g>
             </m.g>
-          </m.g>
-          <ChestFront u={u} delay={0.1} />
+            {/* body: a ribbon down the middle */}
+            <rect x="-42" y="-8" width="84" height="64" rx="6" fill={`url(#${u}box)`} stroke="#5c0d25" strokeWidth="2.5" />
+            <rect x="-42" y="-8" width="84" height="12" fill="#000" opacity="0.18" />
+            <rect x="-8" y="-8" width="16" height="64" fill={`url(#${u}gold)`} stroke="#8a5a12" strokeWidth="1.5" />
+            <path d="M-34 6 L-34 48 M34 6 L34 48" stroke="#fff" strokeWidth="2" opacity="0.15" />
+            {/* the lid with its bow flies away */}
+            <m.g initial={{ y: 0, rotate: 0, opacity: 1 }} animate={{ y: -80, x: 46, rotate: 38, opacity: 0 }} transition={{ delay: 1.75, duration: 0.55, ease: 'easeOut' }}>
+              <rect x="-48" y="-24" width="96" height="20" rx="5" fill={`url(#${u}box)`} stroke="#5c0d25" strokeWidth="2.5" />
+              <rect x="-8" y="-24" width="16" height="20" fill={`url(#${u}gold)`} stroke="#8a5a12" strokeWidth="1.5" />
+              <path d="M0 -26 C-34 -58 -50 -22 0 -26 Z M0 -26 C34 -58 50 -22 0 -26 Z" fill={`url(#${u}gold)`} stroke="#8a5a12" strokeWidth="2" strokeLinejoin="round" />
+              <circle cx="0" cy="-26" r="6" fill={`url(#${u}gold)`} stroke="#8a5a12" strokeWidth="2" />
+            </m.g>
+            {/* confetti */}
+            {CONFETTI.map((c, i) => (
+              <m.rect key={i} x={-c.w / 2} y={-c.w / 2} width={c.w} height={c.w * 0.55} fill={c.color} initial={{ opacity: 0, x: 0, y: -12, rotate: 0 }} animate={{ opacity: [0, 1, 1, 0], x: c.x, y: [-12, c.y, c.y + 60], rotate: c.r }} transition={{ delay: 1.8, duration: 1.6, ease: 'easeOut' }} />
+            ))}
+          </g>
         </m.g>
-      </g>
-      <Sparkles spots={MAP_SPARKS} delay={1.2} />
+      </m.g>
+      <Sparkles spots={[[40, 60, 1], [200, 50, 0.9], [46, 150, 1.1], [196, 140, 1], [120, 18, 0.8]]} delay={2.4} />
     </svg>
   );
 }
 
-/** The ring of power: a gold band, a faceted red stone, a sweep of light and a floating glow. */
-export function RingArt() {
-  const u = useUid();
+/** What comes out of the treasure chest: half of the map (two halves) or the ring of power. */
+export type ChestReward = 'mapA' | 'mapB' | 'ring';
+
+/** A small ring drawn around (0, 0), about 56 wide, with a faceted red stone. */
+function MiniRing({ u }: { u: string }) {
   return (
-    <svg className="story-art" viewBox="0 0 240 210" aria-hidden="true">
+    <g>
+      <ellipse cx="0" cy="8" rx="22" ry="20" fill="none" stroke="#8a5a12" strokeWidth="10" />
+      <ellipse cx="0" cy="8" rx="22" ry="20" fill="none" stroke={`url(#${u}gold)`} strokeWidth="7" />
+      <path d="M-9 -12 L9 -12 L6 -6 L-6 -6 Z" fill={`url(#${u}gold)`} stroke="#8a5a12" strokeWidth="1.4" />
+      <path d="M0 -34 L13 -22 L0 -8 L-13 -22 Z" fill={`url(#${u}gem)`} stroke="#6b130c" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M0 -34 L13 -22 L0 -22 Z" fill="#ffb3a6" opacity="0.65" />
+    </g>
+  );
+}
+
+/** The three keys won so far fly one by one into the lock of the treasure chest; it clicks, bursts open and the gift rises out. */
+export function KeyChestReveal({ reward }: { reward: ChestReward }) {
+  const u = useUid();
+  const LOCK = { x: 120, y: 200 };
+  const START = 0.5; // when the first key sets off
+  const GAP = 0.85; // between keys
+  const FLY = 1.1;
+  const OPEN = START + GAP * 2 + FLY + 0.35; // when the lid lifts
+  const keyX = [58, 120, 182];
+  return (
+    <svg className="story-art story-art-chest" viewBox="0 0 240 250" aria-hidden="true">
       <Defs u={u} />
-      <Rays u={u} cx={120} cy={108} r={104} delay={0.2} />
-      <m.g initial={{ y: 16, opacity: 0, scale: 0.7 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ type: 'spring', stiffness: 180, damping: 13, delay: 0.1 }}>
-        <m.g animate={{ y: [0, -6, 0] }} transition={{ duration: 3, ...loop }} filter={`url(#${u}shadow)`}>
-          <ellipse cx="120" cy="124" rx="46" ry="42" fill="none" stroke="#8a5a12" strokeWidth="17" />
-          <ellipse cx="120" cy="124" rx="46" ry="42" fill="none" stroke={`url(#${u}gold)`} strokeWidth="13" />
-          <ellipse cx="120" cy="124" rx="40" ry="36" fill="none" stroke="#5c3a0a" strokeWidth="2" opacity="0.45" />
-          <m.ellipse cx="120" cy="124" rx="46" ry="42" fill="none" stroke="#fffbe6" strokeWidth="3" strokeLinecap="round" strokeDasharray="26 240" animate={{ strokeDashoffset: [0, -266] }} transition={{ duration: 3.2, repeat: Infinity, ease: 'linear' }} />
-          {/* the setting and the faceted stone */}
-          <path d="M96 82 L144 82 L138 96 L102 96 Z" fill={`url(#${u}gold)`} stroke="#8a5a12" strokeWidth="2" />
-          <path d="M120 38 L148 62 L120 90 L92 62 Z" fill={`url(#${u}gem)`} stroke="#6b130c" strokeWidth="2.5" strokeLinejoin="round" />
-          <path d="M120 38 L148 62 L120 62 Z" fill="#ffb3a6" opacity="0.65" />
-          <path d="M92 62 L120 62 L120 90 Z" fill="#7d1810" opacity="0.55" />
-          <path d="M100 60 L110 48 L116 56 Z" fill="#fff" opacity="0.55" />
+      <Rays u={u} cx={120} cy={140} r={116} delay={OPEN} />
+      {/* the burst of light when the lid lifts */}
+      <m.circle cx="120" cy="160" r="20" fill={`url(#${u}glow)`} initial={{ opacity: 0, scale: 0.2 }} animate={{ opacity: [0, 1, 0], scale: [0.2, 5, 6] }} transition={{ delay: OPEN, duration: 1.1 }} style={{ originX: '120px', originY: '160px' }} />
+      <g transform="translate(120 176)">
+        <m.g initial={{ scale: 0.8, opacity: 0, y: 12 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 14 }}>
+          {/* a little shake as the last key turns */}
+          <m.g animate={{ rotate: [0, -2.5, 2.5, -1.5, 0] }} transition={{ delay: OPEN - 0.45, duration: 0.4 }}>
+            <ChestBack u={u} delay={OPEN - 0.5} />
+            <m.g initial={{ y: 14, opacity: 0, scale: 0.7 }} animate={{ y: -66, opacity: 1, scale: 1 }} transition={{ delay: OPEN + 0.15, duration: 0.95, type: 'spring', damping: 13 }}>
+              <m.g animate={{ y: [0, -5, 0], rotate: [-1.5, 1.5, -1.5] }} transition={{ delay: OPEN + 1.2, duration: 3, ...loop }}>
+                {reward === 'ring' ? <MiniRing u={u} /> : <MapHalf u={u} side={reward === 'mapA' ? 'a' : 'b'} delay={OPEN + 0.6} />}
+              </m.g>
+            </m.g>
+            <ChestFront u={u} delay={OPEN - 0.5} />
+          </m.g>
         </m.g>
-      </m.g>
-      <Sparkles spots={[[64, 56, 1.1], [180, 50, 0.9], [196, 130, 1], [48, 140, 0.8], [120, 24, 1.2]]} delay={0.6} />
+      </g>
+      {/* the three keys fly into the lock one after another */}
+      {keyX.map((sx, i) => {
+        const t0 = START + i * GAP;
+        return (
+          <g key={i}>
+            <m.g
+              initial={{ opacity: 0, x: sx, y: 34, scale: 1, rotate: -20 }}
+              animate={{ opacity: [0, 1, 1, 0], x: [sx, sx, LOCK.x, LOCK.x], y: [34, 30, LOCK.y - 4, LOCK.y - 4], scale: [1, 1.1, 0.5, 0.45], rotate: [-20, -12, 90, 90] }}
+              transition={{ delay: t0, duration: FLY, times: [0, 0.25, 0.88, 1], ease: 'easeInOut' }}
+            >
+              <Key u={u} scale={0.9} />
+            </m.g>
+            {/* the lock lights up each time a key goes in */}
+            <m.circle cx={LOCK.x} cy={LOCK.y + 2} r="10" fill="#fff3c9" initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: [0, 0.95, 0], scale: [0.4, 1.7, 2.2] }} transition={{ delay: t0 + FLY * 0.85, duration: 0.5 }} style={{ originX: `${LOCK.x}px`, originY: `${LOCK.y + 2}px` }} />
+          </g>
+        );
+      })}
+      <Sparkles spots={[[34, 70, 1], [208, 64, 0.9], [30, 190, 1.1], [212, 180, 1], [120, 34, 0.8]]} delay={OPEN + 0.4} />
     </svg>
   );
 }

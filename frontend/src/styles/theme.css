@@ -2623,6 +2623,44 @@ label,
   inline-size: min(100%, 300px);
   block-size: auto;
 }
+.story-3d {
+  position: relative;
+  inline-size: min(100%, 440px);
+  block-size: 340px;
+  margin-inline: auto;
+  border-radius: 18px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 62%, rgba(245, 184, 46, 0.2), transparent 68%);
+}
+.story-3d-final {
+  block-size: 390px;
+}
+.story-3d-wait {
+  display: grid;
+  place-items: center;
+}
+.story-3d canvas {
+  display: block;
+  cursor: grab;
+  touch-action: pan-y;
+}
+.story-3d-hint {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 8px;
+  margin: 0 !important;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff3c9;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.story-3d-hint.is-on {
+  opacity: 1;
+}
 .story-art-tall {
   inline-size: min(100%, 260px);
 }
@@ -2645,6 +2683,27 @@ label,
 }
 .riddle-q {
   font-weight: 700;
+}
+.riddle-3d {
+  inline-size: 100%;
+  block-size: 360px;
+  margin-bottom: 10px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 55%, rgba(245, 184, 46, 0.14), transparent 70%);
+}
+.riddle-3d canvas {
+  display: block;
+  cursor: grab;
+  touch-action: pan-y;
+}
+.riddle-tilt {
+  perspective: 900px;
+}
+.riddle-tilt .riddle-map {
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.15s ease-out;
+  filter: drop-shadow(0 14px 16px rgba(0, 0, 0, 0.45));
 }
 .riddle-map {
   max-block-size: 46vh;

@@ -5,17 +5,20 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { formatHms, useCountdown, type BattleStatus } from '../lib/battle';
 import { MapRiddle } from './MapRiddle';
-import { ChestReveal, RingArt, TreasureScene } from './StoryArt';
-import { KEY_COUNT, MILESTONES, hasMilestone, keysEarned, nextMilestone, type Milestone } from '../map3d/story';
+import { KeyChestReveal, KeyGiftArt, TreasureScene } from './StoryArt';
+import { StoryArtView } from './StoryArtView';
+import { KEY_COUNT, MILESTONES, guardiansBeaten, hasMilestone, keysEarned, nextMilestone, worldOf, type Milestone } from '../map3d/story';
 import type { ApiLevel } from '../map3d/schema';
 
 // The story over the adventure map ("The Treasure of the Pearl of Light", rules in map3d/story.ts): a bar with the keys
-// won so far and the items in the bag, a welcome from Anees the first time, and a window each time a big guardian
-// (levels 15, 30, 45 and 50) is beaten and gives a new item. What the player has already seen is remembered in this browser.
+// won so far and the items in the bag, a welcome from Anees the first time, a gift box that opens on a golden key each time
+// a guardian is beaten (levels 5, 10, ...), and, at every third key (levels 15, 30, 45), the three keys flying into the
+// treasure chest, which opens on the next item; level 50 ends with the treasure scene. What the player has already seen
+// is remembered in this browser.
 
 type Tr = (key: string, vars?: Record<string, string | number>) => string;
 
-type Seen = { intro: boolean; items: number[]; riddle?: boolean };
+type Seen = { intro: boolean; items: number[]; riddle?: boolean; /** guardian levels whose key gift was opened */ gifts?: number[] };
 const storeKey = (userId: number) => `anees_story_${userId}`;
 function readSeen(userId: number): Seen {
   try {
@@ -65,12 +68,12 @@ function Window({ art, title, body, button, onClose }: { art: ReactNode; title: 
   );
 }
 
-/** The picture for each item: a chest opens with half of the map (twice), the ring glows, and the final treasure scene. */
+/** The picture for each item (3D when the device can, else the flat drawing): the three keys open the chest and half of the map (twice) or the ring comes out; the last is the treasure scene. */
 const ART: Record<Milestone['id'], ReactNode> = {
-  mapA: <ChestReveal half="a" />,
-  mapB: <ChestReveal half="b" />,
-  ring: <RingArt />,
-  shield: <TreasureScene />,
+  mapA: <StoryArtView kind="chest" reward="mapA" fallback={<KeyChestReveal reward="mapA" />} />,
+  mapB: <StoryArtView kind="chest" reward="mapB" fallback={<KeyChestReveal reward="mapB" />} />,
+  ring: <StoryArtView kind="chest" reward="ring" fallback={<KeyChestReveal reward="ring" />} />,
+  shield: <StoryArtView kind="final" fallback={<TreasureScene />} />,
 };
 
 export function StoryPanel({ levels, battle, onBattleOver }: { levels: readonly ApiLevel[]; battle: BattleStatus | null; onBattleOver: () => void }) {
@@ -83,10 +86,14 @@ export function StoryPanel({ levels, battle, onBattleOver }: { levels: readonly 
 
   const keys = keysEarned(levels);
   const next = nextMilestone(levels);
-  const winning = !seen.intro ? null : MILESTONES.find((ms) => hasMilestone(levels, ms) && !seen.items.includes(ms.level));
+  const gifts = seen.gifts ?? [];
+  // a guardian's key gift comes first; then, for levels 15, 30, 45 and 50, the chest / treasure window. A guardian whose item window
+  // was already seen (an older save) does not give its gift again.
+  const winning = !seen.intro ? null : MILESTONES.find((ms) => hasMilestone(levels, ms) && !seen.items.includes(ms.level) && gifts.includes(ms.level));
+  const gift = !seen.intro || winning ? null : (guardiansBeaten(levels).find((g) => !gifts.includes(g) && !seen.items.includes(g)) ?? null);
 
   // right after the second half of the map is won and its window closed: the riddle that shows the way (not a level)
-  const riddleDue = seen.intro && !winning && !seen.riddle && !riddleLater && seen.items.includes(30);
+  const riddleDue = seen.intro && !winning && !gift && !seen.riddle && !riddleLater && seen.items.includes(30);
 
   function save(update: Seen) {
     setSeen(update);
@@ -128,10 +135,21 @@ export function StoryPanel({ levels, battle, onBattleOver }: { levels: readonly 
 
       {!seen.intro && <Window art={<span className="story-window-emoji">🦅</span>} title={s('introTitle')} body={s('introBody')} button={s('start')} onClose={() => save({ ...seen, intro: true })} />}
       {riddleDue && <MapRiddle onSolved={() => save({ ...seen, riddle: true })} onLater={() => setRiddleLater(true)} />}
+      {gift !== null && (
+        <Window
+          key={`gift${gift}`}
+          art={<StoryArtView kind="gift" fallback={<KeyGiftArt />} />}
+          title={s('keyGiftTitle')}
+          body={s('keyGiftBody', { world: s(`world${worldOf(gift)}`), n: gift / 5 })}
+          button={s('takeKey')}
+          onClose={() => save({ ...seen, gifts: [...gifts, gift] })}
+        />
+      )}
       {winning && (
         <Window
+          key={`item${winning.level}`}
           art={ART[winning.id]}
-          title={s('youGot', { item: itemName(winning) })}
+          title={winning.id === 'shield' ? s('youGot', { item: itemName(winning) }) : s('chestTitle', { item: itemName(winning) })}
           body={s(`line${winning.level}`)}
           button={s('gotIt')}
           onClose={() => save({ ...seen, items: [...seen.items, winning.level] })}
