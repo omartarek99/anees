@@ -81,12 +81,22 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
   '/cookies': { title: 'Cookie policy | سياسة ملفات تعريف الارتباط | Anees', description: '' },
 };
 let defaultDescription: string | null = null;
+const SITE_ORIGIN = 'https://anees-qa.site';
 
 function PageMeta() {
   const { pathname } = useLocation();
   useEffect(() => {
     const meta = PAGE_META[pathname];
     document.title = meta?.title ?? SITE_TITLE;
+    // Each public page names itself as the address Google should list (they all share one HTML shell, so without this the
+    // login, sign-up and policy pages can look like copies of the home page); every other address points to the home page.
+    let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `${SITE_ORIGIN}${meta ? pathname : '/'}`;
     const tag = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     if (!tag) return;
     if (defaultDescription === null) defaultDescription = tag.content;
