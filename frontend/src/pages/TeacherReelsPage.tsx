@@ -246,6 +246,8 @@ export function TeacherReelsPage() {
       }>('/teacher-reels/generate-questions', {
         scriptText,
         scriptTextAr,
+        title,
+        titleAr,
         subjectId: Number(subjectId),
         grade: Number(grade),
         count: Math.min(4, 10 - questions.length),

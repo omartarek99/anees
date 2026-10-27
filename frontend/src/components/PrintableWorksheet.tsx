@@ -43,6 +43,10 @@ export function PrintableWorksheet({
 
   return createPortal(
     <div className="printable-worksheet-portal" dir={dir}>
+      <table className="pw-frame">
+        <thead><tr><td><div className="pw-spacer" /></td></tr></thead>
+        <tfoot><tr><td><div className="pw-spacer" /></td></tr></tfoot>
+        <tbody><tr><td>
       <div className="printable-worksheet" style={watermarkStyle}>
         <header className="printable-worksheet-header">
           <img src="/icons/logo-mark.png" alt="" className="printable-worksheet-logo" />
@@ -98,6 +102,8 @@ export function PrintableWorksheet({
 
         <footer className="printable-worksheet-footer">{t('brand')}</footer>
       </div>
+        </td></tr></tbody>
+      </table>
     </div>,
     document.body
   );

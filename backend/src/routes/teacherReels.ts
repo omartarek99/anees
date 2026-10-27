@@ -12,6 +12,7 @@ import { compressVideo } from '../lib/videoCompression.js';
 import { awardTeacherPoints, teacherVideoUploadPoints } from '../lib/xp.js';
 import { VIDEO_BUCKET, VIDEO_PATH_PREFIX, deleteReelVideoIfAny } from '../lib/reelVideo.js';
 import { generateQuizQuestions } from '../lib/gemini.js';
+import { findBankMatch } from '../lib/questionBank.js';
 import { aiGenerationLimiter, videoUploadLimiter } from '../middleware/rateLimit.js';
 
 export const teacherReelsRouter = asyncRouter();
@@ -115,12 +116,30 @@ teacherReelsRouter.post(
       return;
     }
 
+    // Math and Science for grades 5 and 6: the questions are written from the school question bank for this lesson, starting easy
+    // and ending medium (never hard).
+    const bank =
+      (subject.key === 'math' || subject.key === 'science') && (body.grade === 5 || body.grade === 6)
+        ? await findBankMatch({
+            subject: subject.key,
+            grade: body.grade,
+            topic: body.title,
+            topicAr: body.titleAr,
+            scriptText: body.scriptText,
+            scriptTextAr: body.scriptTextAr,
+          })
+        : null;
+
     const result = await generateQuizQuestions({
       scriptText: body.scriptText,
       scriptTextAr: body.scriptTextAr,
       subjectName: subject.name,
       grade: body.grade,
       count: body.count,
+      topic: body.title || undefined,
+      topicAr: body.titleAr || undefined,
+      bankReference: bank?.reference,
+      progression: 'easy-to-medium',
     });
 
     if (!result.ok) {

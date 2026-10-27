@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { seed } from './db/seed.js';
+import { applyMapQuestions, applyLevelPool, removeDefaultVideos } from './lib/mapQuestions.js';
 import { db } from './db/db.js';
 import { startDatabaseBackups } from './lib/dbBackup.js';
 import { apiLimiter } from './middleware/rateLimit.js';
@@ -20,9 +21,13 @@ import { teacherReelsRouter } from './routes/teacherReels.js';
 import { adminRouter } from './routes/admin.js';
 import { analyticsRouter } from './routes/analytics.js';
 import { certificatesRouter } from './routes/certificates.js';
+import { guideRouter } from './routes/guide.js';
 import { FRONTEND_ORIGIN } from './lib/config.js';
 
 seed();
+applyMapQuestions();
+applyLevelPool();
+removeDefaultVideos();
 startDatabaseBackups(db);
 
 const app = express();
@@ -98,6 +103,7 @@ app.use('/api/teacher-reels', teacherReelsRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/certificates', requireAuth, certificatesRouter);
+app.use('/api/guide', requireAuth, guideRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found.' });

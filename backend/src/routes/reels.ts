@@ -61,50 +61,8 @@ function loadQuestions(reelId: number) {
 // the same join+filter /map already does, then gathers each level's reels/questions
 // in-process (still N small synchronous SQLite calls, but zero extra HTTP round trips).
 reelsRouter.get('/feed', (req, res) => {
-  const levels = db
-    .prepare(`SELECT * FROM map_levels WHERE kind = 'normal' AND status = 'ready' ORDER BY level_number`)
-    .all() as any[];
-  const progressRows = db.prepare(`SELECT * FROM user_level_progress WHERE user_id = ?`).all(req.userId!) as any[];
-  const progressByLevelId = new Map(progressRows.map((p) => [p.map_level_id, p]));
-
-  // Built-in map lessons, in level order. They go AFTER the teachers' videos below (see the end of this handler).
-  const levelFeed: any[] = [];
-
-  for (const level of levels) {
-    const progress = progressByLevelId.get(level.id) ??
-      (level.level_number === 1 ? { status: 'available', stars: 0, best_score: 0 } : null);
-    if (!progress || progress.status === 'locked') continue;
-
-    // grade IS NULL excludes grade-based reels that happen to be parked on this level's
-    // id as a schema placeholder (see teacherReels.ts) -- those are appended separately
-    // below, not tied to any specific map level.
-    const reels = db
-      .prepare(`SELECT * FROM reels WHERE map_level_id = ? AND grade IS NULL ORDER BY order_in_level`)
-      .all(level.id) as any[];
-    if (reels.length === 0) continue;
-    const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(level.subject_id) as any;
-
-    for (const reel of reels) {
-      levelFeed.push({
-        comingSoon: false,
-        level: { levelNumber: level.level_number, title: level.title, titleAr: level.title_ar, kind: level.kind },
-        subject: { key: subject.key, name: subject.name, nameAr: subject.name_ar, icon: subject.icon },
-        reel: {
-          id: reel.id,
-          title: reel.title,
-          titleAr: reel.title_ar,
-          scriptText: reel.script_text,
-          scriptTextAr: reel.script_text_ar,
-          videoUrl: reel.video_url,
-          durationSec: reel.duration_sec,
-          author: loadAuthor(reel.author_user_id),
-          questions: loadQuestions(reel.id),
-        },
-        progress: { status: progress.status, stars: progress.stars, bestScore: progress.best_score },
-      });
-    }
-  }
-
+  // Only teachers' grade-based videos live in Reels. The adventure-map levels are plain question rounds now (routes/mapQuiz.ts), with
+  // no video behind them.
   // Grade-based teacher lessons, decoupled from the map/level system entirely, always available
   // (nothing to unlock, no lock state). A student gets every lesson tagged with their own grade.
   // Teachers don't set a grade at signup, so they see every grade-based lesson from every grade and
@@ -144,7 +102,7 @@ reelsRouter.get('/feed', (req, res) => {
     });
   }
 
-  res.json([...gradeFeed, ...levelFeed]);
+  res.json(gradeFeed);
 });
 
 // Matches ReelSlide.tsx's flush cadence (a heartbeat roughly every WATCH_HEARTBEAT_SECONDS

@@ -1697,8 +1697,21 @@ button.list-row.selected {
   .printable-worksheet-portal {
     display: block !important;
   }
+  /* No page margin: the browser prints its own header (date/time, page title) and footer (the page address, page numbers) INSIDE the
+     page margin, so a zero margin leaves them nothing to print on. The white space around the sheet comes from the .pw-frame table
+     below instead -- its empty header and footer rows repeat on every printed page. */
   @page {
-    margin: 16mm 14mm;
+    margin: 0;
+  }
+  .pw-frame {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .pw-frame td {
+    padding: 0 14mm;
+  }
+  .pw-spacer {
+    height: 16mm;
   }
   /* Chrome's print dialog has its own "Background graphics" toggle, OFF by default -- with
      it off, every background-color/background-image on the page (the watermark tile, the

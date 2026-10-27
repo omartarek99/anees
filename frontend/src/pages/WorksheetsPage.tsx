@@ -60,6 +60,9 @@ export function WorksheetsPage() {
   const [videos, setVideos] = useState<WorksheetVideo[]>([]);
   // The name of the lesson (درس) or of a video -- the AI writes new questions about it.
   const [lessonName, setLessonName] = useState('');
+  // The grade of the lesson (the school book it comes from) and how many questions the sheet has.
+  const [grade, setGrade] = useState<5 | 6>(user?.grade === 6 ? 6 : 5);
+  const [count, setCount] = useState(10);
   // The Generate button sits at the bottom of the form but the error banner at the top -- bring a
   // new error into view so a failed click doesn't look like nothing happened.
   const errorRef = useRef<HTMLDivElement>(null);
@@ -104,7 +107,7 @@ export function WorksheetsPage() {
     setLoading(true);
     setResult(null);
     try {
-      const body = selectedVideo ? { reelId: selectedVideo.id, difficulty } : { subject, difficulty, topic: typedName };
+      const body = selectedVideo ? { reelId: selectedVideo.id, difficulty, count } : { subject, difficulty, topic: typedName, grade, count };
       const data = await api.post<GenerateResponse>('/worksheets/generate', body);
       setWorksheet(data);
       // A video worksheet's subject comes from the video, not the pills.
@@ -192,7 +195,10 @@ export function WorksheetsPage() {
                 // Picking a video name also switches the subject to that video's subject.
                 const name = e.target.value.trim().toLowerCase();
                 const match = videos.find((v) => [v.title, v.titleAr].some((n) => n && n.trim().toLowerCase() === name));
-                if (match) setSubject(match.subject);
+                if (match) {
+                  setSubject(match.subject);
+                  if (match.grade === 5 || match.grade === 6) setGrade(match.grade);
+                }
               }}
               placeholder={t('worksheets.lessonPlaceholder')}
             />
@@ -227,6 +233,41 @@ export function WorksheetsPage() {
                 <span className="category-pill-icon"><img src={art('science')} alt="" /></span>
                 {t('worksheets.science')}
               </button>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontWeight: 700, marginBottom: 8, display: 'block' }}>{t('worksheets.gradeLabel')}</label>
+            <div className="pill-row">
+              {([5, 6] as const).map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  className={`category-pill${grade === g ? ' selected' : ''}`}
+                  aria-pressed={grade === g}
+                  disabled={!!selectedVideo}
+                  onClick={() => setGrade(g)}
+                >
+                  {t('worksheets.gradeOption', { n: g })}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontWeight: 700, marginBottom: 8, display: 'block' }}>{t('worksheets.countLabel')}</label>
+            <div className="pill-row">
+              {[5, 10, 15, 20].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`category-pill${count === n ? ' selected' : ''}`}
+                  aria-pressed={count === n}
+                  onClick={() => setCount(n)}
+                >
+                  {n}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -297,7 +338,7 @@ export function WorksheetsPage() {
               subjectLabel={
                 (subject === 'math' ? t('worksheets.math') : t('worksheets.science')) +
                 (worksheet.video ? ` · ${pickText(lang, worksheet.video.title, worksheet.video.titleAr)}` : '') +
-                (worksheet.topic ? ` · ${worksheet.topic}` : '')
+                (worksheet.topic ? ` · ${worksheet.topic} · ${t('worksheets.gradeOption', { n: grade })}` : '')
               }
               subjectIcon={art(subject)}
               difficultyLabel={t(`worksheets.${difficulty}`)}

@@ -18,7 +18,7 @@ import {
 } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
-import { GUIDE_EVENT, PAGE_IDS, finishTour, guideEnabled, markPageSeen, pageSeen, tourDone, tourStops, type TourStop } from '../lib/guide';
+import { GUIDE_EVENT, PAGE_IDS, finishTour, guideEnabled, markPageSeen, pageSeen, syncGuide, tourDone, tourStops, type TourStop } from '../lib/guide';
 
 // First-run guide for new accounts (rules in lib/guide.ts): a welcome window, then each icon in the menu bar is lit
 // up (pulsing ring) while a big frosted-glass window zooms out of it, with a trail of floating bubbles like a cloud,
@@ -337,6 +337,8 @@ export function GuideHost() {
   const [intro, setIntro] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const userId = user?.id;
+  // What the account has already seen comes from the server first, so nothing shows twice (another browser, cleared site data).
+  const [synced, setSynced] = useState(false);
 
   // Start the tour for a new account, or again when "Show the guide" is chosen in the menu.
   useEffect(() => {
@@ -348,22 +350,31 @@ export function GuideHost() {
         setPhase('welcome');
       }
     };
-    start();
+    let cancelled = false;
+    setSynced(false);
+    syncGuide(user.id).then(() => {
+      if (cancelled) return;
+      setSynced(true);
+      start();
+    });
     window.addEventListener(GUIDE_EVENT, start);
-    return () => window.removeEventListener(GUIDE_EVENT, start);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(GUIDE_EVENT, start);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   // After the tour: the first time each page is opened, say what it is for.
   useEffect(() => {
     setIntro(null);
-    if (!user || phase !== 'idle' || !guideEnabled(user) || !tourDone(user.id)) return;
+    if (!user || !synced || phase !== 'idle' || !guideEnabled(user) || !tourDone(user.id)) return;
     const id = PAGE_IDS[pathname];
     if (!id || pageSeen(user.id, id)) return;
     const timer = window.setTimeout(() => setIntro(id), 800); // let the page draw first
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, pathname, phase]);
+  }, [userId, pathname, phase, synced]);
 
   const end = useCallback(
     (withConfetti?: boolean) => {

@@ -188,6 +188,9 @@ export const teacherReelQuestionSchema = z.object({
 export const generateQuestionsSchema = z.object({
   scriptText: z.string().trim().min(10, 'Write the lesson script first.').max(2000),
   scriptTextAr: z.string().trim().max(2000).optional().default(''),
+  // The video's title -- used to find the matching lesson in the question bank (lib/questionBank.ts).
+  title: z.string().trim().max(120).optional().default(''),
+  titleAr: z.string().trim().max(120).optional().default(''),
   subjectId: z.number().int(),
   grade: z.coerce.number().int().min(1).max(12),
   count: z.coerce.number().int().min(1).max(10).optional().default(4),

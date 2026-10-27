@@ -63,6 +63,13 @@ export async function generateQuizQuestions(params: {
   // 'worksheet' = practice sheets: mostly short numeric/calculation problems instead of the
   // wordier conceptual questions used for lesson quizzes.
   style?: 'worksheet';
+  // Questions from the school question bank (questionBank.ts) for the lesson: the new questions are written in the same
+  // spirit and on the same skills, with the correct answers worked out here since the bank has none.
+  bankReference?: string;
+  // 'easy-to-medium' = the list starts easy and ends medium; never hard.
+  progression?: 'easy-to-medium';
+  // Free-text level instruction (e.g. exactly how easy), added next to the difficulty line.
+  extraHint?: string;
 }): Promise<GeminiResult<unknown>> {
   if (!GEMINI_API_KEY) {
     return { ok: false, error: 'NOT_CONFIGURED' };
@@ -85,7 +92,21 @@ Lesson topic / video title: "${params.topic}"${params.topicAr ? ` (Arabic: "${pa
 Every question must be about this topic. If the script below is short, use the topic itself and what a grade-${params.grade} ${params.subjectName} class would cover about it.
 `
     : ''
-}${difficultyHint ? `${difficultyHint}\n` : ''}
+}${difficultyHint ? `${difficultyHint}\n` : ''}${params.extraHint ? `${params.extraHint}\n` : ''}${
+    params.progression === 'easy-to-medium'
+      ? 'ORDER AND LEVEL: start with the easiest question and get gradually harder, ending at MEDIUM. Do NOT write any hard or tricky question.\n'
+      : ''
+  }${
+    params.bankReference
+      ? `
+SCHOOL QUESTION BANK for this lesson (Arabic, from the official practice material; it has NO answers):
+"""
+${params.bankReference}
+"""
+Base your questions on these: same skills, same topics, same kind of numbers and wording. Do NOT copy one word for word -- write fresh variations (change the numbers or the situation), and solve each one yourself so the correct answer is certain. Skip any bank question whose wording is unclear or that cannot be a multiple-choice question.
+`
+      : ''
+  }
 ${
   params.scriptText
     ? `Lesson script (English):
@@ -133,6 +154,14 @@ ${params.avoidQuestions.map((q) => `- ${q}`).join('\n')}
 
 Return ONLY the JSON array, matching the provided schema exactly.`;
 
+  return callGemini(prompt, QUESTIONS_RESPONSE_SCHEMA, params.avoidQuestions && params.avoidQuestions.length > 0 ? 0.9 : 0.6);
+}
+
+// One structured-output call down the model fallback chain; the caller validates what comes back.
+export async function callGemini(prompt: string, schema: unknown, temperature: number): Promise<GeminiResult<unknown>> {
+  if (!GEMINI_API_KEY) {
+    return { ok: false, error: 'NOT_CONFIGURED' };
+  }
   try {
     let res: Response | null = null;
     let data: any = null;
@@ -157,8 +186,8 @@ Return ONLY the JSON array, matching the provided schema exactly.`;
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
               responseMimeType: 'application/json',
-              responseSchema: QUESTIONS_RESPONSE_SCHEMA,
-              temperature: params.avoidQuestions && params.avoidQuestions.length > 0 ? 0.9 : 0.6,
+              responseSchema: schema,
+              temperature,
             },
           }),
         });

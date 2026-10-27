@@ -1,9 +1,10 @@
 import type { Role, User } from './auth-context';
+import { api } from './api';
 
 // The first-run guide: a short tour that lights up each icon in the menu bar with a pop-out window, plus a one-time
 // "what is this page" window the first time each page is opened. Only accounts created in the last week get it
 // automatically (older accounts do not suddenly get a tour). What a person
-// has already seen is remembered in this browser, per account.
+// has already seen is kept on the account (the server), with a copy in this browser, so it shows once per new user.
 
 export const GUIDE_EVENT = 'anees:guide';
 const FRESH_DAYS = 7;
@@ -35,10 +36,37 @@ export function guideEnabled(user: User): boolean {
   return fresh;
 }
 
+const remember = (userId: number, name: string) => {
+  write(key(userId, name), '1');
+  api.post('/guide', { key: name }).catch(() => {}); // best effort: the browser copy still works
+};
+
+/** Merges what the server knows into this browser, and sends up what only this browser knows (accounts that saw the guide before it was kept on the server). */
+export async function syncGuide(userId: number): Promise<void> {
+  try {
+    const { seen } = await api.get<{ seen: string[] }>('/guide');
+    const onServer = new Set(seen);
+    for (const name of seen) write(key(userId, name), '1');
+    const prefix = key(userId, '');
+    const names: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(prefix)) names.push(k.slice(prefix.length));
+    }
+    for (const name of names) {
+      if ((name === 'tour' || name.startsWith('page_')) && read(key(userId, name)) === '1' && !onServer.has(name)) {
+        api.post('/guide', { key: name }).catch(() => {});
+      }
+    }
+  } catch {
+    // offline / not signed in yet: fall back to this browser's own record
+  }
+}
+
 export const tourDone = (userId: number) => read(key(userId, 'tour')) === '1';
-export const finishTour = (userId: number) => write(key(userId, 'tour'), '1');
+export const finishTour = (userId: number) => remember(userId, 'tour');
 export const pageSeen = (userId: number, pageId: string) => read(key(userId, `page_${pageId}`)) === '1';
-export const markPageSeen = (userId: number, pageId: string) => write(key(userId, `page_${pageId}`), '1');
+export const markPageSeen = (userId: number, pageId: string) => remember(userId, `page_${pageId}`);
 
 /** Route -> the id used for that page's texts (guide.page_<id>_b) and its "seen" flag. */
 export const PAGE_IDS: Record<string, string> = {

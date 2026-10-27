@@ -5,8 +5,10 @@ import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { awardXp, getPlayerLevel, BOSS_DEFEAT_XP_BONUS, BOSS_PASS_RATIO } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
 import { getBattleStatus, recordBattleLoss } from '../lib/battle.js';
+import { registerLevelQuiz } from './mapQuiz.js';
 
 export const mapRouter = asyncRouter();
+registerLevelQuiz(mapRouter);
 
 mapRouter.get('/', (req, res) => {
   const levels = db

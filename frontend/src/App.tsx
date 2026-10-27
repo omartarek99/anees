@@ -31,6 +31,7 @@ const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m
 const TeacherHomePage = lazy(() => import('./pages/TeacherHomePage').then((m) => ({ default: m.TeacherHomePage })));
 const ReelsPage = lazy(() => import('./pages/ReelsPage').then((m) => ({ default: m.ReelsPage })));
 const MapPage = lazy(() => import('./pages/MapPage').then((m) => ({ default: m.MapPage })));
+const LevelQuizPage = lazy(() => import('./pages/LevelQuizPage').then((m) => ({ default: m.LevelQuizPage })));
 const WorksheetsPage = lazy(() => import('./pages/WorksheetsPage').then((m) => ({ default: m.WorksheetsPage })));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage').then((m) => ({ default: m.LeaderboardPage })));
 const FriendsPage = lazy(() => import('./pages/FriendsPage').then((m) => ({ default: m.FriendsPage })));
@@ -256,6 +257,7 @@ export default function App() {
                 <Route element={<NoAdmin />}>
                   <Route path="/reels" element={<ReelsPage />} />
                   <Route path="/map" element={<MapPage />} />
+                  <Route path="/map/level/:levelNumber" element={<LevelQuizPage />} />
                   <Route path="/craft" element={<CraftPage />} />
                   <Route path="/worksheets" element={<WorksheetsPage />} />
                   <Route path="/leaderboard" element={<LeaderboardPage />} />
