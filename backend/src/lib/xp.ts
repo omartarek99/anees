@@ -1,4 +1,5 @@
 import { db } from '../db/db.js';
+import { grantRankCertificates } from './rankCertificates.js';
 
 export const WORKSHEET_XP_PER_CORRECT: Record<'easy' | 'medium' | 'hard', number> = {
   easy: 5,
@@ -38,6 +39,7 @@ export function awardXp(userId: number, amount: number, reason: string) {
   if (amount === 0) return;
   db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`).run(userId, amount, reason);
   db.prepare(`UPDATE users SET total_xp = total_xp + ? WHERE id = ?`).run(amount, userId);
+  grantRankCertificates(userId);
 }
 
 // Teacher points are a separate currency from total_xp above, only ever earned by

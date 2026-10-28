@@ -11,6 +11,7 @@ import type { AvatarConfig } from '../components/avatar3d/avatarConfig';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
 import { VictoryShield } from '../components/VictoryShield';
+import { CertificatePlaque } from '../components/CertificatePlaque';
 import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, certPillBackground, type CertificateType } from '../lib/certificateTiers';
 
 type TeacherVideo = {
@@ -330,6 +331,8 @@ export function ProfilePage() {
                     style={{ width: '100%', borderRadius: 'var(--radius-sm)', aspectRatio: '4 / 3', objectFit: 'contain', background: 'var(--sand)' }}
                   />
                 </a>
+                <span className="flex gap-sm" style={{ alignItems: 'center' }}>
+                <CertificatePlaque tier={cert.type} label={t(CERT_TYPE_LABEL_KEY[cert.type])} width={36} interactive={false} />
                 <span
                   style={{
                     width: 'fit-content',
@@ -342,6 +345,7 @@ export function ProfilePage() {
                   }}
                 >
                   {t(CERT_TYPE_LABEL_KEY[cert.type])}
+                </span>
                 </span>
                 <strong style={{ fontSize: 14 }}>{cert.title}</strong>
                 {cert.issuedByName && (

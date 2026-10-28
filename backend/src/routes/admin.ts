@@ -23,6 +23,7 @@ import { parseRoleFilter, parseGrade, pageViewStats, countReportUsers, queryRepo
 import { buildReportWorkbook } from '../lib/reportExcel.js';
 import { recentIssues } from '../lib/diagnostics.js';
 import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX, deleteCertificateImageIfAny } from '../lib/certificateImage.js';
+import { PLAQUE_PATH } from '../lib/rankCertificates.js';
 
 import type { Response } from 'express';
 
@@ -303,7 +304,17 @@ adminRouter.post('/certificates', requireCsrfHeader, handleCertificateImageUploa
   }
 
   const image = req.file;
-  if (!image || !looksLikeImage(image.buffer, image.mimetype)) {
+  // No picture uploaded: the certificate is the plaque of the chosen tier (bronze / silver / gold).
+  if (!image) {
+    const id = Number(
+      db
+        .prepare(`INSERT INTO certificates (user_id, title, type, image_url, issued_by) VALUES (?,?,?,?,?)`)
+        .run(userId, title, type, PLAQUE_PATH[type], req.userId!).lastInsertRowid
+    );
+    res.status(201).json({ id });
+    return;
+  }
+  if (!looksLikeImage(image.buffer, image.mimetype)) {
     res.status(400).json({ error: 'Please upload a valid image (JPG, PNG, or WebP, under 8MB).' });
     return;
   }
