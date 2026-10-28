@@ -31,6 +31,7 @@ const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m
 const TeacherHomePage = lazy(() => import('./pages/TeacherHomePage').then((m) => ({ default: m.TeacherHomePage })));
 const ReelsPage = lazy(() => import('./pages/ReelsPage').then((m) => ({ default: m.ReelsPage })));
 const MapPage = lazy(() => import('./pages/MapPage').then((m) => ({ default: m.MapPage })));
+const LevelQuizPage = lazy(() => import('./pages/LevelQuizPage').then((m) => ({ default: m.LevelQuizPage })));
 const WorksheetsPage = lazy(() => import('./pages/WorksheetsPage').then((m) => ({ default: m.WorksheetsPage })));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage').then((m) => ({ default: m.LeaderboardPage })));
 const FriendsPage = lazy(() => import('./pages/FriendsPage').then((m) => ({ default: m.FriendsPage })));
@@ -82,12 +83,22 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
   '/cookies': { title: 'Cookie policy | سياسة ملفات تعريف الارتباط | Anees', description: '' },
 };
 let defaultDescription: string | null = null;
+const SITE_ORIGIN = 'https://anees-qa.site';
 
 function PageMeta() {
   const { pathname } = useLocation();
   useEffect(() => {
     const meta = PAGE_META[pathname];
     document.title = meta?.title ?? SITE_TITLE;
+    // Each public page names itself as the address Google should list (they all share one HTML shell, so without this the
+    // login, sign-up and policy pages can look like copies of the home page); every other address points to the home page.
+    let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `${SITE_ORIGIN}${meta ? pathname : '/'}`;
     const tag = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     if (!tag) return;
     if (defaultDescription === null) defaultDescription = tag.content;
@@ -143,7 +154,7 @@ function ProtectedLayout() {
   );
 }
 
-// Students still land straight on Reels right after signing in (see PublicOnlyLayout below) —
+// Students and teachers still land straight on Reels right after signing in (see PublicOnlyLayout below) —
 // but "/" itself, and the sidebar's Home icon that points there, needs to be a real, distinct
 // homepage to navigate back to, not just another way to reach Reels. Admin has no gameplay
 // home at all — its whole account exists to manage other accounts, so "/" just forwards
@@ -195,9 +206,8 @@ function ProfileHome() {
 function PublicOnlyLayout() {
   const { user, loading } = useAuth();
   if (loading) return <FullScreenLoader />;
-  // First page after signing in: students land on Reels, admins land on the admin panel,
-  // teachers land on Home.
-  if (user) return <Navigate to={user.role === 'student' ? '/reels' : user.role === 'admin' ? '/admin' : '/'} replace />;
+  // First page after signing in: students and teachers land on Reels, admins land on the admin panel.
+  if (user) return <Navigate to={user.role === 'admin' ? '/admin' : '/reels'} replace />;
   return (
     <div style={{ position: 'relative' }}>
       <div className="flex gap-sm" style={{ position: 'absolute', top: 16, insetInlineEnd: 16, zIndex: 10 }}>
@@ -258,6 +268,7 @@ export default function App() {
                 <Route element={<NoAdmin />}>
                   <Route path="/reels" element={<ReelsPage />} />
                   <Route path="/map" element={<MapPage />} />
+                  <Route path="/map/level/:levelNumber" element={<LevelQuizPage />} />
                   <Route path="/craft" element={<CraftPage />} />
                   <Route path="/worksheets" element={<WorksheetsPage />} />
                   <Route path="/leaderboard" element={<LeaderboardPage />} />

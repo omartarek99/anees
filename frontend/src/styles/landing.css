@@ -512,8 +512,8 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
 }
 .landing-footer {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: clamp(32px, 8vw, 120px);
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  gap: clamp(32px, 6vw, 96px);
   max-inline-size: 1462px;
   margin-inline: auto;
   padding: clamp(48px, 6vw, 100px) var(--land-edge) clamp(40px, 5vw, 80px);

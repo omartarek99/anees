@@ -1,0 +1,4284 @@
+{
+ "levels": {
+  "1": [
+   {
+    "questionText": "What is the value of the digit 4 in the number 4 000 000?",
+    "questionTextAr": "ما قيمة الرقم 4 في العدد 4 000 000؟",
+    "choices": [
+     "40 000",
+     "400 000",
+     "4 000 000",
+     "40 000 000"
+    ],
+    "choicesAr": [
+     "40 000",
+     "400 000",
+     "4 000 000",
+     "40 000 000"
+    ],
+    "correctIndex": 2,
+    "explanation": "The digit 4 is in the millions place, so its value is 4 000 000.",
+    "explanationAr": "الرقم 4 يقع في منزلة الملايين، لذا فإن قيمته المنزلية هي 4 000 000."
+   },
+   {
+    "questionText": "Which digit is in the ten-thousands place in the number 3 472 519?",
+    "questionTextAr": "ما الرقم الذي يقع في منزلة عشرات الآلاف في العدد 3 472 519؟",
+    "choices": [
+     "3",
+     "4",
+     "7",
+     "2"
+    ],
+    "choicesAr": [
+     "3",
+     "4",
+     "7",
+     "2"
+    ],
+    "correctIndex": 2,
+    "explanation": "Looking at the number from the right, the ten-thousands place is occupied by the digit 7.",
+    "explanationAr": "بالنظر إلى العدد من اليمين، نجد أن الرقم 7 هو الذي يقع في منزلة عشرات الآلاف."
+   },
+   {
+    "questionText": "What is the standard form of the number: twenty thousand, five hundred three?",
+    "questionTextAr": "ما الصيغة القياسية للعدد: عشرون ألفاً وخمسمائة وثلاثة؟",
+    "choices": [
+     "2 503",
+     "20 503",
+     "200 503",
+     "20 053"
+    ],
+    "choicesAr": [
+     "2 503",
+     "20 503",
+     "200 503",
+     "20 053"
+    ],
+    "correctIndex": 1,
+    "explanation": "Twenty thousand is written as 20 000, and five hundred three is 503, which gives 20 503 in standard form.",
+    "explanationAr": "عشرون ألفاً تكتب 20 000، وخمسمائة وثلاثة تكتب 503، ليصبح العدد بالصيغة القياسية 20 503."
+   },
+   {
+    "questionText": "What is the value of the digit 6 in the number 630 000?",
+    "questionTextAr": "ما قيمة الرقم 6 في العدد 630 000؟",
+    "choices": [
+     "6 000",
+     "60 000",
+     "600 000",
+     "6 000 000"
+    ],
+    "choicesAr": [
+     "6 000",
+     "60 000",
+     "600 000",
+     "6 000 000"
+    ],
+    "correctIndex": 2,
+    "explanation": "The digit 6 is in the hundred-thousands place, so its value is 600 000.",
+    "explanationAr": "الرقم 6 يقع في منزلة مئات الآلاف، لذا فإن قيمته هي 600 000."
+   }
+  ],
+  "2": [
+   {
+    "questionText": "What do all animals need to survive and grow?",
+    "questionTextAr": "ماذا تحتاج جميع الحيوانات لكي تعيش وتنمو؟",
+    "choices": [
+     "Sunlight and soil",
+     "Air, water, and food",
+     "Water and rocks",
+     "Air and sand"
+    ],
+    "choicesAr": [
+     "ضوء الشمس والتربة",
+     "الهواء والماء والغذاء",
+     "الماء والصخور",
+     "الهواء والرمال"
+    ],
+    "correctIndex": 1,
+    "explanation": "All animals require air, water, and food to stay alive and grow.",
+    "explanationAr": "تحتاج جميع الحيوانات إلى الهواء والماء والغذاء للبقاء على قيد الحياة والنمو."
+   },
+   {
+    "questionText": "Animals that feed only on plants and green leaves are called:",
+    "questionTextAr": "تُسمّى الحيوانات التي تتغذى على النباتات والأوراق الخضراء فقط:",
+    "choices": [
+     "Carnivores",
+     "Omnivores",
+     "Herbivores",
+     "Decomposers"
+    ],
+    "choicesAr": [
+     "آكلات اللحوم",
+     "القوارت",
+     "آكلات العشب",
+     "المحللات"
+    ],
+    "correctIndex": 2,
+    "explanation": "Herbivores are animals that eat only plants and plant material.",
+    "explanationAr": "آكلات العشب هي الحيوانات التي تتغذى على النباتات وأجزائها فقط."
+   },
+   {
+    "questionText": "Which group includes animals that eat both plants and meat, such as monkeys and chickens?",
+    "questionTextAr": "أي مجموعة تضم الحيوانات التي تتغذى على النباتات واللحوم معاً، مثل القرد والدجاجة؟",
+    "choices": [
+     "Herbivores",
+     "Omnivores",
+     "Carnivores",
+     "Decomposers"
+    ],
+    "choicesAr": [
+     "آكلات العشب",
+     "القوارت",
+     "آكلات اللحوم",
+     "المحللات"
+    ],
+    "correctIndex": 1,
+    "explanation": "Omnivores are living things that eat both plants and animals.",
+    "explanationAr": "القوارت هي الكائنات الحية التي تتغذى على النباتات والحيوانات معاً."
+   },
+   {
+    "questionText": "A cheetah runs fast to hunt other animals for food. Based on its diet, the cheetah is a:",
+    "questionTextAr": "يركض الفهد بسرعة كبيرة لاصطياد الحيوانات الأخرى والتغذي عليها. بناءً على نوع غذائه، يُعَدّ الفهد حيواناً:",
+    "choices": [
+     "Herbivore",
+     "Omnivore",
+     "Carnivore",
+     "Producer"
+    ],
+    "choicesAr": [
+     "آكلاً للعشب",
+     "قارتاً",
+     "آكلاً للحوم",
+     "منتجاً للغذاء"
+    ],
+    "correctIndex": 2,
+    "explanation": "Because cheetahs hunt and eat other animals, they are classified as carnivores.",
+    "explanationAr": "بما أن الفهد يصطاد الحيوانات الأخرى ويتغذى على لحومها، فهو يُصنَّف من آكلات اللحوم."
+   }
+  ],
+  "3": [
+   {
+    "questionText": "What is the best estimate for 2.3 + 4.6 by rounding to the nearest whole number?",
+    "questionTextAr": "ما هو أفضل تقدير لناتج الجمع 2.3 + 4.6 بالتقريب لأقرب عدد كلي؟",
+    "choices": [
+     "6",
+     "7",
+     "8",
+     "9"
+    ],
+    "choicesAr": [
+     "6",
+     "7",
+     "8",
+     "9"
+    ],
+    "correctIndex": 1,
+    "explanation": "2.3 rounds down to 2, and 4.6 rounds up to 5, so 2 + 5 = 7.",
+    "explanationAr": "العدد 2.3 يُقرب إلى 2، والعدد 4.6 يُقرب إلى 5، إذن 2 + 5 = 7."
+   },
+   {
+    "questionText": "Estimate the difference 15.8 - 8.1 by rounding each number to the nearest whole number.",
+    "questionTextAr": "قدّر ناتج الطرح 15.8 - 8.1 بتقريب كل عدد إلى أقرب عدد كلي.",
+    "choices": [
+     "6",
+     "7",
+     "8",
+     "10"
+    ],
+    "choicesAr": [
+     "6",
+     "7",
+     "8",
+     "10"
+    ],
+    "correctIndex": 2,
+    "explanation": "15.8 rounds to 16, and 8.1 rounds to 8, so 16 - 8 = 8.",
+    "explanationAr": "العدد 15.8 يُقرب إلى 16، والعدد 8.1 يُقرب إلى 8، إذن 16 - 8 = 8."
+   },
+   {
+    "questionText": "Sara bought a pen for 3.85 Riyals and a notebook for 5.20 Riyals. About how much did she spend in total?",
+    "questionTextAr": "اشتريتْ سارة قلمًا بـ 3.85 ريال ودفترًا بـ 5.20 ريال. تقريبًا كم دفعت إجمالاً؟",
+    "choices": [
+     "7 Riyals",
+     "8 Riyals",
+     "9 Riyals",
+     "11 Riyals"
+    ],
+    "choicesAr": [
+     "7 ريالات",
+     "8 ريالات",
+     "9 ريالات",
+     "11 ريالاً"
+    ],
+    "correctIndex": 2,
+    "explanation": "3.85 rounds to 4, and 5.20 rounds to 5, so 4 + 5 = 9 Riyals.",
+    "explanationAr": "العدد 3.85 يُقرب إلى 4، والعدد 5.20 يُقرب إلى 5، إذن 4 + 5 = 9 ريالات."
+   },
+   {
+    "questionText": "What is the best estimate for 33.7 - 11.2 using rounding?",
+    "questionTextAr": "ما هو أفضل تقدير لناتج 33.7 - 11.2 باستخدام التقريب؟",
+    "choices": [
+     "20",
+     "22",
+     "25",
+     "45"
+    ],
+    "choicesAr": [
+     "20",
+     "22",
+     "25",
+     "45"
+    ],
+    "correctIndex": 1,
+    "explanation": "33.7 rounds to 34, and 11.2 rounds to 12, so 34 - 12 = 22.",
+    "explanationAr": "العدد 33.7 يُقرب إلى 34، والعدد 11.2 يُقرب إلى 12، إذن 34 - 12 = 22."
+   }
+  ],
+  "4": [
+   {
+    "questionText": "What are the three common states of matter?",
+    "questionTextAr": "ما حالات المادة الثلاث الشائعة؟",
+    "choices": [
+     "Solid, liquid, and gas",
+     "Hot, warm, and cold",
+     "Big, medium, and small",
+     "Heavy, light, and medium"
+    ],
+    "choicesAr": [
+     "الصلبة والسائلة والغازية",
+     "الحارة والدافئة والباردة",
+     "الكبيرة والمتوسطة والصغيرة",
+     "الثقيلة والمتوسطة والخفيفة"
+    ],
+    "correctIndex": 0,
+    "explanation": "Matter around us typically exists in three main states: solid, liquid, and gas.",
+    "explanationAr": "المادة من حولنا توجد عادة في ثلاث حالات رئيسية هي: الصلبة والسائلة والغازية."
+   },
+   {
+    "questionText": "What is the process called when a liquid changes into a solid?",
+    "questionTextAr": "ماذا يسمى تحول المادة من الحالة السائلة إلى الحالة الصلبة؟",
+    "choices": [
+     "Melting",
+     "Freezing",
+     "Boiling",
+     "Evaporation"
+    ],
+    "choicesAr": [
+     "الانصهار",
+     "التجمد",
+     "الغليان",
+     "التبخر"
+    ],
+    "correctIndex": 1,
+    "explanation": "Freezing is the process where a liquid loses heat and turns into a solid, like water turning into ice.",
+    "explanationAr": "التجمد هو العملية التي تفقد فيها المادة السائلة حرارتها وتتحول إلى حالة صلبة، مثل تحول الماء إلى جليد."
+   },
+   {
+    "questionText": "What do we call water when it is in its gaseous state?",
+    "questionTextAr": "ماذا نطلق على الماء عندما يكون في حالته الغازية؟",
+    "choices": [
+     "Ice",
+     "Liquid water",
+     "Water vapor",
+     "Snow"
+    ],
+    "choicesAr": [
+     "الجليد",
+     "الماء السائل",
+     "بخار الماء",
+     "الثلج"
+    ],
+    "correctIndex": 2,
+    "explanation": "Water in its gas form is called water vapor, which is invisible in the air.",
+    "explanationAr": "الماء في صورته الغازية يسمى بخار الماء، وهو غير مرئي في الهواء."
+   },
+   {
+    "questionText": "The formation of water droplets on the outside of a cold glass of juice is an example of which process?",
+    "questionTextAr": "تكون قطرات الماء على السطح الخارجي لكوب عصير بارد هو مثال على أي عملية؟",
+    "choices": [
+     "Evaporation",
+     "Melting",
+     "Freezing",
+     "Condensation"
+    ],
+    "choicesAr": [
+     "التبخر",
+     "الانصهار",
+     "التجمد",
+     "التكاثف"
+    ],
+    "correctIndex": 3,
+    "explanation": "Condensation happens when water vapor in the air touches a cold surface and turns back into liquid drops.",
+    "explanationAr": "التكاثف يحدث عندما يلامس بخار الماء الموجود في الهواء سطحاً بارداً فيتحول مرة أخرى إلى قطرات سائلة."
+   }
+  ],
+  "5": [
+   {
+    "questionText": "In the expression 10⁴, what is the number 10 called?",
+    "questionTextAr": "في التعبير 10⁴، ماذا يُسمّى العدد 10؟",
+    "choices": [
+     "Exponent",
+     "Base",
+     "Product",
+     "Power"
+    ],
+    "choicesAr": [
+     "الأس",
+     "الأساس",
+     "الناتج",
+     "القوة"
+    ],
+    "correctIndex": 1,
+    "explanation": "In 10⁴, the number 10 is the base and 4 is the exponent.",
+    "explanationAr": "في التعبير 10⁴، يُسمّى العدد 10 الأساس والعدد 4 هو الأس."
+   },
+   {
+    "questionText": "What do all animals need to survive and stay alive?",
+    "questionTextAr": "ماذا تحتاج جميع الحيوانات لكي تعيش وتبقى على قيد الحياة؟",
+    "choices": [
+     "Air, food, and water",
+     "Air only",
+     "Food only",
+     "Water and sunlight only"
+    ],
+    "choicesAr": [
+     "الهواء والغذاء والماء",
+     "الهواء فقط",
+     "الغذاء فقط",
+     "الماء وضوء الشمس فقط"
+    ],
+    "correctIndex": 0,
+    "explanation": "All animals need air, food, and water to live and survive.",
+    "explanationAr": "تحتاج جميع الحيوانات إلى الهواء والغذاء والماء لكي تعيش وتبقى على قيد الحياة."
+   },
+   {
+    "questionText": "What is the value of 5 × 10³?",
+    "questionTextAr": "ما قيمة 5 × 10³؟",
+    "choices": [
+     "50",
+     "500",
+     "5,000",
+     "50,000"
+    ],
+    "choicesAr": [
+     "50",
+     "500",
+     "5 000",
+     "50 000"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since 10³ equals 1,000, multiplying 5 by 1,000 gives 5,000.",
+    "explanationAr": "بما أن 10³ تساوي 1 000، فإن ضرب 5 في 1 000 يعطي 5 000."
+   },
+   {
+    "questionText": "What are animals that feed only on plants called?",
+    "questionTextAr": "ماذا تُسمى الحيوانات التي تتغذى على النباتات فقط؟",
+    "choices": [
+     "Carnivores",
+     "Herbivores",
+     "Omnivores",
+     "Decomposers"
+    ],
+    "choicesAr": [
+     "آكلات اللحوم",
+     "آكلات العشب",
+     "القوارت",
+     "المحللات"
+    ],
+    "correctIndex": 1,
+    "explanation": "Herbivores are animals that eat only plants, grass, and seeds.",
+    "explanationAr": "آكلات العشب هي الحيوانات التي تتغذى على النباتات والأعشاب والبذور فقط."
+   },
+   {
+    "questionText": "Which of the following shows the number 800,000 written using exponents?",
+    "questionTextAr": "أي مما يأتي يمثل العدد 800 000 مكتوبًا باستعمال الأسس؟",
+    "choices": [
+     "8 × 10⁴",
+     "8 × 10⁵",
+     "8 × 10⁶",
+     "80 × 10⁵"
+    ],
+    "choicesAr": [
+     "8 × 10⁴",
+     "8 × 10⁵",
+     "8 × 10⁶",
+     "80 × 10⁵"
+    ],
+    "correctIndex": 1,
+    "explanation": "The number 800,000 has 5 zeros after the 8, so it is written as 8 × 10⁵.",
+    "explanationAr": "العدد 800 000 يحتوي على 5 أصفار بعد العدد 8، فيُكتب على صورة 8 × 10⁵."
+   },
+   {
+    "questionText": "Which of the following animals is an omnivore that eats both plants and animals?",
+    "questionTextAr": "أي من الحيوانات التالية يُعد من القوارت التي تتغذى على النباتات والحيوانات معًا؟",
+    "choices": [
+     "Falcon",
+     "Deer",
+     "Monkey",
+     "Crocodile"
+    ],
+    "choicesAr": [
+     "الصقر",
+     "الغزال",
+     "القرد",
+     "التمساح"
+    ],
+    "correctIndex": 2,
+    "explanation": "Monkeys eat fruits and plants as well as insects and small animals, so they are omnivores.",
+    "explanationAr": "يتغذى القرد على الثمار والنباتات والحشرات والحيوانات الصغيرة، لذلك يُعد من القوارت."
+   }
+  ],
+  "6": [
+   {
+    "questionText": "What is the best estimate for 31 x 22?",
+    "questionTextAr": "ما هو أفضل تقدير لعملية الضرب 31 × 22؟",
+    "choices": [
+     "400",
+     "600",
+     "800",
+     "1 000"
+    ],
+    "choicesAr": [
+     "400",
+     "600",
+     "800",
+     "1 000"
+    ],
+    "correctIndex": 1,
+    "explanation": "Round 31 to 30 and 22 to 20, then multiply 30 by 20 to get 600.",
+    "explanationAr": "نقرب العدد 31 إلى 30 والعدد 22 إلى 20، ثم نضرب 30 في 20 لنحصل على 600."
+   },
+   {
+    "questionText": "Estimate the product of 49 x 52.",
+    "questionTextAr": "قدّر ناتج ضرب العددين 49 × 52.",
+    "choices": [
+     "2 000",
+     "2 500",
+     "3 000",
+     "3 500"
+    ],
+    "choicesAr": [
+     "2 000",
+     "2 500",
+     "3 000",
+     "3 500"
+    ],
+    "correctIndex": 1,
+    "explanation": "Round 49 to 50 and 52 to 50, then multiply 50 by 50 to get 2,500.",
+    "explanationAr": "نقرب 49 إلى 50 و 52 إلى 50، ثم نضرب 50 في 50 ليكون الناتج 2 500."
+   },
+   {
+    "questionText": "A school bought 38 devices, and the price of one device is 491 Riyals. What is the estimated total cost?",
+    "questionTextAr": "اشترت مدرسة 38 جهازاً، وسعر الجهاز الواحد 491 ريالاً. ما هو التقدير المناسب للثمن الإجمالي؟",
+    "choices": [
+     "10 000",
+     "15 000",
+     "20 000",
+     "25 000"
+    ],
+    "choicesAr": [
+     "10 000",
+     "15 000",
+     "20 000",
+     "25 000"
+    ],
+    "correctIndex": 2,
+    "explanation": "Round 38 to 40 and 491 to 500, then multiply 40 by 500 to get 20,000.",
+    "explanationAr": "نقرب 38 إلى 40 و 491 إلى 500، ثم نضرب 40 في 500 لنحصل على 20 000."
+   },
+   {
+    "questionText": "Which multiplication expression has an estimated product of about 4,000?",
+    "questionTextAr": "أي من عمليات الضرب الآتية ناتجها التقديري يساوي تقريباً 4 000؟",
+    "choices": [
+     "78 x 52",
+     "31 x 21",
+     "19 x 28",
+     "41 x 12"
+    ],
+    "choicesAr": [
+     "78 × 52",
+     "31 × 21",
+     "19 × 28",
+     "41 × 12"
+    ],
+    "correctIndex": 0,
+    "explanation": "Rounding 78 to 80 and 52 to 50 gives 80 x 50 = 4,000.",
+    "explanationAr": "عند تقريب 78 إلى 80 و 52 إلى 50 تصبح العملية 80 × 50 ومجموعها 4 000."
+   }
+  ],
+  "7": [
+   {
+    "questionText": "Which of the following devices is usually powered by batteries?",
+    "questionTextAr": "أي من الأجهزة التالية يعمل بالبطاريات عادةً؟",
+    "choices": [
+     "A flashlight",
+     "A washing machine",
+     "A refrigerator",
+     "A ceiling fan"
+    ],
+    "choicesAr": [
+     "المصباح اليدوي",
+     "غسالة الملابس",
+     "الثلاجة",
+     "مروحة السقف"
+    ],
+    "correctIndex": 0,
+    "explanation": "Flashlights are portable devices that use batteries as their energy source.",
+    "explanationAr": "المصابيح اليدوية أجهزة محمولة تستخدم البطاريات كمصدر للطاقة."
+   },
+   {
+    "questionText": "What type of energy output does an electric bell mainly produce?",
+    "questionTextAr": "ما نوع النتاج الذي ينتجه الجرس الكهربائي بشكل أساسي؟",
+    "choices": [
+     "Light",
+     "Sound",
+     "Heat only",
+     "Movement only"
+    ],
+    "choicesAr": [
+     "ضوء",
+     "صوت",
+     "حرارة فقط",
+     "حركة فقط"
+    ],
+    "correctIndex": 1,
+    "explanation": "An electric bell converts electrical energy into sound energy so we can hear its chime.",
+    "explanationAr": "يحول الجرس الكهربائي الطاقة الكهربائية إلى طاقة صوتية لنتمكن من سماع رنينه."
+   },
+   {
+    "questionText": "What is the job of an electric switch in a circuit?",
+    "questionTextAr": "ما وظيفة المفتاح الكهربائي في الدائرة الكهربائية؟",
+    "choices": [
+     "To produce electricity",
+     "To turn the device on or off",
+     "To store electrical energy",
+     "To cool down the wires"
+    ],
+    "choicesAr": [
+     "إنتاج الكهرباء",
+     "تشغيل الجهاز أو إيقافه",
+     "تخزين الطاقة الكهربائية",
+     "تبريد الأسلاك"
+    ],
+    "correctIndex": 1,
+    "explanation": "A switch controls the flow of electricity to turn a device on or off.",
+    "explanationAr": "يتحكم المفتاح الكهربائي في مرور الكهرباء لتشغيل الجهاز أو إيقافه."
+   },
+   {
+    "questionText": "Which device transforms electrical energy into heat to smooth out wrinkled clothes?",
+    "questionTextAr": "أي جهاز يحول الطاقة الكهربائية إلى حرارة لفرد الملابس المجعدة؟",
+    "choices": [
+     "An electric iron",
+     "An electric bell",
+     "A flashlight",
+     "A radio"
+    ],
+    "choicesAr": [
+     "المكواة الكهربائية",
+     "الجرس الكهربائي",
+     "المصباح اليدوي",
+     "الراديو"
+    ],
+    "correctIndex": 0,
+    "explanation": "An electric iron converts electrical energy into heat energy to iron clothes.",
+    "explanationAr": "تحول المكواة الكهربائية الطاقة الكهربائية إلى طاقة حرارية لكي الملابس."
+   }
+  ],
+  "8": [
+   {
+    "questionText": "Find the quotient of 640 divided by 20.",
+    "questionTextAr": "أوجد ناتج قسمة 640 على 20.",
+    "choices": [
+     "3",
+     "32",
+     "320",
+     "40"
+    ],
+    "choicesAr": [
+     "3",
+     "32",
+     "320",
+     "40"
+    ],
+    "correctIndex": 1,
+    "explanation": "When dividing 640 by 20, you can cross out the zeros to make it 64 divided by 2, which equals 32.",
+    "explanationAr": "عند قسمة 640 على 20، يمكنك حذف الأصفار لتصبح 64 مقسومة على 2، وهو ما يساوي 32."
+   },
+   {
+    "questionText": "What is 2,100 divided by 70?",
+    "questionTextAr": "ما ناتج 2,100 مقسومة على 70؟",
+    "choices": [
+     "3",
+     "30",
+     "300",
+     "70"
+    ],
+    "choicesAr": [
+     "3",
+     "30",
+     "300",
+     "70"
+    ],
+    "correctIndex": 1,
+    "explanation": "210 tens divided by 7 tens equals 30.",
+    "explanationAr": "210 عشرات مقسومة على 7 عشرات تساوي 30."
+   },
+   {
+    "questionText": "Divide 728 by 80. What is the quotient and the remainder?",
+    "questionTextAr": "اقسم 728 على 80. ما هو ناتج القسمة والباقي؟",
+    "choices": [
+     "9 and remainder 8",
+     "8 and remainder 48",
+     "9 and remainder 48",
+     "10 and remainder 28"
+    ],
+    "choicesAr": [
+     "9 والباقي 8",
+     "8 والباقي 48",
+     "9 والباقي 48",
+     "10 والباقي 28"
+    ],
+    "correctIndex": 0,
+    "explanation": "80 times 9 is 720, and 728 minus 720 leaves a remainder of 8.",
+    "explanationAr": "العدد 80 ضرب 9 يساوي 720، و728 ناقص 720 يتبقي منه 8."
+   },
+   {
+    "questionText": "A factory produces 4,800 items in 60 hours. How many items does it produce in 1 hour?",
+    "questionTextAr": "يُنتج مصنع 4,800 قطعة في 60 ساعة. كم قطعة يُنتج في الساعة الواحدة؟",
+    "choices": [
+     "8",
+     "80",
+     "800",
+     "420"
+    ],
+    "choicesAr": [
+     "8",
+     "80",
+     "800",
+     "420"
+    ],
+    "correctIndex": 1,
+    "explanation": "Divide 4,800 by 60 by dividing 480 by 6, which gives 80 items per hour.",
+    "explanationAr": "اقسم 4,800 على 60 بقسمة 480 على 6، مما يعطي 80 قطعة في الساعة."
+   }
+  ],
+  "9": [
+   {
+    "questionText": "What are the two terminals of an electric cell?",
+    "questionTextAr": "ما هما قطبا الخلية الكهربائية؟",
+    "choices": [
+     "Top and bottom",
+     "Positive and negative",
+     "Big and small",
+     "Inside and outside"
+    ],
+    "choicesAr": [
+     "علوي وسفلي",
+     "موجب وسالب",
+     "كبير وصغير",
+     "داخلي وخارجي"
+    ],
+    "correctIndex": 1,
+    "explanation": "An electric cell always has a positive terminal and a negative terminal.",
+    "explanationAr": "تتكون الخلية الكهربائية دائماً من قطب موجب وقطب سالب."
+   },
+   {
+    "questionText": "What do we call the flow of electric charges in a closed circuit?",
+    "questionTextAr": "ماذا يُسمى سريان الشحنات الكهربائية في الدائرة المغلقة؟",
+    "choices": [
+     "Electric current",
+     "Light bulb",
+     "Wire heat",
+     "Bell sound"
+    ],
+    "choicesAr": [
+     "التيار الكهربائي",
+     "ضوء المصباح",
+     "حرارة السلك",
+     "صوت الجرس"
+    ],
+    "correctIndex": 0,
+    "explanation": "Electric current is the flow of electric charges through a closed circuit.",
+    "explanationAr": "التيار الكهربائي هو سريان الشحنات الكهربائية في الدائرة المغلقة."
+   },
+   {
+    "questionText": "What unit is used to measure electric current?",
+    "questionTextAr": "ما هي وحدة قياس شدة التيار الكهربائي؟",
+    "choices": [
+     "Meter",
+     "Ampere",
+     "Kilogram",
+     "Liter"
+    ],
+    "choicesAr": [
+     "المتر",
+     "الأمبير",
+     "الكيلوجرام",
+     "اللتر"
+    ],
+    "correctIndex": 1,
+    "explanation": "Electric current is measured in amperes using an ammeter.",
+    "explanationAr": "يتم قياس شدة التيار الكهربائي بوحدة الأمبير باستخدام جهاز الأميتر."
+   },
+   {
+    "questionText": "What is a battery made of?",
+    "questionTextAr": "مما تتكون البطارية؟",
+    "choices": [
+     "One lamp",
+     "One motor",
+     "One or more electric cells",
+     "One bell"
+    ],
+    "choicesAr": [
+     "مصباح واحد",
+     "محرك واحد",
+     "خلية كهربائية واحدة أو أكثر",
+     "جرس واحد"
+    ],
+    "correctIndex": 2,
+    "explanation": "A battery is formed by combining one or more electric cells together.",
+    "explanationAr": "البطارية عبارة عن مجموعة تتكون من خلية كهربائية واحدة أو أكثر."
+   }
+  ],
+  "10": [
+   {
+    "questionText": "What is the best estimate for 4.9 x 5?",
+    "questionTextAr": "ما هو أفضل تقدير لناتج 4.9 × 5؟",
+    "choices": [
+     "20",
+     "25",
+     "30",
+     "35"
+    ],
+    "choicesAr": [
+     "20",
+     "25",
+     "30",
+     "35"
+    ],
+    "correctIndex": 1,
+    "explanation": "Round 4.9 to the nearest whole number, which is 5, and then multiply by 5 to get 25.",
+    "explanationAr": "نُقرب الكسر العشري 4.9 إلى أقرب عدد كلي فيصبح 5، ثم نضربه في 5 ليكون الناتج 25."
+   },
+   {
+    "questionText": "What does an electric buzzer produce when electricity flows through it?",
+    "questionTextAr": "ماذا ينتج الجرس الكهربائي عندما تمر فيه الكهرباء؟",
+    "choices": [
+     "Sound",
+     "Light only",
+     "Water",
+     "Cold air"
+    ],
+    "choicesAr": [
+     "الصوت",
+     "الضوء فقط",
+     "الماء",
+     "الهواء البارد"
+    ],
+    "correctIndex": 0,
+    "explanation": "An electric buzzer transforms electrical energy into sound.",
+    "explanationAr": "يحول الجرس الكهربائي الطاقة الكهربائية إلى صوت."
+   },
+   {
+    "questionText": "What is the best estimate for 6.2 x 8?",
+    "questionTextAr": "ما هو أفضل تقدير لناتج 6.2 × 8؟",
+    "choices": [
+     "40",
+     "48",
+     "56",
+     "64"
+    ],
+    "choicesAr": [
+     "40",
+     "48",
+     "56",
+     "64"
+    ],
+    "correctIndex": 1,
+    "explanation": "Round 6.2 down to 6, then multiply by 8 to get 48.",
+    "explanationAr": "نُقرب الكسر العشري 6.2 إلى 6، ثم نضرب 6 في 8 فيكون الناتج 48."
+   },
+   {
+    "questionText": "What is the main function of an electric switch in a circuit?",
+    "questionTextAr": "ما الوظيفة الرئيسية للمفتاح الكهربائي في الدائرة الكهربائية؟",
+    "choices": [
+     "To produce electricity",
+     "To turn the circuit on or off",
+     "To store water",
+     "To cool down the circuit"
+    ],
+    "choicesAr": [
+     "إنتاج الكهرباء",
+     "تشغيل الدائرة أو إيقافها",
+     "تخزين الماء",
+     "تبريد الدائرة"
+    ],
+    "correctIndex": 1,
+    "explanation": "The switch controls the flow of electricity by turning the circuit on or off.",
+    "explanationAr": "يتحكم المفتاح في سريان الكهرباء بتشغيل الدائرة أو إيقافها."
+   },
+   {
+    "questionText": "Which number is the best estimate for 0.95 x 50?",
+    "questionTextAr": "أي الأعداد التالية يُعد التقدير الأفضل لناتج 0.95 × 50؟",
+    "choices": [
+     "5",
+     "45",
+     "50",
+     "500"
+    ],
+    "choicesAr": [
+     "5",
+     "45",
+     "50",
+     "500"
+    ],
+    "correctIndex": 2,
+    "explanation": "Round 0.95 to 1, and then multiply by 50 to get 50.",
+    "explanationAr": "نُقرب 0.95 إلى 1، ثم نضربه في 50 ليصبح الناتج 50."
+   },
+   {
+    "questionText": "Which of the following devices transforms electrical energy mainly into heat?",
+    "questionTextAr": "أي من الأجهزة التالية يحول الكهرباء بشكل أساسي إلى حرارة؟",
+    "choices": [
+     "Electric iron",
+     "Electric motor",
+     "Flashlight",
+     "Electric bell"
+    ],
+    "choicesAr": [
+     "المكواة الكهربائية",
+     "المحرك الكهربائي",
+     "المصباح اليدوي",
+     "الجرس الكهربائي"
+    ],
+    "correctIndex": 0,
+    "explanation": "An electric iron changes electrical energy into heat energy.",
+    "explanationAr": "تحول المكواة الكهربائية الطاقة الكهربائية إلى طاقة حرارية."
+   }
+  ],
+  "11": [
+   {
+    "questionText": "Which division expression is equal to the fraction 2/5?",
+    "questionTextAr": "أيُّ تعبيرِ قسمةٍ يساوي الكسر 2/5؟",
+    "choices": [
+     "2 ÷ 5",
+     "5 ÷ 2",
+     "2 × 5",
+     "2 + 5"
+    ],
+    "choicesAr": [
+     "2 ÷ 5",
+     "5 ÷ 2",
+     "2 × 5",
+     "2 + 5"
+    ],
+    "correctIndex": 0,
+    "explanation": "The fraction 2/5 means dividing the numerator (2) by the denominator (5), which is 2 ÷ 5.",
+    "explanationAr": "الكسر 2/5 يعني قسمة البسط (2) على المقام (5)، أي 2 ÷ 5."
+   },
+   {
+    "questionText": "What is the result of 3 ÷ 7 written as a fraction?",
+    "questionTextAr": "ما الكسر الذي يعبّر عن ناتج القسمة 3 ÷ 7؟",
+    "choices": [
+     "7/3",
+     "3/7",
+     "4/7",
+     "3/10"
+    ],
+    "choicesAr": [
+     "7/3",
+     "3/7",
+     "4/7",
+     "3/10"
+    ],
+    "correctIndex": 1,
+    "explanation": "Dividing 3 by 7 gives the fraction 3/7, where 3 is the numerator and 7 is the denominator.",
+    "explanationAr": "قسمة 3 على 7 تعطي الكسر 3/7، حيث 3 هو البسط و7 هو المقام."
+   },
+   {
+    "questionText": "If 4 pizzas are shared equally among 5 friends, how much pizza does each friend get?",
+    "questionTextAr": "إذا تَمَّ توزيع 4 قطع بيتزا بالتساوي على 5 أصدقاء، فما نصيب كل شخص؟",
+    "choices": [
+     "5/4 pizza",
+     "1/5 pizza",
+     "4/5 pizza",
+     "1 pizza"
+    ],
+    "choicesAr": [
+     "5/4 بيتزا",
+     "1/5 بيتزا",
+     "4/5 بيتزا",
+     "1 بيتزا"
+    ],
+    "correctIndex": 2,
+    "explanation": "Sharing 4 pizzas among 5 friends is represented as 4 ÷ 5, which equals 4/5 of a pizza for each friend.",
+    "explanationAr": "توزيع 4 قطع بيتزا على 5 أصدقاء يُمثَّل بالقسمة 4 ÷ 5، وهو ما يساوي 4/5 بيتزا لكل شخص."
+   },
+   {
+    "questionText": "What is 4 ÷ 6 written as a fraction in simplest form?",
+    "questionTextAr": "ما ناتج 4 ÷ 6 على صورة كسر في أبسط صورة؟",
+    "choices": [
+     "6/4",
+     "4/6",
+     "2/3",
+     "1/3"
+    ],
+    "choicesAr": [
+     "6/4",
+     "4/6",
+     "2/3",
+     "1/3"
+    ],
+    "correctIndex": 2,
+    "explanation": "4 ÷ 6 equals 4/6, and dividing both the numerator and denominator by 2 simplifies it to 2/3.",
+    "explanationAr": "4 ÷ 6 تساوي الكسر 4/6، وبتقسيم البسط والمقام على 2 نحصل على 2/3 في أبسط صورة."
+   }
+  ],
+  "12": [
+   {
+    "questionText": "What does the term 'life cycle' mean for a living organism?",
+    "questionTextAr": "ماذا نعني بمصطلح \"دورة الحياة\" للكائن الحي؟",
+    "choices": [
+     "The changes a living organism goes through during its life",
+     "The type of food a living organism eats daily",
+     "The place where a living organism lives",
+     "The outer color and skin pattern of an animal"
+    ],
+    "choicesAr": [
+     "التغيرات التي يمر بها الكائن الحي خلال مدة حياته",
+     "نوع الطعام الذي يأكله الكائن الحي يوميًا",
+     "المكان والبيئة التي يعيش فيها الكائن الحي",
+     "لون الكائن الحي وشكله الخارجي فقط"
+    ],
+    "correctIndex": 0,
+    "explanation": "The life cycle includes all the changes and stages of growth an organism goes through from birth to old age.",
+    "explanationAr": "تشير دورة الحياة إلى جميع التغيرات ومراحل النمو التي يمر بها الكائن الحي منذ ولادته وحتى نهاية حياته."
+   },
+   {
+    "questionText": "Which stage is the very first stage in the human life cycle?",
+    "questionTextAr": "ما هي المرحلة الأولى في دورة حياة الإنسان؟",
+    "choices": [
+     "Adolescence",
+     "Early childhood",
+     "Adulthood",
+     "Old age"
+    ],
+    "choicesAr": [
+     "المراهقة",
+     "الطفولة المبكرة",
+     "الرشد",
+     "الشيخوخة"
+    ],
+    "correctIndex": 1,
+    "explanation": "Early childhood is the first stage in human life, starting from infancy when a baby is born.",
+    "explanationAr": "تبدأ دورة حياة الإنسان بمرحلة الطفولة المبكرة وهي المرحلة الأولى وتضم فترة الرضاعة."
+   },
+   {
+    "questionText": "In which stage of the human life cycle does a person usually work and start a family?",
+    "questionTextAr": "في أي مرحلة من دورة حياة الإنسان يعمل الشخص غالبًا ويكون أسرة؟",
+    "choices": [
+     "Early childhood",
+     "Childhood",
+     "Adulthood",
+     "Old age"
+    ],
+    "choicesAr": [
+     "الطفولة المبكرة",
+     "الطفولة",
+     "الرشد",
+     "الشيخوخة"
+    ],
+    "correctIndex": 2,
+    "explanation": "During adulthood, people are fully grown, get jobs, and take care of their families.",
+    "explanationAr": "في مرحلة الرشد، يكون الإنسان بالغًا ويستطيع العمل وتكوين أسرة ورعايتها."
+   },
+   {
+    "questionText": "Which of the following shows the correct order of the final two stages of the human life cycle?",
+    "questionTextAr": "أي من الخيارات التالية يوضح الترتيب الصحيح للمرحلتين الأخيرتين في دورة حياة الإنسان؟",
+    "choices": [
+     "Adulthood then Old age",
+     "Old age then Adulthood",
+     "Adolescence then Early childhood",
+     "Childhood then Adolescence"
+    ],
+    "choicesAr": [
+     "الرشد ثم الشيخوخة",
+     "الشيخوخة ثم الرشد",
+     "المراهقة ثم الطفولة المبكرة",
+     "الطفولة ثم المراهقة"
+    ],
+    "correctIndex": 0,
+    "explanation": "Adulthood comes after adolescence, and it is followed by old age, which is the final stage.",
+    "explanationAr": "تأتي مرحلة الرشد بعد المراهقة، وتليها مرحلة الشيخوخة التي تمثل المرحلة الأخيرة في دورة حياة الإنسان."
+   }
+  ],
+  "13": [
+   {
+    "questionText": "What is 5 1/2 + 3 1/2?",
+    "questionTextAr": "ما ناتج جمع 5 1/2 + 3 1/2؟",
+    "choices": [
+     "8",
+     "8 1/2",
+     "9",
+     "8 2/4"
+    ],
+    "choicesAr": [
+     "8",
+     "8 1/2",
+     "9",
+     "8 2/4"
+    ],
+    "correctIndex": 2,
+    "explanation": "Add the whole numbers (5 + 3 = 8) and the fractions (1/2 + 1/2 = 1), then combine them to get 9.",
+    "explanationAr": "نجمع الأعداد الكلية (5 + 3 = 8) والكسور (1/2 + 1/2 = 1)، ثم نجمعهما معاً لنحصل على 9."
+   },
+   {
+    "questionText": "What is the first step when adding mixed numbers with different denominators, like 2 1/4 + 1 1/2?",
+    "questionTextAr": "ما هي الخطوة الأولى عند جمع أعداد كسرية بمقامين مختلفين، مثل 2 1/4 + 1 1/2؟",
+    "choices": [
+     "Add the whole numbers first",
+     "Rename the fractions with a common denominator",
+     "Multiply the fractions",
+     "Subtract the denominators"
+    ],
+    "choicesAr": [
+     "جمع الأعداد الكلية أولاً",
+     "توحيد مقامات الكسور لإيجاد مقام مشترك",
+     "ضرب الكسور في بعضها",
+     "طرح المقامين من بعضهما"
+    ],
+    "correctIndex": 1,
+    "explanation": "To add fractions, they must have the same denominator, so finding a common denominator is the necessary first step.",
+    "explanationAr": "لكي نجمع الكسور يجب أن يكون لها نفس المقام، لذا فإن توحيد المقامات هو الخطوة الأولى الضرورية."
+   },
+   {
+    "questionText": "What is 2 1/4 + 3 1/4?",
+    "questionTextAr": "ما ناتج جمع 2 1/4 + 3 1/4؟",
+    "choices": [
+     "5 1/4",
+     "5 2/8",
+     "5 1/2",
+     "6 1/2"
+    ],
+    "choicesAr": [
+     "5 1/4",
+     "5 2/8",
+     "5 1/2",
+     "6 1/2"
+    ],
+    "correctIndex": 2,
+    "explanation": "Add the whole numbers (2 + 3 = 5) and the fractions (1/4 + 1/4 = 2/4), which simplifies to 5 1/2.",
+    "explanationAr": "نجمع الأعداد الكلية (2 + 3 = 5) والكسور (1/4 + 1/4 = 2/4)، والتي تبسط لتصبح 5 1/2."
+   },
+   {
+    "questionText": "What is 4 1/3 + 2 1/6?",
+    "questionTextAr": "ما ناتج جمع 4 1/3 + 2 1/6؟",
+    "choices": [
+     "6 1/9",
+     "6 1/2",
+     "6 3/6",
+     "6 5/6"
+    ],
+    "choicesAr": [
+     "6 1/9",
+     "6 1/2",
+     "6 3/6",
+     "6 5/6"
+    ],
+    "correctIndex": 3,
+    "explanation": "Change 1/3 to 2/6, add whole numbers to get 6, and add fractions (2/6 + 1/6 = 3/6), which simplifies to 6 1/2 or 6 3/6.",
+    "explanationAr": "نحول الكسر 1/3 إلى 2/6، ونجمع الأعداد الكلية لنحصل على 6، ونجمع الكسور (2/6 + 1/6 = 3/6) فيصبح الناتج 6 3/6."
+   }
+  ],
+  "14": [
+   {
+    "questionText": "Air resistance is a type of which force?",
+    "questionTextAr": "مقاومة الهواء هي نوع من أنواع أي قوة؟",
+    "choices": [
+     "Friction",
+     "Magnetism",
+     "Electricity",
+     "Gravity"
+    ],
+    "choicesAr": [
+     "الاحتكاك",
+     "المغناطيسية",
+     "الكهرباء",
+     "الجاذبية"
+    ],
+    "correctIndex": 0,
+    "explanation": "Air resistance occurs when a moving object rubs against air molecules, making it a form of friction.",
+    "explanationAr": "تحدث مقاومة الهواء عندما يصطدم جسم متحرك بدقائق الهواء، لذلك فهي نوع من الاحتكاك."
+   },
+   {
+    "questionText": "What happens to air resistance when the surface area of a falling object becomes larger?",
+    "questionTextAr": "ماذا يحدث لمقاومة الهواء عندما تزداد مساحة سطح الجسم النازل؟",
+    "choices": [
+     "It completely disappears",
+     "It decreases",
+     "It increases",
+     "It turns into magnetic force"
+    ],
+    "choicesAr": [
+     "تختفي تمامًا",
+     "تقل",
+     "تزداد",
+     "تتحول إلى قوة مغناطيسية"
+    ],
+    "correctIndex": 2,
+    "explanation": "A larger surface area pushes against more air, which increases the air resistance slowing it down.",
+    "explanationAr": "كلما زادت مساحة سطح الجسم، فإنه يدفع كمية أكبر من الهواء مما يؤدي إلى زيادة مقاومة الهواء."
+   },
+   {
+    "questionText": "When a skydiver falls through the air, which force pulls them downward?",
+    "questionTextAr": "عندما يسقط مظلي في الهواء، ما هي القوة التي تسحبه نحو الأسفل؟",
+    "choices": [
+     "Air resistance",
+     "Gravity",
+     "Magnetism",
+     "Static electricity"
+    ],
+    "choicesAr": [
+     "مقاومة الهواء",
+     "الجاذبية",
+     "المغناطيسية",
+     "الكهرباء الساكنة"
+    ],
+    "correctIndex": 1,
+    "explanation": "Gravity is the force that pulls all objects down toward the Earth.",
+    "explanationAr": "الجاذبية هي القوة التي تسحب جميع الأجسام إلى الأسفل باتجاه الأرض."
+   },
+   {
+    "questionText": "Why does a bicycle racer bend forward while racing?",
+    "questionTextAr": "لماذا يحني متسابق الدراجات جسمه للأمام أثناء السباق؟",
+    "choices": [
+     "To make the bicycle heavier",
+     "To increase air resistance",
+     "To reduce air resistance and move faster",
+     "To stop the bicycle safely"
+    ],
+    "choicesAr": [
+     "لجعل الدراجة أثقل",
+     "لزيادة مقاومة الهواء",
+     "لتقليل مقاومة الهواء والحركة بسرعة أكبر",
+     "لإيقاف الدراجة بأمان"
+    ],
+    "correctIndex": 2,
+    "explanation": "Bending forward makes a smaller shape against the air, reducing air resistance so the cyclist can go faster.",
+    "explanationAr": "انحناء الراكب يقلل من المساحة المواجهة للهواء، مما يقلل مقاومة الهواء ويساعده على السرعة."
+   }
+  ],
+  "15": [
+   {
+    "questionText": "What is the result of dividing 7.2 by 12?",
+    "questionTextAr": "ما ناتج قسمة 7.2 ÷ 12؟",
+    "choices": [
+     "0.6",
+     "6",
+     "0.06",
+     "6.2"
+    ],
+    "choicesAr": [
+     "0.6",
+     "6",
+     "0.06",
+     "6.2"
+    ],
+    "correctIndex": 0,
+    "explanation": "Dividing 7.2 by 12 gives 0.6 because 12 goes into 72 six times, and we line up the decimal point.",
+    "explanationAr": "عند قسمة 7.2 على 12 نحصل على 0.6 لأن 12 تدخل في 72 ست مرات ونضع الفاصلة العشرية في موقعها الصحيح."
+   },
+   {
+    "questionText": "What do we call the changes that happen to a living organism throughout its life?",
+    "questionTextAr": "ماذا نسمي التغيرات التي تحدث للكائن الحي طوال مدة حياته؟",
+    "choices": [
+     "Habitat",
+     "Life cycle",
+     "Diet",
+     "Metamorphosis"
+    ],
+    "choicesAr": [
+     "الموطن",
+     "دورة الحياة",
+     "النظام الغذائي",
+     "التحول"
+    ],
+    "correctIndex": 1,
+    "explanation": "A life cycle refers to all the changes that happen to a living organism from birth until the end of its life.",
+    "explanationAr": "دورة الحياة تشير إلى جميع التغيرات التي تحدث للكائن الحي منذ ولادته وحتى نهاية حياته."
+   },
+   {
+    "questionText": "A teacher bought 15 notebooks for a total of 49.5 riyals. What is the price of one notebook?",
+    "questionTextAr": "اشترى معلم 15 دفترًا بمبلغ إجمالي قدره 49.5 ريالاً. ما سعر الدفتر الواحد؟",
+    "choices": [
+     "3.03 riyals",
+     "3.3 riyals",
+     "33 riyals",
+     "0.33 riyals"
+    ],
+    "choicesAr": [
+     "3.03 ريالات",
+     "3.3 ريالات",
+     "33 ريالاً",
+     "0.33 ريال"
+    ],
+    "correctIndex": 1,
+    "explanation": "Divide the total cost 49.5 by 15 to find that each notebook costs 3.3 riyals.",
+    "explanationAr": "نقسم المبلغ الإجمالي 49.5 على عدد الدفاتر 15 ليكون سعر الدفتر الواحد 3.3 ريالات."
+   },
+   {
+    "questionText": "Which human life stage usually comes right after childhood and is when puberty happens?",
+    "questionTextAr": "ما مرحلة حياة الإنسان التي تأتي عادة بعد الطفولة ويحدث فيها البلوغ؟",
+    "choices": [
+     "Early childhood",
+     "Infancy",
+     "Adolescence",
+     "Old age"
+    ],
+    "choicesAr": [
+     "الطفولة المبكرة",
+     "الرضاعة",
+     "المراهقة",
+     "الشيخوخة"
+    ],
+    "correctIndex": 2,
+    "explanation": "Adolescence is the stage where a person grows and experiences puberty, coming after childhood and before adulthood.",
+    "explanationAr": "المراهقة هي المرحلة التي ينمو فيها الشخص ويحدث فيها البلوغ، وهي تأتي بعد الطفولة وقبل الرشد."
+   },
+   {
+    "questionText": "A rope with a length of 157.5 meters is cut into 25 equal pieces. What is the length of each piece?",
+    "questionTextAr": "حبل طوله 157.5 متراً، قُسِّم إلى 25 جزءاً متساوياً. كم طول الجزء الواحد؟",
+    "choices": [
+     "63 meters",
+     "6.03 meters",
+     "0.63 meters",
+     "6.3 meters"
+    ],
+    "choicesAr": [
+     "63 متراً",
+     "6.03 أمتار",
+     "0.63 متر",
+     "6.3 أمتار"
+    ],
+    "correctIndex": 3,
+    "explanation": "Dividing the total length 157.5 by 25 gives 6.3 meters for each piece.",
+    "explanationAr": "نقسم الطول الكلي 157.5 على 25 فيكون طول الجزء الواحد 6.3 أمتار."
+   },
+   {
+    "questionText": "In which human life stage does a person typically work a job and raise a family?",
+    "questionTextAr": "في أي مرحلة من مراحل حياة الإنسان يعمل الشخص غالبًا وظيفة ويكوّن أسرة؟",
+    "choices": [
+     "Early childhood",
+     "Adolescence",
+     "Adulthood",
+     "Old age"
+    ],
+    "choicesAr": [
+     "الطفولة المبكرة",
+     "المراهقة",
+     "الرشد",
+     "الشيخوخة"
+    ],
+    "correctIndex": 2,
+    "explanation": "Adulthood is the mature stage of human life where people typically take on full responsibilities like working and raising a family.",
+    "explanationAr": "الرشد هو مرحلة النضج في حياة الإنسان حيث يتحمل الأشخاص عادة المسؤوليات الكاملة مثل العمل وتكوين أسرة."
+   }
+  ],
+  "16": [
+   {
+    "questionText": "What did humans copy when designing airplanes?",
+    "questionTextAr": "ما الذي استوحاه الإنسان عند تصميم الطائرات؟",
+    "choices": [
+     "Fish",
+     "Birds",
+     "Insects only",
+     "Reptiles"
+    ],
+    "choicesAr": [
+     "الأسماك",
+     "الطيور",
+     "الحشرات فقط",
+     "الزواحف"
+    ],
+    "correctIndex": 1,
+    "explanation": "Humans designed airplanes by looking at how birds fly and using their wing shapes.",
+    "explanationAr": "صمم الإنسان الطائرات مستوحيًا من شكل أجنحة الطيور وكيفية طيرانها."
+   },
+   {
+    "questionText": "Which animal inspired the shape of the front of the Japanese bullet train to reduce air resistance?",
+    "questionTextAr": "أي حيوان ألهم شكل مقدمة القطار السريع الياباني لتقليل مقاومة الهواء؟",
+    "choices": [
+     "The duck",
+     "The kingfisher bird",
+     "The falcon",
+     "The pigeon"
+    ],
+    "choicesAr": [
+     "البطة",
+     "طائر الرفراف (صياد السمك)",
+     "الصقر",
+     "الحمامة"
+    ],
+    "correctIndex": 1,
+    "explanation": "The Japanese bullet train was designed using the beak shape of the kingfisher bird to move smoothly through the air.",
+    "explanationAr": "صُمم القطار السريع الياباني مستوحيًا من منقار طائر الرفراف ليتحرك بسلاسة عبر الهواء."
+   },
+   {
+    "questionText": "Why can penguins swim very fast in water even though they do not fly?",
+    "questionTextAr": "لماذا يستطيع البطريق السباحة بسرعة كبيرة في الماء رغم أنه لا يطير؟",
+    "choices": [
+     "Because of its heavy feet",
+     "Because of its streamlined body shape",
+     "Because it has long fur",
+     "Because it walks on ice"
+    ],
+    "choicesAr": [
+     "بسبب قدميه الثقيلتين",
+     "بسبب شكل جسمه الانسيابي",
+     "بسبب فروه الطويل",
+     "بسبب مشيه على الجليد"
+    ],
+    "correctIndex": 1,
+    "explanation": "The streamlined body shape of penguins helps them cut through water easily and swim fast.",
+    "explanationAr": "يساعد شكل جسم البطريق الانسيابي على قطع الماء بسهولة والسباحة بسرعة."
+   },
+   {
+    "questionText": "How does a dolphin's body shape help it when moving in water?",
+    "questionTextAr": "كيف يساعد شكل جسم الدلفين عندما يتحرك في الماء؟",
+    "choices": [
+     "It helps it float on top without moving",
+     "It helps reduce water resistance so it can swim quickly",
+     "It helps it dig in the sand",
+     "It helps it breathe fire"
+    ],
+    "choicesAr": [
+     "يساعده على الطفو في الأعلى دون حركة",
+     "يساعد في تقليل مقاومة الماء لكي يسبح بسرعة",
+     "يساعده على الحفر في الرمال",
+     "يساعده على إخراج النار"
+    ],
+    "correctIndex": 1,
+    "explanation": "The smooth, streamlined body of a dolphin reduces water resistance, allowing it to swim very fast.",
+    "explanationAr": "جسم الدلفين الانسيابي يقلل من مقاومة الماء، مما يسمح له بالسباحة بسرعة كبيرة."
+   }
+  ],
+  "17": [
+   {
+    "questionText": "What is the product of 1/2 and 3/4?",
+    "questionTextAr": "ما ناتج ضرب الكسرين 1/2 × 3/4؟",
+    "choices": [
+     "4/6",
+     "3/8",
+     "4/8",
+     "3/6"
+    ],
+    "choicesAr": [
+     "4/6",
+     "3/8",
+     "4/8",
+     "3/6"
+    ],
+    "correctIndex": 1,
+    "explanation": "To multiply fractions, multiply the numerators together (1 × 3 = 3) and the denominators together (2 × 4 = 8) to get 3/8.",
+    "explanationAr": "لضرب كسرين، نضرب البسطين معاً (1 × 3 = 3) والمقامين معاً (2 × 4 = 8) لنحصل على 3/8."
+   },
+   {
+    "questionText": "What is the product of 2/3 and 3/5?",
+    "questionTextAr": "ما ناتج ضرب الكسرين 2/3 × 3/5؟",
+    "choices": [
+     "6/15",
+     "5/8",
+     "5/15",
+     "6/8"
+    ],
+    "choicesAr": [
+     "6/15",
+     "5/8",
+     "5/15",
+     "6/8"
+    ],
+    "correctIndex": 0,
+    "explanation": "Multiply the numerators 2 × 3 = 6 and the denominators 3 × 5 = 15, which gives 6/15.",
+    "explanationAr": "نضرب البسطين 2 × 3 = 6 والمقامين 3 × 5 = 15، فيكون الناتج 6/15."
+   },
+   {
+    "questionText": "Find the product of 3/4 and 4/5.",
+    "questionTextAr": "أوجد ناتج ضرب الكسرين 3/4 × 4/5.",
+    "choices": [
+     "7/9",
+     "12/20",
+     "7/20",
+     "12/9"
+    ],
+    "choicesAr": [
+     "7/9",
+     "12/20",
+     "7/20",
+     "12/9"
+    ],
+    "correctIndex": 1,
+    "explanation": "Multiply the numerators (3 × 4 = 12) and denominators (4 × 5 = 20) to get 12/20.",
+    "explanationAr": "نضرب البسطين (3 × 4 = 12) والمقامين (4 × 5 = 20) لنحصل على 12/20."
+   },
+   {
+    "questionText": "What is the area of a rectangle with a length of 2/5 meter and a width of 3/4 meter?",
+    "questionTextAr": "ما مساحة مستطيل طوله 2/5 متر وعرضه 3/4 متر؟",
+    "choices": [
+     "5/9 meter",
+     "6/20 meter",
+     "6/9 meter",
+     "5/20 meter"
+    ],
+    "choicesAr": [
+     "5/9 متر",
+     "6/20 متر",
+     "6/9 متر",
+     "5/20 متر"
+    ],
+    "correctIndex": 1,
+    "explanation": "To find the area, multiply length by width: 2/5 × 3/4 = 6/20 square meters.",
+    "explanationAr": "لإيجاد المساحة، نضرب الطول في العرض: 2/5 × 3/4 = 6/20 متراً مربعاً."
+   }
+  ],
+  "18": [
+   {
+    "questionText": "What happens during the freezing process of water?",
+    "questionTextAr": "ماذا يحدث خلال عملية تجمد الماء؟",
+    "choices": [
+     "Water changes from a liquid to a solid",
+     "Water changes from a solid to a liquid",
+     "Water changes from a liquid to a gas",
+     "Water changes from a gas to a liquid"
+    ],
+    "choicesAr": [
+     "يتغير الماء من سائل إلى صلب",
+     "يتغير الماء من صلب إلى سائل",
+     "يتغير الماء من سائل إلى غاز",
+     "يتغير الماء من غاز إلى سائل"
+    ],
+    "correctIndex": 0,
+    "explanation": "Freezing is the change of state where liquid water turns into solid ice.",
+    "explanationAr": "التجمد هو حالة تحول الماء السائل إلى جليد صلب."
+   },
+   {
+    "questionText": "Where should you place a cup of water if you want to investigate how it freezes?",
+    "questionTextAr": "أين يجب أن تضع كوب ماء إذا أردت استقصاء كيفية تجمده؟",
+    "choices": [
+     "In a warm oven",
+     "In the freezer",
+     "Out in the hot sun",
+     "Near a heater"
+    ],
+    "choicesAr": [
+     "في الفرن الساخن",
+     "في المجمد (الفريزر)",
+     "تحت الشمس الحارقة",
+     "بالقرب من المدفأة"
+    ],
+    "correctIndex": 1,
+    "explanation": "A freezer provides the very cold temperature needed to turn water into ice.",
+    "explanationAr": "يوفر المجمد درجة الحرارة شديدة البرودة اللازمة لتحويل الماء إلى جليد."
+   },
+   {
+    "questionText": "If you compare a small amount of water and a large amount of water in identical containers placed in the freezer, which one will freeze faster?",
+    "questionTextAr": "إذا قارنت بين كمية صغيرة من الماء وكمية كبيرة منه في وعائين متطابقين ووضعتهما في المجمد، فأيهما سيتجمد أسرع؟",
+    "choices": [
+     "The large amount",
+     "Both will freeze at the exact same time",
+     "The small amount",
+     "Neither will ever freeze"
+    ],
+    "choicesAr": [
+     "الكمية الكبيرة",
+     "الاثنان سيتجمدان في نفس الوقت تماماً",
+     "الكمية الصغيرة",
+     "لن يتجمد أي منهما أبداً"
+    ],
+    "correctIndex": 2,
+    "explanation": "Smaller amounts of water lose heat faster and therefore turn into ice more quickly.",
+    "explanationAr": "الكميات الصغيرة من الماء تفقد الحرارة بشكل أسرع ولذلك تتحول إلى جليد بسرعة أكبر."
+   },
+   {
+    "questionText": "In an investigation about how the amount of water affects its freezing time, what is the independent variable (the thing you change on purpose)?",
+    "questionTextAr": "في استقصاء حول أثر كمية الماء على زمن تجمده، ما هو المتغير المستقل (الشيء الذي تغيره عمداً)؟",
+    "choices": [
+     "The amount of water",
+     "The freezing time",
+     "The temperature of the freezer",
+     "The type of container used"
+    ],
+    "choicesAr": [
+     "كمية الماء",
+     "زمن التجمد",
+     "درجة حرارة المجمد",
+     "نوع الوعاء المستخدم"
+    ],
+    "correctIndex": 0,
+    "explanation": "The independent variable is the factor you intentionally change in the experiment, which is the amount of water.",
+    "explanationAr": "المتغير المستقل هو العامل الذي تغييره عمداً في التجربة، وهو كمية الماء."
+   }
+  ],
+  "19": [
+   {
+    "questionText": "What is the formula to find the volume of a rectangular prism?",
+    "questionTextAr": "ما هي صيغة إيجاد حجم المنشور الرباعي؟",
+    "choices": [
+     "Volume = length + width + height",
+     "Volume = length × width × height",
+     "Volume = 2 × (length + width)",
+     "Volume = length × width"
+    ],
+    "choicesAr": [
+     "الحجم = الطول + العرض + الارتفاع",
+     "الحجم = الطول × العرض × الارتفاع",
+     "الحجم = 2 × (الطول + العرض)",
+     "الحجم = الطول × العرض"
+    ],
+    "correctIndex": 1,
+    "explanation": "To find the volume of a rectangular prism, you multiply its length, width, and height together.",
+    "explanationAr": "لإيجاد حجم المنشور الرباعي، تقوم بضرب الطول والعرض والارتفاع ببعضها."
+   },
+   {
+    "questionText": "Find the volume of a rectangular prism with a length of 4 cm, a width of 3 cm, and a height of 2 cm.",
+    "questionTextAr": "أوجد حجم منشور رباعي طوله 4 سم، وعرضه 3 سم، وارتفاعه 2 سم.",
+    "choices": [
+     "9 cm³",
+     "12 cm³",
+     "24 cm³",
+     "14 cm³"
+    ],
+    "choicesAr": [
+     "9 سم³",
+     "12 سم³",
+     "24 سم³",
+     "14 سم³"
+    ],
+    "correctIndex": 2,
+    "explanation": "Multiply 4 by 3 to get 12, then multiply by 2 to get 24 cubic centimeters.",
+    "explanationAr": "اضرب 4 في 3 ليصبح الناتج 12، ثم اضرب في 2 ليصبح الناتج 24 سنتيمترًا مكعبًا."
+   },
+   {
+    "questionText": "What is the volume of a cube with a side length of 3 cm?",
+    "questionTextAr": "ما حجم مكعب طول ضلعه 3 سم؟",
+    "choices": [
+     "9 cm³",
+     "18 cm³",
+     "27 cm³",
+     "6 cm³"
+    ],
+    "choicesAr": [
+     "9 سم³",
+     "18 سم³",
+     "27 سم³",
+     "6 سم³"
+    ],
+    "correctIndex": 2,
+    "explanation": "To find the volume of a cube, multiply the side length by itself three times (3 × 3 × 3 = 27).",
+    "explanationAr": "لإيجاد حجم المكعب، اضرب طول الضلع في نفسه ثلاث مرات (3 × 3 × 3 = 27)."
+   },
+   {
+    "questionText": "A rectangular prism has a base area of 15 square meters and a height of 4 meters. What is its volume?",
+    "questionTextAr": "منشور رباعي مساحة قاعدته 15 مترًا مربعًا وارتفاعه 4 أمتار. ما هو حجمه؟",
+    "choices": [
+     "19 cubic meters",
+     "60 cubic meters",
+     "45 cubic meters",
+     "30 cubic meters"
+    ],
+    "choicesAr": [
+     "19 مترًا مكعبًا",
+     "60 مترًا مكعبًا",
+     "45 مترًا مكعبًا",
+     "30 مترًا مكعبًا"
+    ],
+    "correctIndex": 1,
+    "explanation": "The volume of a prism is the base area multiplied by the height (15 × 4 = 60).",
+    "explanationAr": "حجم المنشور يساوي مساحة القاعدة مضروبة في الارتفاع (15 × 4 = 60)."
+   }
+  ],
+  "20": [
+   {
+    "questionText": "What is the product of 1/3 and 3/5?",
+    "questionTextAr": "ما هو ناتج ضرب الكسرين 1/3 × 3/5؟",
+    "choices": [
+     "4/8",
+     "3/15",
+     "1/5",
+     "4/15"
+    ],
+    "choicesAr": [
+     "4/8",
+     "3/15",
+     "1/5",
+     "4/15"
+    ],
+    "correctIndex": 2,
+    "explanation": "Multiply the numerators to get 3, and the denominators to get 15. Then simplify 3/15 by dividing both by 3 to get 1/5.",
+    "explanationAr": "نضرب البسطين فيكون الناتج 3، ونضرب المقامين فيكون الناتج 15. ثم نبسط الكسر 3/15 بالقسمة على 3 لنحصل على 1/5."
+   },
+   {
+    "questionText": "What did humans design after observing birds flying in the air?",
+    "questionTextAr": "ما الذي صممه الإنسان بعد مراقبة الطيور وهي تطير في الهواء؟",
+    "choices": [
+     "Submarines",
+     "Airplanes",
+     "Bicycles",
+     "Train tracks"
+    ],
+    "choicesAr": [
+     "الغواصات",
+     "الطائرات",
+     "الدراجات",
+     "قطبان القطار"
+    ],
+    "correctIndex": 1,
+    "explanation": "Humans designed airplanes by observing birds because their wings help them glide smoothly through the air.",
+    "explanationAr": "صمم الإنسان الطائرات من خلال مراقبة الطيور لأن أجنحتها تساعدها على الانزلاق بسلاسة في الهواء."
+   },
+   {
+    "questionText": "Find the product: 2/5 × 5/6",
+    "questionTextAr": "أوجد ناتج الضرب: 2/5 × 5/6",
+    "choices": [
+     "1/3",
+     "7/11",
+     "10/11",
+     "7/30"
+    ],
+    "choicesAr": [
+     "1/3",
+     "7/11",
+     "10/11",
+     "7/30"
+    ],
+    "correctIndex": 0,
+    "explanation": "Multiplying numerators gives 10 and denominators gives 30. 10/30 simplifies to 1/3, or you can cancel the common 5s first!",
+    "explanationAr": "ضرب البسطين يعطي 10 والمقامين يعطي 30. الكسر 10/30 يبسط إلى 1/3، أو يمكن اختصار العدد 5 المشترك أولاً!"
+   },
+   {
+    "questionText": "Which animal inspired the shape of the fast bullet train to help it move smoothly?",
+    "questionTextAr": "أي حيوان ألهَم شكل القطار السريع لمساعدته على الحركة بسلاسة؟",
+    "choices": [
+     "The Kingfisher bird",
+     "The Turtle",
+     "The Elephant",
+     "The Lion"
+    ],
+    "choicesAr": [
+     "طائر الرفراف",
+     "السحلفاة",
+     "الفيل",
+     "الأسد"
+    ],
+    "correctIndex": 0,
+    "explanation": "The Japanese bullet train was designed using the shape of the kingfisher's beak to reduce air resistance.",
+    "explanationAr": "صُمم قطار الرصاصة الياباني مستوحيًا من شكل منقار طائر الرفراف لتقليل مقاومة الهواء."
+   },
+   {
+    "questionText": "A garden has a length of 3/4 meter and a width of 2/3 meter. What is the area of the garden?",
+    "questionTextAr": "حديقة مستطيلة الشكل طولها 3/4 متر وعرضها 2/3 متر. ما مساحة الحديقة؟",
+    "choices": [
+     "5/7 square meters",
+     "1/2 square meters",
+     "6/7 square meters",
+     "9/12 square meters"
+    ],
+    "choicesAr": [
+     "5/7 متر مربع",
+     "1/2 متر مربع",
+     "6/7 متر مربع",
+     "9/12 متر مربع"
+    ],
+    "correctIndex": 1,
+    "explanation": "Area is length times width: 3/4 × 2/3 = 6/12, which simplifies to 1/2 square meter.",
+    "explanationAr": "المساحة تساوي الطول ضرب العرض: 3/4 × 2/3 = 6/12، وعند تبسيط الكسر يصبح 1/2 متر مربع."
+   },
+   {
+    "questionText": "How does a dolphin's streamlined body shape help it move in the water?",
+    "questionTextAr": "كيف يساعد شكل جسم الدلفين الانسيابي على تحركه في الماء؟",
+    "choices": [
+     "It makes it sink to the bottom quickly.",
+     "It helps it trap air bubbles.",
+     "It reduces water resistance so it can swim fast.",
+     "It helps it stay completely still."
+    ],
+    "choicesAr": [
+     "يجعله يغوص إلى القاع بسرعة.",
+     "يساعده على حبس فقاعات الهواء.",
+     "يقلل مقاومة الماء لكي يتمكن من السباحة بسرعة.",
+     "يساعده على البتون ساكنًا تماماً."
+    ],
+    "correctIndex": 2,
+    "explanation": "A streamlined body shape cuts through water easily by reducing water resistance, allowing animals like dolphins to swim very fast.",
+    "explanationAr": "شكل الجسم الانسيابي يقطع الماء بسهولة عن طريق تقليل مقاومة الماء، مما يسمح للحيوانات مثل الدلافين بالسباحة بسرعة كبيرة."
+   }
+  ],
+  "21": [
+   {
+    "questionText": "What does accuracy in measurement mean in mathematics?",
+    "questionTextAr": "ماذا تعني الدقة في القياس في الرياضيات؟",
+    "choices": [
+     "Solving problems quickly",
+     "Using measurements and units correctly and clearly",
+     "Estimating without using tools",
+     "Ignoring the measurement units"
+    ],
+    "choicesAr": [
+     "حل المسائل بسرعة",
+     "استعمال القياسات والوحدات بشكل صحيح وواضح",
+     "التقدير دون استعمال الأدوات",
+     "إهمال وحدات القياس"
+    ],
+    "correctIndex": 1,
+    "explanation": "Accuracy means being precise and using the correct units and measurements clearly.",
+    "explanationAr": "الدقة تعني استخدام القياسات والوحدات بشكل صحيح وواضح تماماً."
+   },
+   {
+    "questionText": "Which unit is the most accurate for measuring the thickness of a small book?",
+    "questionTextAr": "أي وحدة هي الأدق لقياس سمك كتاب صغير؟",
+    "choices": [
+     "Kilometer",
+     "Meter",
+     "Millimeter",
+     "Liter"
+    ],
+    "choicesAr": [
+     "كيلومتر",
+     "متر",
+     "مليمتر",
+     "لتر"
+    ],
+    "correctIndex": 2,
+    "explanation": "Millimeters are very small units, making them the most accurate choice for measuring tiny thicknesses like a book.",
+    "explanationAr": "المليمترات وحدات صالحة وصغيرة جداً، مما يجعلها الأدق لقياس الأشياء الرفيعة مثل سمك الكتاب."
+   },
+   {
+    "questionText": "Sami measured his room's length as 3 meters and 45 centimeters. How can this be written accurately in meters?",
+    "questionTextAr": "قاس سالم طول غرفته بـ 3 أمتار و45 سنتيمترًا. كيف يمكن كتابة ذلك بدقة بالأمتار؟",
+    "choices": [
+     "3.45 m",
+     "3.045 m",
+     "34.5 m",
+     "345 m"
+    ],
+    "choicesAr": [
+     "3.45 م",
+     "3.045 م",
+     "34.5 م",
+     "345 م"
+    ],
+    "correctIndex": 0,
+    "explanation": "Since 45 centimeters is 0.45 of a meter, combining it with 3 meters gives 3.45 meters.",
+    "explanationAr": "بما أن 45 سنتيمتراً تساوي 0.45 من المتر، فإن إضافتها إلى 3 أمتار تصبح 3.45 أمتار."
+   },
+   {
+    "questionText": "Hana measured 4 meters and 8 centimeters. What is this measurement in centimeters?",
+    "questionTextAr": "قاست هند 4 أمتار و8 سنتيمترات. ما هو هذا القياس بالسنتيمترات؟",
+    "choices": [
+     "48 cm",
+     "408 cm",
+     "480 cm",
+     "4.8 cm"
+    ],
+    "choicesAr": [
+     "48 سم",
+     "408 سم",
+     "480 سم",
+     "4.8 سم"
+    ],
+    "correctIndex": 1,
+    "explanation": "Each meter is 100 cm, so 4 meters is 400 cm, plus 8 cm equals 408 cm.",
+    "explanationAr": "كل متر يساوي 100 سم، إذن 4 أمتار تساوي 400 سم، ومضافاً إليها 8 سم تصبح 408 سم."
+   }
+  ],
+  "22": [
+   {
+    "questionText": "What is fresh water?",
+    "questionTextAr": "ما المقصود بالماء العذب؟",
+    "choices": [
+     "Salty water found in seas and oceans",
+     "Non-salty water that is safe for drinking and agriculture",
+     "Only water found in frozen glaciers",
+     "Polluted water from factories"
+    ],
+    "choicesAr": [
+     "الماء المالح الموجود في البحار والمحيطات",
+     "الماء غير المالح الصالح للشرب والزراعة",
+     "الماء المتجمد في الأنهار الجليدية فقط",
+     "الماء الملوث الناتج عن المصانع"
+    ],
+    "correctIndex": 1,
+    "explanation": "Fresh water is water that does not contain high levels of salt, making it suitable for drinking and watering plants.",
+    "explanationAr": "الماء العذب هو الماء الذي لا يحتوي على نسب عالية من الأملاح، مما يجعله صالحًا لشرب الإنسان وري النباتات."
+   },
+   {
+    "questionText": "What is the main reason we need to store fresh water?",
+    "questionTextAr": "ما السبب الرئيسي وراء حاجتنا لتخزين الماء العذب؟",
+    "choices": [
+     "Because rainfall is irregular and its quantity is limited",
+     "Because water never runs out",
+     "To make the water taste saltier",
+     "Because we do not use water every day"
+    ],
+    "choicesAr": [
+     "لأن هطول الأمطار غير منتظم وكمية الماء محدودة",
+     "لأن الماء متوفر بلا حدود ولا ينفد أبدًا",
+     "لكي يصبح طعم الماء مالحًا أكثر",
+     "لاننا لا نستخدم الماء كل يوم"
+    ],
+    "correctIndex": 0,
+    "explanation": "We store fresh water because rain does not fall all the time and resources are limited, so we need a backup supply.",
+    "explanationAr": "نحن نخزن الماء العذب لأن المطر لا يهطل طوال الوقت والكميات محدودة، فنحتاج لتوفيره وقت الحاجة."
+   },
+   {
+    "questionText": "How does the State of Qatar mainly obtain its fresh water?",
+    "questionTextAr": "كيف تحصل دولة قطر بشكل رئيس على الماء العذب؟",
+    "choices": [
+     "From large natural rivers",
+     "From melting snow on mountains",
+     "Through the desalination of seawater",
+     "From frequent heavy waterfalls"
+    ],
+    "choicesAr": [
+     "من الأنهار الطبيعية الكبيرة",
+     "من ذوبان الثلوج على الجبال",
+     "من خلال عملية تحلية مياه البحر",
+     "من الشلالات الغزيرة والمتكررة"
+    ],
+    "correctIndex": 2,
+    "explanation": "Because Qatar has very few rivers or lakes, it relies mainly on desalination plants to remove salt from seawater to make it fresh.",
+    "explanationAr": "نظرًا لقلة الأنهار والبحيرات في قطر، فإنها تعتمد أساسًا على محطات تحلية المياه لإزالة المالح وجعله عذبًا."
+   },
+   {
+    "questionText": "Why do some people collect rainwater in barrels in their gardens?",
+    "questionTextAr": "لماذا يقوم بعض الناس بتجميع مياه الأمطار في براميل داخل حدائقهم؟",
+    "choices": [
+     "To make the water dirty and polluted",
+     "To use it for watering plants and gardens",
+     "To help the water evaporate faster",
+     "To attract more insects to the yard"
+    ],
+    "choicesAr": [
+     "لجعل الماء متسخًا وملوثًا",
+     "استخدامها في ري النباتات والحدائق",
+     "لمساعدة الماء على التبخر بشكل أسرع",
+     "لجذب المزيد من الحشرات إلى الحديقة"
+    ],
+    "correctIndex": 1,
+    "explanation": "Collecting rainwater is a smart way to save fresh water that can be reused for practical purposes like watering plants.",
+    "explanationAr": "تجميع مياه الأمطار يعتبر طريقة ذكية للاستفادة منها في أغراض مفيدة مثل ري النباتات وتوفير الماء."
+   }
+  ],
+  "23": [
+   {
+    "questionText": "Pattern A starts at 0 and adds 3 each time (0, 3, 6, 9). Pattern B starts at 0 and adds 6 each time (0, 6, 12, 18). What is the relationship between each term in Pattern A and Pattern B?",
+    "questionTextAr": "النمط أ يبدأ من 0 ويضيف 3 (0، 3، 6، 9). النمط ب يبدأ من 0 ويضيف 6 (0، 6، 12، 18). ما العلاقة بين كل حد في النمط أ والنمط ب؟",
+    "choices": [
+     "Pattern B = Pattern A + 3",
+     "Pattern B = 2 × Pattern A",
+     "Pattern B = Pattern A × 3",
+     "Pattern B = Pattern A ÷ 2"
+    ],
+    "choicesAr": [
+     "النمط ب = النمط أ + 3",
+     "النمط ب = 2 × النمط أ",
+     "النمط ب = النمط أ × 3",
+     "النمط ب = النمط أ ÷ 2"
+    ],
+    "correctIndex": 1,
+    "explanation": "Multiplying each term in Pattern A by 2 gives the corresponding term in Pattern B.",
+    "explanationAr": "ضرب كل حد في النمط أ في 2 يعطي الحد المقابل في النمط ب."
+   },
+   {
+    "questionText": "Given the ordered pairs (1, 7), (2, 14), and (3, 21), what rule relates the first number (A) to the second number (B)?",
+    "questionTextAr": "بالإدانة للأزواج المرتبة (1، 7)، (2، 14)، و(3، 21)، ما القاعدة التي تربط العدد الأول (أ) بالعدد الثاني (ب)؟",
+    "choices": [
+     "B = A + 6",
+     "B = 7 × A",
+     "B = A × A",
+     "B = 14 × A"
+    ],
+    "choicesAr": [
+     "ب = أ + 6",
+     "ب = 7 × أ",
+     "ب = أ × أ",
+     "ب = 14 × أ"
+    ],
+    "correctIndex": 1,
+    "explanation": "Multiplying the first number A by 7 always gives the second number B.",
+    "explanationAr": "ضرب العدد الأول أ في 7 يعطي دائماً العدد الثاني ب."
+   },
+   {
+    "questionText": "Pattern A adds 4 starting from 0. Pattern B adds 12 starting from 0. What is the 3rd term after zero in Pattern B?",
+    "questionTextAr": "النمط أ يضيف 4 بدءاً من 0. النمط ب يضيف 12 بدءاً من 0. ما الحد الثالث بعد الصفر في النمط ب؟",
+    "choices": [
+     "24",
+     "12",
+     "36",
+     "48"
+    ],
+    "choicesAr": [
+     "24",
+     "12",
+     "36",
+     "48"
+    ],
+    "correctIndex": 2,
+    "explanation": "The terms in Pattern B after zero are 12, 24, and 36, so the 3rd term is 36.",
+    "explanationAr": "حدود النمط ب بعد الصفر هي 12، 24، و36، إذن الحد الثالث هو 36."
+   },
+   {
+    "questionText": "In a table, Pattern A is 2, 4, 6 and Pattern B is 10, 20, 30. What is the value of B when A is 5?",
+    "questionTextAr": "في جدول، النمط أ هو 2، 4، 6 والنمط ب هو 10، 20، 30. ما قيمة ب عندما يكون أ يساوي 5؟",
+    "choices": [
+     "25",
+     "50",
+     "15",
+     "35"
+    ],
+    "choicesAr": [
+     "25",
+     "50",
+     "15",
+     "35"
+    ],
+    "correctIndex": 1,
+    "explanation": "Each term in Pattern B is 5 times the corresponding term in Pattern A, so 5 × 10 = 50.",
+    "explanationAr": "كل حد في النمط ب يساوي 5 أضعاف النمط أ، إذن 5 × 10 = 50."
+   }
+  ],
+  "24": [
+   {
+    "questionText": "Which food group is the main source of energy for our bodies?",
+    "questionTextAr": "ما هي المجموعة الغذائية التي تعتبر المصدر الرئيس للطاقة لأجسامنا؟",
+    "choices": [
+     "Fruits and vegetables",
+     "Carbohydrates",
+     "Meat and beans",
+     "Water"
+    ],
+    "choicesAr": [
+     "الفواكه والخضروات",
+     "الكربوهيدرات",
+     "اللحوم والبقوليات",
+     "الماء"
+    ],
+    "correctIndex": 1,
+    "explanation": "Carbohydrates like bread and pasta give our bodies the energy they need to run, play, and work.",
+    "explanationAr": "الكربوهيدرات مثل الخبز والمكرونة تمنح أجسامنا الطاقة التي تحتاجها للجري واللعب والعمل."
+   },
+   {
+    "questionText": "Why is calcium found in milk and dairy products important for children?",
+    "questionTextAr": "لماذا يعد الكالسيوم الموجود في الحليب ومنتجات الألبان مهمًا للأطفال؟",
+    "choices": [
+     "It builds strong bones and teeth.",
+     "It gives us quick energy to run.",
+     "It helps digest food easily.",
+     "It cools down our body temperature."
+    ],
+    "choicesAr": [
+     "يبني عظامًا وأسنانًا قوية.",
+     "يمنحنا طاقة سريعة للجري.",
+     "يساعد على هضم الطعام بسهولة.",
+     "يخفض درجة حرارة أجسامنا."
+    ],
+    "correctIndex": 0,
+    "explanation": "Calcium is a special nutrient that helps build strong and healthy bones and teeth.",
+    "explanationAr": "الكالسيوم عنصر غذائي مميز يساعد في بناء عظام وأأسنان قوية وصحية."
+   },
+   {
+    "questionText": "What is the main job of fiber found in vegetables and whole grains?",
+    "questionTextAr": "ما هي الوظيفة الأساسية للألياف الموجودة في الخضروات والحبوب الكاملة؟",
+    "choices": [
+     "Building new muscles",
+     "Keeping our vision sharp",
+     "Helping with digestion",
+     "Storing extra fat"
+    ],
+    "choicesAr": [
+     "بناء عضلات جديدة",
+     "الحفاظ على حدة الرؤية",
+     "المساعدة على الهضم",
+     "تخزين الدهون الزائدة"
+    ],
+    "correctIndex": 2,
+    "explanation": "Fiber helps keep our digestive system healthy and working smoothly.",
+    "explanationAr": "تساعد الألياف في الحفاظ على صحة جهازنا الهضمي وجعله يعمل بسلاسة."
+   },
+   {
+    "questionText": "Which of the following is a main source of protein that helps our bodies grow and repair?",
+    "questionTextAr": "أي مما يلي يُعد مصدراً أساسياً للبروتين الذي يساعد أجسامنا على النمو والإصلاح؟",
+    "choices": [
+     "Meat and beans",
+     "Sweets and candy",
+     "Water and soda",
+     "Pure cooking oil"
+    ],
+    "choicesAr": [
+     "اللحوم والبقوليات",
+     "الحلويات والسكاكر",
+     "الماء والمشروبات الغازية",
+     "زيت الطهي الخالص"
+    ],
+    "correctIndex": 0,
+    "explanation": "Meat, fish, eggs, and beans are rich in protein, which helps our body grow and repair tissues.",
+    "explanationAr": "اللحوم والأسماك والبيض والبقوليات غنية بالبروتين الذي يساعد الجسم على النمو وإصلاح الأنسجة."
+   }
+  ],
+  "25": [
+   {
+    "questionText": "What does precision in measurement mean in mathematics?",
+    "questionTextAr": "ماذا تعني الدقة في القياس في الرياضيات؟",
+    "choices": [
+     "Solving math problems as fast as possible",
+     "Using measurements, units, and calculations correctly and clearly",
+     "Estimating all answers without measuring",
+     "Ignoring the units of measurement"
+    ],
+    "choicesAr": [
+     "الحل بأسرع وقت ممكن",
+     "استعمال القياسات والوحدات والعمليات بشكل صحيح وواضح",
+     "التقدير فقط دون استخدام أدوات القياس",
+     "إهمال وحدات القياس"
+    ],
+    "correctIndex": 1,
+    "explanation": "Precision in math means using accurate measurements, proper units, and clear calculations.",
+    "explanationAr": "الدقة في الرياضيات تعني استخدام القياسات والوحدات والعمليات بشكل صحيح وواضح."
+   },
+   {
+    "questionText": "What is fresh water?",
+    "questionTextAr": "ما هو الماء العذب؟",
+    "choices": [
+     "Salty water found in the sea",
+     "Water that is not salty and is safe for drinking and watering plants",
+     "Only frozen water in glaciers",
+     "Polluted water from factories"
+    ],
+    "choicesAr": [
+     "ماء مالح يوجد في البحر",
+     "ماء غير مالح وصالح للشرب وسقي النباتات",
+     "ماء متجمد فقط في الأنهار الجليدية",
+     "ماء ملوث من المصانع"
+    ],
+    "correctIndex": 1,
+    "explanation": "Fresh water is the non-salty water that humans, animals, and plants need to survive.",
+    "explanationAr": "الماء العذب هو الماء غير المالح الذي يحتاجه الإنسان والحيوان والنبات للبقاء على قيد الحياة."
+   },
+   {
+    "questionText": "Which of the following measurements is the most precise for the mass of a bag of fruit?",
+    "questionTextAr": "أيٌّ من القياسات التالية يُعدُّ الأكثر دقة لكتلة كيس من الفاكهة؟",
+    "choices": [
+     "About 3 kg",
+     "2.85 kg",
+     "Around 3 kg",
+     "3 kg approximately"
+    ],
+    "choicesAr": [
+     "قرابة 3 كجم",
+     "2.85 كجم",
+     "نحو 3 كجم",
+     "3 كجم تقريبًا"
+    ],
+    "correctIndex": 1,
+    "explanation": "The value 2.85 kg gives an exact measurement rather than an estimated one.",
+    "explanationAr": "القياس 2.85 كجم يُعطي قيمة محددة بدقة بدلاً من استخدام التقدير."
+   },
+   {
+    "questionText": "Why do we need to store fresh water, especially in places like Qatar?",
+    "questionTextAr": "لماذا نحتاج إلى تخزين الماء العذب، خاصة في مناطق مثل قطر؟",
+    "choices": [
+     "Because rain falls all the time without stopping",
+     "Because rainfall is limited and not regular, so we need to save water for later",
+     "Because we want to change it into salty water",
+     "Because fresh water cannot be used for drinking"
+    ],
+    "choicesAr": [
+     "لأن المطر ينزل طوال الوقت دون توقف",
+     "لأن كمية الأمطار محدودة وغير منتظمة، فنحتاج لتوفير الماء لوقت لاحق",
+     "لأننا نريد تحويله إلى ماء مالح",
+     "لأن الماء العذب لا يمكن استخدامه للشرب"
+    ],
+    "correctIndex": 1,
+    "explanation": "Since rainfall is scarce and irregular in Qatar, storing fresh water helps us have enough when we need it.",
+    "explanationAr": "نظرًا لأن كمية الأمطار قليلة وغير منتظمة في قطر، فإن تخزين الماء العذب يساعدنا في الحصول على ما يكفينا عند الحاجة."
+   },
+   {
+    "questionText": "Tariq measured a wooden board to be 5 meters and 6 centimeters long. What is this length written accurately in centimeters?",
+    "questionTextAr": "قاس طارق طول لوح خشب فوجده 5 أمتار و 6 سنتيمترات. ما هذا الطول مكتوبًا بدقة بالسنتيمترات؟",
+    "choices": [
+     "56 cm",
+     "560 cm",
+     "506 cm",
+     "5006 cm"
+    ],
+    "choicesAr": [
+     "56 سم",
+     "560 سم",
+     "506 سم",
+     "5006 سم"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since 1 meter equals 100 centimeters, 5 meters and 6 centimeters equals 500 plus 6, which is 506 centimeters.",
+    "explanationAr": "بما أن المتر يساوي 100 سنتيمتر، فإن 5 أمتار و 6 سنتيمترات تساوي 500 زائد 6 وتساوي 506 سنتيمترات."
+   },
+   {
+    "questionText": "What is the main way Qatar gets most of its fresh water?",
+    "questionTextAr": "ما هي الطريقة الرئيسية التي تحصل بها قطر على معظم مياهها العذبة؟",
+    "choices": [
+     "Melting snow from high mountains",
+     "Large flowing rivers across the country",
+     "Desalination of sea water to remove salt",
+     "Deep underground wells filled by daily heavy rain"
+    ],
+    "choicesAr": [
+     "ذوبان الثلوج من الجبال العالية",
+     "الأنهار الكبيرة الجارية عبر البلاد",
+     "تحلية مياه البحر لإزالة الملاح",
+     "آبار جوفية عميقة تملؤها الأمطار الغزيرة اليومية"
+    ],
+    "correctIndex": 2,
+    "explanation": "Qatar relies heavily on desalination plants, which take salt out of sea water to make it fresh and drinkable.",
+    "explanationAr": "تعتمد قطر بشكل كبير على محطات تحلية المياه، وهي التي تزيل الملح من ماء البحر لجعله عذباً وصالحاً للشرب."
+   }
+  ],
+  "26": [
+   {
+    "questionText": "Which organ in the human body is responsible for pumping blood to all parts of the body?",
+    "questionTextAr": "ما هو العضو في جسم الإنسان المسؤول عن ضخ الدم إلى جميع أجزاء الجسم؟",
+    "choices": [
+     "The lungs",
+     "The heart",
+     "The stomach",
+     "The kidneys"
+    ],
+    "choicesAr": [
+     "الرئتان",
+     "القلب",
+     "المعدة",
+     "الكليتان"
+    ],
+    "correctIndex": 1,
+    "explanation": "The heart acts as a strong muscular pump that keeps blood moving throughout the entire body.",
+    "explanationAr": "يعمل القلب كمضخة عضلية قوية تحافظ على حركة الدم في جميع أنحاء الجسم."
+   },
+   {
+    "questionText": "What are the main components that make up the circulatory system?",
+    "questionTextAr": "ما هي المكونات الرئيسية التي يتكون منها الجهاز الدوري؟",
+    "choices": [
+     "The stomach and intestines",
+     "The brain and nerves",
+     "The heart, blood vessels, and blood",
+     "The lungs and trachea"
+    ],
+    "choicesAr": [
+     "المعدة والأمعاء",
+     "الدماغ والأعصاب",
+     "القلب والأوعية الدموية والدم",
+     "الرئتان والقصبة الهوائية"
+    ],
+    "correctIndex": 2,
+    "explanation": "The circulatory system consists of the heart, the blood vessels, and the blood that flows inside them.",
+    "explanationAr": "يتكون الجهاز الدوري من القلب والأوعية الدموية والدم الذي يتدفق من خلالها."
+   },
+   {
+    "questionText": "Which blood vessels are responsible for carrying blood back from the body's cells to the heart?",
+    "questionTextAr": "ما هي الأوعية الدموية المسؤولة عن إعادة الدم من خلايا الجسم إلى القلب؟",
+    "choices": [
+     "Arteries",
+     "Veins",
+     "Capillaries",
+     "Nerves"
+    ],
+    "choicesAr": [
+     "الشرايين",
+     "الأوردة",
+     "الشعيرات الدموية",
+     "الأعصاب"
+    ],
+    "correctIndex": 1,
+    "explanation": "Veins are the blood vessels that collect blood from different parts of the body and return it to the heart.",
+    "explanationAr": "الأوردة هي الأوعية الدموية التي تجمع الدم من مختلف أجزاء الجسم وتُعيده إلى القلب."
+   },
+   {
+    "questionText": "Why does a person's heart rate increase during physical exercise?",
+    "questionTextAr": "لماذا يزداد معدل نبض قلب الشخص أثناء ممارسة التمارين الرياضية؟",
+    "choices": [
+     "To supply the body's muscles with more oxygen and nutrients",
+     "To help the body cool down by stopping blood flow",
+     "To let the body rest and sleep better",
+     "To slow down breathing and heartbeat"
+    ],
+    "choicesAr": [
+     "لتزويد عضلات الجسم بمزيد من الأكسجين والمواد الغذائية",
+     "لمساعدة الجسم على التبريد عن طريق إيقاف تدفق الدم",
+     "لسماح للجسم بالراحة والنوم بشكل أفضل",
+     "لإبطاء التنفس ونبضات القلب"
+    ],
+    "correctIndex": 0,
+    "explanation": "During exercise, muscles need more oxygen and energy, so the heart beats faster to pump more blood to them.",
+    "explanationAr": "أثناء التمرين، تحتاج العضلات إلى مزيد من الأكسجين والطاقة، لذلك ينبض القلب بشكل أسرع لضخ المزيد من الدم إليها."
+   }
+  ],
+  "27": [
+   {
+    "questionText": "What is the distance between the points (-4, 3) and (2, 3) on a horizontal line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-4, 3) و (2, 3) على خط أفقي؟",
+    "choices": [
+     "2",
+     "4",
+     "6",
+     "8"
+    ],
+    "choicesAr": [
+     "2",
+     "4",
+     "6",
+     "8"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates: |-4| + |2| = 4 + 2 = 6 units.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، فإننا نجمع القيمتين المطلقتين للإحداثيين السينيين: |-4| + |2| = 4 + 2 = 6 وحدات."
+   },
+   {
+    "questionText": "What is the distance between the points (-3, -2) and (-3, 4) on a vertical line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-3, -2) و (-3, 4) على خط رأسي؟",
+    "choices": [
+     "2",
+     "4",
+     "6",
+     "7"
+    ],
+    "choicesAr": [
+     "2",
+     "4",
+     "6",
+     "7"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the x-coordinates are the same and the points are in different parts of the y-axis, we add the absolute values: |-2| + |4| = 2 + 4 = 6 units.",
+    "explanationAr": "بما أن الإحداثيين السينيين متساويان وتقع النقطتان في جزأين مختلفين من محور الصادات، نجمع القيمتين المطلقتين: |-2| + |4| = 2 + 4 = 6 وحدات."
+   },
+   {
+    "questionText": "What point is located 5 units below the point (2, 4)?",
+    "questionTextAr": "ما النقطة التي تقع على بعد 5 وحدات أسفل النقطة (2, 4)؟",
+    "choices": [
+     "(2, 9)",
+     "(7, 4)",
+     "(2, -1)",
+     "(-3, 4)"
+    ],
+    "choicesAr": [
+     "(2, 9)",
+     "(7, 4)",
+     "(2, -1)",
+     "(-3, 4)"
+    ],
+    "correctIndex": 2,
+    "explanation": "To move down, we subtract 5 from the y-coordinate: 4 - 5 = -1, so the new point is (2, -1).",
+    "explanationAr": "للتحرك إلى الأسفل، نطرح 5 من الإحداثي الصادي: 4 - 5 = -1، إذن النقطة الجديدة هي (2, -1)."
+   },
+   {
+    "questionText": "What is the distance between the decimal coordinate points (-2.5, 3) and (1.5, 3)?",
+    "questionTextAr": "ما المسافة بين نقطتي الإحداثيات العشرية (-2.5, 3) و (1.5, 3)؟",
+    "choices": [
+     "1",
+     "3",
+     "4",
+     "5"
+    ],
+    "choicesAr": [
+     "1",
+     "3",
+     "4",
+     "5"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates: |-2.5| + |1.5| = 2.5 + 1.5 = 4 units.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجمع القيمتين المطلقتين للإحداثيين السينيين: |-2.5| + |1.5| = 2.5 + 1.5 = 4 وحدات."
+   }
+  ],
+  "28": [
+   {
+    "questionText": "Which type of teeth are mainly used for cutting and biting into food?",
+    "questionTextAr": "ما نوع الأسنان التي تستخدم بشكل أساسي لقطع وتقطيع الطعام؟",
+    "choices": [
+     "Canines",
+     "Incisors",
+     "Molars",
+     "Premolars"
+    ],
+    "choicesAr": [
+     "الأنياب",
+     "القواطع",
+     "الطواحن",
+     "الضواحك"
+    ],
+    "correctIndex": 1,
+    "explanation": "Incisors are the sharp front teeth used specifically for biting and cutting pieces of food.",
+    "explanationAr": "القواطع هي الأسنان الأمامية الحادة التي تستخدم خصيصاً لعض وتقطيع قطع الطعام."
+   },
+   {
+    "questionText": "What is the primary role of saliva in the mouth during digestion?",
+    "questionTextAr": "ما هو الدور الأساسي لللعاب في الفم أثناء عملية الهضم؟",
+    "choices": [
+     "Pump blood to the teeth",
+     "Moisten food and start the digestion of starches",
+     "Grind food into tiny powder",
+     "Cool down hot food"
+    ],
+    "choicesAr": [
+     "ضخ الدم إلى الأسنان",
+     "ترطيب الطعام وبدء هضم النشويات",
+     "طحن الطعام إلى مسحوق دقيق",
+     "تبريد الطعام الساخن"
+    ],
+    "correctIndex": 1,
+    "explanation": "Saliva moistens the food to make it easy to swallow and contains chemicals that begin breaking down starches.",
+    "explanationAr": "يرطب اللعاب الطعام لتسهيل بلعه ويحتوي على مواد كيميائية تبدأ في تفكيك النشويات."
+   },
+   {
+    "questionText": "How does chewing food with our teeth help the digestive process?",
+    "questionTextAr": "كيف يساعد مضغ الطعام بأسناننا في عملية الهضم؟",
+    "choices": [
+     "It changes mechanical digestion into a chemical change instantly.",
+     "It breaks food into smaller pieces, which is a form of mechanical digestion.",
+     "It completely digests proteins in the mouth.",
+     "It pushes the food directly into the windpipe."
+    ],
+    "choicesAr": [
+     "يحول الهضم الميكانيكي إلى تغير كيميائي فوراً.",
+     "يفتت الطعام إلى قطع أصغر، وهو شكل من أشكال الهضم الميكانيكي.",
+     "يهضم البروتينات كلياً في الفم.",
+     "يدفع الطعام مباشرة إلى القصبة الهوائية."
+    ],
+    "correctIndex": 1,
+    "explanation": "Chewing physically breaks food down into smaller pieces without changing its chemical nature, known as mechanical digestion.",
+    "explanationAr": "المضغ يفتت الطعام جغرافياً إلى قطع أصغر دون تغيير طبيعته الكيميائية، وهو ما يُعرف بالهضم الميكانيكي."
+   },
+   {
+    "questionText": "What process pushes food down the esophagus toward the stomach, even if you are lying down?",
+    "questionTextAr": "ما العملية التي تدفع الطعام أسفل المريء باتجاه المعدة، حتى لو كنت مستلقياً؟",
+    "choices": [
+     "Gravity pulling it straight down",
+     "Wave-like muscle contractions called peristalsis",
+     "Breathing air pushing it along",
+     "The tongue spitting it forward"
+    ],
+    "choicesAr": [
+     "جاذبية الأرض التي تسحبه للأسفل مباشرة",
+     "انقباضات عضلية تشبه الموجات تسمى الحركة الدودية",
+     "هواء التنفس الذي يدفعه للأمام",
+     "اللسان الذي يبصقه إلى الأمام"
+    ],
+    "correctIndex": 1,
+    "explanation": "The walls of the esophagus use wave-like muscle movements called peristalsis to push food down to the stomach regardless of body position.",
+    "explanationAr": "تستخدم جدران المريء حركات عضلية تشبه الموجات تسمى الحركة الدودية لدفع الطعام إلى المعدة بغض النظر عن وضعية الجسم."
+   }
+  ],
+  "29": [
+   {
+    "questionText": "What is the distance between the points (-4, 3) and (2, 3) in the coordinate plane?",
+    "questionTextAr": "ما المسافة بين النقطتين (-4, 3) و (2, 3) في المستوى الإحداثي؟",
+    "choices": [
+     "2",
+     "4",
+     "6",
+     "8"
+    ],
+    "choicesAr": [
+     "2",
+     "4",
+     "6",
+     "8"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we find the distance by adding the absolute values of the x-coordinates: |-4| + |2| = 4 + 2 = 6.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجد المسافة بجمع القيمتين المطلقتين للإحداثيين السينيين: |-4| + |2| = 4 + 2 = 6."
+   },
+   {
+    "questionText": "Find the distance between the points (-1, -2) and (-1, 5) on a vertical line.",
+    "questionTextAr": "أوجد المسافة بين النقطتين (-1, -2) و (-1, 5) على خط رأسي.",
+    "choices": [
+     "3",
+     "5",
+     "7",
+     "9"
+    ],
+    "choicesAr": [
+     "3",
+     "5",
+     "7",
+     "9"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the x-coordinates are the same, we subtract the y-coordinates in different parts of the number line or find the difference between their absolute values: |5| - (-2) gives 5 + 2 = 7.",
+    "explanationAr": "بما أن الإحداثيين السينيين متساويان، نطرح الإحداثيين الصاديين أو نجد الفرق بينهما: |5 - (-2)| = 7 وحدات."
+   },
+   {
+    "questionText": "What point is located 4 units below the point (2, 5)?",
+    "questionTextAr": "ما النقطة التي تقع على بعد 4 وحدات أسفل النقطة (2, 5)؟",
+    "choices": [
+     "(2, 1)",
+     "(6, 5)",
+     "(2, 9)",
+     "(-2, 5)"
+    ],
+    "choicesAr": [
+     "(2, 1)",
+     "(6, 5)",
+     "(2, 9)",
+     "(-2, 5)"
+    ],
+    "correctIndex": 0,
+    "explanation": "To move down, we subtract 4 from the y-coordinate, so 5 - 4 = 1, keeping the x-coordinate the same to get (2, 1).",
+    "explanationAr": "للتحرك أسفل، نطرح 4 من الإحداثي الصادي، إذن 5 - 4 = 1، مع إبقاء الإحداثي السيني كما هو لنحصل على (2, 1)."
+   },
+   {
+    "questionText": "What is the distance between the decimal coordinates (-2.5, 4) and (1.5, 4)?",
+    "questionTextAr": "ما المسافة بين الإحداثيين العشريين (-2.5, 4) و (1.5, 4)؟",
+    "choices": [
+     "1.0",
+     "2.5",
+     "4.0",
+     "5.5"
+    ],
+    "choicesAr": [
+     "1.0",
+     "2.5",
+     "4.0",
+     "5.5"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are identical, we add the absolute values of the x-coordinates because they are in opposite quadrants: |-2.5| + |1.5| = 2.5 + 1.5 = 4.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متطابقان، نجمع القيمتين المطلقتين للإحداثيين السينيين لأنهما في ربعين مختلفين: |-2.5| + |1.5| = 2.5 + 1.5 = 4."
+   }
+  ],
+  "30": [
+   {
+    "questionText": "Find the sum: 14.2 + 5.35 =",
+    "questionTextAr": "أوجد الناتج: 14.2 + 5.35 =",
+    "choices": [
+     "19.55",
+     "19.75",
+     "18.55",
+     "20.55"
+    ],
+    "choicesAr": [
+     "19.55",
+     "19.75",
+     "18.55",
+     "20.55"
+    ],
+    "correctIndex": 0,
+    "explanation": "Align the decimal points and add the numbers to get 19.55.",
+    "explanationAr": "قم بمحاذاة الفواصل العشرية واجمع الأعداد ليصبح الناتج 19.55."
+   },
+   {
+    "questionText": "Which main organ is responsible for pumping blood to all parts of the human body?",
+    "questionTextAr": "ما العضو الرئيسي المسؤول عن ضخ الدم إلى جميع أجزاء جسم الإنسان؟",
+    "choices": [
+     "Lungs",
+     "Heart",
+     "Stomach",
+     "Kidneys"
+    ],
+    "choicesAr": [
+     "الرئتان",
+     "القلب",
+     "المعدة",
+     "الكليتان"
+    ],
+    "correctIndex": 1,
+    "explanation": "The heart is a muscular organ that pumps blood throughout the entire body.",
+    "explanationAr": "القلب هو عضلة تقوم بضخ الدم عبر جميع أجزاء الجسم."
+   },
+   {
+    "questionText": "Subtract: 15.4 - 6.8 =",
+    "questionTextAr": "اطرح: 15.4 - 6.8 =",
+    "choices": [
+     "9.4",
+     "8.6",
+     "9.6",
+     "8.4"
+    ],
+    "choicesAr": [
+     "9.4",
+     "8.6",
+     "9.6",
+     "8.4"
+    ],
+    "correctIndex": 1,
+    "explanation": "Regroup if needed and subtract to find the difference of 8.6.",
+    "explanationAr": "أعد التجميع إذا لزم الأمر واطرح لتجد الفرق وهو 8.6."
+   },
+   {
+    "questionText": "What are the main components that make up the circulatory system?",
+    "questionTextAr": "ما هي المكونات الأساسية التي يتكون منها الجهاز الدوري؟",
+    "choices": [
+     "Stomach and intestines",
+     "Brain and nerves",
+     "Heart, blood vessels, and blood",
+     "Lungs and windpipe"
+    ],
+    "choicesAr": [
+     "المعدة والأمعاء",
+     "الدماغ والأعصاب",
+     "القلب والأوعية الدموية والدم",
+     "الرئتان والقصبة الهوائية"
+    ],
+    "correctIndex": 2,
+    "explanation": "The circulatory system consists of the heart, blood vessels, and the blood that flows through them.",
+    "explanationAr": "يتكون الجهاز الدوري من القلب والأوعية الدموية والدم الذي يتدفق من خلالها."
+   },
+   {
+    "questionText": "Multiply: 3.2 × 1.5 =",
+    "questionTextAr": "اضرب: 3.2 × 1.5 =",
+    "choices": [
+     "4.8",
+     "0.48",
+     "48",
+     "4.75"
+    ],
+    "choicesAr": [
+     "4.8",
+     "0.48",
+     "48",
+     "4.75"
+    ],
+    "correctIndex": 0,
+    "explanation": "Multiply the numbers as whole numbers and place the decimal point after two decimal digits to get 4.8.",
+    "explanationAr": "اضرب الأعداد كأعداد كليّة ثم ضع الفاصلة العشرية بعد منزلتين عشريتين ليصبح الناتج 4.8."
+   },
+   {
+    "questionText": "Which blood vessels are responsible for carrying blood back toward the heart?",
+    "questionTextAr": "ما هي الأوعية الدموية المسؤولة عن إعادة الدم نحو القلب؟",
+    "choices": [
+     "Arteries",
+     "Veins",
+     "Nerves",
+     "Capillaries"
+    ],
+    "choicesAr": [
+     "الشرايين",
+     "الأوردة",
+     "الأعصاب",
+     "الشعيرات"
+    ],
+    "correctIndex": 1,
+    "explanation": "Veins are the blood vessels that bring blood from the body tissues back to the heart.",
+    "explanationAr": "الأوردة هي الأوعية الدموية التي تعيد الدم من أنسجة الجسم إلى القلب."
+   }
+  ],
+  "31": [
+   {
+    "questionText": "What is the distance between the points (-4, 3) and (2, 3) on a horizontal line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-4, 3) و (2, 3) على خط أفقي؟",
+    "choices": [
+     "2",
+     "4",
+     "6",
+     "8"
+    ],
+    "choicesAr": [
+     "2",
+     "4",
+     "6",
+     "8"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates: |-4| + |2| = 4 + 2 = 6 units.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجمع القيمتين المطلقتين للإحداثيين السينيين: |-4| + |2| = 4 + 2 = 6 وحدات."
+   },
+   {
+    "questionText": "What is the distance between the points (-3, -2) and (-3, 5) on a vertical line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-3, -2) و (-3, 5) على خط رأسي؟",
+    "choices": [
+     "3",
+     "5",
+     "7",
+     "8"
+    ],
+    "choicesAr": [
+     "3",
+     "5",
+     "7",
+     "8"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the x-coordinates are the same, we add the absolute values of the y-coordinates because they are in different vertical directions: |-2| + |5| = 2 + 5 = 7 units.",
+    "explanationAr": "بما أن الإحداثيين السينيين متساويان، نجمع القيمتين المطلقتين للإحداثيين الصاديين لأنهما في اتجاهين مختلفين: |-2| + |5| = 2 + 5 = 7 وحدات."
+   },
+   {
+    "questionText": "Which point is located 4 units below the point (2, 5)?",
+    "questionTextAr": "ما النقطة التي تقع على بعد 4 وحدات أسفل النقطة (2, 5)؟",
+    "choices": [
+     "(2, 9)",
+     "(2, 1)",
+     "(6, 5)",
+     "(-2, 5)"
+    ],
+    "choicesAr": [
+     "(2, 9)",
+     "(2, 1)",
+     "(6, 5)",
+     "(-2, 5)"
+    ],
+    "correctIndex": 1,
+    "explanation": "To move down, we subtract 4 from the y-coordinate: 5 - 4 = 1, keeping the x-coordinate the same at 2.",
+    "explanationAr": "للتحرك أسفل، نطرح 4 من الإحداثي الصادي: 5 - 4 = 1، مع إبقاء الإحداثي السيني كما هو 2."
+   },
+   {
+    "questionText": "What is the distance between the decimal coordinates (-1.5, 4) and (2.5, 4)?",
+    "questionTextAr": "ما المسافة بين الإحداثيين العشريين (-1.5, 4) و (2.5, 4)؟",
+    "choices": [
+     "1.0",
+     "3.0",
+     "4.0",
+     "2.5"
+    ],
+    "choicesAr": [
+     "1.0",
+     "3.0",
+     "4.0",
+     "2.5"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates: |-1.5| + |2.5| = 1.5 + 2.5 = 4.0 units.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجمع القيمتين المطلقتين للإحداثيين السينيين: |-1.5| + |2.5| = 1.5 + 2.5 = 4.0 وحدات."
+   }
+  ],
+  "32": [
+   {
+    "questionText": "What is the primary function of the human reproductive system?",
+    "questionTextAr": "ما الوظيفة الأساسية للجهاز التناسلي لدى الإنسان؟",
+    "choices": [
+     "To pump blood around the body",
+     "To digest food and absorb nutrients",
+     "To ensure reproduction and the continuation of the species",
+     "To help us breathe in oxygen"
+    ],
+    "choicesAr": [
+     "ضخ الدم في جميع أنحاء الجسم",
+     "هضم الطعام وامتصاص العناصر الغذائية",
+     "ضمان التكاثر واستمرار النوع",
+     "مساعدتنا على استنشاق الأكسجين"
+    ],
+    "correctIndex": 2,
+    "explanation": "The main job of the reproductive system is to allow humans to reproduce and have offspring to keep the human species going.",
+    "explanationAr": "المهمة الرئيسية للجهاز التناسلي هي السماح للبشر بالتكاثر وإنجاب الأبناء لاستمرار النوع البشري."
+   },
+   {
+    "questionText": "Which female reproductive organs are responsible for producing egg cells?",
+    "questionTextAr": "ما الأعضاء التناسلية الأنثوية المسؤولة عن إنتاج البويضات؟",
+    "choices": [
+     "The kidneys",
+     "The ovaries",
+     "The lungs",
+     "The stomach"
+    ],
+    "choicesAr": [
+     "الكليتان",
+     "المبيضان",
+     "الرئتان",
+     "المعدة"
+    ],
+    "correctIndex": 1,
+    "explanation": "The female body has two ovaries, and their job is to produce the female reproductive cells known as eggs.",
+    "explanationAr": "يحتوي جسم الأنثى على مبيضين، ومهامهما هي إنتاج الخلايا التناسلية الأنثوية المعروفة بالبويضات."
+   },
+   {
+    "questionText": "What is the name of the female reproductive cell?",
+    "questionTextAr": "ما اسم الخلية التناسلية الأنثوية؟",
+    "choices": [
+     "Sperm cell",
+     "Blood cell",
+     "Nerve cell",
+     "Egg cell"
+    ],
+    "choicesAr": [
+     "حيوان منوي",
+     "خلية دم",
+     "خلية عصبية",
+     "بويضة"
+    ],
+    "correctIndex": 3,
+    "explanation": "The egg cell is the female reproductive cell produced by the ovaries.",
+    "explanationAr": "البويضة هي الخلية التناسلية الأنثوية التي ينتجها المبيضان."
+   },
+   {
+    "questionText": "In which female organ does the baby (embryo) grow and develop during pregnancy?",
+    "questionTextAr": "في أي عضو أنثوي ينمو ويتطور الجنين خلال فترة الحمل؟",
+    "choices": [
+     "The uterus (womb)",
+     "The bladder",
+     "The heart",
+     "The liver"
+    ],
+    "choicesAr": [
+     "الرحم",
+     "المثانة",
+     "القلب",
+     "الكبد"
+    ],
+    "correctIndex": 0,
+    "explanation": "The uterus is a specialized organ where a baby safely grows and is nourished until it is ready to be born.",
+    "explanationAr": "الرحم هو عضو متخصص ينمو فيه الجنين بأمان ويتغذى حتى يصبح جاهزاً للولادة."
+   }
+  ],
+  "33": [
+   {
+    "questionText": "What is the distance between the points (-4, 3) and (2, 3) on a horizontal line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-4, 3) و (2, 3) على خط أفقي؟",
+    "choices": [
+     "2 units",
+     "4 units",
+     "6 units",
+     "8 units"
+    ],
+    "choicesAr": [
+     "وحدتان",
+     "4 وحدات",
+     "6 وحدات",
+     "8 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates: |-4| + |2| = 4 + 2 = 6 units.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجمع القيمتين المطلقتين للإحداثيين السينيين: |-4| + |2| = 4 + 2 = 6 وحدات."
+   },
+   {
+    "questionText": "What is the distance between the points (-1, -2) and (-1, 5) on a vertical line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-1, -2) و (-1, 5) على خط رأسي؟",
+    "choices": [
+     "3 units",
+     "5 units",
+     "7 units",
+     "8 units"
+    ],
+    "choicesAr": [
+     "3 وحدات",
+     "5 وحدات",
+     "7 وحدات",
+     "8 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the x-coordinates are the same, we add the absolute values of the y-coordinates because they are in different halves of the y-axis: |-2| + |5| = 2 + 5 = 7 units.",
+    "explanationAr": "بما أن الإحداثيين السينيين متساويان، نجمع القيمتين المطلقتين للإحداثيين الصاديين لأنهما في جزأين مختلفين من المحور ص: |-2| + |5| = 2 + 5 = 7 وحدات."
+   },
+   {
+    "questionText": "What is the distance between the points (3.5, 2) and (-1.5, 2)?",
+    "questionTextAr": "ما المسافة بين النقطتين (3.5, 2) و (-1.5, 2)؟",
+    "choices": [
+     "2 units",
+     "4 units",
+     "5 units",
+     "6.5 units"
+    ],
+    "choicesAr": [
+     "وحدتان",
+     "4 وحدات",
+     "5 وحدات",
+     "6.5 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "The y-coordinates are the same, so we add the absolute values of the x-coordinates: |3.5| + |-1.5| = 3.5 + 1.5 = 5 units.",
+    "explanationAr": "الإحداثيان الصاديان متساويان، لذا نجمع القيمتين المطلقتين للإحداثيين السينيين: |3.5| + |-1.5| = 3.5 + 1.5 = 5 وحدات."
+   },
+   {
+    "questionText": "What is the new point if you start at (2, 5) and move 4 units down?",
+    "questionTextAr": "ما النقطة الجديدة إذا بدأت من (2, 5) وتحركت 4 وحدات إلى الأسفل؟",
+    "choices": [
+     "(2, 1)",
+     "(2, 9)",
+     "(6, 5)",
+     "(-2, 5)"
+    ],
+    "choicesAr": [
+     "(2, 1)",
+     "(2, 9)",
+     "(6, 5)",
+     "(-2, 5)"
+    ],
+    "correctIndex": 0,
+    "explanation": "Moving down means we subtract 4 from the y-coordinate: 5 - 4 = 1, so the new point is (2, 1).",
+    "explanationAr": "التحرك إلى الأسفل يعني أننا نطرح 4 من الإحداثي الصادي: 5 - 4 = 1، لذا النقطة الجديدة هي (2, 1)."
+   }
+  ],
+  "34": [
+   {
+    "questionText": "What happens when ice is heated?",
+    "questionTextAr": "ماذا يحدث عند تسخين الجليد؟",
+    "choices": [
+     "It melts into liquid water",
+     "It burns completely",
+     "It turns into solid rock",
+     "It does not change at all"
+    ],
+    "choicesAr": [
+     "ينصهر ويتحول إلى ماء سائل",
+     "يحترق تماماً",
+     "يتحول إلى صخر صلب",
+     "لا يتغير على الإطلاق"
+    ],
+    "correctIndex": 0,
+    "explanation": "Heating ice provides thermal energy that causes it to melt and change from a solid state to a liquid state.",
+    "explanationAr": "تسخين الجليد يزوده بطاقة حرارية تجعله ينصهر ويتحول من الحالة الصلبة إلى الحالة السائلة."
+   },
+   {
+    "questionText": "At what temperature does liquid water boil and turn into steam?",
+    "questionTextAr": "عند أي درجة حرارة يغلي الماء السائل ويتحول إلى بخار؟",
+    "choices": [
+     "0 °C",
+     "50 °C",
+     "100 °C",
+     "200 °C"
+    ],
+    "choicesAr": [
+     "0 °C",
+     "50 °C",
+     "100 °C",
+     "200 °C"
+    ],
+    "correctIndex": 2,
+    "explanation": "Water reaches its boiling point and turns into water vapor when heated to 100 degrees Celsius.",
+    "explanationAr": "يصل الماء إلى درجة غليانه ويتحول إلى بخار ماء عندما يتم تسخينه إلى 100 درجة مئوية."
+   },
+   {
+    "questionText": "What type of change happens to an egg when it is cooked by heating?",
+    "questionTextAr": "ما نوع التغير الذي يحدث للبيضة عندما يتم طهيها بالتسخين؟",
+    "choices": [
+     "A physical change that can be easily reversed",
+     "A chemical change that cannot be easily reversed",
+     "No change takes place",
+     "The egg turns back into ice"
+    ],
+    "choicesAr": [
+     "تغير فيزيائي يمكن عكسه بسهولة",
+     "تغير كيميائي لا يمكن عكسه بسهولة",
+     "لا يحدث أي تغير",
+     "تعود البيضة لتصبح جليداً"
+    ],
+    "correctIndex": 1,
+    "explanation": "Cooking an egg causes a chemical change because it transforms the egg permanently into a new substance that cannot go back to its original raw form.",
+    "explanationAr": "طهي البيضة يسبب تغيراً كيميائياً لأنه يحول البيضة بشكل دائم إلى مادة جديدة لا يمكن إرجاعها لشكلها النيئ الأصلي."
+   },
+   {
+    "questionText": "Which of the following describes what happens when chocolate is melted and then cooled down?",
+    "questionTextAr": "أي مما يلي يصف ما يحدث عندما تُصهر الشوكولاتة ثم تُبرَّد؟",
+    "choices": [
+     "Melting is a chemical change and cannot be reversed",
+     "Cooling destroys the chocolate completely",
+     "Melting is a physical change and solidifies again when cooled",
+     "Heating turns chocolate into water vapor"
+    ],
+    "choicesAr": [
+     "الانصهار تغير كيميائي ولا يمكن عكسه",
+     "التبريد يدمر الشوكولاتة تماماً",
+     "الانصهار تغير فيزيائي وتتصلب الشوكولاتة مرة أخرى عند تبريدها",
+     "التسخين يحول الشوكولاتة إلى بخار ماء"
+    ],
+    "correctIndex": 2,
+    "explanation": "Melting chocolate is a temporary physical change, meaning it turns into a liquid when heated and hardens again when cooled without forming a new substance.",
+    "explanationAr": "انصهار الشوكولاتة هو تغير فيزيائي مؤقت، مما يعني أنها تصبح سائلة عند تسخينها وتتصلب مرة أخرى عند تبريدها دون أن تشكل مادة جديدة."
+   }
+  ],
+  "35": [
+   {
+    "questionText": "What is the distance between the points (-4, 3) and (2, 3) in the coordinate plane?",
+    "questionTextAr": "ما المسافة بين النقطتين (-4, 3) و (2, 3) في المستوى الإحداثي؟",
+    "choices": [
+     "2",
+     "4",
+     "6",
+     "8"
+    ],
+    "choicesAr": [
+     "2",
+     "4",
+     "6",
+     "8"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates because the points are on opposite sides of the y-axis: |-4| + |2| = 4 + 2 = 6.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجمع القيمتين المطلقتين للإحداثيين السينيين لأنهما في جهتين مختلفتين من محور الصادات: 4 + 2 = 6."
+   },
+   {
+    "questionText": "What is the main function of the human reproductive system?",
+    "questionTextAr": "ما الوظيفة الرئيسية للجهاز التناسلي لدى الإنسان؟",
+    "choices": [
+     "Digesting food and absorbing nutrients",
+     "Pumping blood throughout the body",
+     "Ensuring reproduction and the continuation of the human species",
+     "Helping the body breathe oxygen"
+    ],
+    "choicesAr": [
+     "هضم الطعام وامتصاص العناصر الغذائية",
+     "ضخ الدم في جميع أنحاء الجسم",
+     "ضمان التكاثر واستمرار النوع البشري",
+     "مساعدة الجسم على تنفس الأكسجين"
+    ],
+    "correctIndex": 2,
+    "explanation": "The reproductive system is responsible for reproduction, allowing humans to have offspring and continue their species.",
+    "explanationAr": "الجهاز التناسلي مسؤول عن التكاثر، مما يتيح للإنسان إنجاب أطفال واستمرار نوعه."
+   },
+   {
+    "questionText": "What is the distance between the points (-1, -2) and (-1, 5) on a vertical line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-1, -2) و (-1, 5) على خط رأسي؟",
+    "choices": [
+     "3",
+     "5",
+     "7",
+     "8"
+    ],
+    "choicesAr": [
+     "3",
+     "5",
+     "7",
+     "8"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the x-coordinates are the same, we find the distance by subtracting the y-coordinates in different quadrants: |5| + |-2| = 5 + 2 = 7.",
+    "explanationAr": "بما أن الإحداثيين السينيين متساويان، نجد المسافة بجمع القيمتين المطلقتين للإحداثيين الصاديين لأنهما في ربعين مختلفين: 5 + 2 = 7."
+   },
+   {
+    "questionText": "Which female reproductive organ is responsible for producing egg cells?",
+    "questionTextAr": "ما العضو التناسلي الأنثوي المسؤول عن إنتاج البويضات؟",
+    "choices": [
+     "The uterus",
+     "The ovaries",
+     "The kidneys",
+     "The lungs"
+    ],
+    "choicesAr": [
+     "الرحم",
+     "المبيضان",
+     "الكليتان",
+     "الرئتان"
+    ],
+    "correctIndex": 1,
+    "explanation": "The ovaries are the two female organs that produce the female reproductive cells, called eggs.",
+    "explanationAr": "المبيضان هما العضوان الأنثويان اللذان ينتجان الخلايا التناسلية الأنثوية التي تسمى البويضات."
+   },
+   {
+    "questionText": "Find the distance between the points (-3.5, 4) and (2.5, 4).",
+    "questionTextAr": "أوجد المسافة بين النقطتين (-3.5, 4) و (2.5, 4).",
+    "choices": [
+     "1",
+     "5",
+     "6",
+     "6.5"
+    ],
+    "choicesAr": [
+     "1",
+     "5",
+     "6",
+     "6.5"
+    ],
+    "correctIndex": 2,
+    "explanation": "Because the y-coordinates are equal, we add the absolute values of the x-coordinates since they lie in different quadrants: |-3.5| + |2.5| = 3.5 + 2.5 = 6.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجمع القيمتين المطلقتين للإحداثيين السينيين لأنهما يقعان في ربعين مختلفين: 3.5 + 2.5 = 6."
+   },
+   {
+    "questionText": "In which female organ does the baby (embryo) grow and develop during pregnancy?",
+    "questionTextAr": "في أي عضو أنثوي ينمو الجنين ويتطور أثناء الحمل؟",
+    "choices": [
+     "The stomach",
+     "The ovary",
+     "The uterus",
+     "The bladder"
+    ],
+    "choicesAr": [
+     "المعدة",
+     "المبيض",
+     "الرحم",
+     "المثانة"
+    ],
+    "correctIndex": 2,
+    "explanation": "The uterus provides a safe and nurturing environment where the baby grows until it is born.",
+    "explanationAr": "يوفر الرحم بيئة آمنة وداعمة ينمو فيها الجنين حتى ولادته."
+   }
+  ],
+  "36": [
+   {
+    "questionText": "What type of mixture can be separated using filtration?",
+    "questionTextAr": "ما نوع المخلوط الذي يمكن فصله باستخدام عملية الترشيح؟",
+    "choices": [
+     "A dissolved solid from a liquid",
+     "An insoluble solid from a liquid",
+     "Two mixed gases",
+     "A dissolved sugar in water"
+    ],
+    "choicesAr": [
+     "مادة صلبة ذائبة عن سائل",
+     "مادة صلبة غير قابلة للذوبان عن سائل",
+     "غازان ممزوجان معاً",
+     "سكر مذاب في الماء"
+    ],
+    "correctIndex": 1,
+    "explanation": "Filtration is used to separate solid particles that do not dissolve in a liquid from the liquid itself.",
+    "explanationAr": "تُستخدم عملية الترشيح لفصل الجسيمات الصلبة التي لا تذوب في السائل عن السائل نفسه."
+   },
+   {
+    "questionText": "What is the name of the liquid that passes through the filter paper during filtration?",
+    "questionTextAr": "ما اسم السائل الذي يمر عبر ورق الترشيح أثناء عملية الترشيح؟",
+    "choices": [
+     "The solute",
+     "The residue",
+     "The filtrate",
+     "The condensate"
+    ],
+    "choicesAr": [
+     "المذاب",
+     "الراسب",
+     "الراشح",
+     "المكثف"
+    ],
+    "correctIndex": 2,
+    "explanation": "The liquid that successfully passes through the filter paper is called the filtrate.",
+    "explanationAr": "السائل الذي يمر بنجاح عبر ورق الترشيح يسمى الراشح."
+   },
+   {
+    "questionText": "Which method is best suited to separate a mixture of sand and water?",
+    "questionTextAr": "ما هي الطريقة الأنسب لفصل مخلوط يتكون من الرمل والماء؟",
+    "choices": [
+     "Using a magnet",
+     "Filtration",
+     "Freezing",
+     "Melting"
+    ],
+    "choicesAr": [
+     "استخدام المغناطيس",
+     "الترشيح",
+     "التجميد",
+     "الانصهار"
+    ],
+    "correctIndex": 1,
+    "explanation": "Because sand does not dissolve in water, filtration can easily trap the sand while letting the water pass through.",
+    "explanationAr": "لأن الرمل لا يذوب في الماء، يمكن للترشيح حبس الرمل بسهولة بينما يسمح للماء بالمرور."
+   },
+   {
+    "questionText": "Which organs in the human body act like natural filters to clean the blood?",
+    "questionTextAr": "ما هي الأعضاء في جسم الإنسان التي تعمل مثل مرشحات طبيعية لتنقية الدم؟",
+    "choices": [
+     "The lungs",
+     "The heart",
+     "The kidneys",
+     "The stomach"
+    ],
+    "choicesAr": [
+     "الرئتان",
+     "القلب",
+     "الكليتان",
+     "المعدة"
+    ],
+    "correctIndex": 2,
+    "explanation": "The kidneys filter waste materials and excess water from the blood in the human body.",
+    "explanationAr": "تقوم الكليتان بترشيح الفضلات والماء الزائد من الدم في جسم الإنسان."
+   }
+  ],
+  "37": [
+   {
+    "questionText": "What is the distance between the points (-4, 3) and (2, 3) on a horizontal line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-4, 3) و (2, 3) على خط أفقي؟",
+    "choices": [
+     "2 units",
+     "4 units",
+     "6 units",
+     "8 units"
+    ],
+    "choicesAr": [
+     "وحدتان",
+     "4 وحدات",
+     "6 وحدات",
+     "8 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates because the points are in different quadrants: |-4| + |2| = 4 + 2 = 6.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجمع القيمتين المطلقتين للإحداثيين السينيين لأن النقطتين تقعان في ربعين مختلفين: 4 + 2 = 6."
+   },
+   {
+    "questionText": "What is the distance between the points (-1, -2) and (-1, 5) on a vertical line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-1, -2) و (-1, 5) على خط رأسي؟",
+    "choices": [
+     "3 units",
+     "5 units",
+     "7 units",
+     "6 units"
+    ],
+    "choicesAr": [
+     "3 وحدات",
+     "5 وحدات",
+     "7 وحدات",
+     "6 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the x-coordinates are the same, we find the distance by subtracting the y-coordinates in different parts of the axis: |-2| + |5| = 2 + 5 = 7.",
+    "explanationAr": "بما أن الإحداثيين السينيين متساويان، نجد المسافة بجمع القيمتين المطلقتين للإحداثيين الصاديين: 2 + 5 = 7."
+   },
+   {
+    "questionText": "What is the distance between the decimal coordinates (1.5, 4) and (-2.5, 4)?",
+    "questionTextAr": "ما المسافة بين الإحداثيين العشريين (1.5, 4) و (-2.5, 4)؟",
+    "choices": [
+     "1 unit",
+     "3 units",
+     "4 units",
+     "5 units"
+    ],
+    "choicesAr": [
+     "وحدة واحدة",
+     "3 وحدات",
+     "4 وحدات",
+     "5 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "The y-coordinates are the same, so we add the absolute values of the x-coordinates: |1.5| + |-2.5| = 1.5 + 2.5 = 4.",
+    "explanationAr": "الإحداثيان الصاديان متساويان، لذا نجمع القيمتين المطلقتين للسينيين: 1.5 + 2.5 = 4."
+   },
+   {
+    "questionText": "What point is located 5 units below the point (2, 3)?",
+    "questionTextAr": "ما النقطة التي تقع على بعد 5 وحدات أسفل النقطة (2, 3)؟",
+    "choices": [
+     "(2, 8)",
+     "(7, 3)",
+     "(2, -2)",
+     "(-3, 3)"
+    ],
+    "choicesAr": [
+     "(2, 8)",
+     "(7, 3)",
+     "(2, -2)",
+     "(-3, 3)"
+    ],
+    "correctIndex": 2,
+    "explanation": "Moving down means we subtract 5 from the y-coordinate: 3 - 5 = -2, so the new point is (2, -2).",
+    "explanationAr": "التحرك إلى الأسفل يعني أننا نطرح 5 من الإحداثي الصادي: 3 - 5 = -2، لذا النقطة الجديدة هي (2, -2)."
+   }
+  ],
+  "38": [
+   {
+    "questionText": "What determines how strong the pull of gravity is on the surface of a planet?",
+    "questionTextAr": "ما الذي يحدد قوة الجاذبية على سطح الكوكب؟",
+    "choices": [
+     "The planet's mass",
+     "The color of the planet",
+     "The number of moons it has",
+     "The speed of the wind"
+    ],
+    "choicesAr": [
+     "كتلة الكوكب",
+     "لون الكوكب",
+     "عدد أقماره",
+     "سرعة الرياح"
+    ],
+    "correctIndex": 0,
+    "explanation": "A planet with a greater mass has a stronger gravitational pull.",
+    "explanationAr": "الكوكب الذي له كتلة أكبر تكون قوة جاذبيته أكبر."
+   },
+   {
+    "questionText": "How does the gravity of the Moon compare to the gravity of Earth?",
+    "questionTextAr": "كيف تُقارن جاذبية القمر بجاذبية الأرض؟",
+    "choices": [
+     "It is much greater than Earth's gravity",
+     "It is about one-sixth of Earth's gravity",
+     "It is exactly equal to Earth's gravity",
+     "It is zero"
+    ],
+    "choicesAr": [
+     "أكبر بكثير من جاذبية الأرض",
+     "تساوي تقريبًا سدس جاذبية الأرض",
+     "تساوي جاذبية الأرض تمامًا",
+     "تساوي صفرًا"
+    ],
+    "correctIndex": 1,
+    "explanation": "The Moon is much smaller than Earth, so its gravity is about one-sixth as strong.",
+    "explanationAr": "القمر أصغر بكثير من الأرض، لذا فإن جاذبيته تبلغ تقريبًا سدس جاذبية الأرض."
+   },
+   {
+    "questionText": "If an object has a weight of 60 Newtons on Earth, approximately what would its weight be on the Moon?",
+    "questionTextAr": "إذا كان وزن جسم 60 نيوتن على الأرض، فكم يكون وزنه تقريبًا على القمر؟",
+    "choices": [
+     "600 Newtons",
+     "360 Newtons",
+     "60 Newtons",
+     "10 Newtons"
+    ],
+    "choicesAr": [
+     "600 نيوتن",
+     "360 نيوتن",
+     "60 نيوتن",
+     "10 نيوتن"
+    ],
+    "correctIndex": 3,
+    "explanation": "Since the Moon's gravity is about one-sixth of Earth's, you divide 60 by 6 to get 10 Newtons.",
+    "explanationAr": "بما أن جاذبية القمر تساوي سدس جاذبية الأرض تقريبًا، فإننا نقسم 60 على 6 لنحصل على 10 نيوتن."
+   },
+   {
+    "questionText": "Why would an astronaut weigh less on Mars than on Earth?",
+    "questionTextAr": "لماذا يكون وزن رائد الفضاء على المريخ أقل من وزنه على الأرض؟",
+    "choices": [
+     "Because Mars has a weaker gravity than Earth",
+     "Because Mars has no atmosphere",
+     "Because Mars rotates faster than Earth",
+     "Because Mars is farther from the Sun"
+    ],
+    "choicesAr": [
+     "لأن جاذبية المريخ أضعف من جاذبية الأرض",
+     "لأن المريخ ليس له غلاف جوي",
+     "لأن المريخ يدور أسرع من الأرض",
+     "لأن المريخ أبعد عن الشمس"
+    ],
+    "correctIndex": 0,
+    "explanation": "Weight depends on gravity, and Mars has less mass and weaker gravity than Earth.",
+    "explanationAr": "الوزن يعتمد على الجاذبية، وكتلة المريخ أقل وجاذبيته أضعف من الأرض."
+   }
+  ],
+  "39": [
+   {
+    "questionText": "What is the distance between the points (-4, 3) and (2, 3) on a horizontal line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-4, 3) و (2, 3) على خط أفقي؟",
+    "choices": [
+     "2",
+     "4",
+     "6",
+     "8"
+    ],
+    "choicesAr": [
+     "2",
+     "4",
+     "6",
+     "8"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates because they are in different quadrants: |-4| + |2| = 4 + 2 = 6.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجمع القيمتين المطلقتين للإحداثيين السينيين لأنهما في ربعين مختلفين: |-4| + |2| = 4 + 2 = 6."
+   },
+   {
+    "questionText": "What is the distance between the points (-3, -2) and (-3, 4) on a vertical line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-3, -2) و (-3, 4) على خط رأسي؟",
+    "choices": [
+     "2",
+     "4",
+     "6",
+     "7"
+    ],
+    "choicesAr": [
+     "2",
+     "4",
+     "6",
+     "7"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the x-coordinates are the same, we add the absolute values of the y-coordinates in different parts of the axis: |-2| + |4| = 2 + 4 = 6.",
+    "explanationAr": "بما أن الإحداثيين السينيين متساويان، نجمع القيمتين المطلقتين للإحداثيين الصاديين في جهتين مختلفتين من المحور: |-2| + |4| = 2 + 4 = 6."
+   },
+   {
+    "questionText": "Which point is located 5 units below the point (2, 4)?",
+    "questionTextAr": "ما النقطة التي تقع على بعد 5 وحدات أسفل النقطة (2, 4)؟",
+    "choices": [
+     "(2, 9)",
+     "(2, -1)",
+     "(-3, 4)",
+     "(7, 4)"
+    ],
+    "choicesAr": [
+     "(2, 9)",
+     "(2, -1)",
+     "(-3, 4)",
+     "(7, 4)"
+    ],
+    "correctIndex": 1,
+    "explanation": "To move down, we subtract 5 from the y-coordinate: 4 - 5 = -1, so the new point is (2, -1).",
+    "explanationAr": "للتحرك إلى الأسفل، نطرح 5 من الإحداثي الصادي: 4 - 5 = -1، إذن النقطة الجديدة هي (2, -1)."
+   },
+   {
+    "questionText": "What is the distance between the decimal coordinate points (-1.5, 2) and (2.5, 2)?",
+    "questionTextAr": "ما المسافة بين نقطتي الإحداثيين العشريين (-1.5, 2) و (2.5, 2)؟",
+    "choices": [
+     "1.0",
+     "2.0",
+     "3.5",
+     "4.0"
+    ],
+    "choicesAr": [
+     "1.0",
+     "2.0",
+     "3.5",
+     "4.0"
+    ],
+    "correctIndex": 3,
+    "explanation": "Since the y-coordinates are equal, we add the absolute values of the x-coordinates because they lie in different quadrants: |-1.5| + |2.5| = 1.5 + 2.5 = 4.0.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجمع القيم المطلقة للإحداثيين السينيين لأنهما يقعان في ربعين مختلفين: |-1.5| + |2.5| = 1.5 + 2.5 = 4.0."
+   }
+  ],
+  "40": [
+   {
+    "questionText": "What does a frequency table show?",
+    "questionTextAr": "ماذا يبيّن الجدول التكراري؟",
+    "choices": [
+     "The number of times each value or interval occurs",
+     "Only the mean of the data",
+     "Just the names of the items",
+     "Only the order of numbers"
+    ],
+    "choicesAr": [
+     "عدد مرات حدوث كل قيمة أو فترة",
+     "الوسط الحسابي للبيانات فقط",
+     "أسماء العناصر فقط",
+     "ترتيب الأرقام فقط"
+    ],
+    "correctIndex": 0,
+    "explanation": "A frequency table is used to show how often each data value or interval occurs.",
+    "explanationAr": "يُستعمل الجدول التكراري لبيان عدد مرات حدوث كل قيمة أو فترة من البيانات."
+   },
+   {
+    "questionText": "Which mixture can be successfully separated using the filtration process?",
+    "questionTextAr": "أي من المخاليط التالية يمكن فصله بنجاح باستخدام عملية الترشيح؟",
+    "choices": [
+     "Dissolved salt and water",
+     "Dissolved sugar and water",
+     "Sand and water",
+     "Two mixed gases"
+    ],
+    "choicesAr": [
+     "الملح الذائب والماء",
+     "السكر الذائب والماء",
+     "الرمل والماء",
+     "غازان ممزوجان"
+    ],
+    "correctIndex": 2,
+    "explanation": "Filtration is used to separate insoluble solid materials, like sand, from liquids because the solid particles are too large to pass through the filter paper.",
+    "explanationAr": "تستخدم عملية الترشيح لفصل المواد الصلبة غير القابلة للذوبان، مثل الرمل، عن السوائل لأن جزيئات المادة الصلبة أكبر من أن تمر عبر ورق الترشيح."
+   },
+   {
+    "questionText": "What should the intervals in a histogram be?",
+    "questionTextAr": "كيف يجب أن تكون الفترات في المدرج التكراري؟",
+    "choices": [
+     "Different in length",
+     "Equal in length",
+     "Overlapping each other",
+     "Randomly chosen"
+    ],
+    "choicesAr": [
+     "مختلفة في الطول",
+     "متساوية في الطول",
+     "متداخلة مع بعضها",
+     "عشوائية الاختيار"
+    ],
+    "correctIndex": 1,
+    "explanation": "Intervals in a histogram must always be equal in length to display the numerical data accurately.",
+    "explanationAr": "يجب أن تكون الفترات في المدرج التكراري متساوية في الطول لعرض البيانات العددية بشكل دقيق وصحيح."
+   },
+   {
+    "questionText": "What is the name of the liquid that passes completely through the filter paper during filtration?",
+    "questionTextAr": "ما اسم السائل الذي يمر تماماً عبر ورق الترشيح أثناء عملية الترشيح؟",
+    "choices": [
+     "The solute",
+     "The filtrate",
+     "The residue",
+     "The condensate"
+    ],
+    "choicesAr": [
+     "المذاب",
+     "الراشح",
+     "الراسب",
+     "المكثف"
+    ],
+    "correctIndex": 1,
+    "explanation": "The liquid that passes through the filter paper is called the filtrate, while the solid left behind is called the residue.",
+    "explanationAr": "السائل الذي يمر عبر ورق الترشيح يُسمى الراشح، بينما المادة الصلبة التي تبقى على الورقة تُسمى الراسب."
+   },
+   {
+    "questionText": "Given a frequency table with intervals: 0–4 (count: 3), 5–9 (count: 7), 10–14 (count: 5). What is the total number of data values?",
+    "questionTextAr": "إذا كان لديك جدول تكراري بالفترات الآتية: 0–4 (التكرار 3)، 5–9 (التكرار 7)، 10–14 (التكرار 5). فما هو عدد البيانات الكلي؟",
+    "choices": [
+     "12",
+     "14",
+     "15",
+     "3"
+    ],
+    "choicesAr": [
+     "12",
+     "14",
+     "15",
+     "3"
+    ],
+    "correctIndex": 2,
+    "explanation": "To find the total number of data values, add all the frequencies together: 3 + 7 + 5 = 15.",
+    "explanationAr": "لإيجاد عدد البيانات الكلي، نقوم بجمع جميع التكرارات معاً: 3 + 7 + 5 = 15."
+   },
+   {
+    "questionText": "Which organs in the human body act as natural filters to clean the blood?",
+    "questionTextAr": "ما هي الأعضاء في جسم الإنسان التي تعمل كمرشحات طبيعية لتنقية الدم؟",
+    "choices": [
+     "The lungs",
+     "The heart",
+     "The kidneys",
+     "The stomach"
+    ],
+    "choicesAr": [
+     "الرئتان",
+     "القلب",
+     "الكليتان",
+     "المعدة"
+    ],
+    "correctIndex": 2,
+    "explanation": "The kidneys are vital organs in the human body that filter waste products and extra water from the blood.",
+    "explanationAr": "الكليتان هما عضوان حيويان في جسم الإنسان تقومان بترشيح الفضلات والماء الزائد من الدم."
+   }
+  ],
+  "41": [
+   {
+    "questionText": "What is the distance between the points (2, 3) and (7, 3) on a horizontal line?",
+    "questionTextAr": "ما المسافة بين النقطتين (2, 3) و (7, 3) على خط أفقي؟",
+    "choices": [
+     "3 units",
+     "5 units",
+     "7 units",
+     "9 units"
+    ],
+    "choicesAr": [
+     "3 وحدات",
+     "5 وحدات",
+     "7 وحدات",
+     "9 وحدات"
+    ],
+    "correctIndex": 1,
+    "explanation": "Since the y-coordinates are the same, we subtract the x-coordinates: 7 - 2 = 5 units.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نطرح الإحداثيين السينيين: 7 - 2 = 5 وحدات."
+   },
+   {
+    "questionText": "What is the distance between the points (-4, 1) and (-4, 6) on a vertical line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-4, 1) و (-4, 6) على خط رأسي؟",
+    "choices": [
+     "2 units",
+     "4 units",
+     "5 units",
+     "10 units"
+    ],
+    "choicesAr": [
+     "وحدتان",
+     "4 وحدات",
+     "5 وحدات",
+     "10 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the x-coordinates are the same, we subtract the y-coordinates: 6 - 1 = 5 units.",
+    "explanationAr": "بما أن الإحداثيين السينيين متساويان، نطرح الإحداثيين الصاديين: 6 - 1 = 5 وحدات."
+   },
+   {
+    "questionText": "To find the distance between two points located in different quadrants on a horizontal line, what do we do with their coordinates?",
+    "questionTextAr": "لإيجاد المسافة بين نقطتين في ربعين مختلفين على خط أفقي، ماذا نفعل بإحداثييهما؟",
+    "choices": [
+     "Add the absolute values of their x-coordinates",
+     "Subtract the x-coordinates",
+     "Multiply the coordinates",
+     "Divide the coordinates"
+    ],
+    "choicesAr": [
+     "نجمع القيم المطلقة للإحداثيين السينيين",
+     "نطرح الإحداثيين السينيين",
+     "نضرب الإحداثيين",
+     "نقسم الإحداثيين"
+    ],
+    "correctIndex": 0,
+    "explanation": "When points are in different quadrants across the y-axis, we add the absolute values of their x-coordinates to find the total distance.",
+    "explanationAr": "عندما تقع النقاط في ربعين مختلفين عبر محور الصادات، نجمع القيم المطلقة للإحداثيين السينيين لإيجاد المسافة الكلية."
+   },
+   {
+    "questionText": "What is the distance between the points (-3.5, 2) and (1.5, 2)?",
+    "questionTextAr": "ما المسافة بين النقطتين (-3.5, 2) و (1.5, 2)؟",
+    "choices": [
+     "2 units",
+     "4 units",
+     "5 units",
+     "6 units"
+    ],
+    "choicesAr": [
+     "وحدتان",
+     "4 وحدات",
+     "5 وحدات",
+     "6 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we find the distance by adding the absolute values from zero: |-3.5| + |1.5| = 3.5 + 1.5 = 5 units.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجد المسافة بجمع القيمتين المطلقتين من الصفر: |-3.5| + |1.5| = 3.5 + 1.5 = 5 وحدات."
+   }
+  ],
+  "42": [
+   {
+    "questionText": "What is the very first stage in the life cycle of a flowering plant?",
+    "questionTextAr": "ما هي المرحلة الأولى في دورة حياة النبات الزهري؟",
+    "choices": [
+     "Germination",
+     "Pollination",
+     "Seed dispersal",
+     "Fertilization"
+    ],
+    "choicesAr": [
+     "الإنبات",
+     "التلقيح",
+     "انتشار البذور",
+     "الإخصاب"
+    ],
+    "correctIndex": 0,
+    "explanation": "The life cycle of a flowering plant begins with germination, which is when the seed starts to grow.",
+    "explanationAr": "تبدأ دورة حياة النبات الزهري بمرحلة الإنبات، وهي المرحلة التي تبدأ فيها البذرة بالنمو."
+   },
+   {
+    "questionText": "What conditions are needed for a seed to germinate successfully?",
+    "questionTextAr": "ما العوامل التي تحتاجها البذرة لكي تنبت بنجاح؟",
+    "choices": [
+     "Water, warmth, and air",
+     "Sunlight only",
+     "Extreme cold and dry soil",
+     "Darkness and heavy rocks"
+    ],
+    "choicesAr": [
+     "الماء والدفء والهواء",
+     "الضوء فقط",
+     "البرودة الشديدة والتربة الجافة",
+     "الظلام والصخور الثقيلة"
+    ],
+    "correctIndex": 0,
+    "explanation": "Seeds need water, warmth, and air to start the germination process.",
+    "explanationAr": "تحتاج البذور إلى الماء والدفء والهواء لتبدأ عملية الإنبات."
+   },
+   {
+    "questionText": "What does pollination refer to in flowering plants?",
+    "questionTextAr": "إلى ماذا تشير عملية التلقيح في النباتات الزهرية؟",
+    "choices": [
+     "The falling of fruit from the tree",
+     "The transfer of pollen from the anther to the stigma",
+     "The growth of the root from the seed",
+     "The scattering of seeds by the wind"
+    ],
+    "choicesAr": [
+     "سقطوط الثمرة من الشجرة",
+     "انتقال حبوب اللقاح من المئبر إلى الميسم",
+     "نمو الجذر من البذرة",
+     "تطاير البذور بفعل الرياح"
+    ],
+    "correctIndex": 1,
+    "explanation": "Pollination is the transfer of pollen grains from the male part (anther) to the female part (stigma) of the flower.",
+    "explanationAr": "التلقيح هو عملية انتقال حبوب اللقاح من الجزء الذكري (المئبر) إلى الجزء الأنثوي (الميسم) في الزهرة."
+   },
+   {
+    "questionText": "After fertilization takes place in a flower, what does the ovary develop into?",
+    "questionTextAr": "بعد حدوث الإخصاب في الزهرة، إلى ماذا يتحول المبيض؟",
+    "choices": [
+     "A new root",
+     "A green leaf",
+     "A fruit containing seeds",
+     "A fresh stem"
+    ],
+    "choicesAr": [
+     "جذر جديد",
+     "ورقة خضراء",
+     "ثمرة تحتوي على بذور",
+     "ساق جديدة"
+    ],
+    "correctIndex": 2,
+    "explanation": "Once fertilization happens, the flower's ovary swells and turns into a fruit that protects the seeds inside.",
+    "explanationAr": "بمجرد حدوث الإخصاب، يتضخم المبيض في الزهرة ويتحول إلى ثمرة تحمي البذور بداخلها."
+   }
+  ],
+  "43": [
+   {
+    "questionText": "What is the distance between the points (-4, 3) and (2, 3) on a horizontal line in the coordinate plane?",
+    "questionTextAr": "ما هي المسافة بين النقطتين (-4, 3) و (2, 3) على خط أفقي في المستوى الإحداثي؟",
+    "choices": [
+     "2 units",
+     "4 units",
+     "6 units",
+     "8 units"
+    ],
+    "choicesAr": [
+     "وحدتان",
+     "4 وحدات",
+     "6 وحدات",
+     "8 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates because the points are in different quadrants: |-4| + |2| = 4 + 2 = 6.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، فإننا نجمع القيم المطلقة للإحداثيين السينيين لأن النقطتين في ربعين مختلفين: |-4| + |2| = 4 + 2 = 6."
+   },
+   {
+    "questionText": "Find the distance between the points (1, -2) and (1, 5) on a vertical line.",
+    "questionTextAr": "أوجد المسافة بين النقطتين (1, -2) و (1, 5) على خط رأسي.",
+    "choices": [
+     "3 units",
+     "5 units",
+     "7 units",
+     "9 units"
+    ],
+    "choicesAr": [
+     "3 وحدات",
+     "5 وحدات",
+     "7 وحدات",
+     "9 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the x-coordinates are the same, we add the absolute values of the y-coordinates in different parts of the axis: |-2| + |5| = 2 + 5 = 7.",
+    "explanationAr": "بما أن الإحداثيين السينيين متساويان، فإننا نجمع القيم المطلقة للإحداثيين الصاديين في جزأين مختلفين من المحور: |-2| + |5| = 2 + 5 = 7."
+   },
+   {
+    "questionText": "What is the distance between the points (-5, -4) and (-2, -4)?",
+    "questionTextAr": "ما هي المسافة بين النقطتين (-5, -4) و (-2, -4)؟",
+    "choices": [
+     "3 units",
+     "5 units",
+     "7 units",
+     "2 units"
+    ],
+    "choicesAr": [
+     "3 وحدات",
+     "5 وحدات",
+     "7 وحدات",
+     "وحدتان"
+    ],
+    "correctIndex": 0,
+    "explanation": "Since the points lie on the same horizontal line with the same y-coordinate, and both are in the same quadrant, we subtract their absolute values: |-2| - |-5| or simply count the units from -5 to -2, which is 3 units.",
+    "explanationAr": "بما أن النقطتين تقعان على نفس الخط الأفقي ولهم نفس الإحداثي الصادي وتقعان في نفس الربع، فإننا نطرح قيمتيهما المطلقتين أو نعد الوحدات من -5 إلى -2 لتكون النتيجة 3 وحدات."
+   },
+   {
+    "questionText": "Find the distance between the decimal coordinates (-1.5, 4) and (2.5, 4).",
+    "questionTextAr": "أوجد المسافة بين الإحداثيين العشريين (-1.5, 4) و (2.5, 4).",
+    "choices": [
+     "1 unit",
+     "3 units",
+     "4 units",
+     "5 units"
+    ],
+    "choicesAr": [
+     "وحدة واحدة",
+     "3 وحدات",
+     "4 وحدات",
+     "5 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates because they are in different quadrants: |-1.5| + |2.5| = 1.5 + 2.5 = 4 units.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، فإننا نجمع القيم المطلقة للإحداثيين السينيين لأنهما في ربعين مختلفين: |-1.5| + |2.5| = 1.5 + 2.5 = 4 وحدات."
+   }
+  ],
+  "44": [
+   {
+    "questionText": "What is the center of our solar system?",
+    "questionTextAr": "ما الذي يقع في مركز نظامنا الشمسي؟",
+    "choices": [
+     "The Earth",
+     "The Sun",
+     "The Moon",
+     "Jupiter"
+    ],
+    "choicesAr": [
+     "الأرض",
+     "الشمس",
+     "القمر",
+     "المشتري"
+    ],
+    "correctIndex": 1,
+    "explanation": "The Sun is the giant star located at the very center of our solar system, and all planets revolve around it.",
+    "explanationAr": "الشمس هي النجم العملاق الذي يقع في مركز نظامنا الشمسي، وتدور حولها جميع الكواكب."
+   },
+   {
+    "questionText": "How many planets are officially recognized in our solar system?",
+    "questionTextAr": "ما عدد الكواكب المعروفة في نظامنا الشمسي؟",
+    "choices": [
+     "7 planets",
+     "9 planets",
+     "8 planets",
+     "10 planets"
+    ],
+    "choicesAr": [
+     "7 كواكب",
+     "9 كواكب",
+     "8 كواكب",
+     "10 كواكب"
+    ],
+    "correctIndex": 2,
+    "explanation": "There are 8 planets in our solar system, starting with Mercury and ending with Neptune.",
+    "explanationAr": "يوجد 8 كواكب في نظامنا الشمسي، تبدأ بكوكب عطارد وتنتهي بكوكب نبتون."
+   },
+   {
+    "questionText": "Which of the following planets is known for having very clear and bright rings?",
+    "questionTextAr": "أي من الكواكب التالية يُعرف بحلقاته الواضحة واللامعة؟",
+    "choices": [
+     "Mercury",
+     "Mars",
+     "Earth",
+     "Saturn"
+    ],
+    "choicesAr": [
+     "عطارد",
+     "المريخ",
+     "الأرض",
+     "زحل"
+    ],
+    "correctIndex": 3,
+    "explanation": "Saturn is famous for its magnificent rings made mostly of ice and rocky pieces.",
+    "explanationAr": "يُعرف كوكب زحل بحلقاته الرائعة المكونة بشكل أساسي من الجليد والقطع الصخرية."
+   },
+   {
+    "questionText": "Which group of planets are known as the inner rocky planets?",
+    "questionTextAr": "أي مجموعة من الكواكب تُعرف بالكواكب الصخرية الداخلية؟",
+    "choices": [
+     "Mercury, Venus, Earth, and Mars",
+     "Jupiter, Saturn, Uranus, and Neptune",
+     "Earth, Jupiter, Saturn, and Mars",
+     "Mercury, Venus, Saturn, and Neptune"
+    ],
+    "choicesAr": [
+     "عطارد والزهرة والأرض والمريخ",
+     "المشتري وزحل وأورانوس ونبتون",
+     "الأرض والمشتري وزحل والمريخ",
+     "عطارد والزهرة وزحل ونبتون"
+    ],
+    "correctIndex": 0,
+    "explanation": "The four planets closest to the Sun (Mercury, Venus, Earth, and Mars) have solid, rocky surfaces.",
+    "explanationAr": "الكواكب الأربعة القريبة من الشمس (عطارد، والزهرة، والأرض، والمريخ) لها أسطح صلبة وصخرية."
+   }
+  ],
+  "45": [
+   {
+    "questionText": "What does a ratio compare?",
+    "questionTextAr": "على ماذا تقارن النسبة؟",
+    "choices": [
+     "Comparing two quantities using division",
+     "Counting only one single object",
+     "Adding three different numbers",
+     "Measuring negative numbers only"
+    ],
+    "choicesAr": [
+     "المقارنة بين كميتين باستعمال القسمة",
+     "عد جسم واحد فقط",
+     "جمع ثلاثة أعداد مختلفة",
+     "قياس الأعداد السالبة فقط"
+    ],
+    "correctIndex": 0,
+    "explanation": "A ratio is a comparison of two quantities by division.",
+    "explanationAr": "النسبة هي مقارنة بين كميتين باستعمال القسمة."
+   },
+   {
+    "questionText": "What is the very first stage in the life cycle of a flowering plant?",
+    "questionTextAr": "ما هي المرحلة الأولى تماماً في دورة حياة النبات الزهري؟",
+    "choices": [
+     "Pollination",
+     "Germination",
+     "Seed dispersal",
+     "Fertilization"
+    ],
+    "choicesAr": [
+     "التلقيح",
+     "الإنبات",
+     "انتشار البذور",
+     "الإخصاب"
+    ],
+    "correctIndex": 1,
+    "explanation": "Germination is the process where the seed starts to grow into a new plant, making it the first stage of the life cycle.",
+    "explanationAr": "الإنبات هو العملية التي تبدأ فيها البذرة بالنمو لتصبح نباتاً جديداً، مما يجعله المرحلة الأولى في دورة الحياة."
+   },
+   {
+    "questionText": "If a basket has 3 apples and 5 oranges, what is the ratio of oranges to apples?",
+    "questionTextAr": "إذا كان في سلة 3 تفاحات و 5 برتقالات، فما هي نسبة البرتقال إلى التفاح؟",
+    "choices": [
+     "3 : 5",
+     "5 : 3",
+     "3 : 8",
+     "5 : 8"
+    ],
+    "choicesAr": [
+     "3 : 5",
+     "5 : 3",
+     "3 : 8",
+     "5 : 8"
+    ],
+    "correctIndex": 1,
+    "explanation": "The order matters in ratios; since oranges come first and there are 5, and apples are 3, the ratio is 5 to 3.",
+    "explanationAr": "الترتيب مهم في النسب؛ وبما أن البرتقال جاء أولاً وعدده 5، والتفاح 3، فتكون النسبة 5 إلى 3."
+   },
+   {
+    "questionText": "What do seeds generally need in order to begin germination?",
+    "questionTextAr": "ما الذي تحتاجه البذور عموماً لكي تبدأ عملية الإنبات؟",
+    "choices": [
+     "Water, warmth, and air",
+     "Bright sunlight only",
+     "Very cold temperatures only",
+     "Soil and darkness only"
+    ],
+    "choicesAr": [
+     "الماء والدفء والهواء",
+     "ضوء الشمس الساطع فقط",
+     "درجات الحرارة شديدة البرودة فقط",
+     "التربة والظلام فقط"
+    ],
+    "correctIndex": 0,
+    "explanation": "Seeds need water to soften the seed coat, warmth to trigger growth, and air to breathe as they start to sprout.",
+    "explanationAr": "تحتاج البذور إلى الماء لتليين غلاف البذرة، والدفء لتحفيز النمو، والهواء للتنفس عندما تبدأ في الإنبات."
+   },
+   {
+    "questionText": "A chef mixes 2 cups of rice with 4 cups of water. What is the ratio of water to rice?",
+    "questionTextAr": "يخلط طاهٍ 2 كوب أرز مع 4 أكواب ماء. ما هي نسبة الماء إلى الأرز؟",
+    "choices": [
+     "2 : 4",
+     "2 : 6",
+     "4 : 2",
+     "4 : 6"
+    ],
+    "choicesAr": [
+     "2 : 4",
+     "2 : 6",
+     "4 : 2",
+     "4 : 6"
+    ],
+    "correctIndex": 2,
+    "explanation": "Water is mentioned first with 4 cups, and rice is second with 2 cups, so the ratio is 4 : 2.",
+    "explanationAr": "تم ذكر الماء أولاً بـ 4 أكواب، والأرز ثانياً بـ 2 كوب، إذن النسبة هي 4 : 2."
+   },
+   {
+    "questionText": "What does the ovary of a flower turn into after fertilization takes place?",
+    "questionTextAr": "إلى ماذا يتحول مبيض الزهرة بعد حدوث عملية الإخصاب؟",
+    "choices": [
+     "A root",
+     "A leaf",
+     "A fruit",
+     "A stem"
+    ],
+    "choicesAr": [
+     "جذر",
+     "ورقة",
+     "ثمرة",
+     "ساق"
+    ],
+    "correctIndex": 2,
+    "explanation": "After fertilization, the flower's ovary swells and develops into a fruit that protects the growing seeds inside.",
+    "explanationAr": "بعد الإخصاب، يتضخم مبيض الزهرة ويتطور إلى ثمرة تحمي بداخلها البذور النامية."
+   }
+  ],
+  "46": [
+   {
+    "questionText": "What do we call the different shapes that the Moon appears to have when we look at it from Earth?",
+    "questionTextAr": "ماذا نسمي الأشكال المختلفة التي يبدو بها القمر عندما نراه من الأرض؟",
+    "choices": [
+     "Planet rings",
+     "Moon phases",
+     "Lunar eclipses",
+     "Moon shadows"
+    ],
+    "choicesAr": [
+     "حلقات الكواكب",
+     "أطوار القمر",
+     "الخسوف القمري",
+     "ظلال القمر"
+    ],
+    "correctIndex": 1,
+    "explanation": "The changing shapes of the Moon as seen from Earth are called Moon phases.",
+    "explanationAr": "الأشكال المتغيرة للقمر كما نراها من الأرض تسمى أطوار القمر."
+   },
+   {
+    "questionText": "During which phase of the Moon do we not see the Moon at all from Earth?",
+    "questionTextAr": "في أي طور من أطوار القمر لا نرى القمر تماماً من الأرض؟",
+    "choices": [
+     "Full Moon",
+     "New Moon (Muhaq)",
+     "First Quarter",
+     "Waxing Gibbous"
+    ],
+    "choicesAr": [
+     "البدر",
+     "المحاق (القمر الجديد)",
+     "التربيع الأول",
+     "الأحدب المتزايد"
+    ],
+    "correctIndex": 1,
+    "explanation": "During the New Moon phase, the lighted side of the Moon faces away from Earth, so it looks completely dark.",
+    "explanationAr": "خلال طور المحاق، يكون الجانب المضاء من القمر بعيداً عن الأرض، لذلك يبدو مظلماً تماماً."
+   },
+   {
+    "questionText": "About how long does it take for the Moon to go through its complete cycle of phases?",
+    "questionTextAr": "حوالي كم يستغرق القمر ليمر بدورته الكاملة من الأطوار؟",
+    "choices": [
+     "About 7 days",
+     "About 15 days",
+     "About 29.5 days",
+     "About 365 days"
+    ],
+    "choicesAr": [
+     "حوالي 7 أيام",
+     "حوالي 15 يوماً",
+     "حوالي 29.5 يوماً",
+     "حوالي 365 يوماً"
+    ],
+    "correctIndex": 2,
+    "explanation": "The Moon completes its full cycle of phases in approximately 29.5 days.",
+    "explanationAr": "يكمل القمر دورته الكاملة من الأطوار في حوالي 29.5 يوماً."
+   },
+   {
+    "questionText": "What is the correct order of the first few Moon phases starting right after the New Moon?",
+    "questionTextAr": "ما هو الترتيب الصحيح لأول أطوار القمر بدءاً مباشرة بعد المحاق؟",
+    "choices": [
+     "New Moon -> Crescent -> First Quarter -> Gibbous -> Full Moon",
+     "Full Moon -> Crescent -> New Moon",
+     "First Quarter -> New Moon -> Full Moon",
+     "Full Moon -> New Moon -> Crescent"
+    ],
+    "choicesAr": [
+     "محاق -> هلال -> تربيع أول -> أحدب -> بدر",
+     "بدر -> هلال -> محاق",
+     "تربيع -> محاق -> بدر",
+     "بدر -> محاق -> هلال"
+    ],
+    "correctIndex": 0,
+    "explanation": "The Moon begins as a New Moon, then we see a Crescent, followed by the First Quarter, Gibbous, and finally the Full Moon.",
+    "explanationAr": "يبدأ القمر كمحاق، ثم نرى الهلال، يليه التربيع الأول، ثم الأحدب، وأخيراً البدر."
+   }
+  ],
+  "47": [
+   {
+    "questionText": "What is the distance between the points (-4, 3) and (2, 3) on a horizontal line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-4, 3) و (2, 3) على خط أفقي؟",
+    "choices": [
+     "2",
+     "4",
+     "6",
+     "8"
+    ],
+    "choicesAr": [
+     "2",
+     "4",
+     "6",
+     "8"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates because the points are in different quadrants: |-4| + |2| = 4 + 2 = 6.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجمع القيمتين المطلقتين للإحداثيين السينيين لأنهما في ربعين مختلفين: |-4| + |2| = 4 + 2 = 6."
+   },
+   {
+    "questionText": "Find the distance between the points (-3, -2) and (-3, 5) on a vertical line.",
+    "questionTextAr": "أوجد المسافة بين النقطتين (-3, -2) و (-3, 5) على خط رأسي.",
+    "choices": [
+     "3",
+     "5",
+     "7",
+     "8"
+    ],
+    "choicesAr": [
+     "3",
+     "5",
+     "7",
+     "8"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the x-coordinates are the same, we add the absolute values of the y-coordinates in different parts of the axis: |-2| + |5| = 2 + 5 = 7.",
+    "explanationAr": "بما أن الإحداثيين السينيين متساويان، نجمع القيمتين المطلقتين للإحداثيين الصاديين لأنهما في جزأين مختلفين من المحور: |-2| + |5| = 2 + 5 = 7."
+   },
+   {
+    "questionText": "What is the distance between the points (1.5, 4) and (-2.5, 4)?",
+    "questionTextAr": "ما المسافة بين النقطتين (1.5, 4) و (-2.5, 4)؟",
+    "choices": [
+     "1",
+     "3",
+     "4",
+     "5"
+    ],
+    "choicesAr": [
+     "1",
+     "3",
+     "4",
+     "5"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates in different signs: |1.5| + |-2.5| = 1.5 + 2.5 = 4.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجمع القيمتين المطلقتين للإحداثيين السينيين ذوي الإشارتين المختلفتين: |1.5| + |-2.5| = 1.5 + 2.5 = 4."
+   },
+   {
+    "questionText": "What point is located 5 units below the point (2, 3)?",
+    "questionTextAr": "ما النقطة التي تقع على بعد 5 وحدات أسفل النقطة (2, 3)؟",
+    "choices": [
+     "(2, 8)",
+     "(2, -2)",
+     "(-3, 3)",
+     "(7, 3)"
+    ],
+    "choicesAr": [
+     "(2, 8)",
+     "(2, -2)",
+     "(-3, 3)",
+     "(7, 3)"
+    ],
+    "correctIndex": 1,
+    "explanation": "To move down, we subtract 5 from the y-coordinate: 3 - 5 = -2, so the new point is (2, -2).",
+    "explanationAr": "للتحرك إلى الأسفل، نطرح 5 من الإحداثي الصادي: 3 - 5 = -2، إذن النقطة الجديدة هي (2, -2)."
+   }
+  ],
+  "48": [
+   {
+    "questionText": "What do we call the plants that humans grow specifically to obtain food?",
+    "questionTextAr": "ماذا نسمي النباتات التي يزرعها الإنسان خصيصاً للحصول على الغذاء؟",
+    "choices": [
+     "Wild plants",
+     "Food crops",
+     "Ornamental plants",
+     "Weeds"
+    ],
+    "choicesAr": [
+     "نباتات برية",
+     "محاصيل غذائية",
+     "نباتات للزينة",
+     "أعشاب ضارة"
+    ],
+    "correctIndex": 1,
+    "explanation": "Plants that are grown by humans to be eaten are known as food crops.",
+    "explanationAr": "النباتات التي يزرعها الإنسان ليتم تناولها تُعرف بالمحاصيل الغذائية."
+   },
+   {
+    "questionText": "Which part of the carrot plant do we usually eat?",
+    "questionTextAr": "أي جزء من نبات الجزر نأكله عادة؟",
+    "choices": [
+     "Leaf",
+     "Stem",
+     "Root",
+     "Flower"
+    ],
+    "choicesAr": [
+     "الورقة",
+     "الساق",
+     "الجذر",
+     "الزهرة"
+    ],
+    "correctIndex": 2,
+    "explanation": "The carrot is a root vegetable that grows underground and stores food for the plant.",
+    "explanationAr": "الجزر هو نبات جذري ينمو تحت الأرض ويخزن الغذاء للنبات."
+   },
+   {
+    "questionText": "Which of the following is considered one of the most widely grown and important crops in Qatar?",
+    "questionTextAr": "أي مما يلي يُعد من أكثر المحاصيل زراعة وأهمية في قطر؟",
+    "choices": [
+     "Apple trees",
+     "Date palms",
+     "Rice fields",
+     "Wheat only"
+    ],
+    "choicesAr": [
+     "أشجار التفاح",
+     "النخيل (التمور)",
+     "حقول الأرز",
+     "القمح فقط"
+    ],
+    "correctIndex": 1,
+    "explanation": "Date palm trees thrive in Qatar's environment and are a traditional and very important crop.",
+    "explanationAr": "تزدهر أشجار النخيل في بيئة قطر وهي محصول تقليدي ومهم للغاية."
+   },
+   {
+    "questionText": "What is hydroponics (soilless agriculture) best described as?",
+    "questionTextAr": "كيف يمكن وصف الزراعة المائية (بدون تربة) بشكل أفضل؟",
+    "choices": [
+     "Growing plants in pure darkness without light",
+     "Growing plants in nutrient-rich water solutions without soil",
+     "Growing plants in desert sand without any water",
+     "Growing plants inside normal garden soil only"
+    ],
+    "choicesAr": [
+     "زراعة النباتات في ظلام دامس بدون ضوء",
+     "زراعة النباتات في محاليل مائية مغذية دون تربة",
+     "زراعة النباتات في رمال الصحراء بدون أي ماء",
+     "زراعة النباتات داخل تربة الحديقة العادية فقط"
+    ],
+    "correctIndex": 1,
+    "explanation": "Hydroponics is a method of growing plants using mineral nutrient solutions in water, without soil.",
+    "explanationAr": "الزراعة المائية هي طريقة لزراعة النباتات باستخدام محاليل مغذية معدنية في الماء، بدون تربة."
+   }
+  ],
+  "49": [
+   {
+    "questionText": "What is the distance between the points (-4, 3) and (2, 3) on a horizontal line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-4, 3) و (2, 3) على خط أفقي؟",
+    "choices": [
+     "2 units",
+     "4 units",
+     "6 units",
+     "8 units"
+    ],
+    "choicesAr": [
+     "وحدتان",
+     "4 وحدات",
+     "6 وحدات",
+     "8 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates because the points are in different quadrants: |-4| + |2| = 4 + 2 = 6.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجمع القيمتين المطلقتين للإحداثيين السينيين لأنهما في ربعين مختلفين: |-4| + |2| = 4 + 2 = 6."
+   },
+   {
+    "questionText": "What is the distance between the points (-3, -2) and (-3, 5) on a vertical line?",
+    "questionTextAr": "ما المسافة بين النقطتين (-3, -2) و (-3, 5) على خط رأسي؟",
+    "choices": [
+     "3 units",
+     "5 units",
+     "7 units",
+     "8 units"
+    ],
+    "choicesAr": [
+     "3 وحدات",
+     "5 وحدات",
+     "7 وحدات",
+     "8 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the x-coordinates are the same, we find the distance by subtracting the y-coordinates or using absolute values in different regions: |-2| + |5| = 2 + 5 = 7.",
+    "explanationAr": "بما أن الإحداثيين السينيين متساويان، نجد المسافة بجمع القيمتين المطلقتين للإحداثيين الصاديين في جهتين مختلفتين من المحور س: |-2| + |5| = 2 + 5 = 7."
+   },
+   {
+    "questionText": "Which point is located 5 units below the point (2, 4)?",
+    "questionTextAr": "ما النقطة التي تقع على بعد 5 وحدات أسفل النقطة (2, 4)؟",
+    "choices": [
+     "(2, 9)",
+     "(7, 4)",
+     "(2, -1)",
+     "(-3, 4)"
+    ],
+    "choicesAr": [
+     "(2, 9)",
+     "(7, 4)",
+     "(2, -1)",
+     "(-3, 4)"
+    ],
+    "correctIndex": 2,
+    "explanation": "To move down, we subtract 5 from the y-coordinate: 4 - 5 = -1, so the new point is (2, -1).",
+    "explanationAr": "للتحرك إلى الأسفل، نطرح 5 من الإحداثي الصادي: 4 - 5 = -1، لذا النقطة الجديدة هي (2, -1)."
+   },
+   {
+    "questionText": "What is the distance between the points (-2.5, 4) and (1.5, 4)?",
+    "questionTextAr": "ما المسافة بين النقطتين (-2.5, 4) و (1.5, 4)؟",
+    "choices": [
+     "1 unit",
+     "3 units",
+     "4 units",
+     "5.5 units"
+    ],
+    "choicesAr": [
+     "وحدة واحدة",
+     "3 وحدات",
+     "4 وحدات",
+     "5.5 وحدات"
+    ],
+    "correctIndex": 2,
+    "explanation": "Since the y-coordinates are the same, we add the absolute values of the x-coordinates in different sides of the y-axis: |-2.5| + |1.5| = 2.5 + 1.5 = 4.",
+    "explanationAr": "بما أن الإحداثيين الصاديين متساويان، نجمع القيمتين المطلقتين للإحداثيين السينيين في جهتين مختلفتين من المحور ص: |-2.5| + |1.5| = 2.5 + 1.5 = 4."
+   }
+  ],
+  "50": [
+   {
+    "questionText": "What is 200% written as a decimal?",
+    "questionTextAr": "ما هي النسبة المئوية 200% مكتوبة على صورة كسر عشري؟",
+    "choices": [
+     "0.2",
+     "2",
+     "20",
+     "0.02"
+    ],
+    "choicesAr": [
+     "0.2",
+     "2",
+     "20",
+     "0.02"
+    ],
+    "correctIndex": 1,
+    "explanation": "To write a percent as a decimal, divide by 100, so 200 divided by 100 is 2.",
+    "explanationAr": "لكتابة نسبة مئوية على صورة كسر عشري، نقسم على 100، إذن 200 مقسومة على 100 تساوي 2."
+   },
+   {
+    "questionText": "What do we call the different shapes that the Moon appears to have when we look at it from Earth?",
+    "questionTextAr": "ماذا نسمي الأشكال المختلفة التي يبدو عليها القمر عندما نراه من الأرض؟",
+    "choices": [
+     "Planet moons",
+     "Moon phases",
+     "Moon sizes",
+     "Moon colors"
+    ],
+    "choicesAr": [
+     "أقمار الكواكب",
+     "أطوار القمر",
+     "أحجام القمر",
+     "ألوان القمر"
+    ],
+    "correctIndex": 1,
+    "explanation": "The changing shapes of the illuminated part of the Moon as seen from Earth are called Moon phases.",
+    "explanationAr": "تسمى الأشكال المتغيرة للجزء المضاء من القمر كما نراه من الأرض أطوار القمر."
+   },
+   {
+    "questionText": "Which of the following represents the decimal 3.6 as a percent?",
+    "questionTextAr": "أي مما يلي يمثل الكسر العشري 3.6 على صورة نسبة مئوية؟",
+    "choices": [
+     "36%",
+     "360%",
+     "3.6%",
+     "0.36%"
+    ],
+    "choicesAr": [
+     "36%",
+     "360%",
+     "3.6%",
+     "0.36%"
+    ],
+    "correctIndex": 1,
+    "explanation": "To change a decimal to a percent, multiply by 100, so 3.6 times 100 is 360%.",
+    "explanationAr": "لتحويل الكسر العشري إلى نسبة مئوية، نضرب في 100، إذن 3.6 ضرب 100 يساوي 360%."
+   },
+   {
+    "questionText": "About how many days does it take for the Moon to complete a full cycle of its phases?",
+    "questionTextAr": "حوالي كم يومًا يستغرق القمر لإكمال دورة كاملة من أطواره؟",
+    "choices": [
+     "7 days",
+     "14 days",
+     "29.5 days",
+     "365 days"
+    ],
+    "choicesAr": [
+     "7 أيام",
+     "14 يومًا",
+     "29.5 يومًا",
+     "365 يومًا"
+    ],
+    "correctIndex": 2,
+    "explanation": "The Moon completes its entire cycle of phases in approximately 29.5 days.",
+    "explanationAr": "يكمل القمر دورته الكاملة من الأطوار في تقريبًا 29.5 يومًا."
+   },
+   {
+    "questionText": "What is 0.005 written as a percent?",
+    "questionTextAr": "ما هو الكسر العشري 0.005 مكتوباً على صورة نسبة مئوية؟",
+    "choices": [
+     "0.5%",
+     "5%",
+     "0.05%",
+     "50%"
+    ],
+    "choicesAr": [
+     "0.5%",
+     "5%",
+     "0.05%",
+     "50%"
+    ],
+    "correctIndex": 0,
+    "explanation": "To convert a decimal to a percent, multiply by 100 by moving the decimal point two places to the right, which gives 0.5%.",
+    "explanationAr": "لتحويل كسر عشري إلى نسبة مئوية، نضرب في 100 بتحريك الفاصلة العشرية منزلتين إلى اليمين، مما يعطي 0.5%."
+   },
+   {
+    "questionText": "Which Moon phase comes right after the New Moon (Muhaq) as a thin curved shape?",
+    "questionTextAr": "ما طور القمر الذي يأتي مباشرة بعد المحاق على شكل منحني رفيع؟",
+    "choices": [
+     "Full Moon",
+     "Waxing Crescent",
+     "Third Quarter",
+     "Last Quarter"
+    ],
+    "choicesAr": [
+     "البدر",
+     "الهلال المتزايد",
+     "التربيع الأول",
+     "التربيع الأخير"
+    ],
+    "correctIndex": 1,
+    "explanation": "After the New Moon phase, a thin curved slice called the waxing crescent begins to appear.",
+    "explanationAr": "بعد طور المحاق، يبدأ جزء منحني رفيع يسمى الهلال المتزايد في الظهور."
+   }
+  ]
+ }
+}

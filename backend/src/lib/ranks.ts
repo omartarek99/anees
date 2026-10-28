@@ -1,4 +1,4 @@
-export type RankTierKey = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'emerald' | 'master';
+export type RankTierKey = 'normal' | 'bronze' | 'silver' | 'gold';
 
 type RankTierDef = {
   key: RankTierKey;
@@ -9,16 +9,14 @@ type RankTierDef = {
   colorDark: string;
 };
 
-// Ordered low to high. total_xp (boosted by quizzes, bosses, worksheets, and reel watch time)
-// determines a student's persistent rank tier, shown on the leaderboard and profile.
+// Ordered low to high. total_xp (boosted by quizzes, bosses, worksheets, and reel watch time) determines a student's persistent rank,
+// shown on the leaderboard and profile, and it is the same ladder as the points bar on the profile (frontend lib/medalLevels.ts) and
+// the tier certificates (lib/rankCertificates.ts): everyone starts at Normal, Bronze from 200 points, Silver from 1000, Gold from 2000.
 export const RANK_TIERS: RankTierDef[] = [
-  { key: 'bronze', minXp: 0, name: 'Bronze', nameAr: 'برونزي', color: '#c88355', colorDark: '#8a5a35' },
-  { key: 'silver', minXp: 300, name: 'Silver', nameAr: 'فضي', color: '#c8ccd4', colorDark: '#8b9099' },
-  { key: 'gold', minXp: 900, name: 'Gold', nameAr: 'ذهبي', color: '#f0c96a', colorDark: '#c9971f' },
-  { key: 'platinum', minXp: 2000, name: 'Platinum', nameAr: 'بلاتيني', color: '#7fd8cf', colorDark: '#379e93' },
-  { key: 'diamond', minXp: 4000, name: 'Diamond', nameAr: 'ماسي', color: '#7bb8f5', colorDark: '#2e6ec9' },
-  { key: 'emerald', minXp: 7000, name: 'Emerald', nameAr: 'زمردي', color: '#4fd399', colorDark: '#1f9e63' },
-  { key: 'master', minXp: 11000, name: 'Master', nameAr: 'أستاذ', color: '#c77df0', colorDark: '#8a2fc4' },
+  { key: 'normal', minXp: 0, name: 'Normal', nameAr: 'عادي', color: '#9aa3b0', colorDark: '#5f6875' },
+  { key: 'bronze', minXp: 200, name: 'Bronze', nameAr: 'برونزي', color: '#c88355', colorDark: '#8a5a35' },
+  { key: 'silver', minXp: 1000, name: 'Silver', nameAr: 'فضي', color: '#c8ccd4', colorDark: '#8b9099' },
+  { key: 'gold', minXp: 2000, name: 'Gold', nameAr: 'ذهبي', color: '#f0c96a', colorDark: '#c9971f' },
 ];
 
 function tierFor(tiers: RankTierDef[], points: number) {
@@ -45,10 +43,10 @@ export function getRankTier(totalXp: number) {
   return tierFor(RANK_TIERS, totalXp);
 }
 
-// Same 7-tier ladder, rescaled for teacher_points -- a teacher earns points 10-30 at a
+// Same 4-level ladder, rescaled for teacher_points -- a teacher earns points 10-30 at a
 // time (see lib/xp.ts), so the student ladder's thresholds (300 XP for Silver, etc.)
 // would be effectively unreachable. Same tier names/colors, smaller numbers.
-const TEACHER_MIN_XP = [0, 50, 150, 300, 600, 1000, 2000];
+const TEACHER_MIN_XP = [0, 100, 200, 400];
 export const TEACHER_RANK_TIERS: RankTierDef[] = RANK_TIERS.map((t, i) => ({ ...t, minXp: TEACHER_MIN_XP[i] }));
 
 export function getTeacherRankTier(teacherPoints: number) {

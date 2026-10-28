@@ -2,11 +2,13 @@ import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
-import { awardXp, getPlayerLevel, BOSS_DEFEAT_XP_BONUS, BOSS_PASS_RATIO } from '../lib/xp.js';
+import { awardXp, getPlayerLevel, getMapLevel, BOSS_DEFEAT_XP_BONUS, BOSS_PASS_RATIO } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
 import { getBattleStatus, recordBattleLoss } from '../lib/battle.js';
+import { registerLevelQuiz } from './mapQuiz.js';
 
 export const mapRouter = asyncRouter();
+registerLevelQuiz(mapRouter);
 
 mapRouter.get('/', (req, res) => {
   const levels = db
@@ -40,7 +42,7 @@ mapRouter.get('/', (req, res) => {
     };
   });
 
-  res.json({ levels: result, playerLevel: getPlayerLevel(req.userId!), battle: getBattleStatus(req.userId!) });
+  res.json({ levels: result, playerLevel: getMapLevel(req.userId!), battle: getBattleStatus(req.userId!) });
 });
 
 function loadLevelWithProgress(userId: number, levelNumber: number) {

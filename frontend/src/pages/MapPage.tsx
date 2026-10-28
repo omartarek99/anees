@@ -42,7 +42,7 @@ export function MapPage() {
     if (lvl.kind === 'boss') {
       setBossModalLevel(lvl.levelNumber);
     } else {
-      navigate(`/reels?level=${lvl.levelNumber}`);
+      navigate(`/map/level/${lvl.levelNumber}`);
     }
   }
 

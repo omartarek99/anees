@@ -3,6 +3,7 @@ import { m, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
+import { CertificatePlaque } from './CertificatePlaque';
 import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
 
 type Certificate = {
@@ -75,6 +76,8 @@ export function CertificateAwardPopup() {
   useEscapeToClose(dismiss, current !== null);
 
   const palette = current ? CERT_PALETTES[current.type] : null;
+  // A rank certificate (or one an admin sent without a picture) IS the tier plaque, so it is shown once, big.
+  const isPlaque = !!current && current.imageUrl.startsWith('/images/certificates/');
 
   return (
     <AnimatePresence>
@@ -108,16 +111,13 @@ export function CertificateAwardPopup() {
               ))}
             </div>
 
-            <div style={{ fontSize: 40 }} aria-hidden>
-              <span className="certificate-award-fire">🔥</span> 🎉{' '}
-              <span className="certificate-award-fire" style={{ animationDelay: '0.3s' }}>
-                🔥
-              </span>
+            <div className="certificate-award-plaque">
+              <CertificatePlaque tier={current.type} label={t(CERT_TYPE_LABEL_KEY[current.type])} width={isPlaque ? 250 : 160} />
             </div>
             <h2 className="certificate-award-heading">{t('certificateAward.title')}</h2>
             <p className="certificate-award-tier">{t(CERT_TYPE_LABEL_KEY[current.type])}</p>
 
-            <img src={current.imageUrl} alt={current.title} className="certificate-award-image" />
+            {!isPlaque && <img src={current.imageUrl} alt={current.title} className="certificate-award-image" />}
 
             <p className="certificate-award-name">{current.title}</p>
             {current.issuedByName && <p className="certificate-award-issuer">{t('profile.certificateFrom', { name: current.issuedByName })}</p>}

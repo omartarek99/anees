@@ -222,6 +222,11 @@ export function LandingPage() {
           <Link to="/terms">{t('legal.terms')}</Link>
           <Link to="/cookies">{t('legal.cookies')}</Link>
         </div>
+        <div className="landing-footer-col">
+          <h3>{t('landing.colContact')}</h3>
+          <span>{t('landing.contactLine')}</span>
+          <a href="mailto:info@anees-qa.site" dir="ltr">info@anees-qa.site</a>
+        </div>
         </div>
       </footer>
     </div>

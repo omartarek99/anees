@@ -1703,8 +1703,21 @@ button.list-row.selected {
   .printable-worksheet-portal {
     display: block !important;
   }
+  /* No page margin: the browser prints its own header (date/time, page title) and footer (the page address, page numbers) INSIDE the
+     page margin, so a zero margin leaves them nothing to print on. The white space around the sheet comes from the .pw-frame table
+     below instead -- its empty header and footer rows repeat on every printed page. */
   @page {
-    margin: 16mm 14mm;
+    margin: 0;
+  }
+  .pw-frame {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .pw-frame td {
+    padding: 0 14mm;
+  }
+  .pw-spacer {
+    height: 16mm;
   }
   /* Chrome's print dialog has its own "Background graphics" toggle, OFF by default -- with
      it off, every background-color/background-image on the page (the watermark tile, the
@@ -2629,6 +2642,44 @@ label,
   inline-size: min(100%, 300px);
   block-size: auto;
 }
+.story-3d {
+  position: relative;
+  inline-size: min(100%, 440px);
+  block-size: 340px;
+  margin-inline: auto;
+  border-radius: 18px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 62%, rgba(245, 184, 46, 0.2), transparent 68%);
+}
+.story-3d-final {
+  block-size: 390px;
+}
+.story-3d-wait {
+  display: grid;
+  place-items: center;
+}
+.story-3d canvas {
+  display: block;
+  cursor: grab;
+  touch-action: pan-y;
+}
+.story-3d-hint {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 8px;
+  margin: 0 !important;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff3c9;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.story-3d-hint.is-on {
+  opacity: 1;
+}
 .story-art-tall {
   inline-size: min(100%, 260px);
 }
@@ -2651,6 +2702,27 @@ label,
 }
 .riddle-q {
   font-weight: 700;
+}
+.riddle-3d {
+  inline-size: 100%;
+  block-size: 360px;
+  margin-bottom: 10px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 55%, rgba(245, 184, 46, 0.14), transparent 70%);
+}
+.riddle-3d canvas {
+  display: block;
+  cursor: grab;
+  touch-action: pan-y;
+}
+.riddle-tilt {
+  perspective: 900px;
+}
+.riddle-tilt .riddle-map {
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.15s ease-out;
+  filter: drop-shadow(0 14px 16px rgba(0, 0, 0, 0.45));
 }
 .riddle-map {
   max-block-size: 46vh;
@@ -2716,4 +2788,224 @@ label,
 .story-window p {
   margin: 0 0 18px;
   line-height: 1.7;
+}
+
+/* ---------------- Certificate plaques (CertificatePlaque.tsx) ---------------- */
+.cert-plaque-stage {
+  perspective: 900px;
+  margin: 0 auto 8px;
+}
+.cert-plaque {
+  --rx: 0deg;
+  --ry: 0deg;
+  --gx: 50%;
+  --gy: 30%;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.18s ease-out;
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.35);
+  animation: cert-plaque-float 5s ease-in-out infinite;
+  touch-action: none;
+  cursor: pointer;
+}
+.cert-plaque:hover {
+  animation-play-state: paused;
+}
+.cert-plaque img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  user-select: none;
+}
+.cert-plaque-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--gx) var(--gy), rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0) 55%);
+  mix-blend-mode: soft-light;
+}
+.cert-plaque-flat {
+  border-radius: 2px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+}
+.certificate-award-plaque {
+  margin: 4px 0 6px;
+}
+@keyframes cert-plaque-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cert-plaque { animation: none; transition: none; }
+}
+
+/* ---------------- Points levels bar on the profile (MedalLevelBar.tsx) ---------------- */
+.medal-level-pill {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 12px;
+  border-radius: 999px;
+  color: #14181f;
+  background: #c9ced6;
+}
+.medal-level-pill.medal-bronze { background: linear-gradient(135deg, #e6a15c, #c88355); }
+.medal-level-pill.medal-silver { background: linear-gradient(135deg, #f1f4f8, #c2c9d3); }
+.medal-level-pill.medal-gold { background: linear-gradient(135deg, #f8d36a, #e0a52a); color: #2e2000; }
+.medal-track-wrap {
+  position: relative;
+  direction: ltr; /* the bar always fills left to right */
+  margin: 4px 34px 0;
+  padding-top: 76px;
+  padding-bottom: 46px;
+}
+.medal-plaques {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 72px;
+}
+.medal-stop {
+  position: absolute;
+  top: 0;
+  width: max-content; /* the last one sits at the very end of the bar: without this it is squeezed to nothing */
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  opacity: 0.62;
+  filter: grayscale(0.55);
+  transition: opacity 0.3s, filter 0.3s, transform 0.3s;
+}
+.medal-stop img {
+  display: block;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+}
+.medal-stop b {
+  font-size: 11px;
+  line-height: 1;
+}
+.medal-stop.is-reached {
+  opacity: 1;
+  filter: none;
+  transform: translateX(-50%) translateY(-2px);
+}
+.medal-stop.is-reached img {
+  filter: drop-shadow(0 0 8px rgba(240, 180, 41, 0.85)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+}
+.medal-track {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--sand-dark);
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.medal-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #aab2bf 0%, #cd7f32 33.3%, #d5dbe3 66.6%, #f0b429 100%);
+  transition: clip-path 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.medal-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(0, 0, 0, 0.35);
+  transform: translateX(-1px);
+}
+.medal-knob {
+  position: absolute;
+  top: 72px;
+  width: 22px;
+  height: 22px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--maroon, #8a1538);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: inset-inline-start 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.medal-knob span {
+  position: absolute;
+  top: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.medal-start {
+  position: absolute;
+  left: 0;
+  bottom: 22px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+@media (prefers-reduced-motion: reduce) {
+  .medal-fill, .medal-knob, .medal-stop { transition: none; }
+}
+
+/* ---------------- Profile editing: pen icons and the + on the picture ---------------- */
+.pen-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-inline-start: 8px;
+  vertical-align: middle;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
+}
+.pen-btn:hover {
+  transform: scale(1.1);
+  background: color-mix(in srgb, currentColor 24%, transparent);
+}
+.avatar-edit-wrap {
+  position: relative;
+  display: inline-block;
+}
+.avatar-plus-wrap {
+  position: absolute;
+  /* on the top left of the 72px round picture, which is centred in this box (the button under it can be wider) */
+  top: -2px;
+  left: calc(50% - 48px);
+  z-index: 3;
+}
+.avatar-plus {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* a plain grey glass dot (no colour fill), clear enough to read over the picture */
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  background: rgba(40, 36, 50, 0.62);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: transform 0.15s, background 0.15s;
+}
+.avatar-plus:hover {
+  transform: scale(1.1);
+  background: rgba(40, 36, 50, 0.8);
 }

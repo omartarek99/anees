@@ -317,3 +317,46 @@ if (!certificateCols.some((c) => c.name === 'image_url')) {
 if (!certificateCols.some((c) => c.name === 'viewed_at')) {
   db.exec(`ALTER TABLE certificates ADD COLUMN viewed_at TEXT`);
 }
+
+// Rank certificates: the tier list gained 'silver' (bronze / silver / gold are the three certificates, platinum is kept for older rows).
+// SQLite cannot widen an existing CHECK, so a database that still has the old one gets the table rebuilt once -- same procedure as the
+// users rebuild above (foreign keys off for its duration, so DROP TABLE does not cascade through the recipients).
+const certificatesSql = (
+  db.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'certificates'`).get() as { sql: string }
+).sql;
+if (!certificatesSql.includes(`'silver'`)) {
+  const oldCols = (db.prepare(`PRAGMA table_info(certificates)`).all() as { name: string }[]).map((c) => c.name);
+  const keep = ['id', 'user_id', 'title', 'title_ar', 'message', 'message_ar', 'type', 'image_url', 'viewed_at', 'issued_by', 'created_at'].filter((c) =>
+    oldCols.includes(c)
+  );
+  db.exec('PRAGMA foreign_keys = OFF');
+  db.exec('BEGIN TRANSACTION');
+  try {
+    db.exec('DROP TABLE IF EXISTS certificates_new');
+    db.exec(`
+      CREATE TABLE certificates_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        title_ar TEXT NOT NULL DEFAULT '',
+        message TEXT NOT NULL DEFAULT '',
+        message_ar TEXT NOT NULL DEFAULT '',
+        type TEXT NOT NULL DEFAULT 'gold' CHECK (type IN ('bronze','silver','gold','platinum')),
+        image_url TEXT NOT NULL DEFAULT '',
+        viewed_at TEXT,
+        issued_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+    db.exec(`INSERT INTO certificates_new (${keep.join(', ')}) SELECT ${keep.join(', ')} FROM certificates`);
+    db.exec('DROP TABLE certificates');
+    db.exec('ALTER TABLE certificates_new RENAME TO certificates');
+    db.exec('CREATE INDEX IF NOT EXISTS idx_certificates_user ON certificates(user_id)');
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  } finally {
+    db.exec('PRAGMA foreign_keys = ON');
+  }
+}

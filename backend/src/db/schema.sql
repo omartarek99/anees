@@ -265,7 +265,7 @@ CREATE TABLE IF NOT EXISTS certificates (
   -- A category label (matching the palette lib/ranks.ts already uses for rank tiers) shown
   -- as a colored badge -- the certificate's actual visual is the admin-uploaded image
   -- below, not drawn from this.
-  type TEXT NOT NULL DEFAULT 'gold' CHECK (type IN ('bronze','gold','platinum')),
+  type TEXT NOT NULL DEFAULT 'gold' CHECK (type IN ('bronze','silver','gold','platinum')),
   -- The admin-supplied certificate image (Supabase Storage public URL) -- the certificate
   -- IS this image; nothing is drawn or overlaid on top of it.
   image_url TEXT NOT NULL DEFAULT '',

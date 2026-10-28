@@ -6,7 +6,6 @@ import { ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { AuthShell } from '../components/AuthShell';
-import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
 import { OtpVerifyForm } from '../components/OtpVerifyForm';
 import { TEACHER_SUBJECTS } from '../lib/teacherSubjects';
 
@@ -38,7 +37,7 @@ export function SignupPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [avatarKey, setAvatarKey] = useState('falcon');
+  const avatarKey = 'falcon'; // no hero picker at signup: everyone starts as the falcon and changes it later on the profile
   const [role, setRole] = useState<Role>('student');
   const [grade, setGrade] = useState('');
   const [schoolName, setSchoolName] = useState('');
@@ -182,43 +181,6 @@ export function SignupPage() {
             </button>
           </div>
         </div>
-
-        {/* The hero picker is student-only. Name + username come right after (both roles). */}
-        <AnimatePresence initial={false}>
-          {role === 'student' && (
-            <m.div
-              key="student-identity"
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="field">
-                <label>{t('auth.chooseHero')}</label>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  {AVATAR_OPTIONS.map((key) => {
-                    const chosen = avatarKey === key;
-                    return (
-                      <m.button
-                        type="button"
-                        key={key}
-                        onClick={() => setAvatarKey(key)}
-                        title={avatarLabel(key, lang)}
-                        className="avatar-choice"
-                        aria-pressed={chosen}
-                        whileTap={{ scale: 0.9 }}
-                        animate={{ scale: chosen ? 1.12 : 1 }}
-                        transition={{ type: 'spring', stiffness: 260, damping: 16 }}
-                      >
-                        <Avatar avatarKey={key} size={44} />
-                      </m.button>
-                    );
-                  })}
-                </div>
-              </div>
-            </m.div>
-          )}
-        </AnimatePresence>
 
         <div className="field">
           <label htmlFor="displayName">{t('auth.name')}</label>

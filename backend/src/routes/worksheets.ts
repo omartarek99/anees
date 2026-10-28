@@ -8,12 +8,16 @@ import { worksheetAiLimiter } from '../middleware/rateLimit.js';
 import { awardXp, awardTeacherPoints, TEACHER_PRINT_POINTS, WORKSHEET_XP_PER_CORRECT } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
 import { generateQuizQuestions } from '../lib/gemini.js';
+import { findBankMatch } from '../lib/questionBank.js';
 import { moderateContent } from '../lib/moderation.js';
 import { teacherReelQuestionSchema } from '../lib/schemas.js';
 
 export const worksheetsRouter = asyncRouter();
 
 const QUESTIONS_PER_WORKSHEET = 10;
+const MAX_QUESTIONS = 20;
+// One AI call writes at most this many questions; a bigger worksheet is several calls run side by side.
+const AI_CHUNK = 5;
 
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -36,6 +40,10 @@ const generateSchema = z
     // The lesson name (درس) typed for a general worksheet -- the AI writes new questions on
     // it each time. Without it, a general worksheet draws from the fixed seeded bank.
     topic: z.string().trim().min(2, 'Lesson name is too short.').max(80).optional(),
+    // The grade of the typed lesson (the school book it comes from) -- Math and Science grades 5 and 6.
+    grade: z.coerce.number().int().min(5).max(6).optional(),
+    // How many questions the worksheet has.
+    count: z.coerce.number().int().min(3).max(MAX_QUESTIONS).optional().default(QUESTIONS_PER_WORKSHEET),
   })
   .refine((b) => b.subject || b.reelId, { message: 'Choose a subject or a video.' });
 
@@ -117,6 +125,7 @@ type AiScope = {
   reelId: number | null;
   // Normalised typed lesson name (general worksheets); null for video worksheets.
   topicKey: string | null;
+  count: number;
 };
 
 function scopeFilter(scope: AiScope, difficulty: Difficulty) {
@@ -134,6 +143,7 @@ function scopeFilter(scope: AiScope, difficulty: Difficulty) {
 // change each time. Older saved questions and (for videos) the teacher's own quiz questions
 // only top the worksheet up if the AI couldn't supply a full set.
 async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise<any[]> {
+  const wanted = scope.count;
   const authored = scope.reelId
     ? (db.prepare(`SELECT * FROM reel_questions WHERE reel_id = ? ORDER BY order_in_reel`).all(scope.reelId) as any[])
     : [];
@@ -149,18 +159,35 @@ async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise
   const known = new Set(existing.map((q) => q.question_text));
   const insertedIds: number[] = [];
 
-  const result = await generateQuizQuestions({
-    scriptText: scope.scriptText,
-    scriptTextAr: scope.scriptTextAr,
-    subjectName: scope.subjectName,
-    grade: scope.grade,
-    count: QUESTIONS_PER_WORKSHEET,
-    topic: scope.topic,
-    topicAr: scope.topicAr,
-    difficulty,
-    avoidQuestions: existing.slice(0, 40).map((q) => q.question_text),
-    style: 'worksheet',
-  });
+  // Math and Science for grades 5 and 6: the questions are written from the school question bank for this lesson.
+  const subjectKey = scope.subjectName.toLowerCase().includes('math') ? 'math' : scope.subjectName.toLowerCase().includes('sci') ? 'science' : null;
+  const bank =
+    subjectKey && (scope.grade === 5 || scope.grade === 6)
+      ? await findBankMatch({ subject: subjectKey, grade: scope.grade, topic: scope.topic, topicAr: scope.topicAr, scriptText: scope.scriptText, scriptTextAr: scope.scriptTextAr })
+      : null;
+  const chunks: number[] = [];
+  for (let left = wanted; left > 0; left -= AI_CHUNK) chunks.push(Math.min(AI_CHUNK, left));
+  const results = await Promise.all(
+    chunks.map((count) =>
+      generateQuizQuestions({
+        scriptText: scope.scriptText,
+        scriptTextAr: scope.scriptTextAr,
+        subjectName: scope.subjectName,
+        grade: scope.grade,
+        count,
+        topic: scope.topic,
+        topicAr: scope.topicAr,
+        difficulty,
+        avoidQuestions: existing.slice(0, 40).map((q) => q.question_text),
+        style: 'worksheet',
+        bankReference: bank?.reference,
+      })
+    )
+  );
+  const okResults = results.filter((r): r is Extract<typeof r, { ok: true }> => r.ok);
+  const result: { ok: true; data: unknown[] } | { ok: false; error: string } = okResults.length
+    ? { ok: true, data: okResults.flatMap((r) => (Array.isArray(r.data) ? r.data : [])) }
+    : { ok: false, error: (results[0] as { error: string }).error };
   if (!result.ok) {
     // Not configured / API hiccup -- fall back to saved questions below.
     if (result.error !== 'NOT_CONFIGURED') console.error('Gemini worksheet generation failed:', result.error);
@@ -203,22 +230,22 @@ async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise
   const fresh = insertedIds.length
     ? (db.prepare(`SELECT * FROM worksheet_questions WHERE id IN (${insertedIds.map(() => '?').join(',')})`).all(...insertedIds) as any[])
     : [];
-  const picked = shuffle(fresh).slice(0, QUESTIONS_PER_WORKSHEET);
+  const picked = shuffle(fresh).slice(0, wanted);
 
   // Top up (AI down / returned too few): older AI questions on the same topic first, then
   // (videos only) the teacher's own quiz questions.
-  if (picked.length < QUESTIONS_PER_WORKSHEET) {
+  if (picked.length < wanted) {
     const pickedIds = new Set(picked.map((q) => q.id));
     const older = shuffle(existing.filter((q) => !authoredTexts.has(q.question_text) && !pickedIds.has(q.id)));
     for (const q of older) {
-      if (picked.length >= QUESTIONS_PER_WORKSHEET) break;
+      if (picked.length >= wanted) break;
       picked.push(q);
     }
   }
-  if (picked.length < QUESTIONS_PER_WORKSHEET) {
+  if (picked.length < wanted) {
     const pickedTexts = new Set(picked.map((q) => q.question_text));
     for (const q of shuffle(authored)) {
-      if (picked.length >= QUESTIONS_PER_WORKSHEET) break;
+      if (picked.length >= wanted) break;
       if (pickedTexts.has(q.question_text)) continue;
       // Mirrored into worksheet_questions (once) so grading can look it up like any other.
       const mirrored = existing.find((e) => e.question_text === q.question_text);
@@ -279,11 +306,13 @@ worksheetsRouter.post(
   limitAiWhenAi,
   async (req, res) => {
     try {
-      const { subject, difficulty, reelId, topic: rawTopic } = req.body as {
+      const { subject, difficulty, reelId, topic: rawTopic, grade: pickedGrade, count } = req.body as {
         subject?: 'math' | 'science';
         difficulty: Difficulty;
         reelId?: number;
         topic?: string;
+        grade?: number;
+        count: number;
       };
 
       if (reelId) {
@@ -303,6 +332,7 @@ worksheetsRouter.post(
             scriptTextAr: reel.script_text_ar,
             reelId: reel.id,
             topicKey: null,
+            count,
           },
           difficulty
         );
@@ -345,12 +375,14 @@ worksheetsRouter.post(
           {
             subjectId: subjectRow.id,
             subjectName: subjectRow.name,
-            grade: user?.grade ?? 5,
+            grade: pickedGrade ?? user?.grade ?? 5,
             topic,
             scriptText: '',
             scriptTextAr: '',
             reelId: null,
-            topicKey: topic,
+            // the grade is part of the key: the same lesson name in grade 5 and 6 are different lessons
+            topicKey: pickedGrade ? `${topic} [g${pickedGrade}]` : topic,
+            count,
           },
           difficulty
         );
@@ -381,7 +413,7 @@ worksheetsRouter.post(
         return;
       }
 
-      const picked = shuffle(pool).slice(0, Math.min(QUESTIONS_PER_WORKSHEET, pool.length));
+      const picked = shuffle(pool).slice(0, Math.min(count, pool.length));
       const attemptId = createAttempt(req.userId!, subjectRow.id, difficulty, null, picked.map((q) => q.id));
 
       res.status(201).json({

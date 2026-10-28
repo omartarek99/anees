@@ -7,7 +7,7 @@ import { pickText } from '../lib/i18n';
 import { Topbar } from '../components/Topbar';
 import { AnimatedText } from '../components/AnimatedText';
 
-type Profile = { levelsCompleted: number; totalXp: number; playerLevel: number };
+type Profile = { levelsCompleted: number; totalXp: number; playerLevel: number; mapLevel: number };
 
 export function HomePage() {
   const { user } = useAuth();
@@ -23,10 +23,12 @@ export function HomePage() {
 
   const level = profile?.playerLevel ?? user?.playerLevel ?? 1;
   const completed = profile?.levelsCompleted ?? 0;
+  // the adventure-map level they are on (the user level above comes from points)
+  const mapLevel = profile?.mapLevel ?? 1;
   const pct = (n: number) => `${Math.round((n / 50) * 100)}%`;
   // One market card per stat: its picture, a corner chip, the value, and where to go with it.
   const cards = [
-    { tone: 'blue', src: '/icons/map-icon.webp', title: t('home.mapProgress'), value: `${level}/50`, chip: pct(level), to: '/map', cta: t('home.openMap') },
+    { tone: 'blue', src: '/icons/map-icon.webp', title: t('home.mapProgress'), value: `${mapLevel}/50`, chip: pct(mapLevel), to: '/map', cta: t('home.openMap') },
     { tone: 'yellow', src: '/icons/levels-icon.webp', title: t('profile.levelsCompleted'), value: `${completed}/50`, chip: pct(completed), to: '/reels', cta: t('home.watchReel') },
     {
       tone: 'pink',

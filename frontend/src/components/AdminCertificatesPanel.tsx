@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
+import { PLAQUE_IMAGE } from './CertificatePlaque';
 import { CERT_TYPES, CERT_PALETTES, CERT_TYPE_LABEL_KEY, certPillBackground, type CertificateType } from '../lib/certificateTiers';
 
 type AdminUserSummary = { id: number; username: string; displayName: string; role: 'student' | 'teacher' | 'admin' };
@@ -82,7 +83,7 @@ export function AdminCertificatesPanel() {
   }
 
   async function handleSend() {
-    if (!recipient || !title.trim() || !imageFile) return;
+    if (!recipient || !title.trim()) return;
     setSending(true);
     setFormError(null);
     try {
@@ -90,7 +91,7 @@ export function AdminCertificatesPanel() {
       formData.append('userId', String(recipient.id));
       formData.append('title', title.trim());
       formData.append('type', type);
-      formData.append('image', imageFile);
+      if (imageFile) formData.append('image', imageFile);
       await api.postForm('/admin/certificates', formData);
       setRecipient(null);
       setSearch('');
@@ -201,7 +202,7 @@ export function AdminCertificatesPanel() {
                     opacity: selected ? 1 : 0.78,
                   }}
                 >
-                  <img src={`/images/ranks/${ct}.webp`} width={24} height={24} alt="" />
+                  <img src={PLAQUE_IMAGE[ct]} width={20} height={27} alt="" style={{ borderRadius: 2 }} />
                   {t(CERT_TYPE_LABEL_KEY[ct])}
                 </button>
               );
@@ -229,7 +230,7 @@ export function AdminCertificatesPanel() {
         <button
           type="button"
           className="btn btn-primary"
-          disabled={!recipient || !title.trim() || !imageFile || sending}
+          disabled={!recipient || !title.trim() || sending}
           onClick={handleSend}
         >
           {sending ? t('admin.certSending') : t('admin.certSendButton')}

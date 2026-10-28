@@ -33,6 +33,13 @@ export const milestoneAt = (level: number) => MILESTONES.find((m) => m.level ===
 
 const done = (levels: readonly ApiLevel[], n: number) => levels.find((l) => l.levelNumber === n)?.progress.status === 'completed';
 
+/** The guardians beaten so far: levels 5, 10, ... 50, in order. Each one gives a key. */
+export function guardiansBeaten(levels: readonly ApiLevel[]): number[] {
+  const beaten: number[] = [];
+  for (let k = 1; k <= KEY_COUNT; k++) if (done(levels, k * 5)) beaten.push(k * 5);
+  return beaten;
+}
+
 /** One key per guardian beaten (levels 5, 10, ... 50). */
 export function keysEarned(levels: readonly ApiLevel[]): number {
   let keys = 0;

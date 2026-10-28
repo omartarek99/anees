@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { RiCalculatorLine, RiAtomLine } from '@remixicon/react';
+import { RiCalculatorLine, RiAtomLine, RiPencilLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { pickText, translateApiError } from '../lib/i18n';
-import { Avatar, AVATAR_OPTIONS, avatarLabel } from '../components/Avatar';
+import { Avatar } from '../components/Avatar';
 import { ProfileAvatar3D } from '../components/ProfileAvatar3D';
 import type { AvatarConfig } from '../components/avatar3d/avatarConfig';
 import { RankBadge, type RankTier } from '../components/RankBadge';
+import { MedalLevelBar } from '../components/MedalLevelBar';
 import { Topbar } from '../components/Topbar';
 import { VictoryShield } from '../components/VictoryShield';
+import { CertificatePlaque } from '../components/CertificatePlaque';
 import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, certPillBackground, type CertificateType } from '../lib/certificateTiers';
 
 type TeacherVideo = {
@@ -49,6 +51,8 @@ type Profile = {
   // lib/xp.ts. Drives the teacher-only leaderboard and this profile's stats for teachers.
   teacherPoints: number;
   playerLevel: number;
+  // 0..1 toward the next level (every 100 points for a student)
+  levelProgress: number;
   rankTier: RankTier;
   levelsCompleted: number;
   bossesDefeated: number;
@@ -135,16 +139,6 @@ export function ProfilePage() {
     }
   }
 
-  async function changeAvatar(avatarKey: string) {
-    try {
-      const data = await api.patch<{ profile: Profile }>('/users/me', { avatarKey });
-      setProfile(data.profile);
-      await refreshUser();
-    } catch (err) {
-      setSaveError(err instanceof ApiError ? translateApiError(lang, err.message) : t('common.genericError'));
-    }
-  }
-
   // Throws on failure -- ProfileAvatar3D shows the error and keeps the customiser open.
   async function saveAvatar3d(avatar3d: AvatarConfig) {
     const data = await api.patch<{ profile: Profile }>('/users/me', { avatar3d });
@@ -197,11 +191,36 @@ export function ProfilePage() {
     <div className="stack">
       <Topbar
         title={
-          <>
-            {profile.displayName}
-            {profile.hasShield && <VictoryShield size={26} />}
-          </>
+          editingName ? (
+            <span className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+              <input value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} maxLength={40} autoFocus aria-label={t('profile.displayName')} style={{ fontSize: 16, minWidth: 160 }} />
+              <button className="btn btn-primary btn-sm" onClick={saveDisplayName} disabled={saving}>
+                {t('common.save')}
+              </button>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  setEditingName(false);
+                  setNameDraft(profile.displayName);
+                }}
+              >
+                {t('common.cancel')}
+              </button>
+            </span>
+          ) : (
+            <>
+              {profile.displayName}
+              {profile.hasShield && <VictoryShield size={26} />}
+              {isOwnProfile && (
+                <button type="button" className="pen-btn" aria-label={t('common.change')} title={t('common.change')} onClick={() => setEditingName(true)}>
+                  <RiPencilLine size={16} />
+                </button>
+              )}
+            </>
+          )
         } subtitle={`${LRI}@${profile.username}${PDI} · ${t('profile.joined', { date: joinedDate })}`} />
+
+      {saveError && <div className="form-error-banner">{saveError}</div>}
 
       {(profile.schoolName || profile.teacherSubject) && (
         <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
@@ -219,17 +238,37 @@ export function ProfilePage() {
       )}
 
       <div className="card flex gap-md" style={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        {profile.role === 'student' && (isOwnProfile || profile.avatar3d) ? (
-          <ProfileAvatar3D
-            avatarKey={profile.avatarKey}
-            photoUrl={profile.avatarUrl}
-            config={profile.avatar3d}
-            size={72}
-            onSave={isOwnProfile ? saveAvatar3d : undefined}
-          />
-        ) : (
-          <Avatar avatarKey={profile.avatarKey} photoUrl={profile.avatarUrl} size={72} />
-        )}
+        <div className="avatar-edit-wrap">
+          {(profile.role === 'student' || profile.role === 'teacher') && (isOwnProfile || profile.avatar3d) ? (
+            <ProfileAvatar3D
+              avatarKey={profile.avatarKey}
+              photoUrl={profile.avatarUrl}
+              config={profile.avatar3d}
+              size={72}
+              onSave={isOwnProfile ? saveAvatar3d : undefined}
+            />
+          ) : (
+            <Avatar avatarKey={profile.avatarKey} photoUrl={profile.avatarUrl} size={72} />
+          )}
+          {/* A small + on the top left of the picture: one click opens the photo picker. (The "customize character" button stays under the picture.) */}
+          {isOwnProfile && (
+            <div className="avatar-plus-wrap">
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) uploadPhoto(file);
+                }}
+              />
+              <button type="button" className="avatar-plus" aria-label={t('profile.changePhoto')} title={t('profile.changePhoto')} disabled={uploadingPhoto} onClick={() => photoInputRef.current?.click()}>
+                {uploadingPhoto ? '…' : '+'}
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Admin accounts have no level / rank / XP -- only the avatar and name. */}
         {profile.role !== 'admin' && (
@@ -246,7 +285,7 @@ export function ProfilePage() {
                 strokeWidth={8}
                 strokeLinecap="round"
                 strokeDasharray={RING_CIRCUMFERENCE}
-                strokeDashoffset={RING_CIRCUMFERENCE * (1 - (profile.rankTier.nextMinXp === null ? 1 : profile.rankTier.progress))}
+                strokeDashoffset={RING_CIRCUMFERENCE * (1 - profile.levelProgress)}
               />
             </svg>
             <div
@@ -292,6 +331,40 @@ export function ProfilePage() {
         )}
       </div>
 
+      <div className="card stack" style={{ gap: 6 }}>
+        <div className="flex-between" style={{ alignItems: 'center' }}>
+          <h3 style={{ fontSize: 16, margin: 0 }}>{t('profile.bio')}</h3>
+          {isOwnProfile && !editingBio && (
+            <button type="button" className="pen-btn" aria-label={t('common.change')} title={t('common.change')} onClick={() => setEditingBio(true)}>
+              <RiPencilLine size={16} />
+            </button>
+          )}
+        </div>
+        {editingBio ? (
+          <div className="stack" style={{ gap: 6 }}>
+            <textarea value={bioDraft} onChange={(e) => setBioDraft(e.target.value)} maxLength={300} rows={4} placeholder={t('profile.bioPlaceholder')} />
+            <div className="flex gap-sm">
+              <button className="btn btn-primary btn-sm" onClick={saveBio} disabled={saving}>
+                {t('common.save')}
+              </button>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  setEditingBio(false);
+                  setBioDraft(profile.bio);
+                }}
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className={profile.bio ? undefined : 'muted'} style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+            {profile.bio || t('profile.noBioYet')}
+          </p>
+        )}
+      </div>
+
       {profile.role !== 'admin' && (
       <div className="grid-cards">
         {profile.role === 'teacher' ? (
@@ -308,12 +381,7 @@ export function ProfilePage() {
       </div>
       )}
 
-      <div className="card stack" style={{ gap: 6 }}>
-        <h3 style={{ fontSize: 16 }}>{t('profile.bio')}</h3>
-        <p className={profile.bio ? undefined : 'muted'} style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-          {profile.bio || t('profile.noBioYet')}
-        </p>
-      </div>
+      {profile.role === 'student' && <MedalLevelBar points={profile.totalXp} />}
 
       {profile.certificates.length > 0 && (
         <div className="card stack">
@@ -330,6 +398,8 @@ export function ProfilePage() {
                     style={{ width: '100%', borderRadius: 'var(--radius-sm)', aspectRatio: '4 / 3', objectFit: 'contain', background: 'var(--sand)' }}
                   />
                 </a>
+                <span className="flex gap-sm" style={{ alignItems: 'center' }}>
+                <CertificatePlaque tier={cert.type} label={t(CERT_TYPE_LABEL_KEY[cert.type])} width={36} interactive={false} />
                 <span
                   style={{
                     width: 'fit-content',
@@ -342,6 +412,7 @@ export function ProfilePage() {
                   }}
                 >
                   {t(CERT_TYPE_LABEL_KEY[cert.type])}
+                </span>
                 </span>
                 <strong style={{ fontSize: 14 }}>{cert.title}</strong>
                 {cert.issuedByName && (
@@ -389,114 +460,6 @@ export function ProfilePage() {
               ))}
             </div>
           )}
-        </div>
-      )}
-
-      {isOwnProfile && (
-        <div className="card stack">
-          <h3 style={{ fontSize: 16 }}>{t('profile.editProfile')}</h3>
-          {saveError && <div className="form-error-banner">{saveError}</div>}
-
-          <div className="field">
-            <label>{t('profile.displayName')}</label>
-            {editingName ? (
-              <div className="flex gap-sm">
-                <input value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} maxLength={40} />
-                <button className="btn btn-primary btn-sm" onClick={saveDisplayName} disabled={saving}>
-                  {t('common.save')}
-                </button>
-                <button
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => {
-                    setEditingName(false);
-                    setNameDraft(profile.displayName);
-                  }}
-                >
-                  {t('common.cancel')}
-                </button>
-              </div>
-            ) : (
-              <div className="flex-between">
-                <span>
-                  {profile.displayName}
-                  {profile.hasShield && <VictoryShield size={18} />}
-                </span>
-                <button className="btn btn-secondary btn-sm" onClick={() => setEditingName(true)}>
-                  {t('common.change')}
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="field">
-            <label>{t('profile.bio')}</label>
-            {editingBio ? (
-              <div className="stack" style={{ gap: 6 }}>
-                <textarea value={bioDraft} onChange={(e) => setBioDraft(e.target.value)} maxLength={300} rows={4} placeholder={t('profile.bioPlaceholder')} />
-                <div className="flex gap-sm">
-                  <button className="btn btn-primary btn-sm" onClick={saveBio} disabled={saving}>
-                    {t('common.save')}
-                  </button>
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => {
-                      setEditingBio(false);
-                      setBioDraft(profile.bio);
-                    }}
-                  >
-                    {t('common.cancel')}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-between" style={{ alignItems: 'flex-start' }}>
-                <span style={{ whiteSpace: 'pre-wrap' }}>{profile.bio || t('profile.noBioYet')}</span>
-                <button className="btn btn-secondary btn-sm" onClick={() => setEditingBio(true)}>
-                  {t('common.change')}
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="field">
-            <label>{t('profile.avatar')}</label>
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) uploadPhoto(file);
-              }}
-            />
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              style={{ width: 'fit-content', marginBottom: 10 }}
-              onClick={() => photoInputRef.current?.click()}
-              disabled={uploadingPhoto}
-            >
-              {uploadingPhoto ? t('profile.uploadingPhoto') : t('profile.changePhoto')}
-            </button>
-            <div className="flex gap-md" style={{ flexWrap: 'wrap' }}>
-              {/* Teachers keep the plain anonymous picture (or upload a photo) -- no emoji heroes. */}
-              {(profile.role === 'teacher' ? [] : AVATAR_OPTIONS).map((key) => (
-                <button
-                  type="button"
-                  key={key}
-                  onClick={() => changeAvatar(key)}
-                  className="badge-circle-wrap"
-                  aria-pressed={profile.avatarKey === key && !profile.avatarUrl}
-                >
-                  <div className="avatar-choice">
-                    <Avatar avatarKey={key} size={48} />
-                  </div>
-                  <span className="badge-circle-label">{avatarLabel(key, lang)}</span>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       )}
     </div>
