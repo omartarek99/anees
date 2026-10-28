@@ -911,10 +911,10 @@ button.list-row.selected {
 }
 
 /* ---------------- Student home hero ----------------
-   After the "Travel Website Landing Page" Figma hero: a small accent tag, a large serif headline (typed out,
-   see TypedText) with a brush flourish and a short lede, centred; below it, apart from the text, a large
-   picture leaning on a soft warm glow. The picture is a cut-out (public/images/home-hero.webp) with no frame,
-   so it sits straight on the page in both themes. The progress cards sit below as their own section. */
+   After the "Travel Website Landing Page" Figma hero: a small accent tag, a large serif headline with a
+   brush flourish, a short lede and the calls to action on one side; a large picture leaning on a soft
+   warm glow on the other. The picture is a cut-out (public/images/home-hero.webp) with no frame, so it sits
+   straight on the page in both themes. The progress cards sit below as their own section. */
 :root {
   --home-glow: rgba(251, 219, 158, 0.75);
 }
@@ -935,17 +935,16 @@ button.list-row.selected {
 }
 .home-hero {
   display: grid;
-  justify-items: center;
-  gap: clamp(12px, 2.5vw, 28px);
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+  align-items: center;
+  gap: clamp(16px, 2.5vw, 32px);
   padding-block: 8px 16px;
-  overflow-x: clip; /* the glow reaches past the picture; it must not widen the page on a phone */
 }
 .home-hero-copy {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 18px;
-  text-align: center;
 }
 .home-eyebrow {
   margin: 0;
@@ -957,37 +956,9 @@ button.list-row.selected {
 }
 .home-hero-title {
   margin: 0;
-  font-size: clamp(2.25rem, 5.4vw, 4rem);
+  font-size: clamp(2.25rem, 4.6vw, 3.6rem);
   line-height: 1.08;
   letter-spacing: -0.01em;
-}
-/* Typed text: what is not typed yet is invisible but keeps its place, so the lines never re-wrap as it types. */
-.typed-rest {
-  visibility: hidden;
-}
-.typed-caret {
-  /* an empty inline box is as tall as its font's content area: a small Latin font keeps the caret text-sized in Arabic too,
-     and being inline (not inline-block) it adds no place for a line to break */
-  font: 0.75em Arial, Helvetica, sans-serif;
-  margin-inline-start: 0.07em;
-  border-inline-start: 0.09em solid var(--gold);
-}
-.typed-caret--done {
-  animation: typed-caret-out 0.9s steps(1) 4 forwards; /* blinks four times, then is gone */
-}
-@keyframes typed-caret-out {
-  50%,
-  100% {
-    opacity: 0;
-  }
-}
-.sr-only {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
 }
 .home-swoosh {
   inline-size: 168px;
@@ -1008,16 +979,14 @@ button.list-row.selected {
 .home-hero-art {
   position: relative;
   isolation: isolate;
-  inline-size: 100%;
-  max-inline-size: 960px;
+  margin-inline-end: -24px; /* bleeds into the page's side padding */
 }
-/* A wide pool of warm light behind the figures: a radial fade, so it has no edge to read as a shape. It reaches out
-   to the sides and below, never up over the text. */
+/* A wide pool of warm light behind the figures: a radial fade, so it has no edge to read as a shape. */
 .home-hero-art::before {
   content: '';
   position: absolute;
   z-index: -1;
-  inset: 0 -6% -10%;
+  inset: -12% -4%;
   background: radial-gradient(closest-side, var(--home-glow) 0%, transparent 100%);
 }
 .home-hero-image {
@@ -1042,6 +1011,14 @@ button.list-row.selected {
   justify-content: center;
 }
 @media (max-width: 900px) {
+  .home-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .home-hero-art {
+    justify-self: center;
+    max-inline-size: 600px;
+    margin-inline-end: 0;
+  }
   .grid-cards.home-cards {
     grid-template-columns: minmax(0, 300px);
   }
