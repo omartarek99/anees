@@ -388,7 +388,6 @@ const en = {
   },
   map: {
     title: 'The Adventure Map',
-    subtitle: '50 levels across the land of Qatar. Defeat a Guardian boss every 5 levels to keep climbing!',
     loadError: 'Could not load the map right now.',
     zoneDesert: 'Desert Oasis',
     zoneSouq: 'The Souq Quarter',
@@ -1251,7 +1250,6 @@ const ar: typeof en = {
   },
   map: {
     title: 'خريطة المغامرة',
-    subtitle: '٥٠ مستوى عبر أرجاء قطر. اهزم الحارس كل ٥ مستويات لمواصلة التقدم!',
     loadError: 'تعذّر تحميل الخريطة حاليًا.',
     zoneDesert: 'واحة الصحراء',
     zoneSouq: 'حي السوق',

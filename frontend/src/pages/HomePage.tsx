@@ -5,7 +5,7 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 import { Topbar } from '../components/Topbar';
-import { AnimatedText } from '../components/AnimatedText';
+import { TypedText } from '../components/TypedText';
 
 type Profile = { levelsCompleted: number; totalXp: number; playerLevel: number; mapLevel: number };
 
@@ -52,8 +52,8 @@ export function HomePage() {
               {t('common.level')} {level} · {pickText(lang, user.rankTier.name, user.rankTier.nameAr)}
             </p>
           )}
-          <h1 className="home-hero-title title-ease">
-            <AnimatedText>{t('home.greeting', { name: user?.displayName ?? '' })}</AnimatedText>
+          <h1 className="home-hero-title">
+            <TypedText>{t('home.greeting', { name: user?.displayName ?? '' })}</TypedText>
           </h1>
           <svg className="home-swoosh" viewBox="0 0 168 14" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" aria-hidden="true">
             <path d="M3 9C34 3 62 11 92 6s52-2 73 3" />

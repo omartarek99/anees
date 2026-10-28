@@ -6,7 +6,6 @@ import { AvatarBoundary } from '../components/avatar3d/AvatarBoundary';
 import { canUseWebGL } from '../components/avatar3d/avatarConfig';
 import { BossArena } from '../components/BossArena';
 import { StoryPanel } from '../components/StoryPanel';
-import { Topbar } from '../components/Topbar';
 import { Map2D } from '../map3d/Map2D';
 import type { ApiLevel } from '../map3d/schema';
 import type { BattleStatus } from '../lib/battle';
@@ -50,7 +49,7 @@ export function MapPage() {
 
   return (
     <div className="stack">
-      <Topbar title={t('map.title')} subtitle={t('map.subtitle')} />
+      <h1 className="craft-title map-title title-ease">{t('map.title')}</h1>
 
       {error && <div className="form-error-banner">{error}</div>}
       {!levels && !error && (
