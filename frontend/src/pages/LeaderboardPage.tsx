@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { RiArrowLeftSLine, RiArrowRightSLine, RiVipDiamondFill } from '@remixicon/react';
+import { RiArrowLeftSLine, RiArrowRightSLine } from '@remixicon/react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -7,6 +7,7 @@ import { Avatar } from '../components/Avatar';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { Topbar } from '../components/Topbar';
 import { VictoryShield } from '../components/VictoryShield';
+import { XpIcon } from '../components/XpIcon';
 import '../styles/leaderboard.css';
 
 type Leader = { rank: number; username: string; displayName: string; avatarKey: string; xp: number; rankTier: RankTier; hasShield?: boolean };
@@ -64,7 +65,7 @@ function PodiumColumn({ leader, xpUnit, narrow }: { leader: Leader; xpUnit: stri
           <RankBadge tier={leader.rankTier} size={32} showIcon={false} />
         </div>
         <div className="lb-value">
-          <RiVipDiamondFill size={narrow ? 16 : 22} aria-hidden="true" />
+          <XpIcon size={narrow ? 28 : 38} />
           {fmt(leader.xp)}
         </div>
         <div className="lb-unit">{xpUnit}</div>
@@ -94,7 +95,7 @@ function LeaderRow({ leader, highlight }: { leader: Leader; highlight: boolean }
       </div>
       <div className="lb-points">
         <span className="lb-chip">
-          <RiVipDiamondFill size={16} aria-hidden="true" />
+          <XpIcon size={28} />
           {fmt(leader.xp)}
         </span>
       </div>
@@ -202,7 +203,7 @@ export function LeaderboardPage() {
             {data.me.xp > 0 ? (
               <>
                 <span>{t('leaderboard.noteEarned')}</span>
-                <RiVipDiamondFill size={16} aria-hidden="true" />
+                <XpIcon size={28} />
                 <b>{fmt(data.me.xp)}</b>
                 <span>{t('leaderboard.noteMid', { month: monthLabel })}</span>
                 <b>#{data.me.rank}</b>

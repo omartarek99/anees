@@ -3,6 +3,7 @@ import { api, ApiError } from '../lib/api';
 import type { Role } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
+import { XpIcon } from './XpIcon';
 
 export type AdminUser = {
   id: number;
@@ -169,7 +170,14 @@ export function AdminUserRow({
         <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
           {u.rank !== null && (
             <span className="badge badge-gold" title={u.role === 'teacher' ? t('admin.teacherPointsLabel') : t('admin.pointsLabel')}>
-              #{u.rank} · {u.role === 'teacher' ? `🏆 ${u.teacherPoints}` : `💎 ${u.totalXp}`}
+              #{u.rank} ·{' '}
+              {u.role === 'teacher' ? (
+                `🏆 ${u.teacherPoints}`
+              ) : (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, verticalAlign: 'middle' }}>
+                  <XpIcon size={22} /> {u.totalXp}
+                </span>
+              )}
             </span>
           )}
           <select

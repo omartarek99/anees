@@ -9,6 +9,7 @@ import { QuizCard, type QuizAnswer, type QuizQuestion } from './QuizCard';
 import { QuizResults, type ResultItem } from './QuizResults';
 import { LevelUpToast } from './LevelUpToast';
 import { Avatar } from './Avatar';
+import { QuizIcon } from './QuizIcon';
 
 export type ReelSlideData = {
   levelNumber: number;
@@ -397,7 +398,8 @@ export function ReelSlide({
               <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11.5, marginTop: 6 }}>{t('reels.videoComingSoon')}</p>
             )}
             {data.questions.length > 0 ? (
-              <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setMode('quiz')}>
+              <button className="btn btn-primary" style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 8 }} onClick={() => setMode('quiz')}>
+                <QuizIcon size={16} />
                 {t('reels.takeQuiz')}
               </button>
             ) : (

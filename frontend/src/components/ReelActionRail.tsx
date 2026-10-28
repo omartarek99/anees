@@ -1,4 +1,6 @@
-import { RiPokerHeartsFill, RiPokerHeartsLine, RiVolumeMuteFill, RiVolumeUpFill, RiFileLine } from '@remixicon/react';
+import { RiPokerHeartsFill, RiPokerHeartsLine, RiVolumeMuteFill, RiVolumeUpFill } from '@remixicon/react';
+import { QuizIcon } from './QuizIcon';
+import { XpIcon } from './XpIcon';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../lib/language-context';
 import { Avatar } from './Avatar';
@@ -73,14 +75,14 @@ export function ReelActionRail({
 
       <button type="button" className="reel-rail-btn" onClick={onOpenQuiz} aria-label={t('reels.takeQuiz')}>
         <span className="notif-bell" style={{ fontSize: 19 }}>
-          <RiFileLine size={19} />
+          <QuizIcon size={19} />
         </span>
         <span className="reel-rail-count">{questionCount}</span>
       </button>
 
       <button type="button" className="reel-rail-btn" onClick={onOpenPointsInfo} aria-label={t('pointsInfo.title')}>
         <span className="notif-bell" style={{ fontSize: 19 }}>
-          💎
+          <XpIcon size={26} />
         </span>
         <span className="reel-rail-count">{t('reels.xpTag')}</span>
       </button>

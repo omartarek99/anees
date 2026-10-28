@@ -1,6 +1,8 @@
 import { m, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
+import { QuizIcon } from './QuizIcon';
+import { XpIcon } from './XpIcon';
 
 /** Explains the point system, opened by tapping the diamond in the reel action rail. Unlike
  * DoublePointsNotification, this one's visibility flips on a direct click (a synchronous
@@ -32,7 +34,9 @@ export function PointsInfoModal({ open, onClose }: { open: boolean; onClose: () 
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ fontSize: 44 }}>💎</div>
+            <div style={{ display: 'flex', justifyContent: 'center', color: 'var(--maroon-dark)' }}>
+              <XpIcon size={84} />
+            </div>
             <h2 style={{ color: 'var(--maroon-dark)', fontSize: 20, marginTop: 8 }}>{t('pointsInfo.title')}</h2>
             <ul style={{ textAlign: 'start', margin: '16px 0', padding: 0, listStyle: 'none' }}>
               <li style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10, fontWeight: 700, fontSize: 14.5, color: 'var(--maroon-dark)' }}>
@@ -42,8 +46,8 @@ export function PointsInfoModal({ open, onClose }: { open: boolean; onClose: () 
                 {t('pointsInfo.video')}
               </li>
               <li style={{ display: 'flex', gap: 10, alignItems: 'center', fontWeight: 700, fontSize: 14.5, color: 'var(--maroon-dark)' }}>
-                <span style={{ fontSize: 20 }} aria-hidden>
-                  📝
+                <span style={{ display: 'inline-flex', width: 20, justifyContent: 'center' }} aria-hidden>
+                  <QuizIcon size={20} />
                 </span>
                 {t('pointsInfo.quiz')}
               </li>

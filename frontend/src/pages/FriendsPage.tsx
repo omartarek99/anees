@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { RiSearchLine, RiVipDiamondFill } from '@remixicon/react';
+import { RiSearchLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -8,6 +8,7 @@ import { translateApiError } from '../lib/i18n';
 import { Avatar } from '../components/Avatar';
 import { Topbar } from '../components/Topbar';
 import { VictoryShield } from '../components/VictoryShield';
+import { XpIcon } from '../components/XpIcon';
 import '../styles/friends.css';
 
 type Friend = { username: string; displayName: string; avatarKey: string; totalXp: number; hasShield?: boolean };
@@ -209,7 +210,7 @@ export function FriendsPage() {
                           <bdi dir="ltr">@{f.username}</bdi>
                         </span>
                         <span className="fr-xp">
-                          <RiVipDiamondFill size={14} aria-hidden="true" />
+                          <XpIcon size={24} />
                           {f.totalXp} {t('common.xpUnit')}
                         </span>
                         <span className="btn btn-secondary btn-sm fr-pill">{t('friends.viewProfile')}</span>

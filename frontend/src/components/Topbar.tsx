@@ -6,6 +6,8 @@ import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 import { api } from '../lib/api';
 import { RankBadge } from './RankBadge';
+import { XpIcon } from './XpIcon';
+import { MedalIcon } from './MedalIcon';
 
 // Without a title the bar is just the XP / level / rank chips and the bell (the home page's hero carries the heading). `hideStats` (the
 // profile page) drops the XP, level and rank chips: only the bell is left.
@@ -46,10 +48,10 @@ export function Topbar({ title, subtitle, actions, hideStats }: { title?: ReactN
         {user.role !== 'admin' && !hideStats && (
           <>
             <span className="stat-pill" style={{ color: 'var(--pastel-blue-ink)' }} title={t(user.role === 'teacher' ? 'profile.teacherPoints' : 'common.xpUnit')}>
-              {user.role === 'teacher' ? `🏆 ${user.teacherPoints}` : `💎 ${user.totalXp}`}
+              {user.role === 'teacher' ? `🏆 ${user.teacherPoints}` : (<><XpIcon size={26} /> {user.totalXp}</>)}
             </span>
             <span className="stat-pill" style={{ color: 'var(--gold-ink)' }} title={t('common.level')}>
-              🏅 {user.playerLevel}
+              <MedalIcon size={19} /> {user.playerLevel}
             </span>
             <Link to="/profile" className="stat-pill" title={pickText(lang, user.rankTier.name, user.rankTier.nameAr)} aria-label={pickText(lang, user.rankTier.name, user.rankTier.nameAr)}>
               <RankBadge tier={user.rankTier} size={28} showName={false} />

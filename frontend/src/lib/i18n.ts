@@ -348,7 +348,7 @@ const en = {
     monthsAgo: '{n} month(s) ago',
   },
   reels: {
-    takeQuiz: 'Take the Quiz 📝',
+    takeQuiz: 'Take the Quiz',
     level: 'Level {n}',
     bonusLesson: 'Bonus Lesson',
     lessonBy: 'By {name}',
@@ -1211,7 +1211,7 @@ const ar: typeof en = {
     monthsAgo: 'منذ {n} شهر',
   },
   reels: {
-    takeQuiz: 'ابدأ الاختبار 📝',
+    takeQuiz: 'ابدأ الاختبار',
     level: 'المستوى {n}',
     bonusLesson: 'درس إضافي',
     lessonBy: 'بواسطة {name}',
