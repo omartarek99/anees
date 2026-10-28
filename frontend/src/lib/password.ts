@@ -1,6 +1,6 @@
 // What a new password must be. The backend (backend/src/lib/password.ts) is the one that enforces it; keep the two in
 // step. This copy shows the rules while the user types, so they are never surprised by the server's answer.
-const PASSWORD_MIN = 10;
+const PASSWORD_MIN = 8;
 const COMMON_WORDS = /password|passw0rd|qwerty|asdfgh|12345|letmein|welcome|iloveyou|admin|anees/i;
 
 // `key` is the i18n entry (auth.<key>) that says it.

@@ -7,7 +7,7 @@ import { z } from 'zod';
 /** bcrypt work factor for every hash we create (OWASP's floor is 10; this is only paid on a local account's login). */
 export const BCRYPT_COST = 12;
 
-const PASSWORD_MIN = 10;
+const PASSWORD_MIN = 8;
 const PASSWORD_MAX_BYTES = 72; // bcrypt ignores everything after 72 bytes, so a longer password would be only partly checked
 // Beats the composition rule on its own ("Password123!" has every kind of character). Keep in step with
 // frontend/src/lib/password.ts, which shows the same rules while the user types.

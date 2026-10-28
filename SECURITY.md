@@ -69,7 +69,7 @@ unreadable. Treat it like any other secret you can't afford to lose.
 
 ## Passwords
 
-- **Rules** (`backend/src/lib/password.ts`, one zod schema used by sign-up, reset and change): 10+ characters, a
+- **Rules** (`backend/src/lib/password.ts`, one zod schema used by sign-up, reset and change): 8+ characters, a
   capital letter, a small letter, a number and a symbol, no common word (`password`, `qwerty`, `12345`, ...), and at
   most 72 bytes -- bcrypt ignores everything after that, so a longer one would be only partly checked. Login accepts
   any existing password (older accounts predate the rules); only *setting* one is checked. Admins need 12+.

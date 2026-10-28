@@ -175,7 +175,7 @@ minutes, 5 wrong tries per code, 60 s between resends) and is verified and logge
 log in gets a "send me a code" button. The login page also has **"Forgot your password?"**: the same kind of emailed
 6-digit code (its own table and email template) lets a user choose a new password; the server answers identically for
 unknown emails, and the code can't be used for anything else. Signed-in users (including the admin, who has no profile
-page) can change their password at `/password`, from the ☰ menu. Every new password (sign-up, reset, change) must be 10+ characters
+page) can change their password at `/password`, from the ☰ menu. Every new password (sign-up, reset, change) must be 8+ characters
 with a capital letter, a small letter, a number and a symbol, and no common word like "password" (`backend/src/lib/password.ts`).
 - `RESEND_API_KEY` -- from resend.com (API Keys), with a domain you own verified there (Domains: add the DNS records it shows)
 - `EMAIL_FROM` -- e.g. `Anees <no-reply@your-domain.com>` (must use the verified domain)
