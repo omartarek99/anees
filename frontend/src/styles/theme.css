@@ -1162,6 +1162,7 @@ button.list-row.selected {
 .market-cta {
   margin-top: auto; /* a wrapped title in one card must not push its button out of line with the others */
   margin-inline: 10px;
+  border-radius: var(--radius-btn-sm); /* a little less round than the site's buttons */
 }
 .stat-card-blue {
   --tile-a: rgba(110, 150, 255, 0.42);
