@@ -25,7 +25,7 @@ export function MedalLevelBar({ points }: { points: number }) {
           const reached = points >= DIVISIONS.find((d) => d.tier.key === tier.key)!.start;
           return (
             <div key={tier.key} className={`medal-tier${reached ? ' is-reached' : ''}${tier.key === current.tier.key ? ' is-current' : ''}`}>
-              <RankBadge tier={{ ...tier, name: tier.name, minXp: 0, nextMinXp: null, progress: 0, division: null }} size={38} showName={false} />
+              <RankBadge tier={{ ...tier, name: tier.name, minXp: 0, nextMinXp: null, progress: 0, division: null }} size={44} showName={false} />
               <span>{pickText(lang, tier.name, tier.nameAr)}</span>
             </div>
           );

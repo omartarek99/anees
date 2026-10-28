@@ -54,7 +54,6 @@ type Profile = {
   // 0..1 toward the next level (every 100 points for a student)
   levelProgress: number;
   rankTier: RankTier;
-  levelsCompleted: number;
   bossesDefeated: number;
   worksheetsCompleted: number;
   videosCount: number;
@@ -190,6 +189,7 @@ export function ProfilePage() {
   return (
     <div className="stack">
       <Topbar
+        hideStats
         title={
           editingName ? (
             <span className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
@@ -304,20 +304,11 @@ export function ProfilePage() {
           </div>
 
           <div className="stack" style={{ gap: 4 }}>
-            <RankBadge tier={profile.rankTier} size={44} />
-            {profile.role === 'teacher' ? (
+            <RankBadge tier={profile.rankTier} size={84} />
+            {profile.role === 'teacher' && (
               <span style={{ fontSize: 13, fontWeight: 700 }}>
                 🏆 {profile.teacherPoints} {t('profile.teacherPoints')}
               </span>
-            ) : (
-              <>
-                <span style={{ fontSize: 13, fontWeight: 700 }}>
-                  ⭐ {profile.totalXp} {t('profile.totalXp')}
-                </span>
-                <span style={{ fontSize: 13, fontWeight: 700 }}>
-                  📚 {profile.levelsCompleted} {t('profile.levelsCompleted')}
-                </span>
-              </>
             )}
             {profile.rankTier.nextMinXp !== null && (
               <p className="muted" style={{ fontSize: 11, margin: 0 }}>

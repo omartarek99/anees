@@ -7,8 +7,9 @@ import { pickText } from '../lib/i18n';
 import { api } from '../lib/api';
 import { RankBadge } from './RankBadge';
 
-// Without a title the bar is just the XP / level / rank chips and the bell (the home page's hero carries the heading).
-export function Topbar({ title, subtitle, actions }: { title?: ReactNode; subtitle?: string; actions?: ReactNode }) {
+// Without a title the bar is just the XP / level / rank chips and the bell (the home page's hero carries the heading). `hideStats` (the
+// profile page) drops the XP, level and rank chips: only the bell is left.
+export function Topbar({ title, subtitle, actions, hideStats }: { title?: ReactNode; subtitle?: string; actions?: ReactNode; hideStats?: boolean }) {
   const { user } = useAuth();
   const { t, lang } = useLanguage();
   const [pendingRequests, setPendingRequests] = useState(0);
@@ -42,7 +43,7 @@ export function Topbar({ title, subtitle, actions }: { title?: ReactNode; subtit
       )}
       <div className="flex gap-sm" style={{ alignItems: 'center' }}>
         {actions}
-        {user.role !== 'admin' && (
+        {user.role !== 'admin' && !hideStats && (
           <>
             <span className="stat-pill" style={{ color: 'var(--pastel-blue-ink)' }} title={t(user.role === 'teacher' ? 'profile.teacherPoints' : 'common.xpUnit')}>
               {user.role === 'teacher' ? `🏆 ${user.teacherPoints}` : `💎 ${user.totalXp}`}
