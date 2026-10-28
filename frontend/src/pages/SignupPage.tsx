@@ -7,6 +7,8 @@ import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { AuthShell } from '../components/AuthShell';
 import { OtpVerifyForm } from '../components/OtpVerifyForm';
+import { PasswordRules } from '../components/PasswordRules';
+import { isStrongPassword } from '../lib/password';
 import { TEACHER_SUBJECTS } from '../lib/teacherSubjects';
 
 /** "By signing up you agree to our Terms and Privacy Policy" with the two names as real links —
@@ -64,6 +66,10 @@ export function SignupPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!isStrongPassword(password)) {
+      setError(t('auth.passwordWeak'));
+      return;
+    }
     // The input's minLength counts spaces, so '  ' passes the browser check -- the server trims it away.
     if (schoolName.trim().length < 2) {
       setError(t('auth.schoolInvalid'));
@@ -218,13 +224,10 @@ export function SignupPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={8}
             autoComplete="new-password"
             aria-describedby="password-hint"
           />
-          <small id="password-hint" className="muted">
-            {t('auth.passwordHint')}
-          </small>
+          <PasswordRules id="password-hint" value={password} />
         </div>
 
         {/* School + class (students) / subject taught + ID (teachers) come last, after the

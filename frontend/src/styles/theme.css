@@ -1570,6 +1570,33 @@ button.list-row.selected {
 .muted {
   color: var(--ink-soft);
 }
+/* The checklist under a new-password field (components/PasswordRules): a rule turns green once it is met. */
+.password-rules {
+  display: grid;
+  gap: 2px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.password-rules li::before {
+  content: '○';
+  display: inline-block;
+  inline-size: 1.5em;
+}
+.password-rules .met {
+  color: var(--success);
+}
+.password-rules .met::before {
+  content: '✓';
+}
+.password-rules .flaw {
+  color: var(--danger);
+}
+.password-rules .flaw::before {
+  content: '✕';
+}
 .stack {
   display: flex;
   flex-direction: column;

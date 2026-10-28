@@ -27,6 +27,7 @@ import { createOtp, verifyOtp, clearOtp } from '../lib/otp.js';
 import { recordIssue } from '../lib/diagnostics.js';
 import { getFirebaseAdminAuth } from '../lib/firebaseAdmin.js';
 import { encrypt, decrypt, hashForLookup } from '../lib/encryption.js';
+import { BCRYPT_COST } from '../lib/password.js';
 
 export const authRouter = asyncRouter();
 
@@ -72,7 +73,7 @@ const WRONG_CREDENTIALS_ERRORS = new Set(['EMAIL_NOT_FOUND', 'INVALID_PASSWORD',
 
 // See its one use in /login below -- a fixed hash to burn bcrypt time against when no
 // account exists at all, so that path can't be timed apart from a real wrong-password check.
-const DUMMY_PASSWORD_HASH = bcrypt.hashSync('anees-timing-safety-placeholder', 10);
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync('anees-timing-safety-placeholder', BCRYPT_COST);
 
 function publicUser(user: any) {
   return {
@@ -275,9 +276,9 @@ authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSche
     // nonexistent username would let an attacker distinguish "no such account" from "wrong
     // password" purely by how fast the response came back, quietly reintroducing username
     // enumeration despite the identical error text. DUMMY_PASSWORD_HASH is precomputed once
-    // at module load (bcrypt.compareSync itself does the expensive part) purely to burn
+    // at module load (bcrypt.compare itself does the expensive part) purely to burn
     // roughly the same time as the real compare on the path below.
-    bcrypt.compareSync(password, DUMMY_PASSWORD_HASH);
+    await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
     res.status(401).json({ error: 'Incorrect username or password.' });
     return;
   }
@@ -294,7 +295,7 @@ authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSche
 
   if (!user.firebase_uid) {
     // Seed/legacy account — untouched bcrypt check, keeps the zero-config demo working.
-    const ok = bcrypt.compareSync(password, user.password_hash);
+    const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) {
       res.status(401).json({ error: 'Incorrect username or password.' });
       return;
@@ -574,11 +575,11 @@ authRouter.post('/change-password', authLimiter, requireCsrfHeader, requireAuth,
       return;
     }
   } else {
-    if (!bcrypt.compareSync(currentPassword, user.password_hash)) {
+    if (!(await bcrypt.compare(currentPassword, user.password_hash))) {
       res.status(401).json({ error: 'Your current password is incorrect.' });
       return;
     }
-    db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(bcrypt.hashSync(newPassword, 10), user.id);
+    db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(await bcrypt.hash(newPassword, BCRYPT_COST), user.id);
   }
 
   // Sign every other device out, keep this one logged in with a fresh session.

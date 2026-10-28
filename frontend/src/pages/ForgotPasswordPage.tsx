@@ -4,6 +4,8 @@ import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { AuthShell } from '../components/AuthShell';
+import { PasswordRules } from '../components/PasswordRules';
+import { isStrongPassword } from '../lib/password';
 
 type Step = 'email' | 'code' | 'done';
 
@@ -55,6 +57,10 @@ export function ForgotPasswordPage() {
     setInfo(null);
     if (password !== confirm) {
       setError(t('profile.passwordMismatch'));
+      return;
+    }
+    if (!isStrongPassword(password)) {
+      setError(t('auth.passwordWeak'));
       return;
     }
     setBusy(true);
@@ -139,10 +145,10 @@ export function ForgotPasswordPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
-              minLength={8}
+              aria-describedby="reset-new-rules"
               required
             />
-            <small className="muted">{t('auth.passwordHint')}</small>
+            <PasswordRules id="reset-new-rules" value={password} />
           </div>
           <div className="field">
             <label htmlFor="reset-confirm">{t('profile.confirmPassword')}</label>
@@ -152,7 +158,6 @@ export function ForgotPasswordPage() {
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               autoComplete="new-password"
-              minLength={8}
               required
             />
           </div>

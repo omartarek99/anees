@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { passwordSchema } from './password.js';
 
 // 'anonymous' = the plain person silhouette that teachers get by default (not a student hero choice).
 export const AVATAR_KEYS = ['falcon', 'astronaut', 'knight', 'athlete', 'robot', 'explorer', 'anonymous'] as const;
@@ -9,11 +10,6 @@ export const usernameSchema = z
   .min(3, 'Username must be at least 3 characters.')
   .max(20, 'Username must be at most 20 characters.')
   .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores.');
-
-export const passwordSchema = z
-  .string()
-  .min(8, 'Password must be at least 8 characters.')
-  .max(72, 'Password is too long.');
 
 export const displayNameSchema = z
   .string()
@@ -79,7 +75,7 @@ export const signupSchema = z
 
 export const loginSchema = z.object({
   username: usernameSchema,
-  password: z.string().min(1, 'Password is required.'),
+  password: z.string().min(1, 'Password is required.').max(200),
 });
 
 export const verifyEmailSchema = z.object({

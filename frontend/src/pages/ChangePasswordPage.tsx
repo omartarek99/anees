@@ -3,6 +3,8 @@ import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { Topbar } from '../components/Topbar';
+import { PasswordRules } from '../components/PasswordRules';
+import { isStrongPassword } from '../lib/password';
 
 /** Change your own password -- open to every role (admins have no profile page, so this lives on
  * its own route, reachable from the floating menu). The backend checks the current password and
@@ -22,6 +24,10 @@ export function ChangePasswordPage() {
     setDone(false);
     if (next !== confirm) {
       setError(t('profile.passwordMismatch'));
+      return;
+    }
+    if (!isStrongPassword(next)) {
+      setError(t('auth.passwordWeak'));
       return;
     }
     setSubmitting(true);
@@ -72,10 +78,10 @@ export function ChangePasswordPage() {
             value={next}
             onChange={(e) => setNext(e.target.value)}
             autoComplete="new-password"
-            minLength={8}
+            aria-describedby="new-password-rules"
             required
           />
-          <small className="muted">{t('auth.passwordHint')}</small>
+          <PasswordRules id="new-password-rules" value={next} />
         </div>
         <div className="field">
           <label htmlFor="confirm-password">{t('profile.confirmPassword')}</label>
@@ -85,7 +91,6 @@ export function ChangePasswordPage() {
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             autoComplete="new-password"
-            minLength={8}
             required
           />
         </div>

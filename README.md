@@ -148,7 +148,7 @@ keep `backend/data/app.db`. Without a backend, every `/api/*` request on the Ver
      `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`
    - `FRONTEND_ORIGIN=https://<your-site>.vercel.app` (CORS + the link in verification emails)
    - `TRUST_PROXY_HOPS=2` when Vercel proxies `/api` to the backend (step 2); `1` if the browser talks to the backend directly
-   - `INITIAL_ADMIN_USERNAME` / `INITIAL_ADMIN_PASSWORD` (12+ chars) -- creates the first admin on the first boot;
+   - `INITIAL_ADMIN_USERNAME` / `INITIAL_ADMIN_PASSWORD` (12+ chars with a capital letter, a small letter, a number and a symbol) -- creates the first admin on the first boot;
      remove the password variable afterwards. In production the `dev_*` accounts are **never created** (and are
      deactivated if a copied database has them), because their passwords are public in this README.
 2. **Vercel**: add a rewrite *before* the SPA one in `vercel.json` so the browser keeps talking to one origin
@@ -175,7 +175,8 @@ minutes, 5 wrong tries per code, 60 s between resends) and is verified and logge
 log in gets a "send me a code" button. The login page also has **"Forgot your password?"**: the same kind of emailed
 6-digit code (its own table and email template) lets a user choose a new password; the server answers identically for
 unknown emails, and the code can't be used for anything else. Signed-in users (including the admin, who has no profile
-page) can change their password at `/password`, from the ☰ menu.
+page) can change their password at `/password`, from the ☰ menu. Every new password (sign-up, reset, change) must be 10+ characters
+with a capital letter, a small letter, a number and a symbol, and no common word like "password" (`backend/src/lib/password.ts`).
 - `RESEND_API_KEY` -- from resend.com (API Keys), with a domain you own verified there (Domains: add the DNS records it shows)
 - `EMAIL_FROM` -- e.g. `Anees <no-reply@your-domain.com>` (must use the verified domain)
 - `FIREBASE_SERVICE_ACCOUNT_BASE64` -- the contents of `backend/secrets/firebase-service-account.json`, base64-encoded

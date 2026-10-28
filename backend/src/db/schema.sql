@@ -48,6 +48,15 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Only a bcrypt hash (local accounts) or '' (Firebase accounts: their password lives, hashed, with Firebase) may ever be
+-- written to password_hash, so a code path that forgot to hash can never leave a plaintext password in this file.
+CREATE TRIGGER IF NOT EXISTS users_password_hash_insert BEFORE INSERT ON users
+WHEN NEW.password_hash <> '' AND NEW.password_hash NOT GLOB '$2[aby]$[0-9][0-9]$*'
+BEGIN SELECT RAISE(ABORT, 'users.password_hash must be a bcrypt hash'); END;
+CREATE TRIGGER IF NOT EXISTS users_password_hash_update BEFORE UPDATE OF password_hash ON users
+WHEN NEW.password_hash <> '' AND NEW.password_hash NOT GLOB '$2[aby]$[0-9][0-9]$*'
+BEGIN SELECT RAISE(ABORT, 'users.password_hash must be a bcrypt hash'); END;
+
 CREATE TABLE IF NOT EXISTS sessions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

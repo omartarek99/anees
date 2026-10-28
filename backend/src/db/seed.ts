@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { db } from './db.js';
 import { encrypt, hashForLookup } from '../lib/encryption.js';
+import { BCRYPT_COST, passwordSchema } from '../lib/password.js';
 
 type Q = {
   text: string;
@@ -136,12 +137,12 @@ function setUpProductionAccounts() {
     );
     return;
   }
-  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username) || password.length < 12) {
+  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username) || password.length < 12 || !passwordSchema.safeParse(password).success) {
     // Only lengths / a character-class check are logged, never the values themselves: a password
     // pasted into the wrong variable must not end up in the host's log.
     console.warn(
       `[seed] Admin NOT created. INITIAL_ADMIN_USERNAME has ${username.length} chars (${/^[a-zA-Z0-9_]*$/.test(username) ? 'valid characters' : 'contains characters other than letters/numbers/underscore'}; needs 3-20). ` +
-        `INITIAL_ADMIN_PASSWORD has ${password.length} chars (needs at least 12).`
+        `INITIAL_ADMIN_PASSWORD has ${password.length} chars (needs at least 12, with a capital letter, a small letter, a number and a symbol, and no common word like "password").`
     );
     return;
   }
@@ -152,7 +153,7 @@ function setUpProductionAccounts() {
   const email = `${username}@anees.local`;
   db.prepare(
     `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, is_seed, role, grade, email_verified) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
-  ).run(username, encrypt(email), hashForLookup(email), bcrypt.hashSync(password, 10), 'Anees Team', 'robot', 0, 0, 'admin', null, 1);
+  ).run(username, encrypt(email), hashForLookup(email), bcrypt.hashSync(password, BCRYPT_COST), 'Anees Team', 'robot', 0, 0, 'admin', null, 1);
   console.log(`[seed] Created initial admin account "${username}".`);
 }
 

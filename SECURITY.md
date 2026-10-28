@@ -67,6 +67,18 @@ written to `backend/.env` (gitignored) so the app keeps working out of the box; 
 is not backed up anywhere else** -- losing it makes every existing user's email permanently
 unreadable. Treat it like any other secret you can't afford to lose.
 
+## Passwords
+
+- **Rules** (`backend/src/lib/password.ts`, one zod schema used by sign-up, reset and change): 10+ characters, a
+  capital letter, a small letter, a number and a symbol, no common word (`password`, `qwerty`, `12345`, ...), and at
+  most 72 bytes -- bcrypt ignores everything after that, so a longer one would be only partly checked. Login accepts
+  any existing password (older accounts predate the rules); only *setting* one is checked. Admins need 12+.
+- **Storage**: never plaintext, never reversible. Accounts created through sign-up have their password hashed by
+  Firebase and `users.password_hash` stays `''`. Local accounts (admin, test accounts) keep a bcrypt hash
+  (cost 12). Two triggers in `schema.sql` abort any insert or update of `password_hash` that is not a bcrypt hash or
+  `''`, so a code path that forgot to hash cannot leave a plaintext password in the database.
+- Password checks are asynchronous (`bcrypt.compare`), so a login never blocks the server for other users.
+
 ## Everything else from this pass, for reference
 
 - **Session-derived identity only**: audited every route file for any place the *acting*
