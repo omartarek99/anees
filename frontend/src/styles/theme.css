@@ -1215,11 +1215,11 @@ button.list-row.selected {
 }
 
 /* ---------------- Category / filter pills ---------------- */
+/* Wraps instead of scrolling: a scroll container clips its children's soft shadows into a hard-edged dark band. */
 .pill-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 4px;
 }
 .category-pill {
   flex-shrink: 0;
