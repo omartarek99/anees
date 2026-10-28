@@ -80,9 +80,31 @@ const maxCompletedLevel = db.prepare(
    WHERE p.user_id = ? AND p.status = 'completed'`
 );
 
-/** "Player level" = the map level the student is currently on (highest completed + 1), capped at 50. */
-export function getPlayerLevel(userId: number): number {
+/** The adventure-map level the student is currently on (highest completed + 1), capped at 50. */
+export function getMapLevel(userId: number): number {
   const row = maxCompletedLevel.get(userId) as { maxLevel: number | null };
   const completedMax = row.maxLevel ?? 0;
   return Math.min(completedMax + 1, 50);
+}
+
+// A user's level grows with their points: everyone starts at level 1 and gains a level every 100 points (students, by total XP) or every
+// 20 points (teachers, by teacher points, a smaller scale like their rank ladder in lib/ranks.ts). With the ranks Bronze at 200 points,
+// Silver at 1000 and Gold at 2000, that makes Bronze level 3, Silver level 11 and Gold level 21.
+export const POINTS_PER_LEVEL = 100;
+export const TEACHER_POINTS_PER_LEVEL = 20;
+
+export function getLevelInfo(userId: number): { level: number; progress: number } {
+  const u = db.prepare(`SELECT role, total_xp, teacher_points FROM users WHERE id = ?`).get(userId) as
+    | { role: string; total_xp: number; teacher_points: number }
+    | undefined;
+  if (!u) return { level: 1, progress: 0 };
+  const teacher = u.role === 'teacher';
+  const points = Math.max(0, teacher ? u.teacher_points : u.total_xp);
+  const per = teacher ? TEACHER_POINTS_PER_LEVEL : POINTS_PER_LEVEL;
+  return { level: 1 + Math.floor(points / per), progress: (points % per) / per };
+}
+
+/** The user's level, from their points (see above). */
+export function getPlayerLevel(userId: number): number {
+  return getLevelInfo(userId).level;
 }

@@ -3,7 +3,7 @@ import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 
 export type RankTier = {
-  key: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'emerald' | 'master';
+  key: 'normal' | 'bronze' | 'silver' | 'gold';
   name: string;
   nameAr: string;
   color: string;
@@ -13,8 +13,8 @@ export type RankTier = {
   progress: number;
 };
 
-// The four lowest tiers have their own artwork (public/images/ranks/<key>.webp, transparent, square).
-const TIER_ART = new Set<RankTier['key']>(['bronze', 'silver', 'gold', 'platinum']);
+// Every tier has its own artwork (public/images/ranks/<key>.webp, transparent, square).
+const TIER_ART = new Set<RankTier['key']>(['normal', 'bronze', 'silver', 'gold']);
 
 /** Rank badge: the tier's artwork for bronze to platinum, a gem-shaped badge (gradient colors only) for the higher tiers. */
 export function RankBadge({ tier, size = 28, showName = true, showIcon = true }: { tier: RankTier; size?: number; showName?: boolean; showIcon?: boolean }) {
@@ -25,7 +25,7 @@ export function RankBadge({ tier, size = 28, showName = true, showIcon = true }:
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
       {!showIcon ? null : TIER_ART.has(tier.key) ? (
-        <img src={`/images/ranks/${tier.key}.webp`} width={size} height={size} alt="" decoding="async" style={{ flexShrink: 0 }} />
+        <img src={`/images/ranks/${tier.key}.webp?v=2`} width={size} height={size} alt="" decoding="async" style={{ flexShrink: 0 }} />
       ) : (
         <svg width={size} height={size} viewBox="0 0 40 40" style={{ flexShrink: 0 }} aria-hidden="true">
           <defs>

@@ -5,7 +5,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader, handleUpload } from '../middleware/validate.js';
 import { avatar3dSchema, updateProfileSchema } from '../lib/schemas.js';
 import { moderateText } from '../lib/moderation.js';
-import { getPlayerLevel } from '../lib/xp.js';
+import { getLevelInfo, getMapLevel } from '../lib/xp.js';
 import { hasShield } from '../lib/battle.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
@@ -71,7 +71,7 @@ function parseAvatar3d(raw: unknown) {
 }
 
 function profileSummary(user: any) {
-  const playerLevel = getPlayerLevel(user.id);
+  const { level: playerLevel, progress: levelProgress } = getLevelInfo(user.id);
   const completedLevels = db
     .prepare(`SELECT COUNT(*) as c FROM user_level_progress WHERE user_id = ? AND status = 'completed'`)
     .get(user.id) as { c: number };
@@ -108,6 +108,9 @@ function profileSummary(user: any) {
     // drives the teacher-only leaderboard, shown on their own profile instead of total XP.
     teacherPoints: user.teacher_points ?? 0,
     playerLevel,
+    // 0..1 toward the next level, and the adventure-map level they are on
+    levelProgress,
+    mapLevel: getMapLevel(user.id),
     rankTier: user.role === 'teacher' ? getTeacherRankTier(user.teacher_points ?? 0) : getRankTier(user.total_xp),
     levelsCompleted: completedLevels.c,
     bossesDefeated: bossesDefeated.c,
