@@ -27,6 +27,7 @@ import {
   TORCH,
   SNOW,
   WHEAT_CROP,
+  WATER,
 } from './craftWorld';
 
 // Procedurally-drawn 16x16 pixel-art block textures — the low resolution + nearest-neighbour
@@ -301,6 +302,12 @@ const drawWheat: Draw = (ctx, rand) => {
   }
 };
 
+const drawWater: Draw = (ctx, rand) => {
+  speckle(ctx, rand, ['#3a74c8', '#3f7bd0', '#356cbd', '#4382d6']);
+  grains(ctx, rand, ['#6aa0e6', '#8fbcf0'], 18);
+  grains(ctx, rand, ['#2a5aa8'], 14);
+};
+
 export type BlockMaterials = {
   materials: Record<number, THREE.Material | THREE.Material[]>;
   dispose: () => void;
@@ -363,6 +370,8 @@ export function buildBlockMaterials(): BlockMaterials {
     [TORCH]: lam({ map: tex(128, drawTorch, { transparent: true }), transparent: true, emissive: 0xff9a3a, emissiveIntensity: 0.9 }),
     [SNOW]: [snowSide, snowSide, snowTop, dirt, snowSide, snowSide],
     [WHEAT_CROP]: lam({ map: tex(129, drawWheat, { transparent: true }), transparent: true, alphaTest: 0.4 }),
+    // drawn as a flat surface quad per top water cell (see CraftPage buildChunk), never as cubes
+    [WATER]: lam({ map: tex(130, drawWater), transparent: true, opacity: 0.7, depthWrite: false, side: THREE.DoubleSide }),
   };
 
   return {

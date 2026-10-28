@@ -40,6 +40,7 @@ const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default:
 const CraftPage = lazy(() => import('./pages/CraftPage').then((m) => ({ default: m.CraftPage })));
 // Dev-only: the 3D map with made-up progress and no login (see the page). Not part of the production build.
 const MapPreviewPage = import.meta.env.DEV ? lazy(() => import('./pages/MapPreviewPage').then((m) => ({ default: m.MapPreviewPage }))) : null;
+const AnimalPreviewPage = import.meta.env.DEV ? lazy(() => import('./pages/AnimalPreviewPage').then((m) => ({ default: m.AnimalPreviewPage }))) : null;
 
 // Navigating to a new page starts at its top (e.g. the Terms link at the bottom of signup).
 // Back/forward (POP) keep the browser's own scroll restoration.
@@ -230,6 +231,16 @@ export default function App() {
                   element={
                     <Suspense fallback={null}>
                       <MapPreviewPage />
+                    </Suspense>
+                  }
+                />
+              )}
+              {AnimalPreviewPage && (
+                <Route
+                  path="/dev/animals"
+                  element={
+                    <Suspense fallback={null}>
+                      <AnimalPreviewPage />
                     </Suspense>
                   }
                 />

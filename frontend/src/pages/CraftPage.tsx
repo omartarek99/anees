@@ -14,6 +14,8 @@ import {
   RUNEBLOCK,
   BEDROCK,
   TRANSPARENT,
+  WATER,
+  biomeAt,
   chunkKey,
   chunkCoord,
   lidx,
@@ -42,7 +44,10 @@ import {
   type PotionKind,
 } from '../lib/craftItems';
 import { buildBlockMaterials } from '../lib/craftTextures';
-import { makeAnimal, updateAnimal, disposeAnimal, rayHitsAnimal, type Animal, type AnimalKind } from '../lib/craftEntities';
+import { makeAnimal, updateAnimal, disposeAnimal, rayHitsAnimal, animalCenterY, animalName, pickSpecies, type Animal } from '../lib/craftEntities';
+import { disposeAllAssets } from '../lib/craftAnimals/model';
+import { speciesOf } from '../lib/craftAnimals/registry';
+import type { SpeciesSpec } from '../lib/craftAnimals/types';
 
 const GRAVITY = 24;
 const MOVE_SPEED = 4.3;
@@ -60,7 +65,10 @@ const SAVE_INTERVAL_MS = 6000;
 const LOAD_RADIUS = 3; // chunks around the player kept meshed (endless streaming)
 const FOG_NEAR = 20;
 const FOG_FAR = 46;
-const MAX_ANIMALS = 8;
+const MAX_ANIMALS = 22; // a lively world; every animal is one mesh, and far ones barely update
+const MAX_PETS = 5; // befriended animals that follow you (the oldest is released when you befriend a sixth)
+const DESPAWN_DIST = 80;
+const WATER_FOG = 0x2a5f9a;
 const SAVE_VERSION = 2;
 
 type Player3D = { x: number; y: number; z: number; vy: number; yaw: number; pitch: number; grounded: boolean; groundRefY: number };
@@ -128,6 +136,8 @@ export function CraftPage() {
   const menuOpenRef = useRef(false);
   const attemptLockRef = useRef<() => void>(() => {});
   const openMenuRef = useRef<() => void>(() => {});
+  const clearAnimalsRef = useRef<() => void>(() => {});
+  const langRef = useRef('en');
 
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -149,6 +159,8 @@ export function CraftPage() {
   const [showTouch, setShowTouch] = useState(false);
   const [locked, setLocked] = useState(false);
   const [pointerLockUnavailable, setPointerLockUnavailable] = useState(false);
+  const [aimed, setAimed] = useState<string | null>(null);
+  langRef.current = lang; // the engine effect runs once: it reads the language through this ref
 
   const hotbarIds = useMemo(() => computeHotbar(inventory), [inventory]);
   useEffect(() => {
@@ -325,16 +337,20 @@ export function CraftPage() {
     const game = gameRef.current!;
     const canvas = canvasRef.current!;
     const wrap = wrapRef.current!;
-    const world = game.world;
+    let world = game.world;
 
     const scene = new THREE.Scene();
     const sky = new THREE.Color(0xbcd9f0);
     scene.background = sky;
     scene.fog = new THREE.Fog(sky.getHex(), FOG_NEAR, FOG_FAR);
+    let underwater = false;
 
     const camera = new THREE.PerspectiveCamera(75, 1, 0.05, FOG_FAR + 28);
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
-    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    // Light on browsers: no preserved drawing buffer, and a pixel ratio of at most 1.5 with antialiasing only on standard-density
+    // screens (a hi-DPI screen is already smooth, and drawing it twice as dense is what makes it heavy).
+    const dpr = window.devicePixelRatio || 1;
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: dpr < 1.5 });
+    renderer.setPixelRatio(Math.min(1.5, dpr));
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.72);
     scene.add(ambient);
@@ -343,6 +359,8 @@ export function CraftPage() {
     scene.add(sun);
 
     const cubeGeom = new THREE.BoxGeometry(1, 1, 1);
+    const waterGeom = new THREE.PlaneGeometry(1, 1);
+    waterGeom.rotateX(-Math.PI / 2);
     const blockMaterials = buildBlockMaterials();
     const materials = blockMaterials.materials;
     const dummy = new THREE.Object3D();
@@ -382,6 +400,16 @@ export function CraftPage() {
             const wz = oz + lz;
             const d = world.diff.get(worldKey(wx, y, wz));
             if (d !== undefined) id = d;
+            if (id === WATER) {
+              // only the top layer of a pond is drawn: one flat translucent quad per water cell with air above it
+              const above = at(lx, y + 1, lz, wx, wz);
+              if (above !== WATER && TRANSPARENT.has(above)) {
+                let arr = groups.get(WATER);
+                if (!arr) groups.set(WATER, (arr = []));
+                arr.push(wx, y, wz);
+              }
+              continue;
+            }
             if (id === AIR || !materials[id]) continue;
             if (
               faceOpen(at(lx + 1, y, lz, wx + 1, wz), id) ||
@@ -401,15 +429,19 @@ export function CraftPage() {
       const cr: ChunkRender = { groups: new Map() };
       groups.forEach((flat, id) => {
         const n = flat.length / 3;
-        const mesh = new THREE.InstancedMesh(cubeGeom, materials[id], n);
-        mesh.frustumCulled = false;
+        const isWater = id === WATER;
+        const mesh = new THREE.InstancedMesh(isWater ? waterGeom : cubeGeom, materials[id], n);
+        const lift = isWater ? 0.38 : 0.5; // the water surface sits a little under the top of its cell
         for (let i = 0; i < n; i++) {
-          dummy.position.set(flat[i * 3] + 0.5, flat[i * 3 + 1] + 0.5, flat[i * 3 + 2] + 0.5);
+          dummy.position.set(flat[i * 3] + 0.5, flat[i * 3 + 1] + lift, flat[i * 3 + 2] + 0.5);
           dummy.updateMatrix();
           mesh.setMatrixAt(i, dummy.matrix);
         }
         mesh.count = n;
         mesh.instanceMatrix.needsUpdate = true;
+        // chunks behind the camera or out of view are skipped by the GPU: a real bound, not `frustumCulled = false`
+        mesh.computeBoundingSphere();
+        mesh.renderOrder = isWater ? 2 : 0;
         scene.add(mesh);
         cr.groups.set(id, { mesh, coords: flat });
       });
@@ -439,6 +471,7 @@ export function CraftPage() {
     }
 
     function rebuildEverything() {
+      world = game.world; // "New world" swaps the world object: build from the current one
       [...rendered.keys()].forEach(disposeChunkRender);
       world.chunks.clear();
       pendingBuilds = [];
@@ -541,6 +574,7 @@ export function CraftPage() {
       );
     }
 
+    const tileAtPos = (x: number, y: number, z: number) => getTile(world, Math.floor(x), Math.floor(y), Math.floor(z));
     const forwardVec = new THREE.Vector3();
     const rightVec = new THREE.Vector3();
     const lookEuler = new THREE.Euler(0, 0, 0, 'YXZ');
@@ -568,15 +602,25 @@ export function CraftPage() {
         mx /= len;
         mz /= len;
       }
-      const spd = MOVE_SPEED * speedMul;
+      const swimming = tileAtPos(p.x, p.y + 0.9, p.z) === WATER;
+      const spd = MOVE_SPEED * speedMul * (swimming ? 0.6 : 1);
       const velX = (forwardVec.x * mz + rightVec.x * mx) * spd;
       const velZ = (forwardVec.z * mz + rightVec.z * mx) * spd;
 
-      p.vy -= GRAVITY * dt;
-      if (p.vy < -22) p.vy = -22;
-      if ((game.keys['Space'] || game.touchJump) && p.grounded) {
-        p.vy = JUMP_V * jumpMul;
-        p.grounded = false;
+      const wantsUp = game.keys['Space'] || game.touchJump;
+      if (swimming) {
+        // water: sink slowly, hold Space to swim up, and a jump from the surface hops out onto the bank
+        p.vy = Math.max(-2.2, p.vy - GRAVITY * 0.14 * dt);
+        if (wantsUp) p.vy = Math.min(3.6, p.vy + 26 * dt);
+        if (wantsUp && tileAtPos(p.x, p.y + 1.7, p.z) !== WATER) p.vy = Math.max(p.vy, 5.2);
+        p.groundRefY = p.y; // no fall damage into (or out of) water
+      } else {
+        p.vy -= GRAVITY * dt;
+        if (p.vy < -22) p.vy = -22;
+        if (wantsUp && p.grounded) {
+          p.vy = JUMP_V * jumpMul;
+          p.grounded = false;
+        }
       }
 
       const nx = p.x + velX * dt;
@@ -652,7 +696,7 @@ export function CraftPage() {
       for (let i = 0; i < 96; i++) {
         if (!(x === startX && y === startY && z === startZ)) {
           const id = getTile(world, x, y, z);
-          if (id !== AIR && id !== undefined) return { x, y, z, nx, ny, nz, dist };
+          if (id !== AIR && id !== WATER && id !== undefined) return { x, y, z, nx, ny, nz, dist };
         }
         if (tmx <= tmy && tmx <= tmz) {
           if (tmx > REACH) break;
@@ -766,10 +810,9 @@ export function CraftPage() {
             target.headingTimer = 0.4;
             spawnBurst(target.x - 0.5, target.y, target.z - 0.5, '#e06a7a');
             if (target.hp <= 0) killAnimal(target);
-          } else if (fresh && !target.tamed) {
-            target.tamed = true;
+          } else if (fresh) {
             game.hitCooldown = 0.5;
-            toastMsg(`❤️ ${t('craft.tamed')}`);
+            befriend(target);
           }
           game.minePrev = game.mineHeld;
           game.mining = null;
@@ -804,7 +847,8 @@ export function CraftPage() {
       const py = r.y + r.ny;
       const pz = r.z + r.nz;
       if (py < 1 || py >= WORLD_Y) return;
-      if (getTile(world, px, py, pz) !== AIR) return;
+      const there = getTile(world, px, py, pz);
+      if (there !== AIR && there !== WATER) return;
       if (overlapsPlayerVoxel(px, py, pz)) return;
       if (invCount(game.inventory, id) <= 0) return;
       setTile(world, px, py, pz, id);
@@ -897,7 +941,7 @@ export function CraftPage() {
       const now = performance.now();
       const night = game.effects.night > now;
       ambient.intensity = night ? 1.35 : 0.72;
-      (scene.fog as THREE.Fog).far = night ? FOG_FAR + 26 : FOG_FAR;
+      if (!underwater) (scene.fog as THREE.Fog).far = night ? FOG_FAR + 26 : FOG_FAR;
       effectSyncTimer += dt;
       if (effectSyncTimer >= 0.5) {
         effectSyncTimer = 0;
@@ -918,8 +962,8 @@ export function CraftPage() {
       let best: Animal | null = null;
       let bestD = maxReach;
       for (const a of game.animals) {
-        if (!rayHitsAnimal(a, camera.position, camDir, maxReach)) continue;
-        const d = Math.hypot(a.x - camera.position.x, a.y + 0.45 - camera.position.y, a.z - camera.position.z);
+        if (!a.mesh.visible || !rayHitsAnimal(a, camera.position, camDir, maxReach)) continue;
+        const d = Math.hypot(a.x - camera.position.x, animalCenterY(a) - camera.position.y, a.z - camera.position.z);
         if (d < bestD) {
           best = a;
           bestD = d;
@@ -927,53 +971,127 @@ export function CraftPage() {
       }
       return best;
     }
+    function removeAnimal(a: Animal) {
+      scene.remove(a.mesh);
+      disposeAnimal(a);
+      game.animals = game.animals.filter((x) => x !== a);
+    }
+    clearAnimalsRef.current = () => [...game.animals].forEach(removeAnimal);
     function killAnimal(a: Animal) {
       if (a.kind === 'pig') addItem(RAW_PORK, 2);
       spawnBurst(a.x - 0.5, a.y, a.z - 0.5, '#e06a7a');
-      scene.remove(a.group);
-      disposeAnimal(a);
-      game.animals = game.animals.filter((x) => x !== a);
+      removeAnimal(a);
       syncInv();
     }
-    function trySpawnAnimal() {
-      if (game.animals.length >= MAX_ANIMALS) return;
-      const keys = [...rendered.keys()];
-      if (!keys.length) return;
+    /** Click an animal: pets follow you from then on; everything else just says hello (and its name). */
+    function befriend(a: Animal) {
+      const label = `${a.spec.emoji} ${animalName(a, langRef.current)}`;
+      spawnBurst(a.x - 0.5, a.y + a.height * 0.5, a.z - 0.5, '#ff7aa8');
+      if (a.spec.tameable === false || a.spec.move === 'swim' || a.tamed) {
+        toastMsg(label);
+        if (a.grounded) a.vy = Math.max(a.vy, 3.5);
+        return;
+      }
+      const pets = game.animals.filter((x) => x.tamed);
+      if (pets.length >= MAX_PETS) pets[0].tamed = false;
+      a.tamed = true;
+      toastMsg(`❤️ ${t('craft.tamed')} · ${label}`);
+    }
+    function addAnimal(spec: SpeciesSpec, x: number, y: number, z: number): Animal {
+      const a = makeAnimal(spec.kind, x, y, z);
+      scene.add(a.mesh);
+      game.animals.push(a);
+      return a;
+    }
+    /** the first solid, non-water block going down a column (null when it is open water or empty) */
+    function groundAt(wx: number, wz: number): number | null {
+      for (let y = WORLD_Y - 2; y > 4; y--) {
+        const g = getTile(world, wx, y, wz);
+        if (g === WATER) return null;
+        if (g !== AIR && !TRANSPARENT.has(g)) return y;
+      }
+      return null;
+    }
+    function spawnHerd(spec: SpeciesSpec, place: (dx: number, dz: number) => { x: number; y: number; z: number } | null, x: number, y: number, z: number) {
+      const [lo, hi] = spec.habitat.herd ?? [1, 1];
+      const n = Math.min(lo + ((Math.random() * (hi - lo + 1)) | 0), MAX_ANIMALS - game.animals.length);
+      for (let i = 0; i < n; i++) {
+        const at = i === 0 ? { x, y, z } : place((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4);
+        if (at) addAnimal(spec, at.x, at.y, at.z);
+      }
+    }
+    function trySpawnAnimal(forceKind?: string) {
+      if (game.animals.length >= MAX_ANIMALS && !forceKind) return;
+      const entries = [...rendered.entries()];
+      if (!entries.length) return;
       const p = game.player;
       const pcx = chunkCoord(p.x);
       const pcz = chunkCoord(p.z);
-      const k = keys[(Math.random() * keys.length) | 0];
+      const forced = forceKind ? speciesOf(forceKind) : null;
+      const roll = Math.random();
+      const want: 'land' | 'water' | 'air' = forced ? (forced.move === 'swim' ? 'water' : forced.move === 'fly' || forced.move === 'float' ? 'air' : 'land') : roll < 0.22 ? 'water' : roll < 0.34 ? 'air' : 'land';
+
+      if (want === 'water') {
+        // a random surface cell of a random pond in view
+        const ponds = entries.filter(([, cr]) => cr.groups.has(WATER));
+        if (!ponds.length) return;
+        const [, cr] = ponds[(Math.random() * ponds.length) | 0];
+        const flat = cr.groups.get(WATER)!.coords;
+        const i = ((Math.random() * flat.length) / 3) | 0;
+        const wx = flat[i * 3];
+        const wy = flat[i * 3 + 1];
+        const wz = flat[i * 3 + 2];
+        let depth = 0;
+        while (depth < 8 && getTile(world, wx, wy - depth, wz) === WATER) depth++;
+        if (Math.hypot(wx - p.x, wz - p.z) < 4) return;
+        const spec = forced ?? pickSpecies({ kind: 'water', biome: biomeAt(world.seed, wx, wz), waterDepth: depth });
+        if (!spec) return;
+        const sy = wy - Math.min(depth - 1, (Math.random() * depth) | 0);
+        const water = (dx: number, dz: number) => (getTile(world, Math.floor(wx + 0.5 + dx), sy, Math.floor(wz + 0.5 + dz)) === WATER ? { x: wx + 0.5 + dx, y: sy, z: wz + 0.5 + dz } : null);
+        spawnHerd(spec, water, wx + 0.5, sy, wz + 0.5);
+        return;
+      }
+
+      const [k] = entries[(Math.random() * entries.length) | 0];
       const [cx, cz] = k.split(',').map(Number);
       if (Math.max(Math.abs(cx - pcx), Math.abs(cz - pcz)) < 1) return; // not right on top of the player
       const wx = cx * CHUNK + ((Math.random() * CHUNK) | 0);
       const wz = cz * CHUNK + ((Math.random() * CHUNK) | 0);
-      for (let y = WORLD_Y - 2; y > 4; y--) {
-        const g = getTile(world, wx, y, wz);
-        if (g !== AIR && !TRANSPARENT.has(g)) {
-          if (getTile(world, wx, y + 1, wz) !== AIR || getTile(world, wx, y + 2, wz) !== AIR) return;
-          const roll = Math.random();
-          const kind: AnimalKind = roll < 0.46 ? 'pig' : roll < 0.73 ? 'dog' : 'cat';
-          const a = makeAnimal(kind, wx + 0.5, y + 1.02, wz + 0.5);
-          scene.add(a.group);
-          game.animals.push(a);
-          return;
-        }
+      const gy = groundAt(wx, wz);
+      if (gy === null) return;
+      if (getTile(world, wx, gy + 1, wz) !== AIR || getTile(world, wx, gy + 2, wz) !== AIR) return;
+      const spec = forced ?? pickSpecies({ kind: want, biome: biomeAt(world.seed, wx, wz) });
+      if (!spec) return;
+      if (want === 'air') {
+        const [lo, hi] = spec.altitude ?? [2, 6];
+        const fy = Math.min(WORLD_Y - 4, gy + 1 + lo + Math.random() * (hi - lo));
+        spawnHerd(spec, (dx, dz) => ({ x: wx + 0.5 + dx, y: fy + Math.random(), z: wz + 0.5 + dz }), wx + 0.5, fy, wz + 0.5);
+        return;
       }
+      const ground = (dx: number, dz: number) => {
+        const gx = Math.floor(wx + 0.5 + dx);
+        const gz = Math.floor(wz + 0.5 + dz);
+        const g = groundAt(gx, gz);
+        if (g === null || getTile(world, gx, g + 1, gz) !== AIR || getTile(world, gx, g + 2, gz) !== AIR) return null;
+        return { x: gx + 0.5, y: g + 1.02, z: gz + 0.5 };
+      };
+      spawnHerd(spec, ground, wx + 0.5, gy + 1.02, wz + 0.5);
     }
+    let initialSpawns = 10;
     function animalsTick(dt: number) {
+      if (initialSpawns > 0) {
+        // populate the world as it opens, a few animals per frame, instead of waiting for the timer
+        for (let i = 0; i < 2 && initialSpawns > 0; i++, initialSpawns--) trySpawnAnimal();
+      }
       game.spawnTimer -= dt;
       if (game.spawnTimer <= 0) {
-        game.spawnTimer = 6 + Math.random() * 5;
-        if (Math.random() < 0.75) trySpawnAnimal();
+        game.spawnTimer = 2 + Math.random() * 2.5;
+        if (Math.random() < 0.85) trySpawnAnimal();
       }
       const p = game.player;
       for (const a of [...game.animals]) {
         updateAnimal(a, dt, world, p);
-        if (!a.tamed && Math.hypot(a.x - p.x, a.z - p.z) > 92) {
-          scene.remove(a.group);
-          disposeAnimal(a);
-          game.animals = game.animals.filter((x) => x !== a);
-        }
+        if (a.gone || (!a.tamed && Math.hypot(a.x - p.x, a.z - p.z) > DESPAWN_DIST)) removeAnimal(a);
       }
     }
 
@@ -1052,6 +1170,7 @@ export function CraftPage() {
     // ---- render loop ----
     let lastT = performance.now();
     let rafId = 0;
+    let lastAimed: string | null = null;
     function loop(tMs: number) {
       const dt = Math.min(0.033, (tMs - lastT) / 1000);
       lastT = tMs;
@@ -1070,13 +1189,32 @@ export function CraftPage() {
       if (active) {
         animalsTick(dt);
         game.reticle = raycastVoxel();
+        const aimAt = game.locked || showTouch ? pickAnimal() : null;
+        const aimLabel = aimAt ? `${aimAt.spec.emoji} ${animalName(aimAt, langRef.current)}` : null;
+        if (aimLabel !== lastAimed) {
+          lastAimed = aimLabel;
+          setAimed(aimLabel);
+        }
         updateMining(dt);
         if (game.useQueued) {
           game.useQueued = false;
           useHeld();
         }
-      } else {
-        for (const a of game.animals) a.group.position.set(a.x, a.y, a.z);
+      }
+      const eyeInWater = tileAtPos(camera.position.x, camera.position.y, camera.position.z) === WATER;
+      if (eyeInWater !== underwater) {
+        underwater = eyeInWater;
+        const fog = scene.fog as THREE.Fog;
+        if (underwater) {
+          sky.setHex(WATER_FOG);
+          fog.color.setHex(WATER_FOG);
+          fog.near = 0.5;
+          fog.far = 18;
+        } else {
+          sky.setHex(0xbcd9f0);
+          fog.color.setHex(0xbcd9f0);
+          fog.near = FOG_NEAR;
+        }
       }
       renderer.render(scene, camera);
       rafId = requestAnimationFrame(loop);
@@ -1110,8 +1248,43 @@ export function CraftPage() {
         },
         tile: (x: number, y: number, z: number) => getTile(world, x, y, z),
         chunks: () => rendered.size,
-        animals: () => game.animals.map((a) => ({ kind: a.kind, x: +a.x.toFixed(1), y: +a.y.toFixed(1), z: +a.z.toFixed(1), hp: a.hp, tamed: a.tamed })),
+        animals: () => game.animals.map((a) => ({ kind: a.kind, variant: a.variant, x: +a.x.toFixed(1), y: +a.y.toFixed(1), z: +a.z.toFixed(1), hp: a.hp, tamed: a.tamed, visible: a.mesh.visible })),
         forceSpawnAnimal: trySpawnAnimal,
+        /** put a species in front of the player (tests): on the ground there for walkers, a few blocks up for fliers */
+        placeAnimal(kind: string, dx = 0, dz = -4, dy = 0) {
+          const spec = speciesOf(kind);
+          const x = Math.floor(game.player.x + dx) + 0.5;
+          const z = Math.floor(game.player.z + dz) + 0.5;
+          const g = groundAt(Math.floor(x), Math.floor(z));
+          const base = g === null ? game.player.y : g + 1.02;
+          const y = spec.move === 'fly' || spec.move === 'float' ? base + 2 + dy : base + dy;
+          return addAnimal(spec, x, y, z).kind;
+        },
+        placeAnimalAt(kind: string, x: number, y: number, z: number) {
+          const a = addAnimal(speciesOf(kind), x, y, z);
+          return { kind: a.kind, variant: a.variant };
+        },
+        clearAnimals: () => clearAnimalsRef.current(),
+        /** befriend the n-th animal as if it had been clicked (tests) */
+        befriendAt: (i: number) => game.animals[i] && befriend(game.animals[i]),
+        /** perf experiments: draw every chunk mesh regardless of view (the old behaviour) or only the visible ones */
+        setCulling: (on: boolean) => rendered.forEach((cr) => cr.groups.forEach((g) => (g.mesh.frustumCulled = on))),
+        /** ms to draw one frame (10 synchronous draws, then a GPU sync): compare before / after, not across machines */
+        renderCost() {
+          const t0 = performance.now();
+          for (let i = 0; i < 10; i++) renderer.render(scene, camera);
+          const gl = renderer.getContext();
+          gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+          return (performance.now() - t0) / 10;
+        },
+        /** ms of animal AI per frame, averaged over n frames */
+        aiCost(n = 60) {
+          const t0 = performance.now();
+          for (let i = 0; i < n; i++) animalsTick(1 / 30);
+          return (performance.now() - t0) / n;
+        },
+        renderStats: () => ({ calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures }),
+        render: () => renderer.render(scene, camera),
       };
     }
 
@@ -1172,10 +1345,13 @@ export function CraftPage() {
       if (document.pointerLockElement === canvas) document.exitPointerLock();
       [...rendered.keys()].forEach(disposeChunkRender);
       game.animals.forEach((a) => {
-        scene.remove(a.group);
+        scene.remove(a.mesh);
         disposeAnimal(a);
       });
+      game.animals = [];
+      disposeAllAssets();
       cubeGeom.dispose();
+      waterGeom.dispose();
       blockMaterials.dispose();
       renderer.dispose();
     };
@@ -1274,7 +1450,7 @@ export function CraftPage() {
     g.hp = 20;
     g.food = 20;
     g.effects = { speed: 0, jump: 0, night: 0 };
-    g.animals.forEach((a) => disposeAnimal(a));
+    clearAnimalsRef.current();
     g.animals = [];
     const s = spawnPoint(g.world);
     g.player.x = s.x;
@@ -1491,6 +1667,29 @@ export function CraftPage() {
                 zIndex: 5,
               }}
             />
+
+            {aimed && (
+              <div
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  top: 'calc(50% + 20px)',
+                  transform: 'translateX(-50%)',
+                  zIndex: 5,
+                  pointerEvents: 'none',
+                  background: 'rgba(16,20,32,0.62)',
+                  color: '#fff',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  padding: '3px 10px',
+                  borderRadius: 999,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {aimed}
+              </div>
+            )}
 
             {hotbar}
 

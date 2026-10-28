@@ -39,11 +39,12 @@ export const FURNACE = 24;
 export const TORCH = 25;
 export const SNOW = 26;
 export const WHEAT_CROP = 27;
+export const WATER = 28; // ponds and lakes: see-through, swim-through, never mined or placed from the hotbar
 
 /** Blocks a placement/mesh treats as see-through for neighbour face culling. */
-export const TRANSPARENT = new Set<number>([AIR, GLASS, TORCH, WHEAT_CROP]);
+export const TRANSPARENT = new Set<number>([AIR, GLASS, TORCH, WHEAT_CROP, WATER]);
 /** Blocks the player can walk through. */
-export const NON_SOLID = new Set<number>([AIR, TORCH, WHEAT_CROP]);
+export const NON_SOLID = new Set<number>([AIR, TORCH, WHEAT_CROP, WATER]);
 
 // ---- integer hash noise -------------------------------------------------------------------
 function hash2(seed: number, x: number, y: number): number {
@@ -179,6 +180,63 @@ function treeBlockAt(seed: number, x: number, y: number, z: number, biome: Biome
   return 0;
 }
 
+// ---- ponds and lakes -----------------------------------------------------------------------------
+// One candidate per 44x44 cell, kept only where the ground is nearly level. A pond is CARVED into the terrain: the ground above
+// the water line inside its footprint becomes air and the volume just under it becomes water, so nothing is ever added above
+// the old surface - a saved world's builds (which live in the edit diff) are never flooded. The bank climbs one block per
+// block back up to the old ground at the rim, so a swimmer can always walk out.
+const POND_CELL = 44;
+type Pond = { cx: number; cz: number; r: number; level: number; depth: number };
+let pondSeed = NaN;
+const pondCache = new Map<number, Pond | null>();
+
+function pondOfCell(seed: number, i: number, j: number): Pond | null {
+  if (seed !== pondSeed) {
+    pondSeed = seed;
+    pondCache.clear();
+  }
+  const key = (i + 32768) * 65536 + (j + 32768);
+  const hit = pondCache.get(key);
+  if (hit !== undefined) return hit;
+  let pond: Pond | null = null;
+  if (hash2(seed + 9001, i, j) < 0.7) {
+    const lake = hash2(seed + 9002, i, j) < 0.3;
+    const r = lake ? 9 + Math.floor(hash2(seed + 9003, i, j) * 6) : 5 + Math.floor(hash2(seed + 9003, i, j) * 4); // lake 9..14, pond 5..8
+    const room = POND_CELL - 2 * (r + 3);
+    const cx = i * POND_CELL + r + 3 + Math.floor(hash2(seed + 9004, i, j) * room);
+    const cz = j * POND_CELL + r + 3 + Math.floor(hash2(seed + 9005, i, j) * room);
+    if (Math.hypot(cx, cz) > 40 && biomeAt(seed, cx, cz) !== 'desert') {
+      let lo = surfaceHeight(seed, cx, cz);
+      let hi = lo;
+      for (let a = 0; a < 8; a++) {
+        const hh = surfaceHeight(seed, Math.round(cx + Math.cos((a * Math.PI) / 4) * r * 0.9), Math.round(cz + Math.sin((a * Math.PI) / 4) * r * 0.9));
+        lo = Math.min(lo, hh);
+        hi = Math.max(hi, hh);
+      }
+      const depth = lake ? 4 + Math.floor(hash2(seed + 9006, i, j) * 3) : 2 + Math.floor(hash2(seed + 9006, i, j) * 2); // lake 4..6, pond 2..3
+      if (hi - lo <= (lake ? 4 : 3) && lo - depth >= 6) pond = { cx, cz, r, level: lo, depth };
+    }
+  }
+  pondCache.set(key, pond);
+  return pond;
+}
+
+// distance from the pond centre and the ragged radius of the column pondAt() last matched (read right after the call)
+let pondDist = 0;
+let pondRadius = 0;
+/** The pond (if any) whose ragged circular footprint covers this column. */
+function pondAt(seed: number, x: number, z: number): Pond | null {
+  const p = pondOfCell(seed, Math.floor(x / POND_CELL), Math.floor(z / POND_CELL));
+  if (!p) return null;
+  const dx = x + 0.5 - p.cx;
+  const dz = z + 0.5 - p.cz;
+  const rr = p.r * (0.82 + 0.36 * valueNoise2(seed + 9100, x * 0.35, z * 0.35));
+  if (dx * dx + dz * dz >= rr * rr) return null;
+  pondDist = Math.sqrt(dx * dx + dz * dz);
+  pondRadius = rr;
+  return p;
+}
+
 /** The one source of truth for base terrain. Pure — no world state. */
 export function baseTileAt(seed: number, x: number, y: number, z: number): number {
   if (y < 0 || y >= WORLD_Y) return AIR;
@@ -187,6 +245,24 @@ export function baseTileAt(seed: number, x: number, y: number, z: number): numbe
 
   const h = surfaceHeight(seed, x, z);
   const biome = biomeAt(seed, x, z);
+
+  if (y > h - 12 && y < h + 10) {
+    const pond = pondAt(seed, x, z);
+    if (pond) {
+      const bank = h - pond.level - Math.floor(pondRadius - pondDist); // 1:1 ramp that meets the old ground exactly at the rim
+      if (bank <= 0) {
+        // open water
+        if (y > pond.level) return AIR;
+        if (y > pond.level - pond.depth) return WATER;
+        if (y === pond.level - pond.depth) return hash3(seed + 3, x, y, z) > 0.45 ? SAND : GRAVEL;
+      } else {
+        // a sloping bank back up to the old ground
+        const top = pond.level + bank;
+        if (y > top) return AIR;
+        if (y === top) return biome === 'desert' ? SAND : biome === 'snowy' ? SNOW : GRASS;
+      }
+    }
+  }
 
   if (y > h) {
     const tree = treeBlockAt(seed, x, y, z, biome);
