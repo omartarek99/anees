@@ -1,5 +1,6 @@
 import { db } from '../db/db.js';
 import { grantRankCertificates } from './rankCertificates.js';
+import { getRankTier, DIVISION_COUNT } from './ranks.js';
 
 export const WORKSHEET_XP_PER_CORRECT: Record<'easy' | 'medium' | 'hard', number> = {
   easy: 5,
@@ -24,15 +25,15 @@ export const VIDEO_FULL_WATCH_POINTS = 2;
 export const QUIZ_PASS_POINTS = 3;
 export const QUIZ_FAIL_POINTS = 1;
 
-// Rune puzzles in the Builder's Quarry scale with the student's total XP so far —
+// Rune puzzles in the Builder's Quarry scale with the student's rank division so far —
 // same difficulty ladder feel as worksheets, but keyed off overall progress rather
-// than a manually chosen difficulty since the puzzle is triggered mid-play.
+// than a manually chosen difficulty since the puzzle is triggered mid-play. The 18 divisions
+// (lib/ranks.ts) are split into four stretches: Iron 1 to Bronze 2, Bronze 3 to Silver 3,
+// Gold 1 to Platinum 2, and Platinum 3 and above.
 export const CRAFT_PUZZLE_XP_BY_TIER = [5, 10, 15, 25] as const;
 export function craftPuzzleTierForXp(totalXp: number): 1 | 2 | 3 | 4 {
-  if (totalXp < 200) return 1;
-  if (totalXp < 800) return 2;
-  if (totalXp < 2000) return 3;
-  return 4;
+  const { index } = getRankTier(totalXp);
+  return (1 + Math.min(3, Math.floor((index * 4) / DIVISION_COUNT))) as 1 | 2 | 3 | 4;
 }
 
 export function awardXp(userId: number, amount: number, reason: string) {
@@ -88,8 +89,8 @@ export function getMapLevel(userId: number): number {
 }
 
 // A user's level grows with their points: everyone starts at level 1 and gains a level every 100 points (students, by total XP) or every
-// 20 points (teachers, by teacher points, a smaller scale like their rank ladder in lib/ranks.ts). With the ranks Bronze at 200 points,
-// Silver at 1000 and Gold at 2000, that makes Bronze level 3, Silver level 11 and Gold level 21.
+// 20 points (teachers, by teacher points, a smaller scale like their rank ladder in lib/ranks.ts). A rank division is 250 points wide
+// (50 for teachers), so a division is two and a half levels.
 export const POINTS_PER_LEVEL = 100;
 export const TEACHER_POINTS_PER_LEVEL = 20;
 

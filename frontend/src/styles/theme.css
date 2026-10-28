@@ -2845,62 +2845,61 @@ label,
   .cert-plaque { animation: none; transition: none; }
 }
 
-/* ---------------- Points levels bar on the profile (MedalLevelBar.tsx) ---------------- */
+/* ---------------- Rank bar on the profile (MedalLevelBar.tsx) ---------------- */
 .medal-level-pill {
   font-size: 12px;
   font-weight: 800;
   padding: 3px 12px;
   border-radius: 999px;
-  color: #14181f;
-  background: #c9ced6;
 }
-.medal-level-pill.medal-bronze { background: linear-gradient(135deg, #e6a15c, #c88355); }
-.medal-level-pill.medal-silver { background: linear-gradient(135deg, #f1f4f8, #c2c9d3); }
-.medal-level-pill.medal-gold { background: linear-gradient(135deg, #f8d36a, #e0a52a); color: #2e2000; }
-.medal-track-wrap {
-  position: relative;
-  direction: ltr; /* the bar always fills left to right */
-  margin: 4px 34px 0;
-  padding-top: 76px;
-  padding-bottom: 46px;
+.medal-tiers {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
 }
-.medal-plaques {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 72px;
-}
-.medal-stop {
-  position: absolute;
-  top: 0;
-  width: max-content; /* the last one sits at the very end of the bar: without this it is squeezed to nothing */
-  transform: translateX(-50%);
+.medal-tier {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  opacity: 0.62;
-  filter: grayscale(0.55);
-  transition: opacity 0.3s, filter 0.3s, transform 0.3s;
+  gap: 3px;
+  min-width: 52px;
+  padding: 6px 4px;
+  border-radius: 12px;
+  opacity: 0.5;
+  filter: grayscale(0.6);
+  transition: opacity 0.3s, filter 0.3s;
 }
-.medal-stop img {
-  display: block;
-  flex-shrink: 0;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
-}
-.medal-stop b {
+.medal-tier span {
   font-size: 11px;
+  font-weight: 700;
   line-height: 1;
 }
-.medal-stop.is-reached {
+.medal-tier.is-reached {
   opacity: 1;
   filter: none;
-  transform: translateX(-50%) translateY(-2px);
 }
-.medal-stop.is-reached img {
-  filter: drop-shadow(0 0 8px rgba(240, 180, 41, 0.85)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+.medal-tier.is-current {
+  background: rgba(240, 180, 41, 0.16);
+  box-shadow: inset 0 0 0 2px rgba(240, 180, 41, 0.75);
+}
+.medal-division {
+  display: grid;
+  gap: 6px;
+}
+.medal-division-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+}
+.medal-division-labels span {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 .medal-track {
   position: relative;
+  direction: ltr; /* the bar always fills left to right */
   height: 14px;
   border-radius: 999px;
   background: var(--sand-dark);
@@ -2909,49 +2908,13 @@ label,
 }
 .medal-fill {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, #aab2bf 0%, #cd7f32 33.3%, #d5dbe3 66.6%, #f0b429 100%);
-  transition: clip-path 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.medal-tick {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: rgba(0, 0, 0, 0.35);
-  transform: translateX(-1px);
-}
-.medal-knob {
-  position: absolute;
-  top: 72px;
-  width: 22px;
-  height: 22px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: #fff;
-  border: 3px solid var(--maroon, #8a1538);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  transition: inset-inline-start 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.medal-knob span {
-  position: absolute;
-  top: 34px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-.medal-start {
-  position: absolute;
-  left: 0;
-  bottom: 22px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ink-soft);
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @media (prefers-reduced-motion: reduce) {
-  .medal-fill, .medal-knob, .medal-stop { transition: none; }
+  .medal-fill, .medal-tier { transition: none; }
 }
 
 /* ---------------- Profile editing: pen icons and the + on the picture ---------------- */

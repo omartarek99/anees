@@ -14,17 +14,14 @@ reelsRouter.get('/double-points-status', (_req, res) => {
   res.json(getDoublePointsStatus());
 });
 
-// Level 1 starts available for every account from the moment it exists, even before any
-// progress row has been written for it (matches GET /map's own fallback, backend/src/routes/map.ts)
-// -- this covers accounts created before the signup route seeded this row (or any other
-// gap), not just the happy path where the row already exists.
-function getProgress(userId: number, level: { id: number; level_number: number }): any {
-  const row = db
-    .prepare(`SELECT * FROM user_level_progress WHERE user_id = ? AND map_level_id = ?`)
-    .get(userId, level.id) as any;
-  if (row) return row;
-  if (level.level_number === 1) return { status: 'available', stars: 0, best_score: 0 };
-  return null;
+// Videos and the adventure map are separate systems: a video has its own quiz (reel_questions), and nothing in here reads or writes map
+// levels or level progress -- the map's questions live in their own pool and routes (routes/mapQuiz.ts, routes/map.ts). A video is
+// for one grade: a student can watch and take the quiz of the videos tagged with their own grade, a teacher of any.
+function visibleReel(userId: number, reelId: number): any | null {
+  const reel = db.prepare(`SELECT * FROM reels WHERE id = ? AND grade IS NOT NULL`).get(reelId) as any;
+  if (!reel) return null;
+  const user = db.prepare(`SELECT grade, role FROM users WHERE id = ?`).get(userId) as { grade: number | null; role: string } | undefined;
+  return user && (user.role === 'teacher' || user.grade === reel.grade) ? reel : null;
 }
 
 function loadAuthor(
@@ -61,10 +58,8 @@ function loadQuestions(reelId: number) {
 // the same join+filter /map already does, then gathers each level's reels/questions
 // in-process (still N small synchronous SQLite calls, but zero extra HTTP round trips).
 reelsRouter.get('/feed', (req, res) => {
-  // Only teachers' grade-based videos live in Reels. The adventure-map levels are plain question rounds now (routes/mapQuiz.ts), with
-  // no video behind them.
-  // Grade-based teacher lessons, decoupled from the map/level system entirely, always available
-  // (nothing to unlock, no lock state). A student gets every lesson tagged with their own grade.
+  // Only teachers' grade-based videos live in Reels. The adventure-map levels are plain question rounds (routes/mapQuiz.ts), with no
+  // video behind them. The lessons are always available (nothing to unlock, no lock state). A student gets every lesson tagged with their own grade.
   // Teachers don't set a grade at signup, so they see every grade-based lesson from every grade and
   // every teacher -- the same full library a student is shown, not just the ones they uploaded.
   const user = db.prepare(`SELECT grade, role FROM users WHERE id = ?`).get(req.userId!) as { grade: number | null; role: string };
@@ -129,19 +124,10 @@ const watchSchema = z.object({
 // credit at most ~1 second of watch time, no matter what `seconds` either one claims.
 reelsRouter.post('/:reelId/watch', requireCsrfHeader, validateBody(watchSchema), (req, res) => {
   const reelId = Number(req.params.reelId);
-  const reel = db.prepare(`SELECT * FROM reels WHERE id = ?`).get(reelId) as any;
+  const reel = visibleReel(req.userId!, reelId);
   if (!reel) {
     res.status(404).json({ error: 'Lesson not found.' });
     return;
-  }
-  // Grade-based reels have no map level to lock behind -- always allowed.
-  if (!reel.grade) {
-    const level = db.prepare(`SELECT * FROM map_levels WHERE id = ?`).get(reel.map_level_id) as any;
-    const progress = getProgress(req.userId!, level);
-    if (!progress || progress.status === 'locked') {
-      res.status(403).json({ error: 'This level is locked.' });
-      return;
-    }
   }
 
   const { seconds: reportedSeconds } = req.body as { seconds: number };
@@ -214,18 +200,9 @@ const submitSchema = z.object({
 
 reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema), (req, res) => {
   const reelId = Number(req.params.reelId);
-  const reel = db.prepare(`SELECT * FROM reels WHERE id = ?`).get(reelId) as any;
+  const reel = visibleReel(req.userId!, reelId);
   if (!reel) {
     res.status(404).json({ error: 'Lesson not found.' });
-    return;
-  }
-
-  // Grade-based reels have no map level to lock behind or complete.
-  const isGradeReel = !!reel.grade;
-  const level = isGradeReel ? null : (db.prepare(`SELECT * FROM map_levels WHERE id = ?`).get(reel.map_level_id) as any);
-  const progress = isGradeReel ? null : getProgress(req.userId!, level);
-  if (!isGradeReel && (!progress || progress.status === 'locked')) {
-    res.status(403).json({ error: 'This level is locked.' });
     return;
   }
 
@@ -240,9 +217,8 @@ reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema
   const passedThisAttempt = scoreRatio >= 0.5;
 
   // Quiz points are flat per submission -- every submission earns them, not just the
-  // first, unlike the old one-time-only XP model (repeat attempts are how a student
-  // reaches the 50% needed to advance anyway). Same "at least half" threshold as
-  // stars/level-unlock above -- 2 out of 4 correct (exactly 50%) counts as a pass.
+  // first. Same "at least half" line as the stars -- 2 out of 4 correct (exactly 50%)
+  // counts as a pass.
   const doublePoints = getDoublePointsStatus();
   const basePoints = scoreRatio >= 0.5 ? QUIZ_PASS_POINTS : QUIZ_FAIL_POINTS;
   const xpEarned = doublePoints.active ? basePoints * DOUBLE_POINTS_MULTIPLIER : basePoints;
@@ -265,77 +241,7 @@ reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema
     );
   }
 
-  if (isGradeReel) {
-    const levelAfterXpGrade = getPlayerLevel(req.userId!);
-    res.json({
-      results,
-      correctCount,
-      total,
-      xpEarned,
-      stars,
-      doublePointsActive: doublePoints.active,
-      leveledUp: levelAfterXpGrade > levelBeforeXp,
-      newPlayerLevel: levelAfterXpGrade,
-    });
-    return;
-  }
-
-  const nowStars = Math.max(stars, progress.stars ?? 0);
-  const bestScore = Math.max(correctCount, progress.best_score ?? 0);
-
-  // The next level only unlocks once every one of THIS level's reels has been passed at
-  // >=50% at least once (usually just this one reel, but a level can have several) --
-  // not merely attempted. Sticky: a level already completed stays completed even if a
-  // later review attempt on one of its reels scores under 50%.
-  const levelReelIds = (db.prepare(`SELECT id FROM reels WHERE map_level_id = ? AND grade IS NULL`).all(level.id) as { id: number }[]).map(
-    (r) => r.id
-  );
-  const passedReelCount = levelReelIds.length
-    ? (
-        db
-          .prepare(
-            `SELECT COUNT(*) as c FROM reel_watch_progress WHERE user_id = ? AND passed_quiz = 1 AND reel_id IN (${levelReelIds
-              .map(() => '?')
-              .join(',')})`
-          )
-          .get(req.userId!, ...levelReelIds) as { c: number }
-      ).c
-    : 0;
-  const levelFullyPassed = progress.status === 'completed' || passedReelCount >= levelReelIds.length;
-  const newStatus = levelFullyPassed ? 'completed' : 'available';
-
-  // Upsert, not a plain UPDATE: level 1 may not have a row yet for accounts predating
-  // signup's own progress-seeding (getProgress's virtual fallback covers reads, but
-  // writes still need a real row to land in). completed_at only ever moves forward to
-  // "now" when the level is newly/still fully passed -- never cleared by an under-50%
-  // review attempt.
-  db.prepare(
-    `INSERT INTO user_level_progress (user_id, map_level_id, status, stars, best_score, completed_at)
-     VALUES (?, ?, ?, ?, ?, CASE WHEN ? THEN datetime('now') ELSE NULL END)
-     ON CONFLICT(user_id, map_level_id) DO UPDATE SET
-       status = excluded.status, stars = excluded.stars, best_score = excluded.best_score,
-       completed_at = CASE WHEN ? THEN datetime('now') ELSE user_level_progress.completed_at END`
-  ).run(req.userId!, level.id, newStatus, nowStars, bestScore, levelFullyPassed ? 1 : 0, levelFullyPassed ? 1 : 0);
-
-  // Unlock the next map level (or boss) only once this level is fully passed -- so a
-  // student can't skip ahead by scoring under 50% on every reel.
-  if (levelFullyPassed) {
-    const nextLevel = db.prepare(`SELECT * FROM map_levels WHERE level_number = ?`).get(level.level_number + 1) as any;
-    if (nextLevel) {
-      const existing = getProgress(req.userId!, nextLevel);
-      if (!existing) {
-        db.prepare(`INSERT INTO user_level_progress (user_id, map_level_id, status) VALUES (?,?,'available')`).run(
-          req.userId!,
-          nextLevel.id
-        );
-      } else if (existing.status === 'locked') {
-        db.prepare(`UPDATE user_level_progress SET status = 'available' WHERE id = ?`).run(existing.id);
-      }
-    }
-  }
-
   const levelAfterXp = getPlayerLevel(req.userId!);
-
   res.json({
     results,
     correctCount,

@@ -3,16 +3,23 @@ import type { Router } from 'express';
 import { db } from '../db/db.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { awardXp, getPlayerLevel, QUIZ_PASS_POINTS, QUIZ_FAIL_POINTS } from '../lib/xp.js';
+import { difficultyTierFor } from '../lib/ranks.js';
 import { getDoublePointsStatus, DOUBLE_POINTS_MULTIPLIER } from '../lib/doublePoints.js';
 import { gradeAnswers } from '../lib/grading.js';
 
-// Normal map levels have no video. Clicking a level serves 4 random questions (2 Math + 2 Science) from the question-bank pool
-// (lib/mapQuestions.ts), a little harder with every level: 10 tiers, level 50 = tier 10 = MEDIUM, never hard.
+// Normal map levels have no video: their questions live in their own pool (level_quiz_questions, lib/mapQuestions.ts), apart from the
+// questions of the videos (reel_questions). Clicking a level serves 4 random questions (2 Math + 2 Science) from that pool, a little
+// harder with every level (10 tiers, level 50 = tier 10 = MEDIUM, never hard) and with every rank division: the tier is the middle
+// of the level's own tier and the tier of the student's division (lib/ranks.ts difficultyTierFor), so Champion players get harder
+// questions on level 1 than Iron players do.
 
 const QUESTIONS_PER_SUBJECT = 2;
 
-function tierOfLevel(levelNumber: number): number {
-  return Math.min(10, Math.max(1, Math.ceil(levelNumber / 5)));
+function tierOfLevel(levelNumber: number, userId: number): number {
+  const byLevel = Math.min(10, Math.max(1, Math.ceil(levelNumber / 5)));
+  const u = db.prepare(`SELECT total_xp FROM users WHERE id = ?`).get(userId) as { total_xp: number } | undefined;
+  const byDivision = difficultyTierFor(u?.total_xp ?? 0);
+  return Math.min(10, Math.max(1, Math.round((byLevel + byDivision) / 2)));
 }
 
 // Grade 6 students get the grade-6 questions; everyone else (grade 5, teachers, no grade) the grade-5 ones.
@@ -61,7 +68,7 @@ export function registerLevelQuiz(router: Router) {
       return;
     }
     const grade = gradeOf(req.userId!);
-    const tier = tierOfLevel(levelNumber);
+    const tier = tierOfLevel(levelNumber, req.userId!);
     const picked = [...pick('math', grade, tier, QUESTIONS_PER_SUBJECT), ...pick('science', grade, tier, QUESTIONS_PER_SUBJECT)];
     if (picked.length === 0) {
       res.status(404).json({ error: 'No questions available for this level yet.' });
@@ -95,9 +102,10 @@ export function registerLevelQuiz(router: Router) {
     const { level, progress } = found;
     const { answers } = req.body as { answers: { questionId: number; choiceIndex: number }[] };
 
-    // Only questions that can be served for this level and grade are accepted (its own tier or the neighbours).
+    // Only questions that can be served for this level and grade are accepted (its own tier or the neighbours, which also covers a rank
+    // division change in the middle of a quiz).
     const grade = gradeOf(req.userId!);
-    const tier = tierOfLevel(levelNumber);
+    const tier = tierOfLevel(levelNumber, req.userId!);
     const ids = [...new Set(answers.map((a) => a.questionId))];
     const questions = db
       .prepare(`SELECT * FROM level_quiz_questions WHERE grade = ? AND tier BETWEEN ? AND ? AND id IN (${ids.map(() => '?').join(',')})`)
