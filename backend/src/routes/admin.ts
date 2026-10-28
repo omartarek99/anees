@@ -23,7 +23,7 @@ import { parseRoleFilter, parseGrade, pageViewStats, countReportUsers, queryRepo
 import { buildReportWorkbook } from '../lib/reportExcel.js';
 import { recentIssues } from '../lib/diagnostics.js';
 import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX, deleteCertificateImageIfAny } from '../lib/certificateImage.js';
-import { PLAQUE_PATH } from '../lib/rankCertificates.js';
+import { PLAQUE_PATH, grantRankCertificates } from '../lib/rankCertificates.js';
 
 import type { Response } from 'express';
 
@@ -232,7 +232,18 @@ adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSch
     return;
   }
   const { totalXp } = req.body as { totalXp: number };
-  applyUserUpdate(res, targetId, () => db.prepare(`UPDATE users SET total_xp = ? WHERE id = ?`).run(totalXp, targetId));
+  const before = db.prepare(`SELECT total_xp FROM users WHERE id = ?`).get(targetId) as { total_xp: number } | undefined;
+  applyUserUpdate(res, targetId, () => {
+    const result = db.prepare(`UPDATE users SET total_xp = ? WHERE id = ?`).run(totalXp, targetId);
+    if (result.changes && before) {
+      // The change goes in the points history too (a negative amount when points are taken away), so the monthly leaderboard, which
+      // adds up that history, moves with it -- and the tier certificates are checked, as after any other points award.
+      const delta = totalXp - before.total_xp;
+      if (delta !== 0) db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`).run(targetId, delta, 'admin_adjust');
+      grantRankCertificates(targetId);
+    }
+    return result;
+  });
 });
 
 // ---------------------------------------------------------------------------------------
