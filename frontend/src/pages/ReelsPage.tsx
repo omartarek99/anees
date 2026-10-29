@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel } from 'swiper/modules';
 import type { Swiper as SwiperClass } from 'swiper';
@@ -174,6 +174,24 @@ export function ReelsPage() {
 
   if (error) {
     return <div className="form-error-banner">{error}</div>;
+  }
+
+  // Nothing to watch yet (lessons come from teachers' uploads): say so and point at what is there, rather than showing a blank frame.
+  if (slides.length === 0) {
+    return (
+      <div className="empty-state card stack" style={{ maxWidth: 520, margin: '40px auto' }}>
+        <h2>{t('reels.emptyTitle')}</h2>
+        <p>{t('reels.emptyBody')}</p>
+        <div className="flex-center gap-md" style={{ flexWrap: 'wrap' }}>
+          <Link to="/map" className="btn btn-primary">
+            {t('home.openMap')}
+          </Link>
+          <Link to="/worksheets" className="btn btn-secondary">
+            {t('nav.worksheets')}
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const activeSlide = slides[activeIndex ?? initialIndex] as ReelSlideData | undefined;

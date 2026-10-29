@@ -1,72 +1,54 @@
-/* Friends. Laid out after the "VR app UI" Figma feed: one glass panel for the main column (who you are, a rounded
-   search box like its composer, pill buttons, then the cards) and a second glass panel beside it for suggestions,
-   all in the site's own glass tokens so light and dark theme follow the rest of the app. */
+/* Friends. One card, after the list design it was given: the title and a search box on top, a tab bar, then rows divided by
+   hairlines (avatar, name and handle, an XP chip, what you can do). Drawn in the site's own tokens, so light and dark theme
+   follow the rest of the app. */
 
 .fr {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  align-items: start;
-  gap: 20px;
-}
-.fr-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-inline-size: 0;
-  padding: 20px;
-  border-radius: var(--radius-lg);
-  background: var(--glass-bg);
+  --fr-line: color-mix(in srgb, var(--ink) 11%, transparent);
+  --fr-tab-bg: var(--ink);
+  --fr-tab-ink: #fff;
+  --fr-chip-bg: rgba(115, 116, 160, 0.16);
+  inline-size: 100%;
+  max-inline-size: 880px;
+  margin-inline: auto;
+  border-radius: 28px;
+  background: var(--surface-panel-strong);
   border: 1px solid var(--glass-border);
   -webkit-backdrop-filter: var(--glass-blur-lg);
   backdrop-filter: var(--glass-blur-lg);
   box-shadow: var(--shadow-3d-md);
 }
+:root[data-theme='dark'] .fr {
+  --fr-tab-ink: #1b1426;
+  --fr-chip-bg: rgba(160, 160, 215, 0.2);
+}
 
-/* Who you are, with a count pill at the end (the Figma's "Post" button sits here). */
-.fr-me {
+.fr-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px 20px;
+  border-block-end: 1px solid var(--fr-line);
 }
-.fr-row-text {
-  flex: 1;
-  min-inline-size: 0;
+.fr-title {
+  margin: 0;
+  font-size: 1.5rem;
 }
-.fr-name {
-  overflow: hidden;
-  color: var(--ink);
-  font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.fr-handle {
-  overflow: hidden;
+.fr-sub {
+  margin: 2px 0 0;
   color: var(--ink-soft);
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 13.5px;
 }
-.fr-count {
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: var(--surface-chip);
-  border: 1px solid var(--glass-border);
-  color: var(--ink);
-  font-size: 12.5px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-/* The composer-style search box. */
 .fr-search {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 16px;
-  border-radius: 16px;
+  inline-size: min(100%, 280px);
+  padding: 11px 14px;
+  border-radius: 14px;
   background: var(--surface-input);
-  border: 1px solid var(--glass-border);
-  box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.08);
+  border: 1px solid var(--fr-line);
   color: var(--ink-soft);
   cursor: text;
 }
@@ -84,97 +66,102 @@
   box-shadow: none;
   color: var(--ink);
   font: inherit;
+  font-size: 14px;
 }
 
-/* Pill buttons: the site's own button material, just fully rounded. */
-.btn.fr-pill {
-  border-radius: 999px;
-  white-space: nowrap;
-}
 .fr-tabs {
   display: flex;
   flex-wrap: wrap;
+  gap: 6px;
+  padding: 14px 28px;
+  border-block-end: 1px solid var(--fr-line);
+}
+.fr-tab {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
+}
+.fr-tab:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.fr-tab.is-active {
+  background: var(--fr-tab-bg);
+  color: var(--fr-tab-ink);
+}
+.fr-tab:focus-visible {
+  outline: 2px solid var(--maroon);
+  outline-offset: 2px;
+}
+
+.fr-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fr-item {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1.1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 16px;
+  padding: 16px 28px;
+  border-block-end: 1px solid var(--fr-line);
+}
+.fr-item:last-child {
+  border-block-end: 0;
+}
+.fr-who {
+  grid-column: 2;
+  min-inline-size: 0;
+}
+.fr-chip-slot {
+  grid-column: 3;
+}
+.fr-actions {
+  grid-column: 4;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 8px;
 }
-
-/* Friend cards: a big rounded avatar tile where the Figma has a post's photo. */
-.fr-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 14px;
-}
-.fr-friend {
+.fr-name {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 6px;
-  min-inline-size: 0;
-  padding: 18px 12px 14px;
-  border-radius: 20px;
-  background: var(--surface-row);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-3d-sm);
-  color: inherit;
-  text-align: center;
-  text-decoration: none;
-  transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.fr-friend:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-3d-md);
+.fr-handle {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.fr-friend .fr-name,
-.fr-friend .fr-handle {
-  max-inline-size: 100%;
-}
-/* A card has room for a longer name on two lines before it is cut. */
-.fr-friend .fr-name {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-.fr-tile {
-  margin-block-end: 4px;
-  padding: 6px;
-  border-radius: 24px;
-  background: var(--surface-chip);
-  box-shadow: var(--shadow-3d-sm);
-  line-height: 0;
-}
-.fr-xp {
+.fr-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-block-end: 6px;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: var(--fr-chip-bg);
   color: var(--ink);
   font-size: 12.5px;
-  font-weight: 800;
+  font-weight: 700;
+  white-space: nowrap;
 }
-.fr-xp svg {
+.fr-chip svg {
   color: var(--gold);
-}
-
-/* Rows: search results, requests and suggestions. */
-.fr-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.fr-heading {
-  margin: 0;
-  font-size: 15px;
-}
-.fr-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 16px;
-  background: var(--surface-row);
-  border: 1px solid var(--glass-border);
 }
 .fr-status {
   color: var(--ink-soft);
@@ -182,32 +169,41 @@
   font-weight: 700;
   white-space: nowrap;
 }
-.fr-side-head {
+.fr-section {
+  padding: 16px 28px 8px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 800;
+}
+.fr-empty {
+  padding: 22px 28px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+.fr-more {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: center;
+  padding: 18px 28px 22px;
 }
 
-@media (max-width: 900px) {
-  .fr {
-    grid-template-columns: minmax(0, 1fr);
+@media (max-width: 640px) {
+  .fr-head,
+  .fr-tabs,
+  .fr-item,
+  .fr-section,
+  .fr-empty {
+    padding-inline: 16px;
   }
-}
-@media (max-width: 480px) {
-  .fr-panel {
-    padding: 14px;
+  .fr-item {
+    grid-template-columns: 48px minmax(0, 1fr);
+    row-gap: 10px;
   }
-  .fr-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+  .fr-chip-slot,
+  .fr-actions {
+    grid-column: 2;
+    justify-content: flex-start;
   }
-  .fr-row {
-    flex-wrap: wrap;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .fr-friend {
-    transition: none;
+  .fr-chip-slot:empty {
+    display: none;
   }
 }

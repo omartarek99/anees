@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { RiSearchLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
@@ -13,9 +13,9 @@ import '../styles/friends.css';
 
 type Friend = { username: string; displayName: string; avatarKey: string; totalXp: number; hasShield?: boolean };
 type FriendRequest = { requestId: number; username: string; displayName: string; avatarKey: string; createdAt: string };
-type Person = { username: string; displayName: string; avatarKey: string };
+type Person = { username: string; displayName: string; avatarKey: string; hasShield?: boolean };
 
-type Tab = 'friends' | 'requests';
+type Tab = 'friends' | 'requests' | 'suggested';
 
 const SUGGESTIONS_SHOWN = 6;
 
@@ -107,168 +107,154 @@ export function FriendsPage() {
   const suggestions = topPlayers.filter((p) => p.username !== user?.username && !statusOf(p.username)).slice(0, SUGGESTIONS_SHOWN);
   const searching = query.trim().length >= 2;
 
-  // One person with the action that fits: an Add pill, or a plain status when there is nothing left to do.
-  // (A render function, not a component: declared inside one, a component would remount every row on each render.)
-  const personRow = (p: Person, size: number) => {
-    const status = statusOf(p.username);
-    return (
-      <div key={p.username} className="fr-row">
-        <Avatar avatarKey={p.avatarKey} size={size} />
-        <div className="fr-row-text">
-          <div className="fr-name">{p.displayName}</div>
-          <div className="fr-handle">
-            <bdi dir="ltr">@{p.username}</bdi>
-          </div>
+  // One row: the person, an optional chip (their XP) and what you can do with them. (A render function, not a component:
+  // declared inside one, a component would remount every row on each render.)
+  const item = (key: string | number, p: Person, chip: ReactNode, actions: ReactNode) => (
+    <li key={key} className="fr-item">
+      <Avatar avatarKey={p.avatarKey} size={48} />
+      <div className="fr-who">
+        <div className="fr-name">
+          {p.displayName}
+          {p.hasShield && <VictoryShield size={16} />}
         </div>
-        {status ? (
-          <span className="fr-status">{status}</span>
-        ) : (
-          <button className="btn btn-primary btn-sm fr-pill" onClick={() => sendRequest(p.username)}>
-            {t('friends.addFriend')}
-          </button>
-        )}
+        <div className="fr-handle">
+          <bdi dir="ltr">@{p.username}</bdi>
+        </div>
       </div>
+      <div className="fr-chip-slot">{chip}</div>
+      <div className="fr-actions">{actions}</div>
+    </li>
+  );
+
+  // Someone you could add: an Add button, or a plain status when there is nothing left to do.
+  const personRow = (p: Person) => {
+    const status = statusOf(p.username);
+    return item(
+      p.username,
+      p,
+      null,
+      status ? (
+        <span className="fr-status">{status}</span>
+      ) : (
+        <button className="btn btn-primary btn-sm" onClick={() => sendRequest(p.username)}>
+          {t('friends.addFriend')}
+        </button>
+      )
     );
   };
 
+  const tabs: { key: Tab; label: string }[] = [
+    { key: 'friends', label: t('friends.tabFriends', { n: friends?.length ?? 0 }) },
+    { key: 'requests', label: t('friends.tabRequests', { n: incoming.length }) },
+    { key: 'suggested', label: t('friends.tabSuggested') },
+  ];
+
   return (
     <div className="stack">
-      <Topbar title={t('friends.title')} subtitle={t('friends.subtitle')} />
+      <Topbar />
 
       {error && <div className="form-error-banner">{error}</div>}
       {message && <div className="form-success-banner">{message}</div>}
 
-      <div className="fr">
-        <section className="fr-panel">
-          <header className="fr-me">
-            <Avatar avatarKey={user?.avatarKey ?? 'falcon'} size={44} />
-            <div className="fr-row-text">
-              <div className="fr-name">
-                {user?.displayName}
-                {user?.hasShield && <VictoryShield size={16} />}
-              </div>
-              <div className="fr-handle">
-                <bdi dir="ltr">@{user?.username}</bdi>
-              </div>
-            </div>
-            <span className="fr-count">{t('friends.tabFriends', { n: friends?.length ?? 0 })}</span>
-          </header>
-
+      <section className="fr">
+        <header className="fr-head">
+          <div>
+            <h1 className="fr-title">{t('friends.title')}</h1>
+            <p className="fr-sub">{t('friends.subtitle')}</p>
+          </div>
           <label className="fr-search">
             <RiSearchLine size={18} aria-hidden="true" />
             <input aria-label={t('friends.searchLabel')} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('friends.searchPlaceholder')} />
           </label>
+        </header>
 
-          {searching ? (
-            <div className="fr-list">
-              {results.map((r) => personRow(r, 40))}
-              {results.length === 0 && <p className="muted">{t('friends.noResults')}</p>}
+        {searching ? (
+          <ul className="fr-list">
+            {results.map(personRow)}
+            {results.length === 0 && <li className="fr-empty">{t('friends.noResults')}</li>}
+          </ul>
+        ) : (
+          <>
+            <div className="fr-tabs">
+              {tabs.map((tabDef) => (
+                <button
+                  key={tabDef.key}
+                  className={`fr-tab${tab === tabDef.key ? ' is-active' : ''}`}
+                  aria-pressed={tab === tabDef.key}
+                  onClick={() => {
+                    setTab(tabDef.key);
+                    setMessage(null);
+                    setError(null);
+                  }}
+                >
+                  {tabDef.label}
+                </button>
+              ))}
             </div>
-          ) : (
-            <>
-              <div className="fr-tabs">
-                {(
-                  [
-                    { key: 'friends', label: t('friends.tabFriends', { n: friends?.length ?? 0 }) },
-                    { key: 'requests', label: t('friends.tabRequests', { n: incoming.length }) },
-                  ] as { key: Tab; label: string }[]
-                ).map((tabDef) => (
-                  <button
-                    key={tabDef.key}
-                    className={`btn btn-sm fr-pill ${tab === tabDef.key ? 'btn-primary' : 'btn-secondary'}`}
-                    aria-pressed={tab === tabDef.key}
-                    onClick={() => {
-                      setTab(tabDef.key);
-                      setMessage(null);
-                      setError(null);
-                    }}
-                  >
-                    {tabDef.label}
-                  </button>
-                ))}
-              </div>
 
-              {tab === 'friends' && (
-                <>
-                  {friends && friends.length === 0 && (
-                    <div className="empty-state">
-                      <div style={{ fontSize: 40 }}>🫂</div>
-                      <p>{t('friends.empty')}</p>
-                    </div>
-                  )}
-                  <div className="fr-grid">
-                    {friends?.map((f) => (
-                      <Link key={f.username} to={`/profile/${f.username}`} className="fr-friend">
-                        <span className="fr-tile">
-                          <Avatar avatarKey={f.avatarKey} size={72} square />
-                        </span>
-                        <span className="fr-name">
-                          {f.displayName}
-                          {f.hasShield && <VictoryShield size={16} />}
-                        </span>
-                        <span className="fr-handle">
-                          <bdi dir="ltr">@{f.username}</bdi>
-                        </span>
-                        <span className="fr-xp">
-                          <XpIcon size={24} />
-                          {f.totalXp} {t('common.xpUnit')}
-                        </span>
-                        <span className="btn btn-secondary btn-sm fr-pill">{t('friends.viewProfile')}</span>
+            {tab === 'friends' &&
+              (friends && friends.length === 0 ? (
+                <div className="empty-state">
+                  <div style={{ fontSize: 40 }}>🫂</div>
+                  <p>{t('friends.empty')}</p>
+                </div>
+              ) : (
+                <ul className="fr-list">
+                  {friends?.map((f) =>
+                    item(
+                      f.username,
+                      f,
+                      <span className="fr-chip">
+                        <XpIcon size={22} />
+                        {f.totalXp} {t('common.xpUnit')}
+                      </span>,
+                      <Link to={`/profile/${f.username}`} className="btn btn-secondary btn-sm">
+                        {t('friends.viewProfile')}
                       </Link>
-                    ))}
-                  </div>
-                </>
-              )}
+                    )
+                  )}
+                </ul>
+              ))}
 
-              {tab === 'requests' && (
-                <div className="fr-list">
-                  <h3 className="fr-heading">{t('friends.incoming')}</h3>
-                  {incoming.length === 0 && <p className="muted">{t('friends.noIncoming')}</p>}
-                  {incoming.map((r) => (
-                    <div key={r.requestId} className="fr-row">
-                      <Avatar avatarKey={r.avatarKey} size={40} />
-                      <div className="fr-row-text">
-                        <div className="fr-name">{r.displayName}</div>
-                      </div>
-                      <button className="btn btn-primary btn-sm fr-pill" onClick={() => respond(r.requestId, 'accept')}>
+            {tab === 'requests' && (
+              <ul className="fr-list">
+                <li className="fr-section">{t('friends.incoming')}</li>
+                {incoming.length === 0 && <li className="fr-empty">{t('friends.noIncoming')}</li>}
+                {incoming.map((r) =>
+                  item(
+                    r.requestId,
+                    r,
+                    null,
+                    <>
+                      <button className="btn btn-primary btn-sm" onClick={() => respond(r.requestId, 'accept')}>
                         {t('friends.accept')}
                       </button>
-                      <button className="btn btn-ghost btn-sm fr-pill" onClick={() => respond(r.requestId, 'decline')}>
+                      <button className="btn btn-ghost btn-sm" onClick={() => respond(r.requestId, 'decline')}>
                         {t('friends.decline')}
                       </button>
-                    </div>
-                  ))}
+                    </>
+                  )
+                )}
+                <li className="fr-section">{t('friends.sent')}</li>
+                {outgoing.length === 0 && <li className="fr-empty">{t('friends.noOutgoing')}</li>}
+                {outgoing.map((r) => item(r.requestId, r, null, <span className="fr-chip">{t('friends.pending')}</span>))}
+              </ul>
+            )}
 
-                  <h3 className="fr-heading">{t('friends.sent')}</h3>
-                  {outgoing.length === 0 && <p className="muted">{t('friends.noOutgoing')}</p>}
-                  {outgoing.map((r) => (
-                    <div key={r.requestId} className="fr-row">
-                      <Avatar avatarKey={r.avatarKey} size={40} />
-                      <div className="fr-row-text">
-                        <div className="fr-name">{r.displayName}</div>
-                      </div>
-                      <span className="badge badge-maroon">{t('friends.pending')}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </section>
-
-        <aside className="fr-panel">
-          <div className="fr-side-head">
-            <h3 className="fr-heading">{t('friends.suggestions')}</h3>
-            <Link to="/leaderboard" className="btn btn-secondary btn-sm fr-pill">
-              {t('friends.viewAll')}
-            </Link>
-          </div>
-          <div className="fr-list">
-            {suggestions.map((p) => personRow(p, 38))}
-            {suggestions.length === 0 && <p className="muted">{t('friends.suggestionsEmpty')}</p>}
-          </div>
-        </aside>
-      </div>
+            {tab === 'suggested' && (
+              <ul className="fr-list">
+                {suggestions.map(personRow)}
+                {suggestions.length === 0 && <li className="fr-empty">{t('friends.suggestionsEmpty')}</li>}
+                <li className="fr-more">
+                  <Link to="/leaderboard" className="btn btn-secondary btn-sm">
+                    {t('friends.viewAll')}
+                  </Link>
+                </li>
+              </ul>
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }
