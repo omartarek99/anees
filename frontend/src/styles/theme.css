@@ -685,8 +685,11 @@ svg {
   --neu-rim-hi: 0.55; /* the bright top edge, and the dark bottom edge */
   --neu-rim-lo: 0.16;
   --neu-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, 0.1) 100%);
-  --neu-lo: 124, 112, 170; /* drop-shadow colour, and how strongly it shows */
+  --neu-lo: 78, 58, 130; /* drop-shadow colour, and how strongly it shows */
   --neu-lo-k: 1;
+  /* A pale button on the pale page has almost no tone difference to show its shape (about 1.1:1), so light mode outlines it:
+     a 1px ring of deep violet, 3.5:1 against the page (WCAG's 3:1 for the edge of a control). */
+  --neu-edge: rgba(70, 52, 120, 0.7);
   --neu-hover: 1.03;
   --neu-primary: #8a1538;
   --neu-primary-pressed: #740f2e;
@@ -702,6 +705,7 @@ svg {
   --neu-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, 0.18) 100%);
   --neu-lo: 0, 0, 0;
   --neu-lo-k: 1.2;
+  --neu-edge: transparent;
   --neu-hover: 1.12;
   --neu-primary: #b3305a;
   --neu-primary-pressed: #9c2650;
@@ -723,7 +727,8 @@ button.list-row,
   --neu-raised: inset 0 1px 0 rgba(255, 255, 255, var(--neu-rim-hi)),
     inset 0 -2px 0 rgba(0, 0, 0, var(--neu-rim-lo)),
     0 calc(16px * var(--neu-s)) calc(28px * var(--neu-s)) calc(-6px * var(--neu-s)) rgba(var(--neu-lo), calc(0.5 * var(--neu-lo-k))),
-    0 calc(2px * var(--neu-s)) calc(4px * var(--neu-s)) rgba(var(--neu-lo), calc(0.22 * var(--neu-lo-k)));
+    0 calc(2px * var(--neu-s)) calc(4px * var(--neu-s)) rgba(var(--neu-lo), calc(0.22 * var(--neu-lo-k))),
+    0 0 0 1px var(--neu-edge);
   --neu-pressed: inset 0 calc(6px * var(--neu-s)) calc(12px * var(--neu-s)) rgba(var(--neu-lo), calc(0.5 * var(--neu-lo-k))),
     inset 0 -1px 0 rgba(255, 255, 255, calc(var(--neu-rim-hi) * 0.5));
   --neu-flat: inset 0 1px 0 rgba(255, 255, 255, calc(var(--neu-rim-hi) * 0.6)), 0 1px 2px rgba(var(--neu-lo), calc(0.3 * var(--neu-lo-k)));
@@ -731,7 +736,7 @@ button.list-row,
 .btn {
   /* Sleek rather than chunky: a flat sheen, a hairline rim and a small shadow (the full raised look is the other controls'). */
   --btn-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 55%);
-  --btn-lift: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 5px 10px -7px rgba(var(--neu-lo), calc(0.5 * var(--neu-lo-k)));
+  --btn-lift: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 6px 12px -6px rgba(var(--neu-lo), calc(0.6 * var(--neu-lo-k))), 0 0 0 1px var(--neu-edge);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -779,6 +784,7 @@ a:focus-visible {
   box-shadow: 0 0 0 3px var(--white), 0 0 0 6px var(--maroon-light);
 }
 .btn-primary {
+  --neu-edge: transparent;
   --btn-bg: var(--neu-primary);
   --btn-pressed: var(--neu-primary-pressed);
   --btn-ink: #fff;
@@ -789,6 +795,7 @@ a:focus-visible {
   --btn-ink: #3d2700;
 }
 .btn-danger {
+  --neu-edge: transparent;
   /* Fixed colours, not --danger: that token flips to a light pink in dark mode (it's tuned for
      text on dark glass), which would put white button text on ~2.7:1. */
   --btn-bg: #b8404f;
