@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { seed } from './db/seed.js';
 import { applyMapQuestions, applyLevelPool, removeDefaultVideos } from './lib/mapQuestions.js';
+import { backfillAdminPoints } from './lib/pointsBackfill.js';
 import { db } from './db/db.js';
 import { startDatabaseBackups } from './lib/dbBackup.js';
 import { apiLimiter } from './middleware/rateLimit.js';
@@ -28,6 +29,7 @@ seed();
 applyMapQuestions();
 applyLevelPool();
 removeDefaultVideos();
+backfillAdminPoints();
 startDatabaseBackups(db);
 
 const app = express();
