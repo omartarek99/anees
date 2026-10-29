@@ -105,6 +105,18 @@
   /* Just the rim (no outer shadow), for surfaces that supply their own coloured glow. */
   --glass-rim: inset 0 2px 2px rgba(249, 247, 253, 0.8), inset 0 0 0 1px rgba(249, 247, 253, 0.38), inset 0 -3px 5px rgba(249, 247, 253, 0.26);
 
+  /* ---- Solid Glass (after deeplethe/solid-glass), trial on .card ----
+     A thick smoky pane: from a distance it reads as solid, only close up as glass. The finish is at the
+     edge -- a line of light along the top, a hairline all round, a shadow gathered underneath -- never a
+     gradient across the face. Face: the pane's tint; rim: the top line of light; inner: a faint second
+     line inside it; edge: the hairline; contact + shade: the shadow underneath. */
+  --sg-face: rgba(246, 243, 251, 0.62);
+  --sg-rim: rgba(255, 255, 255, 0.9);
+  --sg-inner: rgba(255, 255, 255, 0.35);
+  --sg-edge: rgba(70, 52, 120, 0.16);
+  --sg-contact: rgba(43, 27, 70, 0.07);
+  --sg-shade: rgba(43, 27, 70, 0.3);
+
   /* English: Playfair Display for headings (the landing page's serif, so the whole site reads as
      one voice) + Poppins for body. Arabic gets its own pair below since neither font covers
      Arabic script. */
@@ -202,6 +214,12 @@ html[lang='ar'] {
   --shadow-3d-lg: 0 32px 56px -24px rgba(0, 0, 0, 0.7), 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.32),
     inset 0 0 0 1px rgba(255, 255, 255, 0.14), inset 0 -3px 6px rgba(255, 255, 255, 0.08), inset 0 -22px 40px -26px rgba(130, 120, 255, 0.32);
   --glass-rim: inset 0 2px 2px rgba(255, 255, 255, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.14), inset 0 -3px 5px rgba(255, 255, 255, 0.07);
+  --sg-face: rgba(72, 66, 92, 0.46);
+  --sg-rim: rgba(255, 255, 255, 0.16);
+  --sg-inner: rgba(255, 255, 255, 0.04);
+  --sg-edge: rgba(255, 255, 255, 0.07);
+  --sg-contact: rgba(0, 0, 0, 0.1);
+  --sg-shade: rgba(0, 0, 0, 0.6);
 
   --body-bg-color: #0f0b17;
   --body-bg-image: radial-gradient(44% 40% at 8% 12%, rgba(212, 62, 107, 0.34), transparent 70%),
@@ -893,19 +911,20 @@ button.list-row.selected {
 /* ---------------- Cards ---------------- */
 .card {
   position: relative;
-  background: var(--glass-bg);
+  background: var(--sg-face);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
-  border: 1.5px solid var(--glass-border);
+  border: 0;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-3d-md);
+  box-shadow: inset 0 1px 0 var(--sg-rim), inset 0 0 0 1px var(--sg-inner), 0 0 0 1px var(--sg-edge), 0 1px 2px var(--sg-contact),
+    0 12px 32px -14px var(--sg-shade);
   padding: 20px;
 }
-/* Liquid-glass sheen — shared by every glass surface (sidebar has no radius to inherit, which
-   is harmless: `border-radius: inherit` on a square box is just a no-op). */
+/* Liquid-glass sheen — shared by every glass surface but .card, which is a Solid Glass pane (no gradient
+   across its face; sidebar has no radius to inherit, which is harmless: `border-radius: inherit` on a
+   square box is just a no-op). */
 .sidebar::before,
 .topbar::before,
-.card::before,
 .stat-card::before {
   content: '';
   position: absolute;
