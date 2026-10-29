@@ -204,6 +204,7 @@ export function LandingPage() {
         <div className="landing-footer-brand">
           <span className="landing-logo">{t('brand')}</span>
           <p>{t('landing.footerTagline')}</p>
+          <p className="landing-footer-about">{t('landing.footerAbout')}</p>
           <div className="landing-actions">
             <Link to="/signup" className="landing-btn landing-btn--solid">{t('landing.signup')}</Link>
             <Link to="/login" className="landing-btn landing-btn--ghost">{t('landing.login')}</Link>

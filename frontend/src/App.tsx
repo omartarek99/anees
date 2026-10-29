@@ -67,7 +67,7 @@ function PageviewTracker() {
 // the signup page. The text is bilingual on purpose (not tied to the language toggle): Google reads the page in
 // the site's default language, and people search for "Anees login" as often as "تسجيل الدخول". Every other
 // page (the landing page and the signed-in app) keeps the plain site title "Anees".
-const SITE_TITLE = 'Anees';
+const SITE_TITLE = 'Anees | أنيس';
 const PAGE_META: Record<string, { title: string; description: string }> = {
   '/login': {
     title: 'Log in | تسجيل الدخول | Anees',

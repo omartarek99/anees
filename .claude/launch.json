@@ -6,6 +6,10 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 5190
+    },
+    {
+      "name": "dev (terminal)",
+      "url": "http://localhost:5190"
     }
   ]
 }

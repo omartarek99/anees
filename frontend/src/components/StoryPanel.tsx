@@ -22,6 +22,8 @@ type Seen = { intro: boolean; items: number[]; riddle?: boolean; /** guardian le
 const storeKey = (userId: number) => `anees_story_${userId}`;
 function readSeen(userId: number): Seen {
   try {
+    // Development only: opening /map?resetStory=1 forgets which story windows were seen, to watch them again.
+    if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('resetStory')) localStorage.removeItem(storeKey(userId));
     const raw = localStorage.getItem(storeKey(userId));
     if (raw) return { intro: false, items: [], ...JSON.parse(raw) };
   } catch {

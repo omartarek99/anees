@@ -244,8 +244,6 @@ export function TeacherReelsPage() {
           explanationAr: string;
         }[];
       }>('/teacher-reels/generate-questions', {
-        scriptText,
-        scriptTextAr,
         title,
         titleAr,
         subjectId: Number(subjectId),
@@ -426,7 +424,7 @@ export function TeacherReelsPage() {
             <button
               type="button"
               className="btn btn-gold btn-sm"
-              disabled={generatingQuestions || questions.length >= 10 || scriptText.trim().length < 10 || !subjectId || !grade}
+              disabled={generatingQuestions || questions.length >= 10 || title.trim().length < 2 || !subjectId || !grade}
               title={t('teacherReels.generateQuestionsHint')}
               onClick={handleGenerateQuestions}
             >

@@ -813,3 +813,11 @@ html[lang='ar'] .landing-app-copy h2 {
     transition: none;
   }
 }
+
+.landing-footer-about {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  opacity: 0.8;
+  max-width: 340px;
+}

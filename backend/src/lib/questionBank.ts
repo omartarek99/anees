@@ -131,7 +131,8 @@ async function pickWithAi(pool: BankLesson[], topic: string): Promise<BankLesson
   const r = await callGemini(
     `A teacher wants questions on this lesson: "${topic}".\nBelow is the list of lessons of the school book (Arabic). Return the numbers of the 1 or 2 lessons that match it best, best first. Return an empty list if none of them matches.\n\n${list}`,
     PICK_SCHEMA,
-    0
+    0,
+    12_000
   );
   if (!r.ok) return [];
   const ids = (r.data as { lessons?: unknown })?.lessons;

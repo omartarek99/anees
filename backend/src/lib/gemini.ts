@@ -158,7 +158,7 @@ Return ONLY the JSON array, matching the provided schema exactly.`;
 }
 
 // One structured-output call down the model fallback chain; the caller validates what comes back.
-export async function callGemini(prompt: string, schema: unknown, temperature: number): Promise<GeminiResult<unknown>> {
+export async function callGemini(prompt: string, schema: unknown, temperature: number, budgetMs = 60_000): Promise<GeminiResult<unknown>> {
   if (!GEMINI_API_KEY) {
     return { ok: false, error: 'NOT_CONFIGURED' };
   }
@@ -166,9 +166,9 @@ export async function callGemini(prompt: string, schema: unknown, temperature: n
     let res: Response | null = null;
     let data: any = null;
     const now = Date.now();
-    // One overall budget across the whole model fallback chain: five models x 30s would hold the
-    // request open ~150s, past the hosting proxy's own limit.
-    const deadline = now + 45_000;
+    // One overall budget across the whole model fallback chain: five models x 40s would hold the
+    // request open ~200s, past the hosting proxy's own limit (about 100s).
+    const deadline = now + budgetMs;
     const candidates = MODELS.filter((m) => (quotaSkipUntil.get(m) ?? 0) <= now);
     // Everything was recently out of quota -- still try them all rather than fail without asking.
     for (const model of candidates.length > 0 ? candidates : MODELS) {
@@ -181,7 +181,7 @@ export async function callGemini(prompt: string, schema: unknown, temperature: n
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           // A hung upstream must not hang the user's request forever.
-          signal: AbortSignal.timeout(Math.min(30_000, budget)),
+          signal: AbortSignal.timeout(Math.min(40_000, budget)),
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {

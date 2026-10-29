@@ -181,11 +181,10 @@ export const teacherReelQuestionSchema = z.object({
   explanationAr: z.string().trim().max(500).optional().default(''),
 });
 
+// Questions are generated from the lesson name only (the video's title) -- the school question bank (lib/questionBank.ts) is searched for that
+// lesson -- not from the lesson script.
 export const generateQuestionsSchema = z.object({
-  scriptText: z.string().trim().min(10, 'Write the lesson script first.').max(2000),
-  scriptTextAr: z.string().trim().max(2000).optional().default(''),
-  // The video's title -- used to find the matching lesson in the question bank (lib/questionBank.ts).
-  title: z.string().trim().max(120).optional().default(''),
+  title: z.string().trim().min(2, 'Write the lesson name first.').max(120),
   titleAr: z.string().trim().max(120).optional().default(''),
   subjectId: z.number().int(),
   grade: z.coerce.number().int().min(1).max(12),

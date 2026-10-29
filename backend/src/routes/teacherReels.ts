@@ -116,8 +116,8 @@ teacherReelsRouter.post(
       return;
     }
 
-    // Math and Science for grades 5 and 6: the questions are written from the school question bank for this lesson, starting easy
-    // and ending medium (never hard).
+    // The questions are about the lesson name (the title) only. Math and Science for grades 5 and 6: they are written from the school
+    // question bank ("بنك الأسئلة") for that lesson, starting easy and ending medium (never hard).
     const bank =
       (subject.key === 'math' || subject.key === 'science') && (body.grade === 5 || body.grade === 6)
         ? await findBankMatch({
@@ -125,18 +125,16 @@ teacherReelsRouter.post(
             grade: body.grade,
             topic: body.title,
             topicAr: body.titleAr,
-            scriptText: body.scriptText,
-            scriptTextAr: body.scriptTextAr,
           })
         : null;
 
     const result = await generateQuizQuestions({
-      scriptText: body.scriptText,
-      scriptTextAr: body.scriptTextAr,
+      scriptText: '',
+      scriptTextAr: '',
       subjectName: subject.name,
       grade: body.grade,
       count: body.count,
-      topic: body.title || undefined,
+      topic: body.title,
       topicAr: body.titleAr || undefined,
       bankReference: bank?.reference,
       progression: 'easy-to-medium',

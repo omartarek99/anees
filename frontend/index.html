@@ -11,12 +11,12 @@
     <meta name="apple-mobile-web-app-title" content="Anees" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="format-detection" content="telephone=no" />
-    <title>Anees</title>
+    <title>Anees | أنيس</title>
     <!-- Search / sharing. The site address below (https://anees-qa.site) is also in public/robots.txt and
          public/sitemap.xml -- change all three together if the site moves to its own domain. -->
     <meta
       name="description"
-      content="أنيس: منصة تعليمية قطرية ممتعة لتعلّم جميع المواد بدروس الفيديو والاختبارات والمكافآت. Anees: a fun Qatari learning platform covering all subjects, with video lessons, quizzes and rewards."
+      content="أنيس (أنيس التعليمية، Anees Education): منصة تعليمية قطرية ممتعة لتعلّم جميع المواد بدروس الفيديو والاختبارات والمكافآت. Anees: a fun Qatari learning platform covering all subjects, with video lessons, quizzes and rewards."
     />
     <meta name="google-site-verification" content="BtVksEmCn9OMtcy00Tw3r33stzRQPNlpGtbMAM4hY7o" />
     <meta name="google-site-verification" content="lUgDP46vOrPKsKBnGCrRkTwO-SuhIzKVPlTFy0F-m7M" />
@@ -24,7 +24,7 @@
     <link rel="canonical" href="https://anees-qa.site/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Anees" />
-    <meta property="og:title" content="Anees" />
+    <meta property="og:title" content="Anees | أنيس" />
     <meta
       property="og:description"
       content="منصة تعليمية قطرية ممتعة لتعلّم جميع المواد. A fun Qatari learning platform covering all subjects."
@@ -38,18 +38,35 @@
     <meta property="og:locale" content="ar_QA" />
     <meta property="og:locale:alternate" content="en_US" />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Anees" />
+    <meta name="twitter:title" content="Anees | أنيس" />
     <meta name="twitter:image" content="https://anees-qa.site/icons/icon-512.png" />
     <!-- The name Google shows for the site in search results is "Anees" (WebSite name + og:site_name). -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "Anees",
-        "alternateName": ["أنيس"],
-        "url": "https://anees-qa.site/",
-        "inLanguage": ["ar", "en"],
-        "description": "A fun Qatari learning platform covering all subjects, with video lessons, quizzes and rewards."
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://anees-qa.site/#website",
+            "name": "Anees",
+            "alternateName": ["أنيس", "أنيس التعليمية", "انيس", "انيس التعليمية", "منصة أنيس", "Anees Education", "Aneez", "Anis"],
+            "url": "https://anees-qa.site/",
+            "inLanguage": ["ar", "en"],
+            "description": "A fun Qatari learning platform covering all subjects, with video lessons, quizzes and rewards.",
+            "publisher": { "@id": "https://anees-qa.site/#organization" }
+          },
+          {
+            "@type": "EducationalOrganization",
+            "@id": "https://anees-qa.site/#organization",
+            "name": "Anees",
+            "alternateName": ["أنيس", "أنيس التعليمية", "انيس", "انيس التعليمية", "منصة أنيس", "Anees Education", "Aneez", "Anis"],
+            "url": "https://anees-qa.site/",
+            "logo": "https://anees-qa.site/icons/icon-512.png",
+            "description": "أنيس منصة تعليمية قطرية ممتعة لتعلّم جميع المواد بدروس الفيديو والاختبارات والمكافآت.",
+            "areaServed": { "@type": "Country", "name": "Qatar" },
+            "email": "info@anees-qa.site"
+          }
+        ]
       }
     </script>
     <!-- ?v= busts browsers' aggressive favicon cache -- bump it whenever these files change. -->
@@ -63,9 +80,30 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Noto+Sans+Arabic:wght@100..900&family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" />
+    <style>
+      .boot-splash { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; font-family: 'Almarai', 'Poppins', system-ui, sans-serif; background: #1d0a14; color: #f6e9ee; }
+      .boot-splash h1 { margin: 4px 0 0; font-size: 28px; }
+      .boot-splash p { margin: 0; max-width: 560px; line-height: 1.7; font-size: 15px; opacity: 0.9; }
+      .boot-splash nav { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 8px; }
+      .boot-splash a { color: #f0c96a; font-size: 14px; }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Shown for a moment while the app loads, and the only thing a crawler that does not run scripts sees. React replaces it. -->
+      <main class="boot-splash">
+        <img src="/icons/logo-mark.png" alt="Anees" width="96" height="96" />
+        <h1>Anees | أنيس</h1>
+        <p lang="ar" dir="rtl">أنيس، أو منصة أنيس التعليمية، منصة قطرية ممتعة لتعلّم جميع المواد بدروس الفيديو والاختبارات والمكافآت، مع خريطة مغامرات وأوراق عمل وأسئلة تدريبية.</p>
+        <p lang="en" dir="ltr">Anees (Anees Education) is a fun Qatari learning platform for all subjects: video lessons, quizzes, an adventure map, worksheets and rewards.</p>
+        <nav>
+          <a href="/login">تسجيل الدخول | Log in</a>
+          <a href="/signup">إنشاء حساب | Sign up</a>
+          <a href="/privacy">الخصوصية | Privacy</a>
+          <a href="/terms">الشروط | Terms</a>
+        </nav>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
