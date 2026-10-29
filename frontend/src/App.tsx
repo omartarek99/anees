@@ -15,6 +15,7 @@ import { Footer } from './components/Footer';
 import { WarningModal } from './components/WarningModal';
 import { DoublePointsNotification } from './components/DoublePointsNotification';
 import { CertificateAwardPopup } from './components/CertificateAwardPopup';
+import { RankMilestonePopup } from './components/RankMilestonePopup';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { GuideHost } from './components/GuideHost';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
@@ -149,6 +150,7 @@ function ProtectedLayout() {
       {user.role !== 'admin' && <DoublePointsNotification />}
       {/* Certificates are only ever issued to students/teachers (routes/admin.ts rejects
           admin recipients), so there's nothing for an admin account to ever be announced. */}
+      {user.role !== 'admin' && <RankMilestonePopup />}
       {user.role !== 'admin' && <CertificateAwardPopup />}
     </div>
   );

@@ -2889,59 +2889,21 @@ label,
   padding: 3px 12px;
   border-radius: 999px;
 }
-.medal-tiers {
-  display: flex;
-  justify-content: space-between;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.medal-tier {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  min-width: 52px;
-  padding: 6px 4px;
-  border-radius: 12px;
-  opacity: 0.5;
-  filter: grayscale(0.6);
-  transition: opacity 0.3s, filter 0.3s;
-}
-.medal-tier span {
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-}
-.medal-tier.is-reached {
-  opacity: 1;
-  filter: none;
-}
-.medal-tier.is-current {
-  background: rgba(240, 180, 41, 0.16);
-  box-shadow: inset 0 0 0 2px rgba(240, 180, 41, 0.75);
-}
-.medal-division {
-  display: grid;
-  gap: 6px;
-}
-.medal-division-labels {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 12px;
-}
-.medal-division-labels span {
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-.medal-track {
+.medal-ladder {
   position: relative;
-  direction: ltr; /* the bar always fills left to right */
-  height: 14px;
+  display: grid;
+  grid-template-columns: repeat(var(--n), 1fr);
+  padding-top: 6px;
+}
+/* the line runs through the middle of the logos: from the first logo's centre to the last one's (each logo is centred in an equal column) */
+.medal-line {
+  position: absolute;
+  top: 25px; /* 6px padding + half of the 44px logo, less half the line */
+  height: 6px;
+  inset-inline: calc(50% / var(--n));
   border-radius: 999px;
   background: var(--sand-dark);
-  overflow: hidden;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 .medal-fill {
   position: absolute;
@@ -2949,6 +2911,55 @@ label,
   inset-inline-start: 0;
   border-radius: 999px;
   transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.medal-tier {
+  position: relative; /* above the line */
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0 2px 6px;
+  opacity: 0.5;
+  filter: grayscale(0.6);
+  transition: opacity 0.3s, filter 0.3s;
+}
+.medal-tier span {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+}
+.medal-tier b {
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.medal-tier.is-reached {
+  opacity: 1;
+  filter: none;
+}
+.medal-tier.is-current {
+  filter: none;
+  opacity: 1;
+}
+.medal-tier.is-current b {
+  color: #d99a1f;
+}
+/* the divisions: small vertical marks on the line, where each division after the first begins */
+.medal-mark {
+  position: absolute;
+  top: -4px;
+  width: 2px;
+  height: 14px;
+  border-radius: 1px;
+  transform: translateX(-1px);
+  background: color-mix(in srgb, currentColor 35%, transparent);
+}
+.medal-mark.is-reached {
+  background: #fff;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
 }
 @media (prefers-reduced-motion: reduce) {
   .medal-fill, .medal-tier { transition: none; }
@@ -3008,4 +3019,79 @@ label,
 .avatar-plus:hover {
   transform: scale(1.1);
   background: rgba(40, 36, 50, 0.8);
+}
+
+/* ---------------- Level reached: the rank logo that pops out first (RankMilestonePopup.tsx) ---------------- */
+/* the website behind the logo: shadowed and blurred */
+.rank-pop-shade {
+  position: fixed;
+  inset: 0;
+  z-index: 89;
+  background: radial-gradient(circle at 50% 45%, rgba(10, 6, 20, 0.55), rgba(5, 3, 12, 0.85));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  cursor: pointer;
+}
+.rank-pop {
+  position: fixed;
+  z-index: 90;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rank-pop img {
+  position: relative;
+  display: block;
+  width: min(86vw, 460px); /* big, but never wider than the screen */
+  height: auto;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.5));
+  animation: rank-pop-float 2.2s ease-in-out infinite;
+}
+.rank-pop-glow {
+  position: absolute;
+  top: -130px;
+  left: 50%;
+  width: min(130vw, 720px);
+  height: min(130vw, 720px);
+  translate: -50% 0;
+  border-radius: 50%;
+  animation: rank-pop-pulse 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+/* the shield plaque is portrait and is a framed picture, not a cut-out logo */
+.rank-pop-plaque img {
+  width: min(66vw, 340px);
+  border-radius: 4px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+}
+.rank-pop-hint {
+  position: relative;
+  padding: 5px 18px;
+  border-radius: 999px;
+  background: rgba(20, 16, 28, 0.78);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.rank-pop:hover img { animation-play-state: paused; transform: scale(1.08); }
+@keyframes rank-pop-float {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-16px) rotate(2deg); }
+}
+@keyframes rank-pop-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rank-pop img, .rank-pop-glow { animation: none; }
 }

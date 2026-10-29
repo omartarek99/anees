@@ -1,5 +1,5 @@
 import { db } from '../db/db.js';
-import { grantRankCertificates } from './rankCertificates.js';
+import { requestRankCertificates } from './rankCertificates.js';
 import { getRankTier, DIVISION_COUNT } from './ranks.js';
 
 export const WORKSHEET_XP_PER_CORRECT: Record<'easy' | 'medium' | 'hard', number> = {
@@ -40,7 +40,7 @@ export function awardXp(userId: number, amount: number, reason: string) {
   if (amount === 0) return;
   db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`).run(userId, amount, reason);
   db.prepare(`UPDATE users SET total_xp = total_xp + ? WHERE id = ?`).run(amount, userId);
-  grantRankCertificates(userId);
+  requestRankCertificates(userId);
 }
 
 // Teacher points are a separate currency from total_xp above, only ever earned by

@@ -4,6 +4,7 @@ import { api } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
 import { CertificatePlaque } from './CertificatePlaque';
+import { useMilestonesPending } from '../lib/popupGate';
 import { CERT_PALETTES, CERT_TYPE_LABEL_KEY, type CertificateType } from '../lib/certificateTiers';
 
 type Certificate = {
@@ -43,6 +44,8 @@ export function CertificateAwardPopup() {
   const { t } = useLanguage();
   const [queue, setQueue] = useState<Certificate[] | null>(null);
   const confetti = useConfettiPieces(28);
+  // The shield of a tier certificate pops out first; this turns true once it has been clicked and the window opens.
+  const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,7 +63,10 @@ export function CertificateAwardPopup() {
     };
   }, []);
 
-  const current = queue && queue.length > 0 ? queue[0] : null;
+  // The level pop-outs go first; a shield waits until none are left.
+  const waiting = useMilestonesPending();
+  const current = !waiting && queue && queue.length > 0 ? queue[0] : null;
+  useEffect(() => setRevealed(false), [current?.id]);
 
   async function dismiss() {
     if (!current) return;
@@ -79,9 +85,63 @@ export function CertificateAwardPopup() {
   // A rank certificate (or one an admin sent without a picture) IS the tier plaque, so it is shown once, big.
   const isPlaque = !!current && current.imageUrl.startsWith('/images/certificates/');
 
+  const showShield = !!current && !!palette && isPlaque && !revealed;
+  const showWindow = !!current && !!palette && !isPlaque;
+  // A tier certificate: after the shield is clicked, a window like the level one says it is now in the profile.
+  const showPanel = !!current && !!palette && isPlaque && revealed;
+
   return (
+    <>
+      {/* Step 1 (tier certificates): the shield pops out big, floating, on a darkened page -- click it (or the dark part) to open the window. */}
+      <AnimatePresence>
+        {showShield && (
+          <m.div key={`shade-${current!.id}`} className="rank-pop-shade" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setRevealed(true)} aria-hidden />
+        )}
+        {showShield && (
+          <m.button
+            key={`shield-${current!.id}`}
+            type="button"
+            className="rank-pop rank-pop-plaque"
+            aria-label={t('certificateAward.tapLabel')}
+            title={t('certificateAward.tapLabel')}
+            initial={{ scale: 0, rotate: -25, opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 220, damping: 11 }}
+            onClick={() => setRevealed(true)}
+          >
+            <span className="rank-pop-glow" style={{ background: `radial-gradient(circle, ${palette!.light}cc, transparent 68%)` }} aria-hidden />
+            <img src={current!.imageUrl} alt="" width={340} height={466} />
+            <span className="rank-pop-hint">{t('certificateAward.tap')}</span>
+          </m.button>
+        )}
+      </AnimatePresence>
+
     <AnimatePresence>
-      {current && palette && (
+      {showPanel && palette && current && (
+        <m.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={dismiss}>
+          <m.div
+            className="modal-panel text-center"
+            role="alertdialog"
+            aria-modal="true"
+            aria-label={t('certificateAward.title')}
+            initial={{ scale: 0.9, opacity: 0, y: 12 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.92, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+            style={{ maxWidth: 400 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img src={current.imageUrl} alt="" width={84} height={115} style={{ display: 'block', margin: '0 auto', borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }} />
+            <h2 style={{ fontSize: 21, marginTop: 12, color: palette.dark }}>{t('certificateAward.congrats')}</h2>
+            <p style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.5, margin: '4px 0 0' }}>{t('certificateAward.inProfile')}</p>
+            <button className="btn btn-primary btn-block" style={{ marginTop: 20 }} onClick={dismiss}>
+              {t('certificateAward.button')}
+            </button>
+          </m.div>
+        </m.div>
+      )}
+      {showWindow && palette && current && (
         <m.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={dismiss}>
           <m.div
             className="text-center certificate-award-card"
@@ -129,5 +189,6 @@ export function CertificateAwardPopup() {
         </m.div>
       )}
     </AnimatePresence>
+    </>
   );
 }

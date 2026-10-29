@@ -274,7 +274,7 @@ CREATE TABLE IF NOT EXISTS certificates (
   -- A category label (matching the palette lib/ranks.ts already uses for rank tiers) shown
   -- as a colored badge -- the certificate's actual visual is the admin-uploaded image
   -- below, not drawn from this.
-  type TEXT NOT NULL DEFAULT 'gold' CHECK (type IN ('bronze','silver','gold','platinum')),
+  type TEXT NOT NULL DEFAULT 'gold' CHECK (type IN ('bronze','silver','gold','platinum','diamond','warrior','champion')),
   -- The admin-supplied certificate image (Supabase Storage public URL) -- the certificate
   -- IS this image; nothing is drawn or overlaid on top of it.
   image_url TEXT NOT NULL DEFAULT '',
@@ -283,6 +283,21 @@ CREATE TABLE IF NOT EXISTS certificates (
   viewed_at TEXT,
   issued_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- A student who reaches a new level, Bronze or higher (lib/rankCertificates.ts) gets a congratulation popup and a request here;
+-- an admin approves it on the Certificates page and the tier's certificate is sent (routes/admin.ts), or dismisses it.
+CREATE TABLE IF NOT EXISTS certificate_requests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  tier TEXT NOT NULL CHECK (tier IN ('bronze','silver','gold','platinum','diamond','warrior','champion')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','declined')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Set once the student has dismissed the congratulation popup (RankMilestonePopup.tsx)
+  notified_at TEXT,
+  decided_at TEXT,
+  decided_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  UNIQUE(user_id, tier)
 );
 
 CREATE TABLE IF NOT EXISTS friend_requests (

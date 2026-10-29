@@ -28,6 +28,25 @@ certificatesRouter.get('/unseen', (req, res) => {
   });
 });
 
+// The level-reached congratulations ("your shield is being prepared"): announced once, the next time the student loads the app.
+certificatesRouter.get('/requests/unseen', (req, res) => {
+  const rows = db
+    .prepare(`SELECT id, tier, status FROM certificate_requests WHERE user_id = ? AND notified_at IS NULL ORDER BY created_at ASC, id ASC`)
+    .all(req.userId!) as any[];
+  res.json({ requests: rows.map((r) => ({ id: r.id, tier: r.tier, status: r.status })) });
+});
+
+certificatesRouter.post('/requests/:id/seen', requireCsrfHeader, (req, res) => {
+  const result = db
+    .prepare(`UPDATE certificate_requests SET notified_at = datetime('now') WHERE id = ? AND user_id = ? AND notified_at IS NULL`)
+    .run(Number(req.params.id), req.userId!);
+  if (result.changes === 0) {
+    res.status(404).json({ error: 'Not found.' });
+    return;
+  }
+  res.json({ ok: true });
+});
+
 // Marks one certificate as seen once its popup has been dismissed -- scoped to the
 // caller's own certificates (userId in the WHERE, not just the id) so one account can't
 // mark another's certificate as viewed.

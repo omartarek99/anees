@@ -23,7 +23,7 @@ import { parseRoleFilter, parseGrade, pageViewStats, countReportUsers, queryRepo
 import { buildReportWorkbook } from '../lib/reportExcel.js';
 import { recentIssues } from '../lib/diagnostics.js';
 import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX, deleteCertificateImageIfAny } from '../lib/certificateImage.js';
-import { PLAQUE_PATH, grantRankCertificates } from '../lib/rankCertificates.js';
+import { PLAQUE_PATH, issueTierCertificate, requestRankCertificates, type CertificateTier } from '../lib/rankCertificates.js';
 
 import type { Response } from 'express';
 
@@ -240,7 +240,7 @@ adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSch
       // adds up that history, moves with it -- and the tier certificates are checked, as after any other points award.
       const delta = totalXp - before.total_xp;
       if (delta !== 0) db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`).run(targetId, delta, 'admin_adjust');
-      grantRankCertificates(targetId);
+      requestRankCertificates(targetId);
     }
     return result;
   });
@@ -352,6 +352,51 @@ adminRouter.post('/certificates', requireCsrfHeader, handleCertificateImageUploa
       .run(userId, title, type, publicUrlData.publicUrl, req.userId!).lastInsertRowid
   );
   res.status(201).json({ id });
+});
+
+// Students who reached a new level (Bronze, Silver or Gold) and are waiting for their shield certificate to be approved.
+adminRouter.get('/certificate-requests', (_req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT r.id, r.user_id, r.tier, r.created_at, u.username, u.display_name, u.total_xp
+       FROM certificate_requests r JOIN users u ON u.id = r.user_id
+       WHERE r.status = 'pending' ORDER BY r.created_at ASC, r.id ASC`
+    )
+    .all() as any[];
+  res.json({
+    requests: rows.map((r) => ({
+      id: r.id,
+      userId: r.user_id,
+      tier: r.tier,
+      username: r.username,
+      displayName: r.display_name,
+      totalXp: r.total_xp,
+      createdAt: r.created_at,
+    })),
+  });
+});
+
+// Approving sends the tier's certificate; the student sees it as the award popup on their next visit.
+adminRouter.post('/certificate-requests/:id/approve', requireCsrfHeader, (req, res) => {
+  const row = db.prepare(`SELECT * FROM certificate_requests WHERE id = ? AND status = 'pending'`).get(Number(req.params.id)) as any;
+  if (!row) {
+    res.status(404).json({ error: 'Not found.' });
+    return;
+  }
+  const certificateId = issueTierCertificate(row.user_id, row.tier as CertificateTier, req.userId!);
+  db.prepare(`UPDATE certificate_requests SET status = 'approved', decided_at = datetime('now'), decided_by = ? WHERE id = ?`).run(req.userId!, row.id);
+  res.json({ ok: true, certificateId });
+});
+
+adminRouter.post('/certificate-requests/:id/decline', requireCsrfHeader, (req, res) => {
+  const result = db
+    .prepare(`UPDATE certificate_requests SET status = 'declined', decided_at = datetime('now'), decided_by = ? WHERE id = ? AND status = 'pending'`)
+    .run(req.userId!, Number(req.params.id));
+  if (result.changes === 0) {
+    res.status(404).json({ error: 'Not found.' });
+    return;
+  }
+  res.json({ ok: true });
 });
 
 adminRouter.delete('/certificates/:id', requireCsrfHeader, async (req, res) => {

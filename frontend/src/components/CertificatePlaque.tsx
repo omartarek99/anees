@@ -7,13 +7,25 @@ import type { CertificateType } from '../lib/certificateTiers';
 
 export const PLAQUE_IMAGE: Record<CertificateType, string> = {
   bronze: '/images/certificates/bronze.webp',
-  silver: '/images/certificates/platinum.webp',
+  silver: '/images/certificates/silver.webp',
   gold: '/images/certificates/gold.webp',
   platinum: '/images/certificates/platinum.webp',
+  diamond: '/images/certificates/diamond.webp',
+  warrior: '/images/certificates/warrior.webp',
+  champion: '/images/certificates/champion.webp',
 };
 
-// The pictures are 574 x 786.
-const RATIO = 786 / 574;
+// Height over width of each picture: the Bronze, Gold and Platinum plaques are tall (574 x 786), Silver and Diamond nearly square, Warrior and
+// Champion in between.
+export const PLAQUE_RATIO: Record<CertificateType, number> = {
+  bronze: 786 / 574,
+  gold: 786 / 574,
+  platinum: 786 / 574,
+  silver: 818 / 808,
+  diamond: 818 / 808,
+  warrior: 902 / 808,
+  champion: 898 / 808,
+};
 
 export function CertificatePlaque({ tier, label, width = 220, interactive = true }: { tier: CertificateType; label: string; width?: number; interactive?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -37,7 +49,7 @@ export function CertificatePlaque({ tier, label, width = 220, interactive = true
     el.style.setProperty('--gy', '30%');
   }
 
-  const style = { width, height: Math.round(width * RATIO) } as CSSProperties;
+  const style = { width, height: Math.round(width * PLAQUE_RATIO[tier]) } as CSSProperties;
   if (!interactive) {
     return <img src={PLAQUE_IMAGE[tier]} alt={label} width={width} height={style.height as number} className="cert-plaque-flat" loading="lazy" decoding="async" />;
   }

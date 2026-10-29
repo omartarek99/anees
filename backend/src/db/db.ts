@@ -318,13 +318,13 @@ if (!certificateCols.some((c) => c.name === 'viewed_at')) {
   db.exec(`ALTER TABLE certificates ADD COLUMN viewed_at TEXT`);
 }
 
-// Rank certificates: the tier list gained 'silver' (bronze / silver / gold are the three certificates, platinum is kept for older rows).
+// Rank certificates: one per tier from Bronze up (bronze, silver, gold, platinum, diamond, warrior, champion).
 // SQLite cannot widen an existing CHECK, so a database that still has the old one gets the table rebuilt once -- same procedure as the
 // users rebuild above (foreign keys off for its duration, so DROP TABLE does not cascade through the recipients).
 const certificatesSql = (
   db.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'certificates'`).get() as { sql: string }
 ).sql;
-if (!certificatesSql.includes(`'silver'`)) {
+if (!certificatesSql.includes(`'champion'`)) {
   const oldCols = (db.prepare(`PRAGMA table_info(certificates)`).all() as { name: string }[]).map((c) => c.name);
   const keep = ['id', 'user_id', 'title', 'title_ar', 'message', 'message_ar', 'type', 'image_url', 'viewed_at', 'issued_by', 'created_at'].filter((c) =>
     oldCols.includes(c)
@@ -341,7 +341,7 @@ if (!certificatesSql.includes(`'silver'`)) {
         title_ar TEXT NOT NULL DEFAULT '',
         message TEXT NOT NULL DEFAULT '',
         message_ar TEXT NOT NULL DEFAULT '',
-        type TEXT NOT NULL DEFAULT 'gold' CHECK (type IN ('bronze','silver','gold','platinum')),
+        type TEXT NOT NULL DEFAULT 'gold' CHECK (type IN ('bronze','silver','gold','platinum','diamond','warrior','champion')),
         image_url TEXT NOT NULL DEFAULT '',
         viewed_at TEXT,
         issued_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -360,3 +360,36 @@ if (!certificatesSql.includes(`'silver'`)) {
     db.exec('PRAGMA foreign_keys = ON');
   }
 }
+
+// The approval requests for those certificates (certificate_requests, schema.sql) allow the same tiers: a database created while the list was
+// shorter gets the table rebuilt once, keeping its rows.
+const requestsRow = db.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'certificate_requests'`).get() as { sql: string } | undefined;
+if (requestsRow && !requestsRow.sql.includes(`'champion'`)) {
+  db.exec('BEGIN TRANSACTION');
+  try {
+    db.exec('DROP TABLE IF EXISTS certificate_requests_new');
+    db.exec(`
+      CREATE TABLE certificate_requests_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        tier TEXT NOT NULL CHECK (tier IN ('bronze','silver','gold','platinum','diamond','warrior','champion')),
+        status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','declined')),
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        notified_at TEXT,
+        decided_at TEXT,
+        decided_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        UNIQUE(user_id, tier)
+      )
+    `);
+    db.exec('INSERT INTO certificate_requests_new SELECT id, user_id, tier, status, created_at, notified_at, decided_at, decided_by FROM certificate_requests');
+    db.exec('DROP TABLE certificate_requests');
+    db.exec('ALTER TABLE certificate_requests_new RENAME TO certificate_requests');
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+}
+
+// Silver certificates made before Silver had its own plaque point at the Platinum picture: repoint them (nothing happens once they are right).
+db.exec("UPDATE certificates SET image_url = '/images/certificates/silver.webp' WHERE type = 'silver' AND image_url = '/images/certificates/platinum.webp'");

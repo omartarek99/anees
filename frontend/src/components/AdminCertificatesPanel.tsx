@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
-import { PLAQUE_IMAGE } from './CertificatePlaque';
+import { CertificatePlaque, PLAQUE_IMAGE } from './CertificatePlaque';
+import { rankName } from '../lib/medalLevels';
 import { CERT_TYPES, CERT_PALETTES, CERT_TYPE_LABEL_KEY, certPillBackground, type CertificateType } from '../lib/certificateTiers';
 
 type AdminUserSummary = { id: number; username: string; displayName: string; role: 'student' | 'teacher' | 'admin' };
@@ -39,6 +40,32 @@ export function AdminCertificatesPanel() {
   const [formError, setFormError] = useState<string | null>(null);
   const [certificates, setCertificates] = useState<Certificate[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Students who reached a new level and are waiting for their shield certificate to be approved.
+  type CertRequest = { id: number; userId: number; tier: CertificateType; username: string; displayName: string; totalXp: number; createdAt: string };
+  const [requests, setRequests] = useState<CertRequest[] | null>(null);
+  const [requestBusy, setRequestBusy] = useState<number | null>(null);
+
+  function loadRequests() {
+    api
+      .get<{ requests: CertRequest[] }>('/admin/certificate-requests')
+      .then((data) => setRequests(data.requests))
+      .catch(() => setRequests([]));
+  }
+  useEffect(loadRequests, []);
+
+  async function decideRequest(id: number, action: 'approve' | 'decline') {
+    setRequestBusy(id);
+    try {
+      await api.post(`/admin/certificate-requests/${id}/${action}`, {});
+      setRequests((prev) => (prev ? prev.filter((r) => r.id !== id) : prev));
+      if (action === 'approve') loadCertificates();
+    } catch (err) {
+      setFormError(err instanceof ApiError ? translateApiError(lang, err.message) : t('admin.certSendError'));
+    } finally {
+      setRequestBusy(null);
+    }
+  }
 
   function loadCertificates() {
     api
@@ -202,7 +229,7 @@ export function AdminCertificatesPanel() {
                     opacity: selected ? 1 : 0.78,
                   }}
                 >
-                  <img src={PLAQUE_IMAGE[ct]} width={20} height={27} alt="" style={{ borderRadius: 2 }} />
+                  <img src={PLAQUE_IMAGE[ct]} width={20} height={27} alt="" style={{ borderRadius: 2, objectFit: 'contain' }} />
                   {t(CERT_TYPE_LABEL_KEY[ct])}
                 </button>
               );
@@ -286,6 +313,43 @@ export function AdminCertificatesPanel() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      <div className="card stack">
+        <div>
+          <h3 style={{ fontSize: 16, margin: 0 }}>
+            {t('admin.certRequestsTitle')}
+            {requests && requests.length > 0 && <span className="badge badge-gold" style={{ marginInlineStart: 8 }}>{requests.length}</span>}
+          </h3>
+          <p className="muted" style={{ fontSize: 13, margin: '4px 0 0' }}>
+            {t('admin.certRequestsSubtitle')}
+          </p>
+        </div>
+        {requests && requests.length === 0 && <p className="muted" style={{ margin: 0 }}>{t('admin.certRequestsNone')}</p>}
+        <div className="stack" style={{ gap: 10 }}>
+          {requests?.map((r) => (
+            <div key={r.id} className="list-row flex-between" style={{ alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <div className="flex gap-md" style={{ alignItems: 'center' }}>
+                <CertificatePlaque tier={r.tier} label={t(CERT_TYPE_LABEL_KEY[r.tier])} width={40} interactive={false} />
+                <div>
+                  <strong>{r.displayName}</strong> <span className="muted"><bdi dir="ltr">@{r.username}</bdi></span>
+                  <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>
+                    {t('admin.certRequestReached', { level: rankName(r.tier, lang, true), points: r.totalXp })} ·{' '}
+                    {new Date(r.createdAt.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US')}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-sm">
+                <button type="button" className="btn btn-primary btn-sm" disabled={requestBusy === r.id} onClick={() => decideRequest(r.id, 'approve')}>
+                  {t('admin.certRequestApprove')}
+                </button>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={requestBusy === r.id} onClick={() => decideRequest(r.id, 'decline')}>
+                  {t('admin.certRequestDismiss')}
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

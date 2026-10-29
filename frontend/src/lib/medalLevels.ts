@@ -31,3 +31,27 @@ export function standingFor(points: number) {
   const next = DIVISIONS[current.index + 1] ?? null;
   return { current, next, progress: next ? (p - current.start) / POINTS_PER_DIVISION : 1 };
 }
+
+/** The points at which each tier of the ladder starts (the number shown under its logo). */
+export const TIER_START = RANK_LADDER.map((t) => DIVISIONS.find((d) => d.tier.key === t.key)!.start);
+
+/**
+ * How far along the line of rank logos a student is, 0..1. The logos are evenly spaced, so the line reaches a logo when the student
+ * reaches that tier, and sits between two logos while they are between those two tiers (in proportion to their points).
+ */
+export function lineFraction(points: number): number {
+  const p = Math.max(0, points);
+  const n = RANK_LADDER.length;
+  let i = n - 1;
+  while (i > 0 && p < TIER_START[i]) i--;
+  const end = i < n - 1 ? TIER_START[i + 1] : TIER_START[n - 1] + POINTS_PER_DIVISION;
+  const within = Math.min(1, (p - TIER_START[i]) / (end - TIER_START[i]));
+  return Math.min(1, (i + within) / (n - 1));
+}
+
+/** A rank's name in the current language. With `definite`, Arabic gets "ال" (المستوى الذهبي), as after the word "level". */
+export const rankName = (key: string, lang: string, definite = false) => {
+  const t = RANK_LADDER.find((r) => r.key === key);
+  if (!t) return key;
+  return lang === 'ar' ? (definite ? 'ال' : '') + t.nameAr : t.name;
+};

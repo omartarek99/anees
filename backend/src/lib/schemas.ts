@@ -166,7 +166,7 @@ export const adminSetXpSchema = z.object({
 export const adminIssueCertificateSchema = z.object({
   userId: z.coerce.number().int(),
   title: z.string().trim().min(1, 'Name is required.').max(120),
-  type: z.enum(['bronze', 'silver', 'gold']),
+  type: z.enum(['bronze', 'silver', 'gold', 'platinum', 'diamond', 'warrior', 'champion']),
 });
 
 const choiceSchema = z.string().trim().min(1).max(120);
