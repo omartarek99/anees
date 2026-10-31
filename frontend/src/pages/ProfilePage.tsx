@@ -10,6 +10,7 @@ import { ProfileAvatar3D } from '../components/ProfileAvatar3D';
 import type { AvatarConfig } from '../components/avatar3d/avatarConfig';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { MedalLevelBar } from '../components/MedalLevelBar';
+import { AuraPicker } from '../components/AuraPicker';
 import { Topbar } from '../components/Topbar';
 import { VictoryShield } from '../components/VictoryShield';
 import { CertificatePlaque } from '../components/CertificatePlaque';
@@ -373,6 +374,7 @@ export function ProfilePage() {
       )}
 
       {profile.role === 'student' && <MedalLevelBar points={profile.totalXp} />}
+      {profile.role === 'student' && isOwnProfile && <AuraPicker />}
 
       {profile.certificates.length > 0 && (
         <div className="card stack">

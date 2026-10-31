@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, ApiError } from './api';
 import { DEV_BYPASS_LOGIN, DEV_ACCOUNT } from './dev-config';
 import type { RankTier } from '../components/RankBadge';
+import type { RankKey } from './medalLevels';
 
 export type Role = 'student' | 'teacher' | 'admin';
 
@@ -16,6 +17,8 @@ export type User = {
   teacherPoints: number;
   playerLevel: number;
   rankTier: RankTier;
+  /** The rank colour a student picked for their pages (one they have reached); null follows their current rank. */
+  auraRank?: RankKey | null;
   role: Role;
   grade: number | null;
   schoolName: string | null;

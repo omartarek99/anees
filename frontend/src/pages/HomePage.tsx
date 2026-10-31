@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
@@ -6,22 +6,55 @@ import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 import { Topbar } from '../components/Topbar';
 import { AnimatedText } from '../components/AnimatedText';
+import { ProfileAvatar3D } from '../components/ProfileAvatar3D';
+import type { AvatarConfig } from '../components/avatar3d/avatarConfig';
+import { RANK_FRAMES } from '../lib/frames';
+import type { RankKey } from '../lib/medalLevels';
 
-type Profile = { levelsCompleted: number; totalXp: number; playerLevel: number; mapLevel: number };
+type Profile = {
+  levelsCompleted: number;
+  totalXp: number;
+  playerLevel: number;
+  mapLevel: number;
+  avatarKey: string;
+  avatarUrl: string | null;
+  avatar3d: AvatarConfig | null;
+};
+
+// The picture and its frame are smaller on a phone.
+function useNarrow() {
+  const [narrow, setNarrow] = useState(() => window.matchMedia('(max-width: 640px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    const onChange = () => setNarrow(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return narrow;
+}
 
 export function HomePage() {
   const { user } = useAuth();
   const { t, lang } = useLanguage();
   const [profile, setProfile] = useState<Profile | null>(null);
+  // The frame waits for the profile (or its failure) so a student with a customised character never sees the default one flash first.
+  const [loaded, setLoaded] = useState(false);
+  const narrow = useNarrow();
 
   useEffect(() => {
     api
       .get<{ profile: Profile }>('/users/me')
       .then((d) => setProfile(d.profile))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, []);
 
   const level = profile?.playerLevel ?? user?.playerLevel ?? 1;
+  const rank = (user?.auraRank ?? user?.rankTier.key) as RankKey | undefined;
+  const fr = rank ? RANK_FRAMES[rank] : undefined;
+  const hole = Math.round((fr?.hole ?? 132) * (narrow ? 0.62 : 1)); // the picture's round window, css px
+  const pic = Math.round(hole * 1.06);
+  const top = { '--hole': `${hole}px`, '--frame': `${Math.round(fr ? hole / fr.ratio : hole * 1.45)}px` } as CSSProperties;
   const completed = profile?.levelsCompleted ?? 0;
   // the adventure-map level they are on (the user level above comes from points)
   const mapLevel = profile?.mapLevel ?? 1;
@@ -43,7 +76,21 @@ export function HomePage() {
 
   return (
     <div className="stack">
-      <Topbar />
+      {/* The picture sits in the frame of the rank whose colours the pages wear (their own, or an earlier one they picked). The frame is a
+          square image with a round hole in the middle; the picture is drawn a little bigger than the hole and tucked under it. */}
+      <div className="home-top" style={top}>
+        <Topbar />
+        <Link to="/profile" className="home-avatar" aria-label={t('home.myProfile')} title={t('home.myProfile')}>
+          <span className="home-avatar-pic">
+            {loaded ? (
+              <ProfileAvatar3D avatarKey={profile?.avatarKey ?? user?.avatarKey ?? 'falcon'} photoUrl={profile?.avatarUrl} config={profile?.avatar3d ?? null} size={pic} />
+            ) : (
+              <span className="home-avatar-wait" style={{ width: pic, height: pic }} />
+            )}
+          </span>
+          {rank && <img className="home-frame" src={`/images/frames/${rank}.png`} alt="" decoding="async" />}
+        </Link>
+      </div>
 
       <section className="home-hero">
         <div className="home-hero-copy">

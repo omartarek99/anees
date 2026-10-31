@@ -63,6 +63,14 @@ export function getTeacherRankTier(teacherPoints: number) {
   return ladderFor(teacherPoints, TEACHER_POINTS_PER_DIVISION);
 }
 
+export const RANK_KEYS = RANK_TIERS.map((t) => t.key) as [RankTierKey, ...RankTierKey[]];
+
+/** The rank colour a student picked, if it is still theirs: their own tier or one below it (null: follow their current rank). */
+export function earnedAuraRank(picked: string | null | undefined, totalXp: number): RankTierKey | null {
+  const i = RANK_KEYS.indexOf(picked as RankTierKey);
+  return i >= 0 && i <= RANK_KEYS.indexOf(getRankTier(totalXp).key) ? RANK_KEYS[i] : null;
+}
+
 /** The points at which a tier's first division starts (Bronze 1 = 750 for students). */
 export function tierStartXp(key: RankTierKey, per = POINTS_PER_DIVISION): number {
   return DIVISIONS.findIndex((d) => d.tier.key === key) * per;

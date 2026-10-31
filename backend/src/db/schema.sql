@@ -45,6 +45,8 @@ CREATE TABLE IF NOT EXISTS users (
   -- JSON object of option ids only (validated by avatar3dSchema in lib/schemas.ts). NULL until
   -- they save one; readers fall back to the default character / the static avatar.
   avatar3d TEXT,
+  -- The rank colour a student picked for their pages: a tier key (lib/ranks.ts) they have reached. NULL = follow their current rank.
+  aura_rank TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

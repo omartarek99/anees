@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RANK_KEYS } from './ranks.js';
 import { passwordSchema } from './password.js';
 
 // 'anonymous' = the plain person silhouette that teachers get by default (not a student hero choice).
@@ -130,6 +131,8 @@ export const updateProfileSchema = z.object({
   avatarKey: avatarKeySchema.optional(),
   bio: bioSchema.optional(),
   avatar3d: avatar3dSchema.optional(),
+  // A tier key, or null to follow the current rank; users.ts checks the student has reached it.
+  auraRank: z.enum(RANK_KEYS).nullable().optional(),
 });
 
 export const adminSetRoleSchema = z.object({
