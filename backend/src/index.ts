@@ -23,6 +23,8 @@ import { adminRouter } from './routes/admin.js';
 import { analyticsRouter } from './routes/analytics.js';
 import { certificatesRouter } from './routes/certificates.js';
 import { guideRouter } from './routes/guide.js';
+import { challengesRouter } from './routes/challenges.js';
+import { applyChallengePool } from './lib/challengePool.js';
 import { FRONTEND_ORIGIN } from './lib/config.js';
 
 seed();
@@ -30,6 +32,7 @@ applyMapQuestions();
 applyLevelPool();
 removeDefaultVideos();
 backfillAdminPoints();
+applyChallengePool();
 startDatabaseBackups(db);
 
 const app = express();
@@ -106,6 +109,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/certificates', requireAuth, certificatesRouter);
 app.use('/api/guide', requireAuth, guideRouter);
+app.use('/api/challenges', requireAuth, challengesRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found.' });

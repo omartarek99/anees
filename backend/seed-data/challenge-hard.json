@@ -1,0 +1,2308 @@
+{
+ "cells": [
+  {
+   "subject": "math",
+   "grade": 5,
+   "questions": [
+    {
+     "questionText": "On a hundredths grid, Salma shaded 3 columns and 4 small squares in red, then shaded 2 columns and 8 small squares in blue. What decimal represents the unshaded part of the grid?",
+     "questionTextAr": "في نموذج الأجزاء من مئة، ظلت سلمى 3 أعمدة و 4 مربعات باللون الأحمر، ثم ظلت عمودين و 8 مربعات باللون الأزرق. ما الكسر العشري الذي يمثل الجزء غير المظلل من النموذج؟",
+     "choices": [
+      "0.62",
+      "0.48",
+      "0.38",
+      "0.28"
+     ],
+     "choicesAr": [
+      "0.62",
+      "0.48",
+      "0.38",
+      "0.28"
+     ],
+     "correctIndex": 2,
+     "explanation": "Salma shaded 0.34 + 0.28 = 0.62 in total, so 1.00 - 0.62 = 0.38 remains unshaded.",
+     "explanationAr": "ظلت سلمى 0.34 + 0.28 = 0.62 من النموذج، وبالتالي يكون الجزء غير المظلل هو 1.00 - 0.62 = 0.38."
+    },
+    {
+     "questionText": "Tariq wanted to add 0.4 + 0.05 using a hundredths grid. He accidentally shaded 5 full columns instead of 5 small squares for 0.05. What is the correct sum if he shades the model properly?",
+     "questionTextAr": "أراد طارق جمع 0.4 + 0.05 باستخدام نموذج الأجزاء من مئة. ولكنه ظلل بالخطأ 5 أعمدة كاملة بدلاً من 5 مربعات صغيرة لتمثيل 0.05. ما الناتج الصحيح إذا قام بتظليل النموذج بشكل صحيح؟",
+     "choices": [
+      "0.90",
+      "0.45",
+      "0.09",
+      "0.54"
+     ],
+     "choicesAr": [
+      "0.90",
+      "0.45",
+      "0.09",
+      "0.54"
+     ],
+     "correctIndex": 1,
+     "explanation": "0.4 is represented by 4 columns (0.40) and 0.05 is 5 small squares, so 0.40 + 0.05 = 0.45.",
+     "explanationAr": "0.4 يمثل 4 أعمدة (0.40) و 0.05 يمثل 5 مربعات صغيرة، فتكون النتيجة 0.40 + 0.05 = 0.45."
+    },
+    {
+     "questionText": "Mona starts with 2 complete hundredths grids. She crosses out 1 complete grid, 3 full columns, and 5 small squares. What decimal value is left?",
+     "questionTextAr": "لدي منى نموذجان كاملان من الأجزاء من مئة. شطبت نموذجاً كاملاً و 3 أعمدة و 5 مربعات صغيرة. ما الكسر العشري المتبقي؟",
+     "choices": [
+      "1.35",
+      "0.75",
+      "0.55",
+      "0.65"
+     ],
+     "choicesAr": [
+      "1.35",
+      "0.75",
+      "0.55",
+      "0.65"
+     ],
+     "correctIndex": 3,
+     "explanation": "Crossing out 1 whole grid, 3 tenths, and 5 hundredths (1.35) from 2 wholes leaves 2.00 - 1.35 = 0.65.",
+     "explanationAr": "شطب نموذج كامل و 3 أجزاء من عشرة و 5 أجزاء من مئة (1.35) من 2 صحيح يعطي 2.00 - 1.35 = 0.65."
+    },
+    {
+     "questionText": "A hundredths grid has 0.83 of its area shaded in green and yellow combined. If the green part is made of 4 full columns and 7 small squares, how many small squares make up the yellow part?",
+     "questionTextAr": "نموذج أجزاء من مئة فيه 0.83 مظلل باللونين الأخضر والأصفر معاً. إذا كان الجزء الأخضر يتكون من 4 أعمدة كاملة و 7 مربعات صغيرة، فكم مربعات صغيرة يمثل الجزء الأصفر؟",
+     "choices": [
+      "36 small squares",
+      "46 small squares",
+      "38 small squares",
+      "26 small squares"
+     ],
+     "choicesAr": [
+      "36 مربعاً صغيراً",
+      "46 مربعاً صغيراً",
+      "38 مربعاً صغيراً",
+      "26 مربعاً صغيراً"
+     ],
+     "correctIndex": 0,
+     "explanation": "The total shaded is 83 squares and the green part is 47 squares, so the yellow part is 83 - 47 = 36 small squares.",
+     "explanationAr": "إجمالي المظلل 83 مربعاً والجزء الأخضر 47 مربعاً، فيكون الجزء الأصفر 83 - 47 = 36 مربعاً صغيراً."
+    },
+    {
+     "questionText": "Faisal uses a hundredths grid to represent a ribbon of length 1.0 meter. He cuts off 0.28 meters for a craft project and 0.45 meters for his friend. How many small squares on the grid represent the length of ribbon he has left?",
+     "questionTextAr": "يمثل فيصل شريطاً طوله 1.0 متر بنموذج الأجزاء من مئة. قص منه 0.28 متر لمشروع ألعاب، ثم قص 0.45 متر لصديقه. كم مربعاً صغيراً في النموذج يمثل طول الشريط المتبقي معه؟",
+     "choices": [
+      "73 small squares",
+      "37 small squares",
+      "27 small squares",
+      "17 small squares"
+     ],
+     "choicesAr": [
+      "73 مربعاً صغيراً",
+      "37 مربعاً صغيراً",
+      "27 مربعاً صغيراً",
+      "17 مربعاً صغيراً"
+     ],
+     "correctIndex": 2,
+     "explanation": "Faisal cut a total of 0.28 + 0.45 = 0.73 meters (73 squares), leaving 100 - 73 = 27 small squares.",
+     "explanationAr": "قص فيصل ما مجتمعه 0.28 + 0.45 = 0.73 متراً (73 مربعاً)، فيتبقى 100 - 73 = 27 مربعاً صغيراً."
+    },
+    {
+     "questionText": "What is the product of 3.4 and 0.5?",
+     "questionTextAr": "ما هو ناتج ضرب 3.4 في 0.5؟",
+     "choices": [
+      "1.7",
+      "17",
+      "0.17",
+      "1.5"
+     ],
+     "choicesAr": [
+      "1.7",
+      "17",
+      "0.17",
+      "1.5"
+     ],
+     "correctIndex": 0,
+     "explanation": "Multiply 34 by 5 to get 170, and since there are two decimal places in total, place the decimal point to get 1.7.",
+     "explanationAr": "اضرب 34 في 5 ليكون الناتج 170، وبما أن مجموع المنازل العشرية هو منزلتان، نضع الفاصلة العشرية ليصبح الناتج 1.7."
+    },
+    {
+     "questionText": "A runner jogs at a speed of 8.5 kilometers per hour. How many kilometers does the runner cover in 0.4 hours?",
+     "questionTextAr": "يجرى متسابق بسرعة 8.5 كيلومترات في الساعة. كم كيلومترًا يقطع المتسابق في 0.4 ساعة؟",
+     "choices": [
+      "3.4",
+      "34",
+      "0.34",
+      "8.9"
+     ],
+     "choicesAr": [
+      "3.4",
+      "34",
+      "0.34",
+      "8.9"
+     ],
+     "correctIndex": 0,
+     "explanation": "Multiply 8.5 by 0.4. Multiplying 85 by 4 gives 340, and with two decimal places the result is 3.4.",
+     "explanationAr": "نضرب 8.5 في 0.4. حاصل ضرب 85 في 4 يساوي 340، ومع وضع الفاصلة بعد منزلتين يصبح الناتج 3.4."
+    },
+    {
+     "questionText": "Which of the following pairs of decimals has a product of 0.12?",
+     "questionTextAr": "أي من زوجي الكسور العشرية الآتية ناتج ضربهما يساوي 0.12؟",
+     "choices": [
+      "0.4 and 0.3",
+      "0.6 and 0.2",
+      "1.2 and 1.0",
+      "0.04 and 0.3"
+     ],
+     "choicesAr": [
+      "0.4 و 0.3",
+      "0.6 و 0.2",
+      "1.2 و 1.0",
+      "0.04 و 0.3"
+     ],
+     "correctIndex": 1,
+     "explanation": "Multiplying 0.6 by 0.2 gives 0.12 because 6 times 2 is 12 and there are two decimal places in total.",
+     "explanationAr": "ضرب 0.6 في 0.2 يعطي 0.12 لأن 6 ضرب 2 يساوي 12 ويوجد منزلتان عشريتان في الناتج."
+    },
+    {
+     "questionText": "What is the product of 1.25 and 4?",
+     "questionTextAr": "ما هو ناتج ضرب 1.25 في 4؟",
+     "choices": [
+      "5.0",
+      "0.5",
+      "50",
+      "4.1"
+     ],
+     "choicesAr": [
+      "5.0",
+      "0.5",
+      "50",
+      "4.1"
+     ],
+     "correctIndex": 0,
+     "explanation": "Multiplying 125 by 4 gives 500, and with two decimal places the product is 5.0.",
+     "explanationAr": "ضرب 125 في 4 يساوي 500، ومع وجود منزلتين عشريتين يكون الناتج 5.0."
+    },
+    {
+     "questionText": "If the price of 1 kilogram of apples is 3.5 riyals, what is the cost of 0.6 kilograms?",
+     "questionTextAr": "إذا كان ثمن 1 كيلوجرام من التفاح 3.5 ريالات، فكم ثمن 0.6 كيلوجرام؟",
+     "choices": [
+      "2.1",
+      "0.21",
+      "21",
+      "4.1"
+     ],
+     "choicesAr": [
+      "2.1",
+      "0.21",
+      "21",
+      "4.1"
+     ],
+     "correctIndex": 0,
+     "explanation": "Multiply 3.5 by 0.6. Since 35 times 6 is 210, placing the decimal point for two decimal places gives 2.1.",
+     "explanationAr": "نضرب 3.5 في 0.6. بما أن 35 ضرب 6 يساوي 210، فإن وضع الفاصلة لتعطي منزلتين عشريتين ينتج عنه 2.1."
+    },
+    {
+     "questionText": "If you know that 425 ÷ 17 = 25, what should be the reasonable result for 4.25 ÷ 17?",
+     "questionTextAr": "إذا كنت تعلم أن 425 ÷ 17 = 25، فما الناتج المعقول لـ 4.25 ÷ 17؟",
+     "choices": [
+      "2.5",
+      "0.25",
+      "25",
+      "0.025"
+     ],
+     "choicesAr": [
+      "2.5",
+      "0.25",
+      "25",
+      "0.025"
+     ],
+     "correctIndex": 1,
+     "explanation": "Since 4.25 is 100 times smaller than 425, the decimal point moves two places to the left, making the answer 0.25.",
+     "explanationAr": "بما أن 4.25 أصغر بـ 100 مرة من 425، فإن الفاصلة العشرية تتحرك منزلتين إلى اليسار ليصبح الناتج 0.25."
+    },
+    {
+     "questionText": "Ali says that dividing 7.2 by 3 gives 24. Using logical reasoning, the correct answer should be close to:",
+     "questionTextAr": "يقول علي إن قسمة 7.2 على 3 تساوي 24. باستخدام التبرير المنطقي، يجب أن يكون الناتج الصحيح قريباً من:",
+     "choices": [
+      "2",
+      "20",
+      "0.2",
+      "200"
+     ],
+     "choicesAr": [
+      "2",
+      "20",
+      "0.2",
+      "200"
+     ],
+     "correctIndex": 0,
+     "explanation": "Since 7.2 is close to 6, dividing it by 3 gives about 2, so 24 is not a reasonable answer.",
+     "explanationAr": "بما أن 7.2 قريب من 6، فإن قسمته على 3 تساوي تقريباً 2، لذا فإن 24 ليس ناتجاً معقولاً."
+    },
+    {
+     "questionText": "Fatima claims that division always results in a smaller number. Which of the following number sentences proves her wrong?",
+     "questionTextAr": "تَدَّعي هند أن القسمة تجعل العدد دائماً أصغر. أي من الجمل العددية الآتية يثبت خطأ قولها؟",
+     "choices": [
+      "12 ÷ 4 = 3",
+      "8 ÷ 2 = 4",
+      "5 ÷ 0.5 = 10",
+      "10 ÷ 10 = 1"
+     ],
+     "choicesAr": [
+      "12 ÷ 4 = 3",
+      "8 ÷ 2 = 4",
+      "5 ÷ 0.5 = 10",
+      "10 ÷ 10 = 1"
+     ],
+     "correctIndex": 2,
+     "explanation": "Dividing 5 by a decimal less than 1 gives 10, which is greater than 5, showing that division does not always make numbers smaller.",
+     "explanationAr": "قسمة 5 على عدد عشري أقل من 1 تعطي 10، وهو أكبر من 5، مما يوضح أن القسمة لا تجعل الأعداد أصغر دائماً."
+    },
+    {
+     "questionText": "Mona bought 4 books for 18.8 Riyals and said that the price of one book is 47 Riyals. Is her answer reasonable?",
+     "questionTextAr": "اشترت مونا 4 كتب بـ 18.8 ريالاً وقالت إن سعر الكتاب الواحد 47 ريالاً. هل إجابتها معقولة؟",
+     "choices": [
+      "Yes, because 47 is greater than 18.8",
+      "No, because the answer should be close to 5 since 20 divided by 4 is 5",
+      "Yes, because multiplication confirms it",
+      "No, because the price of one book must be zero"
+     ],
+     "choicesAr": [
+      "نعم، لأن 47 أكبر من 18.8",
+      "لا، لأن الناتج يجب أن يكون قريباً من 5 لأن 20 تقسيم 4 يساوي 5",
+      "نعم، لأن الضرب يؤكد ذلك",
+      "لا، لأن سعر الكتاب الواحد يجب أن يكون صفراً"
+     ],
+     "correctIndex": 1,
+     "explanation": "Since 18.8 is close to 20, dividing by 4 gives about 5, so 47 is completely unreasonable.",
+     "explanationAr": "بما أن 18.8 قريب من 20، فإن القسمة على 4 تعطي حوالي 5، لذا فإن 47 غير معقول بالمرة."
+    },
+    {
+     "questionText": "What is the most reasonable estimate for 54.3 ÷ 6?",
+     "questionTextAr": "ما التقدير الأكثر معقولية للناتج 54.3 ÷ 6؟",
+     "choices": [
+      "9",
+      "90",
+      "0.9",
+      "900"
+     ],
+     "choicesAr": [
+      "9",
+      "90",
+      "0.9",
+      "900"
+     ],
+     "correctIndex": 0,
+     "explanation": "Since 54.3 is very close to 54, and 54 divided by 6 is 9, the reasonable estimate is 9.",
+     "explanationAr": "بما أن 54.3 قريب جداً من 54، و 54 تقسيم 6 يساوي 9، إذن التقدير المعقول هو 9."
+    },
+    {
+     "questionText": "Salma had 3/5 of a pizza and ate 1/2 of it. What fraction of the whole pizza did she eat?",
+     "questionTextAr": "كان لدى سلمى 3/5 فطيرة، وأكلت نصفها (1/2). ما الكسر الذي يمثل الجزء الذي أكلته من الفطيرة كلها؟",
+     "choices": [
+      "3/10",
+      "4/7",
+      "3/7",
+      "6/10"
+     ],
+     "choicesAr": [
+      "3/10",
+      "4/7",
+      "3/7",
+      "6/10"
+     ],
+     "correctIndex": 0,
+     "explanation": "To find the fraction of the whole pizza eaten, multiply the two fractions: 3/5 × 1/2 = 3/10.",
+     "explanationAr": "لإيجاد الكسر الذي أكلته من الفطيرة كلها، نضرب الكسرين: 3/5 × 1/2 = 3/10."
+    },
+    {
+     "questionText": "In an area model for 3/4 × 2/3, how many small grid parts are shaded twice to show the product?",
+     "questionTextAr": "في نموذج المساحة لضرب 3/4 × 2/3، ما عدد الأجزاء الصغيرة التي تظللت مرتين لتمثل ناتج الضرب؟",
+     "choices": [
+      "5 parts",
+      "6 parts",
+      "12 parts",
+      "7 parts"
+     ],
+     "choicesAr": [
+      "5 أجزاء",
+      "6 أجزاء",
+      "12 جزءاً",
+      "7 أجزاء"
+     ],
+     "correctIndex": 1,
+     "explanation": "Multiplying the numerators 3 × 2 gives 6 shaded parts out of a total of 12 parts.",
+     "explanationAr": "ضرب البسطين 3 × 2 يعطي 6 أجزاء مظللة من أصل 12 جزءاً كلياً."
+    },
+    {
+     "questionText": "Tariq planted 4/5 of his garden, and 1/2 of the planted part has red flowers. What fraction of the whole garden has red flowers?",
+     "questionTextAr": "زرع طارق 4/5 حديقته، وكان نصف الجزء المزروع (1/2) يحتوي على ورود حمراء. ما الكسر الذي يمثل الجزء المزروع وروداً حمراء من الحديقة كلها؟",
+     "choices": [
+      "5/10",
+      "4/10",
+      "5/7",
+      "4/7"
+     ],
+     "choicesAr": [
+      "5/10",
+      "4/10",
+      "5/7",
+      "4/7"
+     ],
+     "correctIndex": 1,
+     "explanation": "Multiply 4/5 by 1/2 to get 4/10, which represents the red flower garden portion.",
+     "explanationAr": "نضرب 4/5 في 1/2 لنحصل على 4/10، والذي يمثل جزء الحديقة المزروع وروداً حمراء."
+    },
+    {
+     "questionText": "What is the product of 2/3 × 3/4 in its simplest form?",
+     "questionTextAr": "ما ناتج ضرب 2/3 × 3/4 في أبسط صورة؟",
+     "choices": [
+      "6/12",
+      "5/7",
+      "1/2",
+      "2/3"
+     ],
+     "choicesAr": [
+      "6/12",
+      "5/7",
+      "1/2",
+      "2/3"
+     ],
+     "correctIndex": 2,
+     "explanation": "Multiplying gives 6/12, and simplifying by dividing numerator and denominator by 6 gives 1/2.",
+     "explanationAr": "ناتج الضرب هو 6/12، وعند تبسيط الكسر بقسمة البسط والمقام على 6 نحصل على 1/2."
+    },
+    {
+     "questionText": "Why is the product of 1/2 × 1/4 less than 1/4?",
+     "questionTextAr": "لماذا يكون ناتج ضرب 1/2 × 1/4 أصغر من الكسر 1/4؟",
+     "choices": [
+      "Because we are taking a part of a part, which makes the amount smaller.",
+      "Because multiplication always makes numbers smaller.",
+      "Because 1/2 is bigger than 1/4.",
+      "Because we add the numbers instead of multiplying."
+     ],
+     "choicesAr": [
+      "لأننا نأخذ جزءاً من جزء، مما يجعل الكمية أصغر.",
+      "لأن عملية الضرب تجعل الأعداد أصغر دائماً.",
+      "لأن الكسر 1/2 أكبر من 1/4.",
+      "لأننا نجمع الأعداد بدلاً من ضربها."
+     ],
+     "correctIndex": 0,
+     "explanation": "Multiplying a fraction by another fraction less than 1 means you are finding a portion of that fraction, so the result gets smaller.",
+     "explanationAr": "ضرب كسر في كسر آخر أقل من الواحد يعني أننا نجد جزءاً من ذلك الكسر، لذا تصبح الكمية الناتجة أصغر."
+    },
+    {
+     "questionText": "Huda has a ribbon that is 3 meters long. She cut off 120 centimeters. How many centimeters of ribbon are left?",
+     "questionTextAr": "لدى هند شريط طوله 3 أمتار، قصت منه 120 سنتمترًا. كم سنتمترًا بقي من الشريط؟",
+     "choices": [
+      "180 cm",
+      "288 cm",
+      "300 cm",
+      "210 cm"
+     ],
+     "choicesAr": [
+      "180 سم",
+      "288 سم",
+      "300 سم",
+      "210 سم"
+     ],
+     "correctIndex": 0,
+     "explanation": "First convert 3 meters to 300 centimeters, then subtract 120 centimeters to get 180 centimeters left.",
+     "explanationAr": "أولاً نحول 3 أمتار إلى 300 سنتمتر، ثم نطرح منها 120 سنتمترًا ليتبقى 180 سنتمترًا."
+    },
+    {
+     "questionText": "Which of the following lengths is the longest?",
+     "questionTextAr": "أيها من الأطوال التالية يُعتبر الأطول؟",
+     "choices": [
+      "4 meters",
+      "350 centimeters",
+      "3,800 millimeters",
+      "0.005 kilometers"
+     ],
+     "choicesAr": [
+      "4 أمتار",
+      "350 سنتمترًا",
+      "3 800 مليمتر",
+      "0.005 كيلومتر"
+     ],
+     "correctIndex": 3,
+     "explanation": "Convert all to centimeters: 4 m = 400 cm, 350 cm, 3,800 mm = 380 cm, and 0.005 km = 500 cm, so 500 cm is the longest.",
+     "explanationAr": "نحول الكل إلى السنتمترات: 4 م = 400 سم، 350 سم، 3 800 مم = 380 سم، و 0.005 كم = 500 سم، إذن 500 سم هو الأطول."
+    },
+    {
+     "questionText": "A running track is 5 kilometers long. What is the length of the track in meters?",
+     "questionTextAr": "طول مسار جري 5 كيلومترات. ما طول المسار بالأمتار؟",
+     "choices": [
+      "50 meters",
+      "500 meters",
+      "5,000 meters",
+      "50,000 meters"
+     ],
+     "choicesAr": [
+      "50 مترًا",
+      "500 متر",
+      "5 000 متر",
+      "50 000 متر"
+     ],
+     "correctIndex": 2,
+     "explanation": "Since each 1 kilometer equals 1,000 meters, multiply 5 by 1,000 to get 5,000 meters.",
+     "explanationAr": "بما أن كل 1 كيلومتر يساوي 1 000 متر، فنضرب 5 في 1 000 لنحصل على 5 000 متر."
+    },
+    {
+     "questionText": "Ali says that 4.5 meters is equal to 45 centimeters. What is his mistake?",
+     "questionTextAr": "قال علي إن 4.5 أمتار تساوي 45 سنتمترًا. ما خطؤه؟",
+     "choices": [
+      "He should have divided by 100 instead of multiplying.",
+      "He multiplied by 10 instead of multiplying by 100.",
+      "He should have converted to kilometers instead.",
+      "He forgot that 1 meter equals 10 centimeters."
+     ],
+     "choicesAr": [
+      "كان يجب عليه القسمة على 100 بدلاً من الضرب.",
+      "لقد ضرب في 10 بدلاً من أن يضرب في 100.",
+      "كان يجب عليه التحويل إلى الكيلومترات بدلاً من ذلك.",
+      "لقد نسى أن 1 متر يساوي 10 سنتمترات."
+     ],
+     "correctIndex": 1,
+     "explanation": "To convert from meters to centimeters, you multiply by 100, so 4.5 meters is 450 centimeters, not 45.",
+     "explanationAr": "للتحويل من الأمتار إلى السنتمترات، نضرب في 100، إذن 4.5 أمتار تساوي 450 سنتمترًا وليست 45."
+    },
+    {
+     "questionText": "A craft stick has a length of 230 millimeters. What is its length in centimeters?",
+     "questionTextAr": "طول عصا يدوية 230 مليمترًا. ما طولها بالسنتمترات؟",
+     "choices": [
+      "23 centimeters",
+      "2,300 centimeters",
+      "2.3 centimeters",
+      "230 centimeters"
+     ],
+     "choicesAr": [
+      "23 سنتمترًا",
+      "2 300 سنتمتر",
+      "2.3 سنتمتر",
+      "230 سنتمترًا"
+     ],
+     "correctIndex": 0,
+     "explanation": "To convert from millimeters to centimeters, divide by 10, so 230 divided by 10 is 23 centimeters.",
+     "explanationAr": "للتحويل من المليمترات إلى السنتمترات، نقسم على 10، إذن 230 مقسومة على 10 تساوي 23 سنتمترًا."
+    },
+    {
+     "questionText": "Reem has 60 SAR and saves 5 SAR each week. Haya has 30 SAR and saves 10 SAR each week. After how many weeks will they both have the same amount of money?",
+     "questionTextAr": "مع ريم 60 ريالًا وتدّخر 5 ريالات أسبوعيًا، ومع هيا 30 ريالًا وتدّخر 10 ريالات أسبوعيًا. بعد كم أسبوع يتساوى ما معهما من المال؟",
+     "choices": [
+      "4 weeks",
+      "5 weeks",
+      "6 weeks",
+      "8 weeks"
+     ],
+     "choicesAr": [
+      "4 أسابيع",
+      "5 أسابيع",
+      "6 أسابيع",
+      "8 أسابيع"
+     ],
+     "correctIndex": 2,
+     "explanation": "Each week Haya gains 5 SAR more than Reem, so to bridge the 30 SAR difference, it takes 30 ÷ 5 = 6 weeks.",
+     "explanationAr": "تكسب هيا 5 ريالات إضافية كل أسبوع مقارنة بريم، ولسد الفارق البالغ 30 ريالًا تحتاجان إلى 30 ÷ 5 = 6 أسابيع."
+    },
+    {
+     "questionText": "Square tables are placed side by side in a single line. 1 table seats 4 people, 2 tables seat 6, and 3 tables seat 8. How many people can sit around a row of 12 tables?",
+     "questionTextAr": "تم توصيل طاولات مربعة في صف واحد. يجلس 4 أشخاص حول طاولة واحدة، و6 حول طاولتين، و8 حول 3 طاولات. كم شخصًا يمكنه الجلوس حول صف مكون من 12 طاولة؟",
+     "choices": [
+      "24 people",
+      "26 people",
+      "28 people",
+      "48 people"
+     ],
+     "choicesAr": [
+      "24 شخصًا",
+      "26 شخصًا",
+      "28 شخصًا",
+      "48 شخصًا"
+     ],
+     "correctIndex": 1,
+     "explanation": "The pattern rule is (number of tables × 2) + 2, so for 12 tables: (12 × 2) + 2 = 26 people.",
+     "explanationAr": "قاعدة النمط هي (عدد الطاولات × 2) + 2، وبالتالي لـ 12 طاولة: (12 × 2) + 2 = 26 شخصًا."
+    },
+    {
+     "questionText": "A pattern of shapes made with toothpicks starts with Shape 1 having 5 toothpicks, and each subsequent shape adds 4 toothpicks. How many toothpicks are needed to build Shape 15?",
+     "questionTextAr": "نمط أشكال مكونة من أعواد أسنان؛ الشكل 1 يتكون من 5 أعواد، ويزيد كل شكل تالٍ بمقدار 4 أعواد. كم عودًا يلزم لبناء الشكل 15؟",
+     "choices": [
+      "56 toothpicks",
+      "60 toothpicks",
+      "61 toothpicks",
+      "65 toothpicks"
+     ],
+     "choicesAr": [
+      "56 عودًا",
+      "60 عودًا",
+      "61 عودًا",
+      "65 عودًا"
+     ],
+     "correctIndex": 2,
+     "explanation": "Starting with 5, we add 4 toothpicks 14 times (15 - 1 = 14), so 5 + (14 × 4) = 61 toothpicks.",
+     "explanationAr": "نبدأ بـ 5 ونضيف 4 أعواد 14 مرة (15 - 1 = 14)، فيكون الناتج 5 + (14 × 4) = 61 عودًا."
+    },
+    {
+     "questionText": "Khalid reads 15 pages on the first day and increases his reading by 3 pages each day. How many total pages will he have read by the end of the 5th day?",
+     "questionTextAr": "يقرأ خالد 15 صفحة في اليوم الأول ويزيد قراءته بمقدار 3 صفحات كل يوم. كم مجموع الصفحات التي يقرؤها بنهاية اليوم الخامس؟",
+     "choices": [
+      "95 pages",
+      "105 pages",
+      "120 pages",
+      "135 pages"
+     ],
+     "choicesAr": [
+      "95 صفحة",
+      "105 صفحات",
+      "120 صفحة",
+      "135 صفحة"
+     ],
+     "correctIndex": 1,
+     "explanation": "The pages read each day are 15, 18, 21, 24, and 27, giving a total of 15 + 18 + 21 + 24 + 27 = 105 pages.",
+     "explanationAr": "الصفحات المقروءة يوميًا هي 15، 18، 21، 24، و27، ومجموعها يساوي 15 + 18 + 21 + 24 + 27 = 105 صفحات."
+    },
+    {
+     "questionText": "Candle A is 30 cm tall and burns down by 3 cm per hour. Candle B is 20 cm tall and burns down by 1 cm per hour. After how many hours will both candles be the same height?",
+     "questionTextAr": "شمعة (أ) طولها 30 سم وتنقص 3 سم كل ساعة، وشمعة (ب) طولها 20 سم وتنقص 1 سم كل ساعة. بعد كم ساعة يصبح للشمعتين الطول نفسه؟",
+     "choices": [
+      "4 hours",
+      "5 hours",
+      "6 hours",
+      "10 hours"
+     ],
+     "choicesAr": [
+      "4 ساعات",
+      "5 ساعات",
+      "6 ساعات",
+      "10 ساعات"
+     ],
+     "correctIndex": 1,
+     "explanation": "Candle A decreases by 2 cm per hour faster than Candle B, so closing the 10 cm height difference takes 10 ÷ 2 = 5 hours.",
+     "explanationAr": "تنقص الشمعة (أ) بمعدل 2 سم في الساعة أسرع من (ب)، ولسد فرق الطول البالغ 10 سم نحتاج 10 ÷ 2 = 5 ساعات."
+    }
+   ]
+  },
+  {
+   "subject": "science",
+   "grade": 5,
+   "questions": [
+    {
+     "questionText": "In the food chain 'Plant -> Grasshopper -> Frog -> Snake -> Eagle', which organism acts as BOTH a predator to the frog AND prey to the eagle?",
+     "questionTextAr": "في السلسلة الغذائية: 'نبات ← جندب ← ضفدع ← ثعبان ← صقر'، أي كائن حي يُعد مفترسًا للضفدع وفريسة للصقر في الوقت نفسه؟",
+     "choices": [
+      "Grasshopper",
+      "Snake",
+      "Frog",
+      "Eagle"
+     ],
+     "choicesAr": [
+      "الجندب",
+      "الثعبان",
+      "الضفدع",
+      "الصقر"
+     ],
+     "correctIndex": 1,
+     "explanation": "The snake eats the frog, acting as its predator, and is hunted by the eagle, acting as its prey.",
+     "explanationAr": "الثعبان يأكل الضفدع فيكون مفترسًا له، ويصطاده الصقر فيكون فريسة له."
+    },
+    {
+     "questionText": "A student builds a 5-organism food chain: 'Algae -> Tadpole -> Small Fish -> Water Snake -> Heron'. How many arrows are in this chain, and what is the role of the heron?",
+     "questionTextAr": "قام طالب ببناء سلسلة غذائية تتكون من 5 كائنات حية: 'طحالب ← شرغوف ← سمكة صغيرة ← ثعبان ماء ← طائر البلشون'. كم عدد الأسهم في هذه السلسلة، وما دور طائر البلشون؟",
+     "choices": [
+      "4 arrows, and the heron is the top predator",
+      "5 arrows, and the heron is a producer",
+      "4 arrows, and the heron is a herbivore",
+      "5 arrows, and the heron is the top predator"
+     ],
+     "choicesAr": [
+      "4 أسهم، والبلشون هو المفترس الأعلى",
+      "5 أسهم، والبلشون هو المنتج",
+      "4 أسهم، والبلشون هو آكل عشب",
+      "5 أسهم، والبلشون هو المفترس الأعلى"
+     ],
+     "correctIndex": 0,
+     "explanation": "A food chain with 5 organisms has 4 arrows showing energy transfer, and the animal at the very end is the top predator.",
+     "explanationAr": "السلسلة الغذائية التي تتكون من 5 كائنات تحوي 4 أسهم توضح انتقال الطاقة، والكائن في نهايتها هو المفترس الأعلى."
+    },
+    {
+     "questionText": "Why would a top predator at the 5th level of a long food chain eventually die if all green plants at the 1st level disappeared?",
+     "questionTextAr": "لماذا يموت المفترس الأعلى في المستوى الخامس لسلسلة غذائية طويلة إذا اختفت جميع النباتات الخضراء في المستوى الأول؟",
+     "choices": [
+      "Because top predators eat green plants directly.",
+      "Because green plants are the main energy source that passes through all chain levels.",
+      "Because top predators change into producers when plants disappear.",
+      "Because green plants hunt top predators for food."
+     ],
+     "choicesAr": [
+      "لأن المفترسات العليا تأكل النباتات الخضراء بشكل مباشر.",
+      "لأن النباتات الخضراء هي المصدر الأساسي للطاقة التي تنتقل عبر جميع مستويات السلسلة.",
+      "لأن المفترسات العليا تتحول إلى منتجات عند اختفاء النباتات.",
+      "لأن النباتات الخضراء تصطاد المفترسات العليا للحصول على الغذاء."
+     ],
+     "correctIndex": 1,
+     "explanation": "Plants make the initial energy for the entire chain, so without plants, no organisms get the energy they need to survive.",
+     "explanationAr": "تنتج النباتات الطاقة الأولية للسلسلة بأكملها، وبدون النباتات لا تحصل الكائنات على الطاقة التي تحتاجها للبقاء."
+    },
+    {
+     "questionText": "A student wants to complete a 4-level desert food chain: 'Cactus -> [ ? ] -> Desert Lizard -> Falcon'. Which animal correctly fills the missing step?",
+     "questionTextAr": "يريد طالب إكمال سلسلة غذائية صحراوية من 4 مستويات: 'صبار ← [ ؟ ] ← سحلية صحراوية ← صقر'. أي حيوان يناسب الفراغ لتكون السلسلة صحيحة؟",
+     "choices": [
+      "Desert Locust (Herbivore insect)",
+      "Viper Snake (Carnivore)",
+      "Camel (Large Herbivore)",
+      "Scorpion (Carnivore)"
+     ],
+     "choicesAr": [
+      "جراد صحراوي (حشرة آكلة أعشاب)",
+      "أفعى صحراوية (آكل لحوم)",
+      "جمل (عاشب ضخم)",
+      "عقرب (آكل لحوم)"
+     ],
+     "correctIndex": 0,
+     "explanation": "The missing animal must eat the producer (cactus) and be prey for the lizard, making the desert locust the correct choice.",
+     "explanationAr": "الحيوان المفقود يجب أن يأكل المنتج (الصبار) ويكون فريسة للسحلية، مما يجعل الجراد الصحراوي الخيار الصحيح."
+    },
+    {
+     "questionText": "In the ocean food chain 'Microalgae -> Shrimp -> Small Fish -> Squid -> Seal', how many animals act as prey?",
+     "questionTextAr": "في السلسلة الغذائية البحرية 'دقيقة طحالب ← جمبري ← سمكة صغيرة ← حبار ← فقمة'، كم عدد الحيوانات التي تُعتبر فريسة؟",
+     "choices": [
+      "1 animal",
+      "2 animals",
+      "3 animals",
+      "4 animals"
+     ],
+     "choicesAr": [
+      "حيوان واحد",
+      "حيوانان",
+      "3 حيوانات",
+      "4 حيوانات"
+     ],
+     "correctIndex": 2,
+     "explanation": "Shrimp, small fish, and squid are all animals that are hunted and eaten by other animals, making 3 prey animals.",
+     "explanationAr": "الجمبري، والسمكة الصغيرة، والحبار هي جميعها حيوانات تُصطاد وتُؤكل بواسطة حيوانات أخرى، مما يجعل عدد الفرائس 3 حيوانات."
+    },
+    {
+     "questionText": "Ahmed wants to build a circuit using a diagram that shows two lamps connected in parallel, each with its own separate switch. What will happen when he closes only one switch?",
+     "questionTextAr": "يريد أحمد بناء دائرة باستخدام مخطط يوضح مصباحين موصولين على التوازي، ولكل منهما مفتاح منفصل. ماذا سيحدث عند إغلاق مفتاح واحد فقط؟",
+     "choices": [
+      "Only the lamp connected to the closed switch will light up.",
+      "Both lamps will light up together.",
+      "Neither lamp will light up.",
+      "The battery will stop working immediately."
+     ],
+     "choicesAr": [
+      "سيضيء المصباح المتصل بالمفتاح المغلق فقط.",
+      "سيضيء المصباحان معًا.",
+      "لن يضيء أي من المصباحين.",
+      "ستتوقف البطارية عن العمل فورا."
+     ],
+     "correctIndex": 0,
+     "explanation": "In a parallel circuit with separate switches, each branch operates independently so you can turn each lamp on or off by itself.",
+     "explanationAr": "في دائرة التوازي ذات المفاتيح المنفصلة، يعمل كل فرع بشكل مستقل، لذا يمكنك تشغيل أو إطفاء كل مصباح لوحده."
+    },
+    {
+     "questionText": "Sara has a simple series circuit with one cell and one lamp. If she changes the order of the components by placing the lamp before the cell instead of after it, what will happen to the circuit?",
+     "questionTextAr": "لدى سارة دائرة توالٍ بسيطة تحتوي على خلية واحدة ومصباح واحد. إذا غيرت ترتيب المكونات بوضع المصباح قبل الخلية بدلاً من بعدها، فماذا سيحدث للدائرة؟",
+     "choices": [
+      "The lamp will still work normally.",
+      "The lamp will stop working completely.",
+      "The circuit will turn into a parallel circuit.",
+      "The battery will explode."
+     ],
+     "choicesAr": [
+      "سيستمر المصباح في العمل بشكل طبيعي.",
+      "سيتوقف المصباح عن العمل تماما.",
+      "ستتحول الدائرة إلى دائرة توازٍ.",
+      "ستنفجر البطارية."
+     ],
+     "correctIndex": 0,
+     "explanation": "Changing the order of components in a simple series circuit does not stop it from working as long as the loop remains complete.",
+     "explanationAr": "تغيير ترتيب المكونات في دائرة توالٍ بسيطة لا يمنعها من العمل ما دامت الحلقة الكهربائية مكتملة."
+    },
+    {
+     "questionText": "Before building a real electrical circuit from a circuit diagram, what is the most important first step you must do?",
+     "questionTextAr": "قبل بناء دائرة كهربائية حقيقية من مخطط الدائرة، ما هي الخطوة الأولى والأهم التي يجب عليك القيام بها؟",
+     "choices": [
+      "Understand the symbols of the components used in the diagram.",
+      "Ignore the diagram and guess how to connect the wires.",
+      "Cut all the wires into very small pieces.",
+      "Add extra batteries that are not in the diagram."
+     ],
+     "choicesAr": [
+      "فهم رموز المكونات المستخدمة في المخطط.",
+      "تجاهل المخطط وتخمين كيفية توصيل الأسلاك.",
+      "قطع جميع الأسلاك إلى قطع صغار جدا.",
+      "إضافة بطاريات إضافية غير موجودة في المخطط."
+     ],
+     "correctIndex": 0,
+     "explanation": "You must understand the component symbols first so you know which actual parts to choose and how to connect them correctly.",
+     "explanationAr": "يجب عليك فهم رموز المكونات أولاً حتى تعرف القطع الحقيقية التي يجب اختيارها وكيفية توصيلها بشكل صحيح."
+    },
+    {
+     "questionText": "Yousef built a circuit containing a cell, a lamp, and a buzzer connected in series. When he closes the switch, what will you observe?",
+     "questionTextAr": "بنى يوسف دائرة تحتوي على خلية ومصباح وجرس موصولين على التوالي. عندما أغلق المفتاح، ماذا ستلاحظ؟",
+     "choices": [
+      "The buzzer will make a sound and the lamp will light up.",
+      "Only the buzzer will work, and the lamp will stay off.",
+      "Only the lamp will work, and the buzzer will make no sound.",
+      "Nothing will work at all."
+     ],
+     "choicesAr": [
+      "سيصدر الجرس صوتًا ويضيء المصباح.",
+      "سيصم الجرس فقط ويبقى المصباح مطفأ.",
+      "سيضيء المصباح فقط ولن يصدر الجرس صوتًا.",
+      "لن يعمل أي شيء نهائيا."
+     ],
+     "correctIndex": 0,
+     "explanation": "In a series circuit, all components share the same loop, so both the lamp and the buzzer will work together when the switch is closed.",
+     "explanationAr": "في دائرة التوالي، تشترك جميع المكونات في نفس الحلقة، لذا سيعمل كل من المصباح والجرس معًا عند إغلاق المفتاح."
+    },
+    {
+     "questionText": "Laila tested her newly built circuit and noticed that the lamp did not turn on. What should she do next according to good science practices?",
+     "questionTextAr": "اختبرت ليلى دائرتها الجديدة التي بنتها ولاحظت أن المصباح لم يضء. ماذا يجب عليها أن تفعل بعد ذلك وفقًا للممارسات العلمية السليمة؟",
+     "choices": [
+      "Check all the connections and compare the result with the circuit diagram.",
+      "Throw the components away and buy new ones.",
+      "Assume the diagram was completely wrong without looking.",
+      "Leave the switch closed and walk away."
+     ],
+     "choicesAr": [
+      "التحقق من جميع التوصيلات ومقارنة النتيجة بمخطط الدائرة.",
+      "رمي المكونات بعيدًا وشراء أخرى جديدة.",
+      "افتراض أن المخطط كان خاطئًا تمامًا دون النظر إليه.",
+      "ترك المفتاح مغلقًا والمغادرة."
+     ],
+     "correctIndex": 0,
+     "explanation": "When a circuit does not work, checking the connections and comparing them to the diagram helps find and fix any mistakes.",
+     "explanationAr": "عندما لا تعمل الدائرة، فإن التحقق من التوصيلات ومقارنتها بالمخطط يساعد في العثور على أي أخطاء وإصلاحها."
+    },
+    {
+     "questionText": "Ahmed listed four life events: 1. Learning to speak, 2. Obtaining a National ID card, 3. Replacing milk teeth with permanent teeth, 4. Getting a driver's license. Which of these are legal milestones determined by state laws?",
+     "questionTextAr": "دوّن أحمد أربعة أحداث في الحياة: 1. تعلم الكلام، 2. الحصول على بطاقة الهوية الوطنية، 3. تبديل الأسنان اللبنية بالأسنان الدائمة، 4. الحصول على رخصة القيادة. أيٌّ من هذه الأحداث يُعدّ تغيرًا أساسيًا قانونيًا تحدده قوانين الدولة؟",
+     "choices": [
+      "1 and 3 only",
+      "2 and 4 only",
+      "1 and 2 only",
+      "3 and 4 only"
+     ],
+     "choicesAr": [
+      "1 و3 فقط",
+      "2 و4 فقط",
+      "1 و2 فقط",
+      "3 و4 فقط"
+     ],
+     "correctIndex": 1,
+     "explanation": "Obtaining an ID card and getting a driver's license are legal milestones set by state regulations, whereas speaking and teeth replacement are natural physical developments.",
+     "explanationAr": "الحصول على الهوية ورخصة القيادة من التغيرات القانونية التي تحددها القوانين لأعمار معينة، بينما الكلام وتبديل الأسنان تغيرات طبيعية."
+    },
+    {
+     "questionText": "Laila is 14 years old and is going through puberty, experiencing body changes and rapid growth. In which life cycle stage is Laila, and what type of milestone is puberty?",
+     "questionTextAr": "تبلغ ليلى من العمر 14 عامًا وهي تمر بمرحلة البلوغ وتلاحظ تغيرات جسدية ونموًا سريعًا. في أي مرحلة من دورة الحياة تصنَّف ليلى، وما نوع تغير البلوغ؟",
+     "choices": [
+      "Early childhood stage; natural milestone",
+      "Adolescence stage; natural milestone",
+      "Adulthood stage; legal milestone",
+      "Old age stage; natural milestone"
+     ],
+     "choicesAr": [
+      "مرحلة الطفولة المبكرة؛ تغير طبيعي",
+      "مرحلة المراهقة؛ تغير طبيعي",
+      "مرحلة الرشد؛ تغير قانوني",
+      "مرحلة الشيخوخة؛ تغير طبيعي"
+     ],
+     "correctIndex": 1,
+     "explanation": "Puberty occurs during adolescence (around age 10-19) and is a natural physical change in the human life cycle.",
+     "explanationAr": "يحدث البلوغ خلال مرحلة المراهقة وهو تغير جسدي طبيعي يحدث في دورة حياة الإنسان."
+    },
+    {
+     "questionText": "Why is adulthood considered the longest stage in the human life cycle?",
+     "questionTextAr": "لماذا تُعتبر مرحلة الرشد أطول مراحل دورة حياة الإنسان غالبًا؟",
+     "choices": [
+      "Because it spans several decades from young adulthood until old age.",
+      "Because physical growth in adulthood is faster than in early childhood.",
+      "Because all stages in human life are equal in duration.",
+      "Because children spend over fifty years in early childhood."
+     ],
+     "choicesAr": [
+      "لأنها تمتد لعدة عقود من شباب الإنسان حتى وصوله لمرحلة الشيخوخة.",
+      "لأن النمو الجسدي في الرشد أسرع من الطفولة المبكرة.",
+      "لأن جميع مراحل حياة الإنسان متساوية تمامًا في عدد السنوات.",
+      "لأن الأطفال يقضون أكثر من خمسين عامًا في مرحلة الطفولة المبكرة."
+     ],
+     "correctIndex": 0,
+     "explanation": "Adulthood spans many decades covering work, family, and independent living, making it longer than childhood or adolescence.",
+     "explanationAr": "تمتد مرحلة الرشد لعقود طويلة تشمل العمل وتكوين الأسرة، مما يجعلها أطول من الطفولة والمراهقة."
+    },
+    {
+     "questionText": "A 10-year-old child wants to apply for a driver's license. The officer explains that he must wait until he grows older. What is the scientific explanation for this decision?",
+     "questionTextAr": "يرغب طفل عمره 10 سنوات في الحصول على رخصة قيادة السيارة، ولكن الموظف أوضح له أنه يجب أن ينتظر حتى يكبر. ما التفسير العلمي الصحيح لهذا الموقف؟",
+     "choices": [
+      "Driver's licenses are natural milestones that appear automatically at puberty.",
+      "Driver's licenses are legal milestones restricted by state law to specific mature age stages, such as adulthood.",
+      "Driver's licenses are only granted during early childhood when learning to walk.",
+      "Driver's licenses are given only to elderly individuals during old age."
+     ],
+     "choicesAr": [
+      "رخصة القيادة تغير طبيعي يظهر تلقائيًا عند البلوغ.",
+      "رخصة القيادة تغير قانوني ترتبطه قوانين الدولة ببدء سن محدد في مرحلة الرشد.",
+      "رخصة القيادة تُمنح فقط في الطفولة المبكرة مع تعلم المشي.",
+      "رخصة القيادة تُمنح فقط لكبار السن في مرحلة الشيخوخة."
+     ],
+     "correctIndex": 1,
+     "explanation": "Getting a driver's license is a legal milestone governed by state laws that require reaching adulthood.",
+     "explanationAr": "الحصول على رخصة القيادة هو تغير قانوني يرتبط بقوانين الدولة وشروط السن المحددة عادة في مرحلة الرشد."
+    },
+    {
+     "questionText": "Omar observes that his 1-year-old brother is taking his first steps, while his 8-year-old sister is replacing her milk teeth with permanent teeth. How should both of these milestones be categorized?",
+     "questionTextAr": "لاحظ عمر أن أخاه البالغ من العمر سنة واحدة يبدأ خطواته الأولى للمشي، بينما أخته البالغة 8 سنوات تقوم بتبديل أسنانها اللبنية. كيف تصنَّف كِلتا الظاهرتين؟",
+     "choices": [
+      "Both are natural milestones resulting from normal physical growth.",
+      "Both are legal milestones regulated by government laws.",
+      "Learning to walk is a legal milestone, while losing milk teeth is a natural milestone.",
+      "Learning to walk belongs to old age, while changing teeth belongs to adulthood."
+     ],
+     "choicesAr": [
+      "كلاهما تغيران أساسيان طبيعيان ناتجان عن نمو الجسم الطبيعي.",
+      "كلاهما تغيران أساسيان قانونيان يخضعان لقوانين الدولة.",
+      "تعلم المشي تغير قانوني، بينما تبديل الأسنان تغير طبيعي.",
+      "تعلم المشي يحدث في الشيخوخة، بينما تبديل الأسنان يحدث في الرشد."
+     ],
+     "correctIndex": 0,
+     "explanation": "Learning to walk and changing primary teeth are both natural milestones driven by body growth.",
+     "explanationAr": "تعلم المشي وتبديل الأسنان اللبنية هما تغيران طبيعيان يحدثان نتيجة نمو الجسم والتطور الطبيعي."
+    },
+    {
+     "questionText": "If you drop a ball of clay shaped like a flat pancake and another ball shaped like a pointy torpedo into a deep cylinder of water, which one will reach the bottom first and why?",
+     "questionTextAr": "إذا أسقطت قطعة صلصال على شكل قرص مسطح وقطعة أخرى على شكل طوربيد مدبب في أسطوانة عميقة من الماء، أيهما سيصل إلى القاع أولاً ولماذا؟",
+     "choices": [
+      "The flat pancake, because it is wider.",
+      "The pointy torpedo, because its streamlined shape reduces water resistance.",
+      "The flat pancake, because water pushes it down harder.",
+      "Both will reach the bottom at the exact same time."
+     ],
+     "choicesAr": [
+      "القرص المسطح، لأنه أوسع.",
+      "الطوربيد المدبب، لأن شكله الانسيابي يقلل مقاومة الماء.",
+      "القرص المسطح، لأن الماء يدفعه لأسفل بقوة أكبر.",
+      "كلاهما سيصل إلى القاع في نفس الوقت تماماً."
+     ],
+     "correctIndex": 1,
+     "explanation": "Streamlined, pointy shapes cut through the water easily with less resistance, making them move faster.",
+     "explanationAr": "الأشكال الانسيابية المدببة تقطع الماء بسهولة وبمقاومة أقل، مما يجعلها تتحرك بشكل أسرع."
+    },
+    {
+     "questionText": "A student is testing different shapes of clay in a water tube to see how fast they sink. What is the dependent variable that the student needs to measure?",
+     "questionTextAr": "طالب يختبر أشكالاً مختلفة من الصلصال في أنبوب ماء لمعرفة مدى سرعة غوصها. ما هو المتغير التابع الذي يحتاج الطالب إلى قياسه؟",
+     "choices": [
+      "The time taken for the clay shape to reach the bottom",
+      "The shape of the clay",
+      "The mass of the clay",
+      "The type of water in the tube"
+     ],
+     "choicesAr": [
+      "الزمن المستغرق لوصول شكل الصلصال إلى القاع",
+      "شكل الصلصال",
+      "كتلة الصلصال",
+      "نوع الماء في الأنبوب"
+     ],
+     "correctIndex": 0,
+     "explanation": "The dependent variable is what you measure in an investigation, which is the time it takes for the shape to fall.",
+     "explanationAr": "المتغير التابع هو ما نقيسه في الاستقصاء، وهو الزمن الذي يستغرقه الشكل للسقوط."
+    },
+    {
+     "questionText": "Why must a student use the exact same mass of clay when testing different shapes in a water drop investigation?",
+     "questionTextAr": "لماذا يجب على الطالب استخدام نفس كتلة الصلصال تماماً عند اختبار أشكال مختلفة في استقصاء سقوط الماء؟",
+     "choices": [
+      "To make the test a fair test by keeping everything the same except the shape.",
+      "To make the clay change its color.",
+      "So the clay does not dissolve in the water.",
+      "To make the water level rise higher."
+     ],
+     "choicesAr": [
+      "لجعل الاستقصاء عادلاً من خلال إبقاء كل شيء متساوياً ما عدا الشكل.",
+      "لجعل الصلصال يغير لونه.",
+      "لكي لا يذوب الصلصال في الماء.",
+      "لجعل مستوى الماء يرتفع أكثر."
+     ],
+     "correctIndex": 0,
+     "explanation": "Keeping the mass the same is essential in a fair test so that only the shape affects the falling speed.",
+     "explanationAr": "الحفاظ على الكتلة متساوية أمر أساسي في الاستقصاء العادل لكي يؤثر الشكل وحده على سرعة السقوط."
+    },
+    {
+     "questionText": "Engineers design modern submarines with a streamlined shape. What is the main scientific reason for this design?",
+     "questionTextAr": "يصمم المهندسون الغواصات الحديثة بشكل انسيابي. ما هو السبب العلمي الأساسي لهذا التصميم؟",
+     "choices": [
+      "To increase water resistance so it stays stable",
+      "To reduce water resistance and move through the water quickly",
+      "To make the submarine look nicer and more colorful",
+      "To make the submarine heavier so it sinks instantly"
+     ],
+     "choicesAr": [
+      "لزيادة مقاومة الماء حتى تظل مستقرة",
+      "لتقليل مقاومة الماء والتحرك عبر الماء بسرعة",
+      "ليكون شكل الغواصة أجمل وأكثر ملونة",
+      "لجعل الغواصة أثقل لكي تغوص فوراً"
+     ],
+     "correctIndex": 1,
+     "explanation": "A streamlined shape helps submarines glide smoothly by cutting down the pushback from water.",
+     "explanationAr": "الشكل الانسيابي يساعد الغواصات على الانزلاق بسلاسة عن طريق تقليل مقاومة الماء."
+    },
+    {
+     "questionText": "Penguins are birds that cannot fly in the air, but they are amazingly fast swimmers. Which feature of their bodies helps them move so well in water?",
+     "questionTextAr": "البطاريق طيور لا تستطيع الطيران في الهواء، لكنها سباحة سريعة بشكل مذهل. ما هي ميزة أجسامها التي تساعدها على التحرك جيداً في الماء؟",
+     "choices": [
+      "Their heavy feathers",
+      "Their streamlined body shape",
+      "Their wide flat feet",
+      "Their bright colors"
+     ],
+     "choicesAr": [
+      "ريشها الثقيل",
+      "شكل جسمها الانسيابي",
+      "أقدامها الواسعة المسطحة",
+      "ألوانها الساطعة"
+     ],
+     "correctIndex": 1,
+     "explanation": "Just like fish and submarines, penguins have a streamlined body that lets them slice through water easily.",
+     "explanationAr": "تماماً مثل الأسماك والغواصات، تمتلك البطاريق جسماً انسيابياً يتيح لها شق طريقها في الماء بسهولة."
+    },
+    {
+     "questionText": "Reem wants to test how surface area affects the rate of evaporation. She pours 100 mL of water into a wide dish and 100 mL into a narrow cylinder. Which set of variables must she keep the same to ensure a fair test?",
+     "questionTextAr": "ترغب ريم في اختبار أثر مساحة السطح على معدل التبخر. قامت بصب 100 مل من الماء في طبق واسع و100 مل في مخبار ضيق. ما المتغيرات التي يجب أن تحافظ عليها مثبتة لضمان اختبار عادل؟",
+     "choices": [
+      "The surface area of the dishes and liquid type",
+      "The initial water volume, location, and air temperature",
+      "The remaining water volume and measurement time only",
+      "The container material and evaporation rate"
+     ],
+     "choicesAr": [
+      "مساحة سطح الإناءين ونوع السائل",
+      "كمية الماء الأولية والمكان ودرجة حرارة الهواء",
+      "كمية الماء المتبقية ووقت القياس فقط",
+      "مادة صنع الإناء ومعدل التبخر"
+     ],
+     "correctIndex": 1,
+     "explanation": "In a fair test, only the independent variable (surface area) changes while variables like water volume, location, and temperature are kept constant.",
+     "explanationAr": "في الاختبار العادل، نتغير فقط مساحة السطح بينما نثبت باقي العوامل مثل كمية الماء والمكان ودرجة الحرارة."
+    },
+    {
+     "questionText": "A farmer in Qatar wants to reduce water evaporation from an open irrigation pool during a hot summer. Which strategy would be most effective based on factors that affect evaporation?",
+     "questionTextAr": "يرغب مزارع في قطر في تقليل تبخر الماء من بركة ري مكشوفة خلال الصيف الحار. أي إستراتيجية هي الأكثر فاعلية بناءً على العوامل المؤثرة في التبخر؟",
+     "choices": [
+      "Spreading the pool water over a wider, shallower area",
+      "Stirring the pool water continuously with a mechanical pump",
+      "Covering part of the pool surface to limit exposed area and sunlight",
+      "Heating the surrounding ground around the pool"
+     ],
+     "choicesAr": [
+      "نشر ماء البركة على مساحة أوسع وغير عميقة",
+      "تحريك ماء البركة باستمرار باستخدام مضخة",
+      "تغطية جزء من سطح البركة لتقليل المساحة المعرضة وأشعة الشمس",
+      "تسخين الأرض المحيطة بالبركة"
+     ],
+     "correctIndex": 2,
+     "explanation": "Covering the water surface reduces both the exposed surface area and direct heat, which slows down evaporation.",
+     "explanationAr": "تغطية سطح الماء تقلل من مساحة السطح المعرضة للهواء والحرارة، مما يقلل من معدل التبخر."
+    },
+    {
+     "questionText": "Rashid placed 50 mL of water into three identical cups under different conditions. After 2 days, Cup A had 10 mL left, Cup B had 35 mL left, and Cup C had 25 mL left. Which cup was placed in the warmest and windiest environment?",
+     "questionTextAr": "وضع راشد 50 مل من الماء في ثلاثة أكواب متماثلة تحت ظروف مختلفة. بعد يومين، تبقى في الكوب (أ) 10 مل، وفي الكوب (ب) 35 مل، وفي الكوب (ج) 25 مل. أي كوب كان في البيئة الأكثر حرارة وعصفًا بالرياح؟",
+     "choices": [
+      "Cup A, because it lost the most water due to high evaporation",
+      "Cup B, because it preserved the most water without evaporating",
+      "Cup C, because it had an average amount of water remaining",
+      "Cup A and Cup B, because both had the same evaporation rate"
+     ],
+     "choicesAr": [
+      "الكوب (أ)، لأنه فقد أكبر كمية من الماء بسبب التبخر السريع",
+      "الكوب (ب)، لأنه احتفظ بأكبر كمية من الماء دون تبخر",
+      "الكوب (ج)، لأنه يحتوي على كمية متوسطة من الماء المتبقي",
+      "الكوبان (أ) و(ب)، لأن لهما نفس معدل التبخر"
+     ],
+     "correctIndex": 0,
+     "explanation": "Higher temperature and wind speed increase the rate of evaporation, leaving the smallest volume of remaining water (Cup A lost 40 mL).",
+     "explanationAr": "ارتفاع الحرارة وزيادة الرياح يرفعان معدل التبخر، مما يترك أقل كمية ماء متبقية (الكوب أ فقد 40 مل)."
+    },
+    {
+     "questionText": "In an experiment investigating how temperature affects the rate of evaporation, a student measures the remaining water volume every 3 hours using a graduated cylinder. What are the independent and dependent variables?",
+     "questionTextAr": "في تجربة لاختبار أثر درجة الحرارة على معدل التبخر، يقيس طالب حجم الماء المتبقي كل 3 ساعات باستخدام مخبار مدرج. ما المتغير المستقل والمتغير التابع؟",
+     "choices": [
+      "Independent: remaining water volume; Dependent: container surface area",
+      "Independent: air temperature; Dependent: remaining water volume",
+      "Independent: measurement time; Dependent: type of liquid",
+      "Independent: initial water volume; Dependent: air temperature"
+     ],
+     "choicesAr": [
+      "المستقل: حجم الماء المتبقي؛ التابع: مساحة سطح الإناء",
+      "المستقل: درجة الحرارة؛ التابع: حجم الماء المتبقي",
+      "المستقل: وقت القياس؛ التابع: نوع السائل",
+      "المستقل: حجم الماء الابتدائي؛ التابع: درجة الحرارة"
+     ],
+     "correctIndex": 1,
+     "explanation": "The factor tested/changed intentionally is temperature (independent variable), and the resulting change measured is the remaining water volume (dependent variable).",
+     "explanationAr": "المتغير الذي نغيره عمداً هو درجة الحرارة (المستقل)، بينما النتيجة التي نقيسها هي حجم الماء المتبقي (التابع)."
+    },
+    {
+     "questionText": "Mariam hung a wet towel fully spread out on a clothesline outside, while Sara left an identical wet towel folded in a tight pile on a chair. Why will Mariam's towel dry much faster?",
+     "questionTextAr": "علقت مريم منشفة رطبة مفرودة بالكامل على حبل الغسيل، بينما تركت سارة منشفة رطبة مماثلة مطوية في كومة على الكرسي. لماذا ستجف منشفة مريم أسرع بكثير؟",
+     "choices": [
+      "Mariam's towel has a smaller surface area exposed to the surrounding air",
+      "Sara's towel traps heat inside the folds, stopping evaporation completely",
+      "Mariam's towel has a larger surface area exposed to heat and moving air",
+      "Folding a towel speeds up condensation instead of evaporation"
+     ],
+     "choicesAr": [
+      "منشفة مريم لها مساحة سطح أصغر معرضة للهواء المحيط",
+      "منشفة سارة تحبس الحرارة داخل الطيات فيتوقف التبخر تماماً",
+      "منشفة مريم لها مساحة سطح أكبر معرضة للحرارة والهواء المتحرك",
+      "طي المنشفة يسرع عملية التكثف بدلاً من التبخر"
+     ],
+     "correctIndex": 2,
+     "explanation": "Unfolding the towel increases its exposed surface area to warm, moving air, which significantly accelerates the evaporation process.",
+     "explanationAr": "فرد المنشفة يزيد من مساحة سطحها المعرضة للهواء والحرارة، مما يسرع عملية التبخر بشكل كبير."
+    },
+    {
+     "questionText": "If Sarah wants to design a healthy lunch plate using the healthy plate model, what should take up the largest portion of her plate?",
+     "questionTextAr": "إذا أرادت سارة تصميم طبق غداء صحي باستخدام نموذج الطبق الصحي، فما الذي يجب أن يشغل الجزء الأكبر من طبقها؟",
+     "choices": [
+      "Meat and chicken",
+      "Vegetables and fruits",
+      "Sweets and chocolates",
+      "Fats and oils"
+     ],
+     "choicesAr": [
+      "اللحوم والدجاج",
+      "الخضروات والفواكه",
+      "الحلويات والشوكولاتة",
+      "الدهون والزيوت"
+     ],
+     "correctIndex": 1,
+     "explanation": "Vegetables and fruits provide essential vitamins and fiber, so they should fill the largest part of a healthy plate.",
+     "explanationAr": "الخضروات والفواكه تمد الجسم بالفيتامينات والألياف الضرورية، لذا يجب أن تشغل الجزء الأكبر من الطبق الصحي."
+    },
+    {
+     "questionText": "Which of the following daily meal plans is considered completely balanced?",
+     "questionTextAr": "أي من خطط الوجبات اليومية التالية يُعتبر متوازنًا تمامًا؟",
+     "choices": [
+      "Breakfast: soda and chips, Lunch: pizza, Dinner: chocolate",
+      "Breakfast: eggs and bread, Lunch: rice, fish and salad, Dinner: milk and fruit",
+      "Breakfast: only sweets, Lunch: burgers, Dinner: soda",
+      "Breakfast: only bread, Lunch: only meat, Dinner: only rice"
+     ],
+     "choicesAr": [
+      "الإفطار: مشروب غازي وشرائح بطاطس، الغداء: بيتزا، العشاء: شوكولاتة",
+      "الإفطار: بيض وخبز، الغداء: أرز وسمك وسلطة، العشاء: حليب وفاكهة",
+      "الإفطار: حلويات فقط، الغداء: برجر، العشاء: مشروب غازي",
+      "الإفطار: خبز فقط، الغداء: لحم فقط، العشاء: أرز فقط"
+     ],
+     "correctIndex": 1,
+     "explanation": "This meal plan includes a variety of food groups like proteins, grains, and fruits and vegetables in suitable amounts.",
+     "explanationAr": "تتضمن خطة الوجبات هذه تنوعًا في المجموعات الغذائية مثل البروتينات، والحبوب، والفواكه والخضروات بكميات مناسبة."
+    },
+    {
+     "questionText": "Mazen is packing a healthy snack to eat at school recess. Which of the following should he choose?",
+     "questionTextAr": "يحضر مازن وجبة خفيفة صحية ليأكلها في فسحة المدرسة. ماذا يجب أن يختار من بين ما يلي؟",
+     "choices": [
+      "A bag of potato chips and a soda",
+      "An apple and a handful of almonds",
+      "A large chocolate bar",
+      "Sweet sugary candies"
+     ],
+     "choicesAr": [
+      "كيس من رقائق البطاطس ومشروب غازي",
+      "تفاحة وقبضة من اللوز",
+      "لوح شوكولاتة كبير",
+      "حلوى سكرية ملونة"
+     ],
+     "correctIndex": 1,
+     "explanation": "Fruits and nuts provide healthy energy and nutrients, making them a great healthy snack.",
+     "explanationAr": "تمنح الفواكه والمكسرات طاقة صحية وعناصر مغذية، مما يجعلها وجبة خفيفة صحية ممتازة."
+    },
+    {
+     "questionText": "Your friend ate a lunch of only bread, cheese, and sweet tea. Which important food group is missing from this meal?",
+     "questionTextAr": "تناول صديقك وجبة غداء تتكون من خبز وجبن وشاي محلى فقط. ما هي المجموعة الغذائية المهمة الناقصة في هذه الوجبة؟",
+     "choices": [
+      "Grains",
+      "Dairy",
+      "Vegetables and fruits",
+      "Sweets"
+     ],
+     "choicesAr": [
+      "الحبوب",
+      "منتجات الحليب",
+      "الخضروات والفواكه",
+      "الحلويات"
+     ],
+     "correctIndex": 2,
+     "explanation": "The meal lacks vegetables and fruits, which are necessary to make it a balanced meal.",
+     "explanationAr": "تفتقر الوجبة إلى الخضروات والفواكه، وهي ضرورية لجعل الوجبة متوازنة."
+    },
+    {
+     "questionText": "Why is it important not to skip breakfast every morning?",
+     "questionTextAr": "لماذا من المهم عدم تخطي وجبة الإفطار كل صباح؟",
+     "choices": [
+      "Because it gives your body energy to start the day and focus at school",
+      "Because it makes you feel sleepy during class",
+      "Because it replaces the need for lunch and dinner",
+      "Because it contains only sugar and fats"
+     ],
+     "choicesAr": [
+      "لأنها تمنح جسمك الطاقة لبدء اليوم والتركيز في المدرسة",
+      "لأنها تجعلك تشعر بالنعاس أثناء الفصل",
+      "لأنها تغني عن الحاجة لتناول الغداء والعشاء",
+      "لأنها تحتوي على السكر والدهون فقط"
+     ],
+     "correctIndex": 0,
+     "explanation": "Breakfast is the most important meal that gives our brain and body the energy needed after a long night's sleep.",
+     "explanationAr": "وجبة الإفطار هي الأهم لأنها تمنح عقولنا وأجسامنا الطاقة اللازمة بعد نوم الليل الطويل."
+    }
+   ]
+  },
+  {
+   "subject": "math",
+   "grade": 6,
+   "questions": [
+    {
+     "questionText": "Sara has 5/6 kg of sugar. She uses 1/6 kg to make a cake, and then divides the remaining sugar into small bags containing 1/12 kg each. How many small bags can she fill?",
+     "questionTextAr": "لدى سارة 5/6 كيلوجرام من السكر. استخدمت 1/6 كيلوجرام لصنع كعكة، ثم وزّعت السكر المتبقي على أكياس صغيرة يسع كل منها 1/12 كيلوجرام. كم كيساً صغيراً تستطيع أن تملأ؟",
+     "choices": [
+      "4 bags",
+      "6 bags",
+      "8 bags",
+      "10 bags"
+     ],
+     "choicesAr": [
+      "4 أكياس",
+      "6 أكياس",
+      "8 أكياس",
+      "10 أكياس"
+     ],
+     "correctIndex": 2,
+     "explanation": "Subtract 1/6 from 5/6 to get 4/6 (or 2/3) kg remaining, then divide 2/3 by 1/12 (2/3 × 12/1) to get 8 bags.",
+     "explanationAr": "نطرح 1/6 من 5/6 لنحصل على المتبقي 4/6 (أو 2/3) كجم، ثم نقسم 2/3 على 1/12 (2/3 × 12/1) لنحصل على 8 أكياس."
+    },
+    {
+     "questionText": "Ahmed was asked to calculate 4/5 ÷ 2/3, so he wrote: 4/5 × 2/3 = 8/15. What mistake did Ahmed make?",
+     "questionTextAr": "طُلب من أحمد حساب 4/5 ÷ 2/3، فكتب: 4/5 × 2/3 = 8/15. ما الخطأ الذي ارتكبه أحمد؟",
+     "choices": [
+      "He forgot to multiply the numerators.",
+      "He multiplied by the second fraction instead of its reciprocal.",
+      "He flipped the first fraction instead of the second one.",
+      "He added the fractions instead of dividing."
+     ],
+     "choicesAr": [
+      "نسِيَ ضرب البسط في البسط.",
+      "ضرب في الكسر الثاني بدلاً من ضربه في مقلوبه.",
+      "قلَب الكسر الأول بدلاً من الكسر الثاني.",
+      "جمع الكسرين بدلاً من قسمتهما."
+     ],
+     "correctIndex": 1,
+     "explanation": "To divide fractions, you must multiply by the reciprocal of the second fraction (3/2) rather than multiplying by the second fraction as it is.",
+     "explanationAr": "لقسمة كسرين يجب الضرب في مقلوب الكسر الثاني (3/2) بدلاً من ضرب الكسر الثاني كما هو."
+    },
+    {
+     "questionText": "Which of the following division expressions results in a quotient greater than 1?",
+     "questionTextAr": "أي من عبارات القسمة التالية يكون ناتجها أكبر من 1؟",
+     "choices": [
+      "1/3 ÷ 3/4",
+      "2/5 ÷ 4/5",
+      "3/8 ÷ 1/2",
+      "5/6 ÷ 2/3"
+     ],
+     "choicesAr": [
+      "1/3 ÷ 3/4",
+      "2/5 ÷ 4/5",
+      "3/8 ÷ 1/2",
+      "5/6 ÷ 2/3"
+     ],
+     "correctIndex": 3,
+     "explanation": "5/6 ÷ 2/3 = 5/6 × 3/2 = 15/12 = 1 1/4, which is greater than 1 because the dividend is larger than the divisor.",
+     "explanationAr": "5/6 ÷ 2/3 = 5/6 × 3/2 = 15/12 = 1 1/4، وهو أكبر من 1 لأن المقسوم أكبر من المقسوم عليه."
+    },
+    {
+     "questionText": "A machine fills 3/4 of a container in 3/8 of an hour. At this rate, how many full containers can it fill in 1 hour?",
+     "questionTextAr": "يملأ جهاز 3/4 من خزان في 3/8 ساعة. بهذا المعدل، كم خزانًا كاملاً يملأ الجهاز في ساعة واحدة؟",
+     "choices": [
+      "1 container",
+      "2 containers",
+      "9/32 containers",
+      "1 1/2 containers"
+     ],
+     "choicesAr": [
+      "خزان واحد",
+      "خزانان (2)",
+      "9/32 خزان",
+      "1 1/2 خزان"
+     ],
+     "correctIndex": 1,
+     "explanation": "Dividing the amount (3/4) by time (3/8) gives 3/4 × 8/3 = 2 full containers per hour.",
+     "explanationAr": "قسمة الكمية (3/4) على الزمن (3/8) تعطي 3/4 × 8/3 = 2 خزان كامل في الساعة."
+    },
+    {
+     "questionText": "The area of a rectangular garden is 7/10 square meters, and its width is 2/5 meters. What is the length of the garden in meters?",
+     "questionTextAr": "مساحة حديقة مستطيلة 7/10 متر مربع، وعرضها 2/5 متر. ما طول الحديقة بالأمتار؟",
+     "choices": [
+      "7/25 meters",
+      "1 1/4 meters",
+      "1 3/4 meters",
+      "2 1/2 meters"
+     ],
+     "choicesAr": [
+      "7/25 متر",
+      "1 1/4 متر",
+      "1 3/4 متر",
+      "2 1/2 متر"
+     ],
+     "correctIndex": 2,
+     "explanation": "Length equals area divided by width: 7/10 ÷ 2/5 = 7/10 × 5/2 = 35/20 = 1 3/4 meters.",
+     "explanationAr": "الطول يساوي المساحة مقسومة على العرض: 7/10 ÷ 2/5 = 7/10 × 5/2 = 35/20 = 1 3/4 متر."
+    },
+    {
+     "questionText": "Which expression shows 30 + 45 rewritten using the Greatest Common Factor (GCF) and the distributive property?",
+     "questionTextAr": "أي من المقادير التالية يعبر عن إعادة كتابة 30 + 45 باستخدام العامل المشترك الأكبر وخاصية التوزيع؟",
+     "choices": [
+      "15 × (2 + 3)",
+      "5 × (6 + 9)",
+      "3 × (10 + 15)",
+      "15 × (2 × 3)"
+     ],
+     "choicesAr": [
+      "15 × (2 + 3)",
+      "5 × (6 + 9)",
+      "3 × (10 + 15)",
+      "15 × (2 × 3)"
+     ],
+     "correctIndex": 0,
+     "explanation": "The GCF of 30 and 45 is 15, so factoring out 15 gives 15 × (2 + 3).",
+     "explanationAr": "العامل المشترك الأكبر للعددين 30 و45 هو 15، وبأخذه عاملًا مشتركًا نحصل على 15 × (2 + 3)."
+    },
+    {
+     "questionText": "Light A flashes every 6 seconds, and Light B flashes every 8 seconds. If they flash together right now, after how many seconds will they flash together again for the first time?",
+     "questionTextAr": "يضيء مصباح (أ) كل 6 ثوانٍ، ويضيء مصباح (ب) كل 8 ثوانٍ. إذا أضاءا معًا الآن، فبعد كم ثانية سيضيئان معًا للمرة الأولى؟",
+     "choices": [
+      "48 seconds",
+      "24 seconds",
+      "14 seconds",
+      "2 seconds"
+     ],
+     "choicesAr": [
+      "48 ثانية",
+      "24 ثانية",
+      "14 ثانية",
+      "ثانيتان"
+     ],
+     "correctIndex": 1,
+     "explanation": "The first time they flash together again is the Least Common Multiple (LCM) of 6 and 8, which is 24 seconds.",
+     "explanationAr": "المرة الأولى التي يضيئان فيها معًا هي المضاعف المشترك الأصغر للعددين 6 و8 وهو 24 ثانية."
+    },
+    {
+     "questionText": "A carpenter has two wooden boards measuring 48 cm and 64 cm. He cuts both into equal pieces of the maximum possible length with no wood left over. How many total pieces does he get from both boards?",
+     "questionTextAr": "لدى نجار قطعتان من الخشب طولهما 48 سم و 64 سم. يريد تقطيعهما إلى قطع متساوية بأطول طول ممكن دون هدر. ما إجمالي عدد القطع التي يحصل عليها من القطعتين؟",
+     "choices": [
+      "16 pieces",
+      "7 pieces",
+      "12 pieces",
+      "8 pieces"
+     ],
+     "choicesAr": [
+      "16 قطعة",
+      "7 قطع",
+      "12 قطعة",
+      "8 قطع"
+     ],
+     "correctIndex": 1,
+     "explanation": "The GCF of 48 and 64 is 16 cm per piece, giving 3 pieces from the first board and 4 from the second, for a total of 7 pieces.",
+     "explanationAr": "العامل المشترك الأكبر للعددين 48 و64 هو 16 سم، فينتج 3 قطع من الأولى و4 قطع من الثانية، ليكون المجموع 7 قطع."
+    },
+    {
+     "questionText": "If the prime factorization of number N is 2² × 3 × 5 and the prime factorization of number M is 2 × 3² × 5, what is the Least Common Multiple (LCM) of N and M?",
+     "questionTextAr": "إذا كان التحليل إلى العوامل الأولية للعدد N هو 2² × 3 × 5، والتحليل للعدد M هو 2 × 3² × 5، فما هو المضاعف المشترك الأصغر للعددين N و M؟",
+     "choices": [
+      "30",
+      "180",
+      "360",
+      "90"
+     ],
+     "choicesAr": [
+      "30",
+      "180",
+      "360",
+      "90"
+     ],
+     "correctIndex": 1,
+     "explanation": "The LCM takes the highest power of each prime factor (2² × 3² × 5), which equals 4 × 9 × 5 = 180.",
+     "explanationAr": "المضاعف المشترك الأصغر يأخذ أعلى قوى للعوامل الأولية (2² × 3² × 5)، وحاصل ضربها يساوي 180."
+    },
+    {
+     "questionText": "Reem has 28 red roses and 42 white roses. She wants to arrange all the flowers into the greatest possible number of identical bouquets. How many white roses will be in each bouquet?",
+     "questionTextAr": "تمتلك ريم 28 وردة حمراء و42 وردة بيضاء. تريد توزيع جميع الورود على أكبر عدد ممكن من الباقات المتماثلة. كم وردة بيضاء ستكون في كل باقة؟",
+     "choices": [
+      "14 white roses",
+      "2 white roses",
+      "3 white roses",
+      "6 white roses"
+     ],
+     "choicesAr": [
+      "14 وردة بيضاء",
+      "وردتان بيضاوان",
+      "3 وردات بيضاء",
+      "6 وردات بيضاء"
+     ],
+     "correctIndex": 2,
+     "explanation": "The GCF of 28 and 42 is 14 bouquets, so dividing 42 white roses by 14 gives 3 white roses in each bouquet.",
+     "explanationAr": "العامل المشترك الأكبر للعددين 28 و42 هو 14 باقة، وبقسمة 42 وردة بيضاء على 14 ينتج 3 وردات بيضاء في كل باقة."
+    },
+    {
+     "questionText": "The scores of four students on a short quiz are 2, 5, 7, and 10. What is the Mean Absolute Deviation (MAD) of these scores?",
+     "questionTextAr": "درجات أربعة طلاب في اختبار قصير هي 2، 5، 7، 10. ما قيمة الانحراف المتوسط المطلق (MAD) لهذه الدرجات؟",
+     "choices": [
+      "2.5",
+      "6.0",
+      "3.0",
+      "10.0"
+     ],
+     "choicesAr": [
+      "2.5",
+      "6.0",
+      "3.0",
+      "10.0"
+     ],
+     "correctIndex": 0,
+     "explanation": "The mean is 6; the absolute distances from 6 are 4, 1, 1, and 4, which average to 2.5.",
+     "explanationAr": "الوسط الحسابي هو 6، والمسافات المطلقة عن 6 هي 4، 1، 1، 4 ومتوسط هذه المسافات يساوي 2.5."
+    },
+    {
+     "questionText": "When calculating the Mean Absolute Deviation (MAD), why must we take the absolute value of each difference before finding their average?",
+     "questionTextAr": "عند حساب الانحراف المتوسط المطلق، لماذا يجب أخذ القيمة المطلقة للفروق قبل إيجاد متوسطها؟",
+     "choices": [
+      "Because distances must be negative numbers.",
+      "Because without absolute values, the positive and negative differences would cancel out to zero.",
+      "Because the mean is always greater than all data values.",
+      "Because absolute value doubles the final result."
+     ],
+     "choicesAr": [
+      "لأن المسافات يجب أن تكون أعداداً سالبة.",
+      "لأنه بدون القيمة المطلقة، ستلغي الفروق الموجبة والسالبة بعضها ويكون مجموعها صفراً.",
+      "لأن الوسط الحسابي دائماً أكبر من جميع القيم.",
+      "لأن القيمة المطلقة تضاعف النتيجة النهائية."
+     ],
+     "correctIndex": 1,
+     "explanation": "The sum of differences from the mean without absolute values is always zero because positive and negative deviations cancel each other.",
+     "explanationAr": "مجموع الفروق عن الوسط الحسابي بدون استخدام القيمة المطلقة يساوي صفراً دائماً لأن القيم الموجبة والسالبة تلغي بعضها."
+    },
+    {
+     "questionText": "Class A and Class B both have a mean test score of 80. The Mean Absolute Deviation (MAD) for Class A is 2, while for Class B it is 9. Which statement is correct?",
+     "questionTextAr": "حصل الصف (أ) والصف (ب) على وسط حسابي متساوٍ في الاختبار وهو 80. وكان الانحراف المتوسط المطلق للصف (أ) هو 2 وللصف (ب) هو 9. أيّ الجمل التالية صحيحة؟",
+     "choices": [
+      "Class A's scores are more spread out than Class B's scores.",
+      "Class B's scores are closer to the mean than Class A's scores.",
+      "Class A's scores are closer and less spread out around the mean than Class B's scores.",
+      "Class B has a higher overall average than Class A."
+     ],
+     "choicesAr": [
+      "درجات الصف (أ) أكثر تشتتاً وانتشاراً من درجات الصف (ب).",
+      "درجات الصف (ب) أقرب إلى الوسط الحسابي من درجات الصف (أ).",
+      "درجات الصف (أ) أقرب وأقل تشتتاً حول الوسط الحسابي مقارنة بالصف (ب).",
+      "معدل درجات الصف (ب) أعلى من معدل درجات الصف (أ)."
+     ],
+     "correctIndex": 2,
+     "explanation": "A smaller MAD value means the data points are closer together and less spread out around the mean.",
+     "explanationAr": "قيمة الانحراف المتوسط المطلق الأصغر تعني أن البيانات أكثر تقارباً وأقل تشتتاً حول الوسط الحسابي."
+    },
+    {
+     "questionText": "A student decides to use the median to summarize a dataset because it contains an extreme outlier. Which measure of variation is best paired with the median?",
+     "questionTextAr": "قرر طالب استخدام الوسيط لتلخيص مجموعة بيانات لاحتوائها على قيمة متطرفة. ما مقياس التشتت الأنسب للاستخدام مع الوسيط؟",
+     "choices": [
+      "Mean Absolute Deviation (MAD)",
+      "Interquartile Range (IQR)",
+      "Mean",
+      "Mode"
+     ],
+     "choicesAr": [
+      "الانحراف المتوسط المطلق (MAD)",
+      "المدى الربيعي (IQR)",
+      "الوسط الحسابي",
+      "المنوال"
+     ],
+     "correctIndex": 1,
+     "explanation": "The Interquartile Range (IQR) measures the spread of the middle 50% of data and is best paired with the median.",
+     "explanationAr": "المدى الربيعي (IQR) يقيس تشتت الـ 50% الوسطى من البيانات وهو المقياس الأنسب للاستخدام مع الوسيط."
+    },
+    {
+     "questionText": "In a study of weekly reading hours, the first quartile (Q1) is 12 hours and the third quartile (Q3) is 28 hours. What is the Interquartile Range (IQR)?",
+     "questionTextAr": "في دراسة لعدد ساعات القراءة الأسبوعية، كان الربيع الأدنى (Q1) يساوي 12 ساعة، والربيع الأعلى (Q3) يساوي 28 ساعة. ما قيمة المدى الربيعي (IQR)؟",
+     "choices": [
+      "40 hours",
+      "16 hours",
+      "20 hours",
+      "14 hours"
+     ],
+     "choicesAr": [
+      "40 ساعة",
+      "16 ساعة",
+      "20 ساعة",
+      "14 ساعة"
+     ],
+     "correctIndex": 1,
+     "explanation": "The Interquartile Range is calculated by subtracting Q1 from Q3 (28 - 12 = 16).",
+     "explanationAr": "يُحسب المدى الربيعي بطرح الربيع الأدنى من الربيع الأعلى (28 - 12 = 16)."
+    },
+    {
+     "questionText": "A table shows the points (1, 7), (2, 12), and (3, 17). Which equation represents this table, and what is the value of y when x = 6?",
+     "questionTextAr": "يوضح جدول النقاط (1, 7) و (2, 12) و (3, 17). ما المعادلة التي تمثل هذا الجدول، وما قيمة y عندما تكون x = 6؟",
+     "choices": [
+      "Equation y = 5x + 2, and y = 32",
+      "Equation y = 7x, and y = 42",
+      "Equation y = 5x + 2, and y = 30",
+      "Equation y = 6x + 1, and y = 37"
+     ],
+     "choicesAr": [
+      "المعادلة y = 5x + 2، وقيمة y = 32",
+      "المعادلة y = 7x، وقيمة y = 42",
+      "المعادلة y = 5x + 2، وقيمة y = 30",
+      "المعادلة y = 6x + 1، وقيمة y = 37"
+     ],
+     "correctIndex": 0,
+     "explanation": "Multiplying x by 5 and adding 2 gives y = 5x + 2, so when x = 6, y = 5(6) + 2 = 32.",
+     "explanationAr": "ضرب x في 5 ثم إضافة 2 يعطي المعادلة y = 5x + 2، وعندما x = 6 تكون y = 5(6) + 2 = 32."
+    },
+    {
+     "questionText": "Runner A's distance is represented by the equation y = 12x. Runner B's distance graph passes through (0, 0) and (3, 45). Who is faster, and by how much?",
+     "questionTextAr": "تُثَّل مسافة العداء (أ) بالمعادلة y = 12x. بينما يمر التمثيل البياني لمسافة العداء (ب) بالنقطتين (0, 0) و (3, 45). أيهما أسرع، وبكم كيلومتر في الساعة؟",
+     "choices": [
+      "Runner A is faster by 3 km/h.",
+      "Runner B is faster by 3 km/h.",
+      "Runner B is faster by 5 km/h.",
+      "Both runners have the same speed."
+     ],
+     "choicesAr": [
+      "العداء (أ) أسرع بمقدار 3 كم/ساعة.",
+      "العداء (ب) أسرع بمقدار 3 كم/ساعة.",
+      "العداء (ب) أسرع بمقدار 5 كم/ساعة.",
+      "العداءان لهما نفس السرعة."
+     ],
+     "correctIndex": 1,
+     "explanation": "Runner A's speed is 12 km/h and Runner B's speed is 45 / 3 = 15 km/h, so Runner B is faster by 3 km/h.",
+     "explanationAr": "سرعة العداء (أ) هي 12 كم/ساعة وسرعة العداء (ب) هي 45 / 3 = 15 كم/ساعة، فالعداء (ب) أسرع بمقدار 3 كم/ساعة."
+    },
+    {
+     "questionText": "Mona earns $15 per hour plus a fixed bonus of $10. If x is the number of hours worked and y is the total earnings, which point lies on the graph of this relationship?",
+     "questionTextAr": "تكسب منى 15 درهمًا في الساعة بالإضافة إلى مكافأة ثابته قدرها 10 دراهم. إذا كانت x تمثل عدد الساعات و y تمثل إجمالي المبالغ المكتسبة، فأي نقطة تقع على التمثيل البياني لهذه العلاقة؟",
+     "choices": [
+      "(2.5, 37.5)",
+      "(2.5, 47.5)",
+      "(3, 45)",
+      "(2, 35)"
+     ],
+     "choicesAr": [
+      "(2.5, 37.5)",
+      "(2.5, 47.5)",
+      "(3, 45)",
+      "(2, 35)"
+     ],
+     "correctIndex": 1,
+     "explanation": "The equation is y = 15x + 10, so for x = 2.5 hours, y = 15(2.5) + 10 = 47.5.",
+     "explanationAr": "المعادلة هي y = 15x + 10، وعندما x = 2.5 ساعة، تكون y = 15(2.5) + 10 = 47.5."
+    },
+    {
+     "questionText": "Which statement is true about the graph of the equation y = 4x + 3?",
+     "questionTextAr": "أي جملة مما يلي صحيحة حول التمثيل البياني للمعادلة y = 4x + 3؟",
+     "choices": [
+      "It passes through the origin (0, 0) and contains the point (2, 11).",
+      "It intersects the y-axis at 3 and contains the point (3, 15).",
+      "It intersects the y-axis at 4 and contains the point (3, 15).",
+      "It passes through the origin (0, 0) and contains the point (3, 12)."
+     ],
+     "choicesAr": [
+      "يمر بنقطة الأصل (0, 0) ويحتوي على النقطة (2, 11).",
+      "يقطع المحور y عند 3 ويحتوي على النقطة (3, 15).",
+      "يقطع المحور y عند 4 ويحتوي على النقطة (3, 15).",
+      "يمر بنقطة الأصل (0, 0) ويحتوي على النقطة (3, 12)."
+     ],
+     "correctIndex": 1,
+     "explanation": "Substituting x = 0 gives y = 3 (y-intercept at 3), and substituting x = 3 gives y = 4(3) + 3 = 15.",
+     "explanationAr": "التعويض بـ x = 0 يعطي y = 3 (يقطع المحور y عند 3)، والتعويض بـ x = 3 يعطي y = 4(3) + 3 = 15."
+    },
+    {
+     "questionText": "Graph 1 is given by y = 8x. Graph 2 is represented by a table containing (1, 5), (2, 10), and (3, 15). Which graph is steeper, and what is the difference between their y-values when x = 4?",
+     "questionTextAr": "التمثيل البياني (1) يمثله y = 8x. والتمثيل البياني (2) يمثله جدول يحتوي على النقاط (1, 5) و (2, 10) و (3, 15). أي التمثيلين أكثر انحدارًا، وما الفرق بين قيمتي y عندما x = 4؟",
+     "choices": [
+      "Graph 1 is steeper, and the difference is 12.",
+      "Graph 2 is steeper, and the difference is 12.",
+      "Graph 1 is steeper, and the difference is 3.",
+      "Both graphs have the same steepness, and the difference is 0."
+     ],
+     "choicesAr": [
+      "التمثيل (1) أكثر انحدارًا، والفرق يساوي 12.",
+      "التمثيل (2) أكثر انحدارًا، والفرق يساوي 12.",
+      "التمثيل (1) أكثر انحدارًا، والفرق يساوي 3.",
+      "التمثيلان لهما نفس الانحدار، والفرق يساوي 0."
+     ],
+     "correctIndex": 0,
+     "explanation": "Graph 1 has a rate of 8 while Graph 2 has a rate of 5 (y = 5x), so Graph 1 is steeper and at x = 4 the difference is 8(4) - 5(4) = 12.",
+     "explanationAr": "التمثيل (1) معدله 8 بينما التمثيل (2) معدله 5 (y = 5x)، لذا التمثيل (1) أكثر انحدارًا والفرق عند x = 4 هو 8(4) - 5(4) = 12."
+    },
+    {
+     "questionText": "A robot's height is 50 inches. What is its height in centimeters approximately? (1 inch = 2.54 cm)",
+     "questionTextAr": "طول روبوت 50 إنشًا. كم سنتمترًا طوله تقريبًا؟ (1 إنش = 2.54 سم)",
+     "choices": [
+      "127 cm",
+      "52.54 cm",
+      "19.69 cm",
+      "12.7 cm"
+     ],
+     "choicesAr": [
+      "127 سم",
+      "52.54 سم",
+      "19.69 سم",
+      "12.7 سم"
+     ],
+     "correctIndex": 0,
+     "explanation": "To convert inches to centimeters, multiply the number of inches by 2.54, so 50 times 2.54 equals 127 centimeters.",
+     "explanationAr": "للتحويل من إنش إلى سنتمتر، نضرب عدد الأنشات في 2.54، إذن 50 ضرب 2.54 يساوي 127 سنتمترًا."
+    },
+    {
+     "questionText": "A running track is 5 miles long. Approximately how many kilometers is that? (1 mile ≈ 1.61 km)",
+     "questionTextAr": "مسار جري طوله 5 أميال. كم كيلومترًا طوله تقريبًا؟ (1 ميل ≈ 1.61 كم)",
+     "choices": [
+      "3.11 km",
+      "8.05 km",
+      "6.61 km",
+      "5.16 km"
+     ],
+     "choicesAr": [
+      "3.11 كم",
+      "8.05 كم",
+      "6.61 كم",
+      "5.16 كم"
+     ],
+     "correctIndex": 1,
+     "explanation": "Since 1 mile is about 1.61 kilometers, multiply 5 by 1.61 to get 8.05 kilometers.",
+     "explanationAr": "بما أن 1 ميل يساوي تقريبًا 1.61 كيلومتر، نضرب 5 في 1.61 لنحصل على 8.05 كيلومترات."
+    },
+    {
+     "questionText": "A container holds 4 gallons of water. About how many liters is that? (1 gallon ≈ 3.79 liters)",
+     "questionTextAr": "حاوية تتسع لـ 4 جالونات من الماء. كم لترًا تقريبًا سعتها؟ (1 جالون ≈ 3.79 لترات)",
+     "choices": [
+      "15.16 liters",
+      "1.06 liters",
+      "7.79 liters",
+      "12.56 liters"
+     ],
+     "choicesAr": [
+      "15.16 لترًا",
+      "1.06 لتر",
+      "7.79 لترات",
+      "12.56 لترًا"
+     ],
+     "correctIndex": 0,
+     "explanation": "To convert gallons to liters, multiply 4 by 3.79, which gives 15.16 liters.",
+     "explanationAr": "للتحويل من الجالونات إلى اللترات، نضرب 4 في 3.79، وهو ما يعطي 15.16 لترًا."
+    },
+    {
+     "questionText": "A bag of flour weighs 10 kilograms. What is its weight in pounds approximately? (1 kg ≈ 2.2 pounds)",
+     "questionTextAr": "كيس طحين كتلته 10 كيلوجرامات. كم باوندًا كتلته تقريبًا؟ (1 كجم ≈ 2.2 باوند)",
+     "choices": [
+      "4.54 pounds",
+      "12.2 pounds",
+      "22 pounds",
+      "7.8 pounds"
+     ],
+     "choicesAr": [
+      "4.54 باوندات",
+      "12.2 باوندًا",
+      "22 باوندًا",
+      "7.8 باوندات"
+     ],
+     "correctIndex": 2,
+     "explanation": "Since 1 kilogram is about 2.2 pounds, multiplying 10 by 2.2 gives 22 pounds.",
+     "explanationAr": "بما أن 1 كيلوجرام يساوي تقريبًا 2.2 باوند، فإن ضرب 10 في 2.2 يعطي 22 باوندًا."
+    },
+    {
+     "questionText": "Khaled says that 2 liters is equal to about 0.95 quarts. What is his mistake? (1 liter ≈ 1.06 quarts)",
+     "questionTextAr": "قال خالد إن 2 لتر يساوي تقريبًا 0.95 كوارت. ما خطؤه؟ (1 لتر ≈ 1.06 كوارت)",
+     "choices": [
+      "He should have divided by 1.06 instead of multiplying.",
+      "He used the conversion for quarts to liters instead of liters to quarts, because 1 liter is greater than 1 quart.",
+      "He should have used inches instead of quarts.",
+      "He made no mistake, the statement is correct."
+     ],
+     "choicesAr": [
+      "كان عليه القسمة على 1.06 بدلًا من الضرب.",
+      "لقد استعمل تحويل الكوارت إلى لترات بدلًا من العكس، لأن 1 لتر أكبر من 1 كوارت.",
+      "كان عليه استخدام الإنشات بدلًا من الكوارت.",
+      "لم يخطئ، العبارة صحيحة."
+     ],
+     "correctIndex": 1,
+     "explanation": "Since 1 liter is about 1.06 quarts, 2 liters should be more than 2 quarts, so 0.95 is incorrect because 1 liter is greater in value than 1 quart.",
+     "explanationAr": "بما أن 1 لتر يساوي تقريبًا 1.06 كوارت، فإن 2 لتر يجب أن تكون أكثر من 2 كوارت، لذا فإن 0.95 خطأ لأن اللتر الواحد أكبر قيمة من الكوارت الواحد."
+    },
+    {
+     "questionText": "A rectangular garden has dimensions of 12 meters by 10 meters, and a rectangular swimming pool of 6 meters by 4 meters is built inside it. What is the area of the grass surrounding the pool?",
+     "questionTextAr": "حديقة مستطيلة أبعادها 12 متراً في 10 أمتار، ويوجد بداخلها حوض سباحة مستطيل أبعاده 6 أمتار في 4 أمتار. ما مساحة العشب المحيط بحوض السباحة؟",
+     "choices": [
+      "120 square meters",
+      "96 square meters",
+      "144 square meters",
+      "24 square meters"
+     ],
+     "choicesAr": [
+      "120 متراً مربعاً",
+      "96 متراً مربعاً",
+      "144 متراً مربعاً",
+      "24 متراً مربعاً"
+     ],
+     "correctIndex": 1,
+     "explanation": "Find the total area of the garden (12 × 10 = 120), then subtract the area of the pool (6 × 4 = 24), which gives 120 - 24 = 96 square meters.",
+     "explanationAr": "نحسب المساحة الكلية للحديقة (12 × 10 = 120)، ثم نطرح منها مساحة حوض السباحة (6 × 4 = 24)، ليكون الناتج 120 - 24 = 96 متراً مربعاً."
+    },
+    {
+     "questionText": "An L-shaped room floor is made of two rectangles: the first is 8 meters by 3 meters, and the second is 4 meters by 3 meters. What is the total area of the floor in square meters?",
+     "questionTextAr": "أرضية غرفة على شكل حرف L مكونة من مستطيلين: الأول 8 أمتار في 3 أمتار، والثاني 4 أمتار في 3 أمتار. ما المساحة الكلية للأرضية بالمتر المربع؟",
+     "choices": [
+      "24 square meters",
+      "12 square meters",
+      "36 square meters",
+      "60 square meters"
+     ],
+     "choicesAr": [
+      "24 متراً مربعاً",
+      "12 متراً مربعاً",
+      "36 متراً مربعاً",
+      "60 متراً مربعاً"
+     ],
+     "correctIndex": 2,
+     "explanation": "To find the total area of a composite shape, you find the area of each part and add them together: (8 × 3) + (4 × 3) = 24 + 12 = 36.",
+     "explanationAr": "لإيجاد المساحة الكلية لشكل مركب، نجد مساحة كل جزء ثم نجمعها معا: (8 × 3) + (4 × 3) = 24 + 12 = 36."
+    },
+    {
+     "questionText": "A house front consists of a rectangle measuring 9 meters by 4 meters, with a triangular roof on top having a base of 9 meters and a height of 3 meters. What is the total area of the house front?",
+     "questionTextAr": "واجهة منزل تتكون من مستطيل أبعاده 9 أمتار في 4 أمتار، ويعلوه سقف مثلث قاعدته 9 أمتار وارتفاعه 3 أمتار. ما المساحة الكلية للواجهة؟",
+     "choices": [
+      "36 square meters",
+      "49.5 square meters",
+      "54 square meters",
+      "40.5 square meters"
+     ],
+     "choicesAr": [
+      "36 متراً مربعاً",
+      "49.5 متراً مربعاً",
+      "54 متراً مربعاً",
+      "40.5 متراً مربعاً"
+     ],
+     "correctIndex": 1,
+     "explanation": "The rectangle area is 9 × 4 = 36, and the triangle area is (1/2) × 9 × 3 = 13.5. Adding them gives 36 + 13.5 = 49.5 square meters.",
+     "explanationAr": "مساحة المستطيل تساوي 9 × 4 = 36، ومساحة المثلث تساوي نصف القاعدة في الارتفاع (1/2 × 9 × 3 = 13.5). وبجمع المساحتين نحصل على 36 + 13.5 = 49.5 متراً مربعاً."
+    },
+    {
+     "questionText": "A regular hexagon is divided into 6 identical triangles, and the area of each triangle is 8 square centimeters. What is the total area of the hexagon?",
+     "questionTextAr": "سداسي منتظم قُسّم إلى 6 مثلثات متطابقة، ومساحة كل مثلث تبلغ 8 سنتيمترات مربعة. ما المساحة الكلية للسداسي؟",
+     "choices": [
+      "48 square centimeters",
+      "14 square centimeters",
+      "24 square centimeters",
+      "56 square centimeters"
+     ],
+     "choicesAr": [
+      "48 سنتيمتراً مربعاً",
+      "14 سنتيمتراً مربعاً",
+      "24 سنتيمتراً مربعاً",
+      "56 سنتيمتراً مربعاً"
+     ],
+     "correctIndex": 0,
+     "explanation": "Since the hexagon is divided into 6 equal triangles, multiply the area of one triangle by 6: 8 × 6 = 48 square centimeters.",
+     "explanationAr": "بما أن الشكل السداسي مقسم إلى 6 مثلثات متساوية، نضرب مساحة المثلث الواحد في 6: 8 × 6 = 48 سنتيمتراً مربعاً."
+    },
+    {
+     "questionText": "A composite polygon is made of a square with a side length of 5 cm and a triangle placed on top with a base of 5 cm and a height of 4 cm. What is the total area of this polygon?",
+     "questionTextAr": "مضلع مركب مكون من مربع طول ضلعه 5 سم ومثلث موضوع فوقه قاعدته 5 سم وارتفاعه 4 سم. ما المساحة الكلية لهذا المضلع؟",
+     "choices": [
+      "35 square centimeters",
+      "25 square centimeters",
+      "45 square centimeters",
+      "30 square centimeters"
+     ],
+     "choicesAr": [
+      "35 سنتيمتراً مربعاً",
+      "25 سنتيمتراً مربعاً",
+      "45 سنتيمتراً مربعاً",
+      "30 سنتيمتراً مربعاً"
+     ],
+     "correctIndex": 3,
+     "explanation": "The square area is 5 × 5 = 25, and the triangle area is (1/2) × 5 × 4 = 10. The total area is 25 + 10 = 30 square centimeters.",
+     "explanationAr": "مساحة المربع تساوي 5 × 5 = 25، ومساحة المثلث تساوي نصف القاعدة في الارتفاع (1/2 × 5 × 4 = 10). المساحة الكلية هي 25 + 10 = 30 سنتيمتراً مربعاً."
+    }
+   ]
+  },
+  {
+   "subject": "science",
+   "grade": 6,
+   "questions": [
+    {
+     "questionText": "If you take a bite of an apple and use your front teeth to slice through it, which type of teeth are you using primarily?",
+     "questionTextAr": "إذا قضمت تفاحة واستخدمت أسنانك الأمامية لقطعها، فما هو نوع الأسنان الذي تستخدمه في الغالب؟",
+     "choices": [
+      "Canines",
+      "Incisors",
+      "Molars",
+      "Premolars"
+     ],
+     "choicesAr": [
+      "الأنياب",
+      "القواطع",
+      "الطواحن",
+      "الضواحك"
+     ],
+     "correctIndex": 1,
+     "explanation": "Incisors are the sharp front teeth used specifically for biting and cutting food into smaller pieces.",
+     "explanationAr": "القواطع هي الأسنان الأمامية الحادة التي تستخدم خصيصاً لقضم وقطع الطعام إلى قطع أصغر."
+    },
+    {
+     "questionText": "What type of digestion happens when your teeth crush and grind food into smaller bits in your mouth?",
+     "questionTextAr": "ما نوع الهضم الذي يحدث عندما تقوم أسنانك بسحق وطحن الطعام إلى قطع أصغر في فمك؟",
+     "choices": [
+      "Chemical digestion",
+      "Mechanical digestion",
+      "Respiratory digestion",
+      "Circulatory digestion"
+     ],
+     "choicesAr": [
+      "هضم كيميائي",
+      "هضم ميكانيكي",
+      "هضم تنفسي",
+      "هضم دوراني"
+     ],
+     "correctIndex": 1,
+     "explanation": "Mechanical digestion involves physically breaking down food into smaller pieces using structures like teeth.",
+     "explanationAr": "الهضم الميكانيكي يتضمن تكسير الطعام جسدياً إلى قطع أصغر باستخدام تراكيب مثل الأسنان."
+    },
+    {
+     "questionText": "Which of the following describes the main role of saliva in the mouth during digestion?",
+     "questionTextAr": "أي مما يلي يصف الدور الأساسي لللعاب في الفم أثناء عملية الهضم؟",
+     "choices": [
+      "It cools down hot food.",
+      "It moistens food and begins digesting starches.",
+      "It turns proteins into fats.",
+      "It freezes food before swallowing."
+     ],
+     "choicesAr": [
+      "يبرد الطعام الساخن.",
+      "يرطب الطعام ويبدأ في هضم النشويات.",
+      "يحول البروتينات إلى دهون.",
+      "يجمد الطعام قبل بلعه."
+     ],
+     "correctIndex": 1,
+     "explanation": "Saliva wets the food to make it easy to swallow and contains special chemicals that start breaking down starches.",
+     "explanationAr": "يرطب اللعاب الطعام لتسهيل بلعه ويحتوي على مواد كيميائية خاصة تبدأ في تحطيم النشويات."
+    },
+    {
+     "questionText": "How does the esophagus move food down to the stomach, even if a person is lying down or hanging upside down?",
+     "questionTextAr": "كيف ينقل المريء الطعام إلى المعدة، حتى لو كان الشخص مستلقياً أو مقلوباً رأساً على عقب؟",
+     "choices": [
+      "By using gravity alone",
+      "By using muscular contractions called peristalsis",
+      "By blowing air to push it",
+      "By absorbing the food completely"
+     ],
+     "choicesAr": [
+      "باستخدام الجاذبية وحدها",
+      "باستخدام انقباضات عضلية تسمى الحركة الدودية",
+      "نفخ الهواء لدفع الطعام",
+      "عن طريق امتصاص الطعام بالكامل"
+     ],
+     "correctIndex": 1,
+     "explanation": "Wave-like muscle contractions in the esophagus push the food downward regardless of body position.",
+     "explanationAr": "انقباضات عضلية تشبه الموجات في المريء تدفع الطعام إلى الأسفل بغض النظر عن وضعية الجسم."
+    },
+    {
+     "questionText": "A student eats a piece of bread and chews it thoroughly. Which chemical component inside the bread begins to change in the mouth due to saliva?",
+     "questionTextAr": "يتناول طالب قطعة خبز ويمضغها جيداً. ما هو المكون الكيميائي الموجود داخل الخبز الذي يبدأ بالتغير في الفم بسبب اللعاب؟",
+     "choices": [
+      "Starches",
+      "Water",
+      "Vitamins",
+      "Iron"
+     ],
+     "choicesAr": [
+      "النشويات",
+      "الماء",
+      "الفيتامينات",
+      "الحديد"
+     ],
+     "correctIndex": 0,
+     "explanation": "Saliva contains special substances that chemically start breaking down starches into simpler sugars right in the mouth.",
+     "explanationAr": "يحتوي اللعاب على مواد خاصة تبدأ كيميائياً في تحطيم النشويات إلى سكريات أبسط داخل الفم مباشرة."
+    },
+    {
+     "questionText": "If a student cuts a large sheet of construction paper into twenty small triangles, which of the following best describes what happens to the paper?",
+     "questionTextAr": "إذا قام طالب بقص ورقة بناء كبيرة إلى عشرة مثلثات صغيرة، فأي مما يلي يصف أفضل ما يحدث للورقة؟",
+     "choices": [
+      "It becomes a completely new type of material.",
+      "Its chemical composition changes into plastic.",
+      "It changes in size and shape, but remains paper.",
+      "It cannot be reversed under any circumstance."
+     ],
+     "choicesAr": [
+      "تصبح نوعًا جديدًا تمامًا من المواد.",
+      "يتغير تركيبها الكيميائي إلى بلاستيك.",
+      "تتغير في الحجم والشكل، لكنها تظل ورقة.",
+      "لا يمكن عكسها تحت أي ظرف."
+     ],
+     "correctIndex": 2,
+     "explanation": "Cutting paper only changes its size and shape, not its chemical identity, which makes it a physical change.",
+     "explanationAr": "قص الورقة يغير فقط حجمها وشكلها وليس هويتها الكيميائية، مما يجعله تغيرًا فيزيائيًا."
+    },
+    {
+     "questionText": "Which of the following scenarios is an example of a physical change where state of matter changes?",
+     "questionTextAr": "أي من السيناريوهات التالية يعتبر مثالاً على تغير فيزيائي تتغير فيه حالة المادة؟",
+     "choices": [
+      "Liquid water turning into water vapor when heated",
+      "Wood burning in a campfire to form ash",
+      "Iron rusting when left outside in the rain",
+      "Milk turning sour in the refrigerator"
+     ],
+     "choicesAr": [
+      "تحول الماء السائل إلى بخار ماء عند تسخينه",
+      "احتراق الخشب في نار المخيم لتشكيل رماد",
+      "صدأ الحديد عندما يُترك في الخارج تحت المطر",
+      "تحول الحليب إلى حامض في الثلاجة"
+     ],
+     "correctIndex": 0,
+     "explanation": "Evaporation is a change in the state of matter from liquid to gas without creating a new substance, so it is a physical change.",
+     "explanationAr": "التبخر هو تغير في حالة المادة من سائل إلى غاز دون تكوين مادة جديدة، لذا فهو تغير فيزيائي."
+    },
+    {
+     "questionText": "A solid copper wire is bent into the shape of a star. Why is this considered a physical change?",
+     "questionTextAr": "سلك نحاسي صلب تم ثنيه على شكل نجمة. لماذا يُعتبر هذا تغيرًا فيزيائيًا؟",
+     "choices": [
+      "Because the copper turns into a new metal.",
+      "Because the wire keeps its properties as copper and no new substance is formed.",
+      "Because the wire becomes extremely hot and melts completely.",
+      "Because the change can never be undone."
+     ],
+     "choicesAr": [
+      "لأن النحاس يتحول إلى معدن جديد.",
+      "لأن السلك يحتفظ بخصائصه كنحاس ولا تتكون أي مادة جديدة.",
+      "لأن السلك يصبح ساخنًا للغاية ويذوب تمامًا.",
+      "لأن التغير لا يمكن التراجع عنه أبدًا."
+     ],
+     "correctIndex": 1,
+     "explanation": "Bending changes only the appearance or form of the wire, while the material itself remains pure copper.",
+     "explanationAr": "الثني يغير فقط مظهر أو شكل السلك، بينما تبقى المادة نفسها نحاسًا نقيًا."
+    },
+    {
+     "questionText": "Which statement is generally true about most physical changes?",
+     "questionTextAr": "أي عبارة تعتبر صحيحة بشكل عام حول معظم التغيرات الفيزيائية؟",
+     "choices": [
+      "They always produce a bright light.",
+      "They are permanent and can never be reversed.",
+      "They can often be reversed to get the original material back.",
+      "They always result in the formation of a gas."
+     ],
+     "choicesAr": [
+      "تنتج دائمًا ضوءًا ساطعًا.",
+      "هي دائمًا دبرة ولا يمكن عكسها أبدًا.",
+      "يمكن غالباً عكسها لاستعادة المادة الأصلية.",
+      "تؤدي دائمًا إلى تكوين غاز."
+     ],
+     "correctIndex": 2,
+     "explanation": "Most physical changes, like melting ice or dissolving sugar, can be reversed to return to the starting materials.",
+     "explanationAr": "معظم التغيرات الفيزيائية، مثل ذوبان الجليد أو إذابة السكر، يمكن عكسها للعودة إلى المواد البدائية."
+    },
+    {
+     "questionText": "At what temperature does pure liquid water typically freeze into solid ice under standard conditions?",
+     "questionTextAr": "عند أي درجة حرارة يتجمد الماء السائل النقي عادة ليتحول إلى جليد صلب تحت الظروف المعيارية؟",
+     "choices": [
+      "0 degrees Celsius",
+      "50 degrees Celsius",
+      "100 degrees Celsius",
+      "37 degrees Celsius"
+     ],
+     "choicesAr": [
+      "صفر درجة مئوية",
+      "50 درجة مئوية",
+      "100 درجة مئوية",
+      "37 درجة مئوية"
+     ],
+     "correctIndex": 0,
+     "explanation": "Pure water freezes at 0 degrees Celsius, which is also the melting point of ice.",
+     "explanationAr": "الماء النقي يتجمد عند صفر درجة مئوية، وهي أيضاً نقطة انصهار الجليد."
+    },
+    {
+     "questionText": "Salma dropped an iron nail in a wet garden, and after a few days, a reddish-brown coating formed on it. How should Salma classify this change?",
+     "questionTextAr": "أسقطت سلمى مسماراً من الحديد في حديقة رطبة، وبعد بضعة أيام تشكلت عليه طبقة حمراء مائلة للبنفسجي أو البني. كيف تصنف سلمى هذا التغير؟",
+     "choices": [
+      "Physical change because the shape of the nail changed",
+      "Chemical change because a new substance with different properties was formed",
+      "Physical change because the color change can be easily washed off",
+      "Chemical change because the nail melted in the water"
+     ],
+     "choicesAr": [
+      "تغير فيزيائي لأن شكل المسمار تغير",
+      "تغير كيميائي لأنه تكونت مادة جديدة ذات خصائص مختلفة",
+      "تغير فيزيائي لأن تغير اللون يمكن غسله بسهولة",
+      "تغير كيميائي لأن المسمار انصهر في الماء"
+     ],
+     "correctIndex": 1,
+     "explanation": "Rusting is a chemical change because it produces a brand-new substance (rust) that has different properties from the original iron.",
+     "explanationAr": "صدأ الحديد يعد تغيراً كيميائياً لأنه ينتج مادة جديدة كلياً (الصدأ) لها خصائص تختلف عن خصائص الحديد الأصلي."
+    },
+    {
+     "questionText": "Ahmed wants to separate a mixture of fine sand and water in the science laboratory. Which method is best suited for this task?",
+     "questionTextAr": "يريد أحمد فصل مخلوط من الرمل الناعم والماء في مختبر العلوم. ما هي الطريقة الأنسب لهذه المهمة؟",
+     "choices": [
+      "Evaporation",
+      "Filtration",
+      "Using a magnet",
+      "Freezing"
+     ],
+     "choicesAr": [
+      "التبخير",
+      "الترشيح",
+      "استخدام المغناطيس",
+      "التجمد"
+     ],
+     "correctIndex": 1,
+     "explanation": "Filtration uses a filter paper to trap solid particles like sand while allowing the liquid water to pass through.",
+     "explanationAr": "الترشيح يستخدم ورق الترشيح لحجز الدقائق الصلبة مثل الرمل بينما يسمح للماء السائل بالمرور من خلاله."
+    },
+    {
+     "questionText": "If you dissolve 15 grams of salt completely into 100 grams of water, what will be the total mass of the resulting saltwater solution?",
+     "questionTextAr": "إذا قمت بإذابة 15 جراماً من الملح تماماً في 100 جرام من الماء، فما هي الكتلة الكلية لمحلول الماء المالح الناتج؟",
+     "choices": [
+      "100 grams",
+      "85 grams",
+      "115 grams",
+      "1500 grams"
+     ],
+     "choicesAr": [
+      "100 جرام",
+      "85 جراماً",
+      "115 جراماً",
+      "1500 جرام"
+     ],
+     "correctIndex": 2,
+     "explanation": "The total mass of a solution is always equal to the sum of the mass of the solute plus the mass of the solvent (15 + 100 = 115).",
+     "explanationAr": "كتلة المحلول دائماً تساوي مجموع كتلة المذاب مضافاً إليها كتلة المذيب (15 + 100 = 115)."
+    },
+    {
+     "questionText": "Which of the following events represents a physical change rather than a chemical change?",
+     "questionTextAr": "أي من الأحداث التالية يمثل تغيراً فيزيائياً وليس تغيراً كيميائياً؟",
+     "choices": [
+      "Frying an egg in a pan",
+      "Baking a birthday cake",
+      "Melting butter in a warm saucepan",
+      "Burning wood in a campfire"
+     ],
+     "choicesAr": [
+      "قلي بيضة في مقلاة",
+      "خبز كعيد الميلاد",
+      "انصهار الزبدة في قدر دافئ",
+      "احتراق الخشب في نار المخيم"
+     ],
+     "correctIndex": 2,
+     "explanation": "Melting butter is a physical change because the butter only changes its state from solid to liquid without forming a new substance.",
+     "explanationAr": "انصهار الزبدة هو تغير فيزيائي لأن الزبدة تتغير حالتها فقط من الصلبة إلى السائلة دون تكوين مادة جديدة."
+    },
+    {
+     "questionText": "During a science experiment, Layla heats a sugar solution until all the liquid disappears, leaving solid crystals behind. Which separation technique is Layla using?",
+     "questionTextAr": "خلال تجربة علمية، تقوم ليلى بتسخين محلول سكر حتى يختفي السائل تماماً وتتبقى بلورات صلبة. ما هي تقنية الفصل التي تستخدمها ليلى؟",
+     "choices": [
+      "Evaporation",
+      "Condensation",
+      "Filtration",
+      "Magnetism"
+     ],
+     "choicesAr": [
+      "التبخير",
+      "التكاثف",
+      "الترشيح",
+      "المغناطيسية"
+     ],
+     "correctIndex": 0,
+     "explanation": "Evaporation is used to separate a dissolved solid from a liquid by heating the solution until the liquid turns into gas and escapes.",
+     "explanationAr": "التبخير يُستخدم لفصل مادة صلبة مذابة عن سائل عن طريق تسخين المحلول حتى يتحول السائل إلى غاز ويتطاير."
+    },
+    {
+     "questionText": "If a plant's flowers lose all their bright petals, which process is most directly and negatively affected?",
+     "questionTextAr": "إذا فقدت أزهار أحد النباتات جميع بتلاتها الزاهية، فما هي العملية الأكثر تأثراً بشكل مباشر وسلبي؟",
+     "choices": [
+      "Water absorption from soil",
+      "Pollination by insects",
+      "Photosynthesis in leaves",
+      "Nutrient transport through stem"
+     ],
+     "choicesAr": [
+      "امتصاص الماء من التربة",
+      "التلقيح بواسطة الحشرات",
+      "البناء الضوئي في الأوراق",
+      "نقل المغذيات عبر الساق"
+     ],
+     "correctIndex": 1,
+     "explanation": "Bright petals are designed to attract pollinators like insects, so losing them would make pollination much harder.",
+     "explanationAr": "البتلات الزاهية مصممة لجذب الملقحات مثل الحشرات، لذا فإن فقدانها سيجعل عملية التلقيح أكثر صعوبة بكثير."
+    },
+    {
+     "questionText": "A scientist examines a flower part that produces pollen grains. Which part is she looking at?",
+     "questionTextAr": "تفحص عالمة جزءاً في الزهرة ينتج حبوب اللقاح. فما هو الجزء الذي تنظر إليه؟",
+     "choices": [
+      "The stigma",
+      "The sepal",
+      "The anther",
+      "The ovary"
+     ],
+     "choicesAr": [
+      "الميسم",
+      "السبلة",
+      "المئبر",
+      "المبيض"
+     ],
+     "correctIndex": 2,
+     "explanation": "The anther is the part of the stamen that produces and holds pollen grains.",
+     "explanationAr": "المئبر هو جزء السداة الذي ينتج ويحمل حبوب اللقاح."
+    },
+    {
+     "questionText": "During a dissection, a student traces the path of pollen from where it first lands on the female part to where fertilization happens. What is the correct sequence of structures it interacts with?",
+     "questionTextAr": "أثناء تشريح زهرة، يتتبع طالب مسار حبوب اللقاح من لحظة هبوطها على الجزء الأنثوي وحتى حدوث الإخصاب. ما هو الترتيب الصحيح للتراكيب التي تمر عبرها؟",
+     "choices": [
+      "Style then Stigma then Ovary",
+      "Stigma then Style then Ovary",
+      "Ovary then Style then Stigma",
+      "Anther then Filament then Stigma"
+     ],
+     "choicesAr": [
+      "القلم ثم الميسم ثم المبيض",
+      "الميسم ثم القلم ثم المبيض",
+      "المبيض ثم القلم ثم الميسم",
+      "المئبر ثم الخيط ثم الميسم"
+     ],
+     "correctIndex": 1,
+     "explanation": "Pollen first lands on the sticky stigma, travels down the tube called the style, and reaches the ovary containing ovules.",
+     "explanationAr": "تهبط حبوب اللقاح أولاً على الميسم اللزج، ثم تنتقل عبر الأنبوب المسمى بالقلم، وصولاً إلى المبيض الذي يحتوي على البويضات."
+    },
+    {
+     "questionText": "Why are the sepals important for a flower before it fully opens into a bloom?",
+     "questionTextAr": "لماذا تعتبر السبلات مهمة للزهرة قبل أن تتفتح بالكامل؟",
+     "choices": [
+      "They produce the plant's food.",
+      "They protect the delicate flower bud.",
+      "They absorb sunlight for energy.",
+      "They catch the pollen grains."
+     ],
+     "choicesAr": [
+      "إنها تنتج غذاء النبات.",
+      "إنها تحمي برعم الزهرة الرقيق.",
+      "إنها تمتص ضوء الشمس للحصول على الطاقة.",
+      "إنها تلتقط حبوب اللقاح."
+     ],
+     "correctIndex": 1,
+     "explanation": "Sepals are the outer green parts that protect the flower bud before it opens.",
+     "explanationAr": "السبلات هي الأجزاء الخضراء الخارجية التي تحمي برعم الزهرة قبل أن يتفتح."
+    },
+    {
+     "questionText": "A mutation causes a flower to grow without any carpels (pistils). What will this flower be unable to do?",
+     "questionTextAr": "تسببت طفرة في نمو زهرة بدون أي كرابل (أعضاء التأنيث). ما الذي لن تستطيع هذه الزهرة القيام به؟",
+     "choices": [
+      "Produce male pollen",
+      "Attract bees with color",
+      "Produce female ovules",
+      "Protect the bud with sepals"
+     ],
+     "choicesAr": [
+      "إنتاج حبوب اللقاح الذكرية",
+      "جذب النحل باللون",
+      "إنتاج البويضات الأنثوية",
+      "حماية البرعم بالسبلات"
+     ],
+     "correctIndex": 2,
+     "explanation": "The carpel is the female reproductive structure which contains the ovary and ovules.",
+     "explanationAr": "الكربلة هي التركيب التكاثري الأنثوي الذي يحتوي على المبيض والبويضات."
+    },
+    {
+     "questionText": "If a newly discovered planet has a solid rocky surface and is located at a moderate distance from its sun, but has completely no atmosphere, why would it still be very difficult for living organisms to survive there?",
+     "questionTextAr": "إذا تم اكتشاف كوكب جديد له سطح صخري صلب ويقع على مسافة معتدلة من شمسه، ولكنه يخلو تمامًا من أي غلاف جوي، فلماذا سيكون من الصعب جدًا على الكائنات الحية البقاء على قيد الحياة فيه؟",
+     "choices": [
+      "Because without an atmosphere, there is no liquid water, no breathing air, and no protection from harmful solar rays.",
+      "Because the lack of an atmosphere makes the planet too cold at all times.",
+      "Because living things only need rocks to survive.",
+      "Because planets without atmospheres always have strong liquid oceans."
+     ],
+     "choicesAr": [
+      "لأنه بدون غلاف جوي، لا يوجد ماء سائل، ولا هواء للتنفس، ولا حماية من أشعة الشمس الضارة.",
+      "لأن انعدام الغلاف الجوي يجعل الكوكب باردًا جدًا في كل الأوقات.",
+      "لأن الكائنات الحية تحتاج إلى الصخور فقط للبقاء.",
+      "لأن الكواكب التي بدون غلاف جوي تحتوي دائمًا على محيطات سائلة قوية."
+     ],
+     "correctIndex": 0,
+     "explanation": "An atmosphere is crucial because it provides breathing air, holds heat, and protects life from dangerous radiation.",
+     "explanationAr": "الغلاف الجوي أمر بالغ الأهمية لأنه يوفر هواء التنفس، ويحافظ على الحرارة، ويحمي الحياة من الإشعاعات الخطيرة."
+    },
+    {
+     "questionText": "Mercury experiences extreme temperature changes, being extremely hot during the day and extremely cold at night. What is the main reason for this harsh condition?",
+     "questionTextAr": "تشهد كوكب عطارد تغيرات درجات حرارة شديدة، حيث يكون حارًا جدًا في النهار وباردًا جدًا في الليل. ما هو السبب الرئيسي لهذه الحالة القاسية؟",
+     "choices": [
+      "Its very thick atmosphere traps all the heat.",
+      "It lacks a proper atmosphere to trap heat and moderate temperatures.",
+      "It is made entirely of gas with no solid surface.",
+      "It is covered by deep oceans that absorb sunlight."
+     ],
+     "choicesAr": [
+      "غلافه الجوي السميك جدًا يحبس كل الحرارة.",
+      "لانه يفتقر إلى غلاف جوي مناسب لحبس الحرارة وتعديل درجات الحرارة.",
+      "لانه مصنوع بالكامل من الغاز بدون سطح صلب.",
+      "لانه مغطى بمحيطات عميقة تمتص ضوء الشمس."
+     ],
+     "correctIndex": 1,
+     "explanation": "Without a substantial atmosphere to trap heat, temperatures on Mercury swing wildly between day and night.",
+     "explanationAr": "بدون غلاف جوي كبير لحبس الحرارة، تتأرجح درجات الحرارة على عطارد بشكل كبير بين النهار والليل."
+    },
+    {
+     "questionText": "Venus is the hottest planet in our solar system, even hotter than Mercury which is closer to the Sun. Why does Venus get so intensely hot?",
+     "questionTextAr": "الزهرة هو الكوكب الأشد حرارة في نظامنا الشمسي، حتى أشد حرارة من عطارد الأقرب إلى الشمس. لماذا يصبح الزهرة حارًا جدًا؟",
+     "choices": [
+      "Because its thick atmosphere traps the heat from the Sun like a greenhouse.",
+      "Because it is covered in active volcanoes that burn constantly.",
+      "Because it has large oceans of boiling water.",
+      "Because it receives no wind from space."
+     ],
+     "choicesAr": [
+      "لأن غلافه الجوي السميك يحبس حرارة الشمس مثل الصوبة الزجاجية.",
+      "لانه مغطى ببراكين نشطة تحترق باستمرار.",
+      "لانه يحتوي على محيطات كبيرة من الماء المغلي.",
+      "لانه لا يتلقى أي رياح من الفضاء."
+     ],
+     "correctIndex": 0,
+     "explanation": "The thick atmosphere of Venus acts like a blanket, trapping heat and making the surface extremely hot.",
+     "explanationAr": "يعمل الغلاف الجوي السميك لكوكب الزهرة كبطانية، حيث يحبس الحرارة ويجعل السطح حارًا للغاية."
+    },
+    {
+     "questionText": "If astronauts travel to Mars, they must wear special spacesuits. Based on what you know about the conditions on Mars, what is one major reason for this?",
+     "questionTextAr": "إذا سافر رواد الفضاء إلى المريخ، فيجب عليهم ارتداء بدلات فضائية خاصة. بناءً على ما تعرفه عن الظروف على المريخ، ما هو السبب الرئيسي لذلك؟",
+     "choices": [
+      "To protect them from swimming in deep liquid oceans.",
+      "To provide them with suitable breathing air, since Mars lacks enough oxygen and air pressure.",
+      "To protect them from extremely high temperatures like on Venus.",
+      "To shield them from giant trees and heavy plant roots."
+     ],
+     "choicesAr": [
+      "لحمايتهم من السباحة في محيطات سائلة عميقة.",
+      "لتزويدهم بهواء تنفس مناسب، حيث يفتقر المريخ إلى الأكسجين الكافي والضغط الجوي.",
+      "لحمايتهم من درجات الحرارة العالية للغاية كما هو الحال على الزهرة.",
+      "لحمايتهم من الأشجار العملاقة وجذور النباتات الثقيلة."
+     ],
+     "correctIndex": 1,
+     "explanation": "Mars does not have enough breathable air or proper air pressure, so astronauts need spacesuits to survive.",
+     "explanationAr": "المريخ ليس لديه ما يكفي من الهواء القابل للتنفس أو الضغط الجوي المناسب، لذا يحتاج رواد الفضاء إلى بدلات فضائية للبقاء على قيد الحياة."
+    },
+    {
+     "questionText": "Why is Earth uniquely suited to support life compared to the other rocky planets in our solar system?",
+     "questionTextAr": "لماذا تعد الأرض ملائمة بشكل فريد لدعم الحياة مقارنة بالكواكب الصخرية الأخرى في نظامنا الشمسي؟",
+     "choices": [
+      "Because it has the right temperature, liquid water, and a protective atmosphere with oxygen.",
+      "Because it is the closest planet to the Sun.",
+      "Because it is the only planet that has solid rocks.",
+      "Because it has no gravity pulling things down."
+     ],
+     "choicesAr": [
+      "لأنها تمتلك درجة الحرارة المناسبة، والماء السائل، وغلافًا جويًا واقيًا يحتوي على الأكسجين.",
+      "لأنها الكوكب الأقرب إلى الشمس.",
+      "لأنها الكوكب الوحيد الذي يحتوي على صخور صلبة.",
+      "لأن ليس لديها جاذبية تسحب الأشياء إلى أسفل."
+     ],
+     "correctIndex": 0,
+     "explanation": "Earth has the perfect combination of liquid water, suitable temperature, and a protective atmosphere with oxygen, which living things need.",
+     "explanationAr": "تتمتع الأرض بالتركيبة المثالية من الماء السائل، ودرجة الحرارة المناسبة، والغلاف الجوي الواقي الذي يحتوي على الأكسجين، والتي تحتاجه الكائنات الحية."
+    },
+    {
+     "questionText": "A farmer wants to grow a crop that is a rich source of grains and serves as a staple food worldwide. Which of the following plants should the farmer choose?",
+     "questionTextAr": "يريد مزارع زراعة محاصيل تُعد مصدراً غنياً بالحبوب وتُعتبر غذاءً رئيسياً في جميع أنحاء العالم. أي من النباتات التالية يجب أن يختار المزارع؟",
+     "choices": [
+      "Lettuce",
+      "Wheat",
+      "Carrot",
+      "Apple"
+     ],
+     "choicesAr": [
+      "الخس",
+      "القمح",
+      "الجزر",
+      "التفاح"
+     ],
+     "correctIndex": 1,
+     "explanation": "Wheat is a cereal grain that is considered a major staple food worldwide, unlike lettuce, carrots, or apples.",
+     "explanationAr": "القمح من حبوب الحبوب التي تُعد غذاءً رئيسياً مهماً في العالم، على عكس الخس أو الجزر أو التفاح."
+    },
+    {
+     "questionText": "While preparing a salad, Maya eats spinach leaves, carrot roots, and broccoli flowers. Which part of the broccoli plant is Maya actually consuming?",
+     "questionTextAr": "أثناء إعداد السلطة، تناولت مايا أوراق السبانخ، وجذور الجزر، وأزهار البروكلي. ما هو الجزء الذي تتناوله مايا فعلياً من نبات البروكلي؟",
+     "choices": [
+      "The root",
+      "The leaf",
+      "The flower",
+      "The stem"
+     ],
+     "choicesAr": [
+      "الجذر",
+      "الورقة",
+      "الزهرة",
+      "الساق"
+     ],
+     "correctIndex": 2,
+     "explanation": "Broccoli is a vegetable where we eat the flower buds of the plant.",
+     "explanationAr": "البروكلي هو خضار نأكل فيه براعم الزهرة الخاصة بالنبات."
+    },
+    {
+     "questionText": "Qatar has a dry desert climate, yet date palm trees grow abundantly and successfully there. Why are date palm trees well-suited for cultivation in Qatar?",
+     "questionTextAr": "تتمتع قطر بمناخ صحراوي جاف، ومع ذلك تنمو أشجار النخيل فيها بغزارة ونجاح. لماذا تعد أشجار النخيل مناسبة جداً للزراعة في قطر؟",
+     "choices": [
+      "Because they require massive amounts of standing water without soil",
+      "Because they are specially adapted to tolerate the local desert environment",
+      "Because they only grow in cold, snowy regions",
+      "Because they are entirely non-food ornamental plants"
+     ],
+     "choicesAr": [
+      "لأنها تحتاج إلى كميات هائلة من المياه الراكدة بدون تربة",
+      "لأنها تتكيف بشكل خاص لتحمل البيئة الصحراوية المحلية",
+      "لأنها تنمو فقط في المناطق الباردة والمثلجة",
+      "لأنها نباتات زينة غير صالحة للأكل تماماً"
+     ],
+     "correctIndex": 1,
+     "explanation": "Date palms are traditional crops that naturally tolerate the hot and dry desert conditions found in Qatar.",
+     "explanationAr": "أشجار النخيل هي محاصيل تقليدية تتحمل بطبيعتها الظروف الصحراوية الحارة والجافة الموجودة في قطر."
+    },
+    {
+     "questionText": "A student sets up an experiment to grow plants in nutrient-rich water solutions without using any soil at all. What is this modern agricultural method called?",
+     "questionTextAr": "أجرى طالب تجربة لزراعة النباتات في محاليل مائية غنية بالمغذيات دون استخدام التربة على الإطلاق. ماذا تسمى هذه الطريقة الزراعية الحديثة؟",
+     "choices": [
+      "Hydroponics (Soilless farming)",
+      "Desert farming",
+      "Forestry",
+      "Dryland cropping"
+     ],
+     "choicesAr": [
+      "الزراعة المائية (بدون تراب)",
+      "الزراعة الصحراوية",
+      "الحراجة",
+      "زراعة الأراضي الجافة"
+     ],
+     "correctIndex": 0,
+     "explanation": "Hydroponics is the scientific method of growing plants in water containing dissolved mineral nutrients without soil.",
+     "explanationAr": "الزراعة المائية هي الطريقة العلمية لزراعة النباتات في ماء يحتوي على مغذيات معدنية مذابة دون تربة."
+    },
+    {
+     "questionText": "If you eat a baked potato for lunch, which specific part of the potato plant are you actually eating?",
+     "questionTextAr": "إذا تناولت بطاطس مشوية على الغداء، فما هو الجزء المحدد من نبات البطاطس الذي تتناوله فعلياً؟",
+     "choices": [
+      "The underground stem (tuber)",
+      "The green leaf",
+      "The main root",
+      "The sweet fruit"
+     ],
+     "choicesAr": [
+      "الساق الأرضية (الدرنة)",
+      "الورقة الخضراء",
+      "الجذر الرئيسي",
+      "الثمرة الحلوة"
+     ],
+     "correctIndex": 0,
+     "explanation": "Potatoes are specialized underground stems called tubers that store food for the plant.",
+     "explanationAr": "البطاطس هي سيقان أرضية متخصصة تسمى الدرنات وهي تخزن الغذاء للنبات."
+    }
+   ]
+  }
+ ]
+}

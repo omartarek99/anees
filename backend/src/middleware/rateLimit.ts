@@ -22,7 +22,8 @@ export const apiLimiter = rateLimit({
   limit: API_LIMIT_PER_MIN,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: skipForLoadTest,
+  // The challenge screen asks "is there a game for me?" every few seconds; that one call has its own per-player limit instead (challengePollLimiter).
+  skip: (req) => skipForLoadTest() || (req.method === 'GET' && req.path === '/challenges/current'),
 });
 
 // Auto-generating quiz questions calls a paid external API (Gemini) per request -- a
@@ -56,4 +57,13 @@ export const videoUploadLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => `user:${(req as any).userId ?? 'anon'}`,
   message: { error: 'Too many attempts. Please wait a few minutes and try again.' },
+});
+
+// One signed-in player may poll for their friend challenge about every second; keyed by user, not IP, so a classroom behind one address is fine.
+export const challengePollLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => String((req as any).userId ?? "anonymous"),
 });

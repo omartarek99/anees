@@ -9,6 +9,7 @@ import { Avatar } from '../components/Avatar';
 import { Topbar } from '../components/Topbar';
 import { VictoryShield } from '../components/VictoryShield';
 import { XpIcon } from '../components/XpIcon';
+import { ChallengeSetupModal } from '../components/ChallengeSetupModal';
 import '../styles/friends.css';
 
 type Friend = { username: string; displayName: string; avatarKey: string; totalXp: number; hasShield?: boolean };
@@ -32,6 +33,8 @@ export function FriendsPage() {
   const [topPlayers, setTopPlayers] = useState<Person[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // the friend a challenge is being set up for ("تحدى صديقك")
+  const [challengeFor, setChallengeFor] = useState<Friend | null>(null);
 
   function loadFriends() {
     api
@@ -208,9 +211,14 @@ export function FriendsPage() {
                         <XpIcon size={22} />
                         {f.totalXp} {t('common.xpUnit')}
                       </span>,
-                      <Link to={`/profile/${f.username}`} className="btn btn-secondary btn-sm">
-                        {t('friends.viewProfile')}
-                      </Link>
+                      <>
+                        <button type="button" className="btn btn-gold btn-sm" onClick={() => setChallengeFor(f)}>
+                          ⚔️ {t('challenge.button')}
+                        </button>
+                        <Link to={`/profile/${f.username}`} className="btn btn-secondary btn-sm">
+                          {t('friends.viewProfile')}
+                        </Link>
+                      </>
                     )
                   )}
                 </ul>
@@ -255,6 +263,7 @@ export function FriendsPage() {
           </>
         )}
       </section>
+      <ChallengeSetupModal friend={challengeFor} onClose={() => setChallengeFor(null)} />
     </div>
   );
 }

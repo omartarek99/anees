@@ -317,6 +317,34 @@ CREATE TABLE IF NOT EXISTS friendships (
   UNIQUE(user_a_id, user_b_id)
 );
 
+-- Friend challenges ("تحدى صديقك", lib/challenges.ts). Times are epoch milliseconds. The answers are {questionId: chosenIndex}, saved as each
+-- player goes so a game stopped by the other player's submit still has this player's answers so far.
+CREATE TABLE IF NOT EXISTS friend_challenges (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  challenger_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  challenged_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  subject TEXT NOT NULL CHECK (subject IN ('math','science')),
+  difficulty TEXT NOT NULL CHECK (difficulty IN ('easy','medium','hard')),
+  question_count INTEGER NOT NULL,
+  question_ids_json TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','active','finished','declined','cancelled','expired')),
+  created_ms INTEGER NOT NULL,
+  started_ms INTEGER,
+  ends_ms INTEGER,
+  finished_ms INTEGER,
+  challenger_answers_json TEXT NOT NULL DEFAULT '{}',
+  challenged_answers_json TEXT NOT NULL DEFAULT '{}',
+  challenger_score INTEGER,
+  challenged_score INTEGER,
+  winner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  points INTEGER NOT NULL DEFAULT 0,
+  submitted_by INTEGER,
+  challenger_seen INTEGER NOT NULL DEFAULT 0,
+  challenged_seen INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_friend_challenges_challenger ON friend_challenges(challenger_id, status);
+CREATE INDEX IF NOT EXISTS idx_friend_challenges_challenged ON friend_challenges(challenged_id, status);
+
 CREATE TABLE IF NOT EXISTS craft_saves (
   user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   seed INTEGER NOT NULL,
