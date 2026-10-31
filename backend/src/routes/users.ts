@@ -7,7 +7,7 @@ import { avatar3dSchema, updateProfileSchema } from '../lib/schemas.js';
 import { moderateText } from '../lib/moderation.js';
 import { getLevelInfo, getMapLevel } from '../lib/xp.js';
 import { hasShield } from '../lib/battle.js';
-import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
+import { earnedAuraRank, getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { AVATAR_PHOTO_BUCKET, AVATAR_PHOTO_PATH_PREFIX, deleteAvatarPhotoIfAny } from '../lib/avatarPhoto.js';
 import { looksLikeImage } from '../lib/imageValidation.js';
@@ -140,11 +140,12 @@ usersRouter.get('/me', requireAuth, (req, res) => {
 });
 
 usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProfileSchema), (req, res) => {
-  const { displayName, avatarKey, bio, avatar3d } = req.body as {
+  const { displayName, avatarKey, bio, avatar3d, auraRank } = req.body as {
     displayName?: string;
     avatarKey?: string;
     bio?: string;
     avatar3d?: unknown;
+    auraRank?: string | null;
   };
 
   // Every moderation check runs before the first write, so a request rejected for one field
@@ -152,6 +153,14 @@ usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProf
   if (displayName !== undefined && !moderateText(displayName).allowed) {
     res.status(400).json({ error: 'Please choose an appropriate display name.' });
     return;
+  }
+  // A rank colour is only for a student, and only one they have reached (their own rank or a lower one); null goes back to following their rank.
+  if (auraRank) {
+    const me = db.prepare(`SELECT role, total_xp FROM users WHERE id = ?`).get(req.userId!) as { role: string; total_xp: number };
+    if (me.role !== 'student' || earnedAuraRank(auraRank, me.total_xp) !== auraRank) {
+      res.status(400).json({ error: 'You can only pick the colour of a rank you have reached.' });
+      return;
+    }
   }
   // Empty bio (clearing it) is always fine -- only non-empty text needs moderation.
   if (bio && !moderateText(bio).allowed) {
@@ -167,6 +176,9 @@ usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProf
   }
   if (avatar3d !== undefined) {
     db.prepare(`UPDATE users SET avatar3d = ? WHERE id = ?`).run(JSON.stringify(avatar3d), req.userId!);
+  }
+  if (auraRank !== undefined) {
+    db.prepare(`UPDATE users SET aura_rank = ? WHERE id = ?`).run(auraRank, req.userId!);
   }
   if (bio !== undefined) {
     db.prepare(`UPDATE users SET bio = ? WHERE id = ?`).run(bio, req.userId!);

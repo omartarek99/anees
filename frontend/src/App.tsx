@@ -3,6 +3,7 @@ import { Navigate, Route, BrowserRouter, Routes, Outlet, useLocation, useNavigat
 import { AuthProvider, useAuth } from './lib/auth-context';
 import { LanguageProvider, useLanguage } from './lib/language-context';
 import { ThemeProvider } from './lib/theme-context';
+import { RankAura } from './components/RankAura';
 import { trackPageview } from './lib/analytics';
 import { Sidebar } from './components/Sidebar';
 import { AvatarBoundary } from './components/avatar3d/AvatarBoundary';
@@ -230,6 +231,7 @@ export default function App() {
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
+            <RankAura />
             <PageviewTracker />
             <PageMeta />
             <ScrollToTop />

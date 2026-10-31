@@ -10,7 +10,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema, changePasswordSchema, forgotPasswordSchema, resetPasswordSchema } from '../lib/schemas.js';
 import { getPlayerLevel } from '../lib/xp.js';
 import { hasShield } from '../lib/battle.js';
-import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
+import { earnedAuraRank, getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import {
   firebaseSignUp,
@@ -86,6 +86,8 @@ function publicUser(user: any) {
     playerLevel: getPlayerLevel(user.id),
     // Teachers rank by teacher points, students by XP -- same rule as the profile and leaderboard.
     rankTier: user.role === 'teacher' ? getTeacherRankTier(user.teacher_points ?? 0) : getRankTier(user.total_xp),
+    // The rank colour a student picked for their pages (a rank they have reached), or null to follow their current rank.
+    auraRank: user.role === 'student' ? earnedAuraRank(user.aura_rank, user.total_xp) : null,
     role: user.role,
     grade: user.grade,
     schoolName: user.school_name ?? null,

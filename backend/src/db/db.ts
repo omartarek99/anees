@@ -303,6 +303,10 @@ if (!userColsForTeacherPoints.some((c) => c.name === 'teacher_points')) {
 if (!userColsForTeacherPoints.some((c) => c.name === 'avatar3d')) {
   db.exec(`ALTER TABLE users ADD COLUMN avatar3d TEXT`);
 }
+// The rank colour a student picked for their pages (a tier key of lib/ranks.ts, one they have reached); NULL follows their current rank.
+if (!userColsForTeacherPoints.some((c) => c.name === 'aura_rank')) {
+  db.exec(`ALTER TABLE users ADD COLUMN aura_rank TEXT`);
+}
 
 // Certificate tier (bronze/gold/platinum), added after the initial certificates table.
 const certificateCols = db.prepare(`PRAGMA table_info(certificates)`).all() as { name: string }[];

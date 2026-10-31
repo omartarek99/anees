@@ -105,6 +105,18 @@
   /* Just the rim (no outer shadow), for surfaces that supply their own coloured glow. */
   --glass-rim: inset 0 2px 2px rgba(249, 247, 253, 0.8), inset 0 0 0 1px rgba(249, 247, 253, 0.38), inset 0 -3px 5px rgba(249, 247, 253, 0.26);
 
+  /* ---- Solid Glass (after deeplethe/solid-glass), trial on .card ----
+     A thick smoky pane: from a distance it reads as solid, only close up as glass. The finish is at the
+     edge -- a line of light along the top, a hairline all round, a shadow gathered underneath -- never a
+     gradient across the face. Face: the pane's tint; rim: the top line of light; inner: a faint second
+     line inside it; edge: the hairline; contact + shade: the shadow underneath. */
+  --sg-face: rgba(246, 243, 251, 0.62);
+  --sg-rim: rgba(255, 255, 255, 0.9);
+  --sg-inner: rgba(255, 255, 255, 0.35);
+  --sg-edge: rgba(70, 52, 120, 0.16);
+  --sg-contact: rgba(43, 27, 70, 0.07);
+  --sg-shade: rgba(43, 27, 70, 0.3);
+
   /* English: Playfair Display for headings (the landing page's serif, so the whole site reads as
      one voice) + Poppins for body. Arabic gets its own pair below since neither font covers
      Arabic script. */
@@ -120,11 +132,15 @@
      refractions in the reference -- the same four orbs dark mode uses, softer. A pale bloom in
      the middle keeps the area behind the content light (muted text sits directly on it and must
      stay AA). */
-  --body-bg-color: #dad4e5;
-  --body-bg-image: radial-gradient(44% 40% at 8% 12%, rgba(212, 62, 107, 0.24), transparent 70%),
-    radial-gradient(42% 38% at 92% 8%, rgba(240, 168, 58, 0.28), transparent 70%),
-    radial-gradient(48% 44% at 86% 90%, rgba(100, 92, 235, 0.26), transparent 70%),
-    radial-gradient(46% 42% at 6% 92%, rgba(40, 190, 190, 0.22), transparent 70%),
+  --aura-ka: 24;
+  --aura-kb: 28;
+  --aura-kc: 26;
+  --aura-kd: 22;
+  --body-bg-color: color-mix(in srgb, var(--rk-c) calc(var(--aura-base) * 1%), #dad4e5);
+  --body-bg-image: radial-gradient(44% 40% at 8% 12%, var(--aura-a), transparent 70%),
+    radial-gradient(42% 38% at 92% 8%, var(--aura-b), transparent 70%),
+    radial-gradient(48% 44% at 86% 90%, var(--aura-c), transparent 70%),
+    radial-gradient(46% 42% at 6% 92%, var(--aura-d), transparent 70%),
     radial-gradient(62% 52% at 50% 46%, rgba(249, 247, 253, 0.4), transparent 78%);
 }
 
@@ -202,12 +218,22 @@ html[lang='ar'] {
   --shadow-3d-lg: 0 32px 56px -24px rgba(0, 0, 0, 0.7), 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.32),
     inset 0 0 0 1px rgba(255, 255, 255, 0.14), inset 0 -3px 6px rgba(255, 255, 255, 0.08), inset 0 -22px 40px -26px rgba(130, 120, 255, 0.32);
   --glass-rim: inset 0 2px 2px rgba(255, 255, 255, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.14), inset 0 -3px 5px rgba(255, 255, 255, 0.07);
+  --sg-face: rgba(72, 66, 92, 0.46);
+  --sg-rim: rgba(255, 255, 255, 0.16);
+  --sg-inner: rgba(255, 255, 255, 0.04);
+  --sg-edge: rgba(255, 255, 255, 0.07);
+  --sg-contact: rgba(0, 0, 0, 0.1);
+  --sg-shade: rgba(0, 0, 0, 0.6);
 
-  --body-bg-color: #0f0b17;
-  --body-bg-image: radial-gradient(44% 40% at 8% 12%, rgba(212, 62, 107, 0.34), transparent 70%),
-    radial-gradient(42% 38% at 92% 8%, rgba(240, 168, 58, 0.2), transparent 70%),
-    radial-gradient(48% 44% at 86% 90%, rgba(100, 92, 235, 0.32), transparent 70%),
-    radial-gradient(46% 42% at 6% 92%, rgba(40, 190, 190, 0.22), transparent 70%);
+  --aura-ka: 34;
+  --aura-kb: 20;
+  --aura-kc: 32;
+  --aura-kd: 22;
+  --body-bg-color: color-mix(in srgb, var(--rk-c) calc(var(--aura-base) * 1%), #0f0b17);
+  --body-bg-image: radial-gradient(44% 40% at 8% 12%, var(--aura-a), transparent 70%),
+    radial-gradient(42% 38% at 92% 8%, var(--aura-b), transparent 70%),
+    radial-gradient(48% 44% at 86% 90%, var(--aura-c), transparent 70%),
+    radial-gradient(46% 42% at 6% 92%, var(--aura-d), transparent 70%);
 }
 
 * {
@@ -718,6 +744,7 @@ svg {
 .category-pill,
 button.list-row,
 .avatar-choice,
+.aura-option,
 .a3d-btn,
 .a3d-tab,
 .a3d-choice,
@@ -828,13 +855,13 @@ a:focus-visible {
    marked .on-dark) stay a flat deep-rose fill with a white label: a pale neumorphic pill has no
    matching surface to sit on there. */
 .on-dark .btn-primary {
-  background: var(--btn-sheen), linear-gradient(90deg, #c22954, #8a1538);
+  background: var(--btn-sheen), linear-gradient(90deg, var(--rk-btn-a), var(--rk-btn-b));
   color: #fff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 6px 14px -8px rgba(194, 41, 84, 0.85);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 6px 14px -8px color-mix(in srgb, var(--rk-btn-a) 85%, transparent);
 }
 .on-dark .btn-primary:active:not(:disabled) {
-  background: linear-gradient(90deg, #a82149, #740f2e);
-  box-shadow: 0 4px 10px -6px rgba(194, 41, 84, 0.85);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--rk-btn-a) 87%, #000), color-mix(in srgb, var(--rk-btn-b) 84%, #000));
+  box-shadow: 0 4px 10px -6px color-mix(in srgb, var(--rk-btn-a) 85%, transparent);
 }
 .on-dark .btn-primary:disabled {
   opacity: 0.55;
@@ -893,19 +920,20 @@ button.list-row.selected {
 /* ---------------- Cards ---------------- */
 .card {
   position: relative;
-  background: var(--glass-bg);
+  background: var(--sg-face);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
-  border: 1.5px solid var(--glass-border);
+  border: 0;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-3d-md);
+  box-shadow: inset 0 1px 0 var(--sg-rim), inset 0 0 0 1px var(--sg-inner), 0 0 0 1px var(--sg-edge), 0 1px 2px var(--sg-contact),
+    0 12px 32px -14px var(--sg-shade);
   padding: 20px;
 }
-/* Liquid-glass sheen — shared by every glass surface (sidebar has no radius to inherit, which
-   is harmless: `border-radius: inherit` on a square box is just a no-op). */
+/* Liquid-glass sheen — shared by every glass surface but .card, which is a Solid Glass pane (no gradient
+   across its face; sidebar has no radius to inherit, which is harmless: `border-radius: inherit` on a
+   square box is just a no-op). */
 .sidebar::before,
 .topbar::before,
-.card::before,
 .stat-card::before {
   content: '';
   position: absolute;
@@ -914,6 +942,145 @@ button.list-row.selected {
   background: var(--glass-sheen);
   mix-blend-mode: overlay;
   pointer-events: none;
+}
+
+/* ---------------- Rank aura ----------------
+   The glow behind the glass (the four colour orbs in --body-bg-image) takes the colour of the student's rank: RankAura.tsx sets
+   <html data-rank="gold"> for a student, and --rk-a..d below are that rank's four orb colours (the defaults are the site's own
+   maroon, gold, violet and teal, so a page with no rank looks exactly as before). --aura-ka..kd (set per theme) are how strong each
+   orb is; a higher rank glows a little stronger (--tier-boost) and the glow grows as the student nears the next division
+   (--rank-progress, 0..1, set by RankAura). Registered as <color> so a promotion cross-fades instead of snapping.
+   The rank also takes over the site's brand colour for that student -- the --maroon family (links, active icons, focus, chips,
+   progress bars), --neu-primary (the primary button) and --rk-btn-a/b (the reel overlay's buttons). Each rank's ramp has the same
+   luminance as today's maroon, so every label that passes contrast on the maroon passes on the rank colour; gold, the reward
+   colour, stays gold. */
+@property --rk-a { syntax: '<color>'; inherits: true; initial-value: #d43e6b; }
+@property --rk-b { syntax: '<color>'; inherits: true; initial-value: #f0a83a; }
+@property --rk-c { syntax: '<color>'; inherits: true; initial-value: #645ceb; }
+@property --rk-d { syntax: '<color>'; inherits: true; initial-value: #28bebe; }
+:root {
+  --rk-a: #d43e6b;
+  --rk-b: #f0a83a;
+  --rk-c: #645ceb;
+  --rk-d: #28bebe;
+  --rk-btn-a: #c22954;
+  --rk-btn-b: #8a1538;
+  --aura-boost: 1;
+  --aura-base: 0;
+  --aura-a: color-mix(in srgb, var(--rk-a) calc(var(--aura-ka) * var(--aura-boost) * 1%), transparent);
+  --aura-b: color-mix(in srgb, var(--rk-b) calc(var(--aura-kb) * var(--aura-boost) * 1%), transparent);
+  --aura-c: color-mix(in srgb, var(--rk-c) calc(var(--aura-kc) * var(--aura-boost) * 1%), transparent);
+  --aura-d: color-mix(in srgb, var(--rk-d) calc(var(--aura-kd) * var(--aura-boost) * 1%), transparent);
+  transition: --rk-a 0.9s ease, --rk-b 0.9s ease, --rk-c 0.9s ease, --rk-d 0.9s ease;
+}
+:root[data-rank] {
+  --aura-base: 9;
+  --aura-boost: calc(var(--tier-boost) + var(--rank-progress, 0) * 0.1);
+  --home-glow: color-mix(in srgb, color-mix(in srgb, var(--rk-b) 45%, #fff) 75%, transparent);
+}
+:root[data-rank][data-theme='dark'] {
+  --home-glow: color-mix(in srgb, var(--rk-b) 24%, transparent);
+}
+/* iron */
+:root[data-rank='iron'],
+.aura-option[data-rank='iron'] {
+  --rk-a: #8793a6; --rk-b: #b8c0cc; --rk-c: #5d6a7e; --rk-d: #7a8ea6; --tier-boost: 0.7;
+  --rk-btn-a: #5a697c; --rk-btn-b: #3d4755;
+  --maroon: #3d4755; --maroon-light: #5a697c; --maroon-dark: #21262c; --maroon-pale: #e5e7ea;
+  --neu-primary: #3d4755; --neu-primary-pressed: #333b46;
+}
+:root[data-rank='iron'][data-theme='dark'] {
+  --maroon: #68798f; --maroon-light: #909dad; --maroon-dark: #2e3640; --maroon-pale: rgba(104, 121, 143, 0.18);
+  --neu-primary: #566477; --neu-primary-pressed: #4a5666;
+}
+/* bronze */
+:root[data-rank='bronze'],
+.aura-option[data-rank='bronze'] {
+  --rk-a: #d0804a; --rk-b: #f0b070; --rk-c: #8f5530; --rk-d: #e0703c; --tier-boost: 0.9;
+  --rk-btn-a: #a64e22; --rk-btn-b: #8d421d;
+  --maroon: #7f3c1a; --maroon-light: #a64e22; --maroon-dark: #3b1e0f; --maroon-pale: #f1e3dc;
+  --neu-primary: #8d421d; --neu-primary-pressed: #753718;
+}
+:root[data-rank='bronze'][data-theme='dark'] {
+  --maroon: #d4632b; --maroon-light: #e09c7a; --maroon-dark: #562912; --maroon-pale: rgba(212, 99, 43, 0.18);
+  --neu-primary: #9f4b21; --neu-primary-pressed: #88401c;
+}
+/* silver */
+:root[data-rank='silver'],
+.aura-option[data-rank='silver'] {
+  --rk-a: #b3bfdc; --rk-b: #e8eefc; --rk-c: #7f93bd; --rk-d: #aac6f0; --tier-boost: 1.08;
+  --rk-btn-a: #5165a5; --rk-btn-b: #374570;
+  --maroon: #374570; --maroon-light: #5165a5; --maroon-dark: #1f2539; --maroon-pale: #e3e6f1;
+  --neu-primary: #374570; --neu-primary-pressed: #2e395d;
+}
+:root[data-rank='silver'][data-theme='dark'] {
+  --maroon: #6275b2; --maroon-light: #8d9ac5; --maroon-dark: #2a3455; --maroon-pale: rgba(98, 117, 178, 0.18);
+  --neu-primary: #4e609d; --neu-primary-pressed: #425287;
+}
+/* gold */
+:root[data-rank='gold'],
+.aura-option[data-rank='gold'] {
+  --rk-a: #f2b63c; --rk-b: #ffdf8a; --rk-c: #c98e12; --rk-d: #f09a2a; --tier-boost: 1;
+  --rk-btn-a: #946d08; --rk-btn-b: #936b08;
+  --maroon: #715306; --maroon-light: #946d08; --maroon-dark: #302405; --maroon-pale: #eee8d7;
+  --neu-primary: #936b08; --neu-primary-pressed: #7b5a06;
+}
+:root[data-rank='gold'][data-theme='dark'] {
+  --maroon: #ce970b; --maroon-light: #f3cb65; --maroon-dark: #453204; --maroon-pale: rgba(206, 151, 11, 0.18);
+  --neu-primary: #7f5d07; --neu-primary-pressed: #6d5006;
+}
+/* platinum */
+:root[data-rank='platinum'],
+.aura-option[data-rank='platinum'] {
+  --rk-a: #4fd0c8; --rk-b: #a0ece6; --rk-c: #2a9c98; --rk-d: #62b4e8; --tier-boost: 1.05;
+  --rk-btn-a: #137470; --rk-btn-b: #0d4f4d;
+  --maroon: #0d4f4d; --maroon-light: #137470; --maroon-dark: #092a29; --maroon-pale: #d9e9e8;
+  --neu-primary: #0d4f4d; --neu-primary-pressed: #0b4140;
+}
+:root[data-rank='platinum'][data-theme='dark'] {
+  --maroon: #168581; --maroon-light: #20ada8; --maroon-dark: #0a3c3a; --maroon-pale: rgba(22, 133, 129, 0.18);
+  --neu-primary: #126e6b; --neu-primary-pressed: #0f5f5c;
+}
+/* diamond */
+:root[data-rank='diamond'],
+.aura-option[data-rank='diamond'] {
+  --rk-a: #3fb0ff; --rk-b: #9fdcff; --rk-c: #2a6fd0; --rk-d: #7a9cff; --tier-boost: 1.1;
+  --rk-btn-a: #0b6cac; --rk-btn-b: #084a76;
+  --maroon: #084a76; --maroon-light: #0b6cac; --maroon-dark: #07283e; --maroon-pale: #d8e7f2;
+  --neu-primary: #084a76; --neu-primary-pressed: #063d62;
+}
+:root[data-rank='diamond'][data-theme='dark'] {
+  --maroon: #0d7cc6; --maroon-light: #33a3ed; --maroon-dark: #06385a; --maroon-pale: rgba(13, 124, 198, 0.18);
+  --neu-primary: #0a67a4; --neu-primary-pressed: #09588d;
+}
+/* warrior */
+:root[data-rank='warrior'],
+.aura-option[data-rank='warrior'] {
+  --rk-a: #ee5646; --rk-b: #ff9468; --rk-c: #a8281e; --rk-d: #ff6a3a; --tier-boost: 1.18;
+  --rk-btn-a: #c32e1d; --rk-btn-b: #872014;
+  --maroon: #872014; --maroon-light: #c32e1d; --maroon-dark: #48140e; --maroon-pale: #f5dedb;
+  --neu-primary: #872014; --neu-primary-pressed: #701a11;
+}
+:root[data-rank='warrior'][data-theme='dark'] {
+  --maroon: #de3725; --maroon-light: #e67e72; --maroon-dark: #67180f; --maroon-pale: rgba(222, 55, 37, 0.18);
+  --neu-primary: #bb2c1c; --neu-primary-pressed: #a12618;
+}
+/* champion */
+:root[data-rank='champion'],
+.aura-option[data-rank='champion'] {
+  --rk-a: #b05cf2; --rk-b: #f0a8ff; --rk-c: #6428b8; --rk-d: #ff78c8; --tier-boost: 1.25;
+  --rk-btn-a: #8d3ed2; --rk-btn-b: #63249a;
+  --maroon: #63249a; --maroon-light: #8d3ed2; --maroon-dark: #35164f; --maroon-pale: #ede0f8;
+  --neu-primary: #63249a; --neu-primary-pressed: #521e7f;
+}
+:root[data-rank='champion'][data-theme='dark'] {
+  --maroon: #9b56d7; --maroon-light: #b788e0; --maroon-dark: #4b1b75; --maroon-pale: rgba(155, 86, 215, 0.18);
+  --neu-primary: #8836d0; --neu-primary-pressed: #762bb8;
+}
+:root[data-rank] .home-eyebrow { color: var(--maroon); }
+:root[data-rank] .home-swoosh { color: var(--maroon-light); }
+@media (prefers-reduced-motion: reduce) {
+  :root { transition: none; }
 }
 
 /* ---------------- Student home hero ----------------
@@ -938,6 +1105,144 @@ button.list-row.selected {
 }
 .topbar--bare::before {
   display: none;
+}
+/* The top row: the XP / level / rank chips and the bell, with the student's picture in its rank frame at the end (top right; top left in
+   Arabic). The frame is a square PNG (public/images/frames, sizes in lib/frames.ts) with a round hole in the middle: --hole is the picture's
+   window and --frame the whole image, both set by HomePage. The picture is drawn a little larger than the hole and tucked under the frame.
+   Behind the picture an aura in the rank's four colours (--rk-a..d, set by RankAura.tsx) turns slowly, with a closer glow that breathes; a
+   higher rank glows stronger (--aura-boost, the page glow's own strength). The frame's art reaches past the picture, so the row reserves that
+   room, and the hero is pulled up under the part that hangs below. */
+.home-top {
+  --hole: 132px;
+  --frame: 190px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  inline-size: 100%;
+  max-inline-size: 1080px;
+  margin-inline: auto;
+  margin-block-end: calc(-44px - (var(--frame) - var(--hole)) * 0.42);
+}
+.home-top > .topbar {
+  z-index: 1;
+  flex: 1 1 0;
+  inline-size: auto;
+  min-inline-size: 0;
+  max-inline-size: none;
+  margin: 0;
+}
+.home-avatar {
+  position: relative;
+  flex: none;
+  display: block;
+  inline-size: var(--hole);
+  block-size: var(--hole);
+  margin: calc((var(--frame) - var(--hole)) / 2);
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+.home-avatar:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+.home-avatar:focus-visible {
+  outline: 3px solid var(--maroon);
+  outline-offset: 6px;
+}
+.home-avatar-pic {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+  border-radius: 50%;
+}
+.home-avatar-pic > .a3d-slot,
+.home-avatar-pic > .home-avatar-wait {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.home-avatar-pic::before,
+.home-avatar-pic::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.home-avatar-pic::before {
+  inset: -34%;
+  background: conic-gradient(var(--rk-a), var(--rk-d), var(--rk-b), var(--rk-c), var(--rk-a));
+  -webkit-mask-image: radial-gradient(closest-side, transparent 52%, #000 63%, transparent 100%);
+  mask-image: radial-gradient(closest-side, transparent 52%, #000 63%, transparent 100%);
+  filter: blur(12px);
+  opacity: calc(0.62 * var(--aura-boost, 1));
+  animation: home-aura-turn 30s linear infinite;
+}
+.home-avatar-pic::after {
+  inset: -9%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--rk-a) calc(70% * var(--aura-boost, 1)), transparent) 72%, transparent 100%);
+  filter: blur(7px);
+  animation: home-aura-breathe 5.5s ease-in-out infinite;
+}
+@keyframes home-aura-turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@keyframes home-aura-breathe {
+  50% {
+    transform: scale(1.12);
+    opacity: 0.6;
+  }
+}
+.home-avatar .a3d-slot {
+  gap: 0;
+}
+.home-avatar .a3d-mini {
+  border: 0;
+  box-shadow: none;
+}
+.home-frame {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  inline-size: var(--frame);
+  max-inline-size: none;
+  block-size: auto;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 8px 14px rgba(20, 30, 60, 0.28));
+}
+.home-avatar-wait {
+  display: block;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+}
+@media (max-width: 640px) {
+  .home-top {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-block-end: 0;
+  }
+  .home-avatar {
+    order: -1;
+  }
+  .home-top > .topbar {
+    flex-basis: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-avatar {
+    transition: none;
+  }
+  .home-avatar:hover {
+    transform: none;
+  }
+  .home-avatar-pic::before,
+  .home-avatar-pic::after {
+    animation: none;
+  }
 }
 .home-hero {
   display: grid;
@@ -1337,7 +1642,7 @@ button.list-row.selected {
 .field textarea:focus {
   outline: none;
   border-color: var(--maroon);
-  box-shadow: inset 0 2px 6px rgba(43, 27, 70, 0.1), 0 0 0 4px rgba(138, 21, 56, 0.14);
+  box-shadow: inset 0 2px 6px rgba(43, 27, 70, 0.1), 0 0 0 4px color-mix(in srgb, var(--rk-btn-b) 14%, transparent);
 }
 .form-error-banner {
   background: var(--danger-light);
@@ -2880,6 +3185,65 @@ label,
 }
 @media (prefers-reduced-motion: reduce) {
   .cert-plaque { animation: none; transition: none; }
+}
+
+/* ---------------- Page colours on the profile (AuraPicker.tsx) ----------------
+   One button per rank (plus "my rank"): a small ball of that rank's colours, its name, and a lock on the ranks not reached yet. The
+   buttons take their rank's palette from the Rank aura block (data-rank on the button), so the ring on the chosen one is its own colour. */
+.aura-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 12px;
+}
+.rank-swatch {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 50%;
+  color: #fff;
+  background: radial-gradient(circle at 30% 24%, var(--rk-b), var(--rk-a) 52%, var(--rk-c));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -3px 6px rgba(0, 0, 0, 0.18), 0 4px 10px -4px color-mix(in srgb, var(--rk-c) 70%, transparent);
+}
+.aura-option {
+  --neu-s: 0.5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 6px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--neu-sheen), var(--neu-bg);
+  box-shadow: var(--neu-raised);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+  transition: box-shadow 0.2s var(--ease-out), background-color 0.2s var(--ease-out), opacity 0.2s var(--ease-out);
+}
+.aura-option small {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.aura-option[aria-pressed='true'] {
+  background: var(--neu-bg-pressed);
+  box-shadow: var(--neu-pressed), 0 0 0 2px var(--rk-a);
+}
+.aura-option:disabled {
+  cursor: not-allowed;
+}
+.aura-option.is-locked {
+  opacity: 0.6;
+  box-shadow: var(--neu-flat);
+}
+.aura-option.is-locked .rank-swatch {
+  filter: grayscale(0.85);
 }
 
 /* ---------------- Rank bar on the profile (MedalLevelBar.tsx) ---------------- */
