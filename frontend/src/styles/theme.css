@@ -1318,7 +1318,7 @@ button.list-row.selected {
   text-align: center;
 }
 .grid-cards.home-cards {
-  grid-template-columns: repeat(3, minmax(0, 260px));
+  grid-template-columns: repeat(4, minmax(0, 300px)); /* all four cards in one row */
   justify-content: center;
 }
 @media (max-width: 900px) {
@@ -1331,7 +1331,12 @@ button.list-row.selected {
     margin-inline-end: 0;
   }
   .grid-cards.home-cards {
-    grid-template-columns: minmax(0, 300px);
+    grid-template-columns: repeat(2, minmax(0, 300px)); /* two by two on a tablet */
+  }
+}
+@media (max-width: 520px) {
+  .grid-cards.home-cards {
+    grid-template-columns: minmax(0, 300px); /* one under another on a phone */
   }
 }
 

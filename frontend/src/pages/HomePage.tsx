@@ -10,6 +10,8 @@ import { ProfileAvatar3D } from '../components/ProfileAvatar3D';
 import type { AvatarConfig } from '../components/avatar3d/avatarConfig';
 import { RANK_FRAMES } from '../lib/frames';
 import type { RankKey } from '../lib/medalLevels';
+import { ChallengePickerModal } from '../components/ChallengePickerModal';
+import { ChallengeSetupModal } from '../components/ChallengeSetupModal';
 
 type Profile = {
   levelsCompleted: number;
@@ -40,6 +42,9 @@ export function HomePage() {
   // The frame waits for the profile (or its failure) so a student with a customised character never sees the default one flash first.
   const [loaded, setLoaded] = useState(false);
   const narrow = useNarrow();
+  // "تحدى صديقك": pick a friend, then set the challenge up
+  const [picking, setPicking] = useState(false);
+  const [challengeFor, setChallengeFor] = useState<{ username: string; displayName: string } | null>(null);
 
   useEffect(() => {
     api
@@ -71,6 +76,15 @@ export function HomePage() {
       chip: user ? pickText(lang, user.rankTier.name, user.rankTier.nameAr) : '',
       to: '/leaderboard',
       cta: t('nav.leaderboard'),
+    },
+    {
+      tone: 'green',
+      src: '/icons/challenge-icon.webp',
+      title: t('challenge.homeTitle'),
+      value: '⚔️',
+      chip: 'VS',
+      to: null as string | null,
+      cta: t('challenge.homeCta'),
     },
   ];
 
@@ -132,13 +146,28 @@ export function HomePage() {
                 </div>
                 <strong className="market-value">{c.value}</strong>
               </div>
-              <Link to={c.to} className="btn btn-primary market-cta">
-                {c.cta}
-              </Link>
+              {c.to ? (
+                <Link to={c.to} className="btn btn-primary market-cta">
+                  {c.cta}
+                </Link>
+              ) : (
+                <button type="button" className="btn btn-primary market-cta" onClick={() => setPicking(true)}>
+                  {c.cta}
+                </button>
+              )}
             </article>
           ))}
         </div>
       </section>
+      <ChallengePickerModal
+        open={picking}
+        onClose={() => setPicking(false)}
+        onPick={(f) => {
+          setPicking(false);
+          setChallengeFor(f);
+        }}
+      />
+      <ChallengeSetupModal friend={challengeFor} onClose={() => setChallengeFor(null)} />
     </div>
   );
 }
