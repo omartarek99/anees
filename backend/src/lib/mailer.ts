@@ -183,6 +183,38 @@ export function sendOtpEmail(to: string, code: string, lang: 'ar' | 'en'): Promi
   return postToResend(to, otpContent(code, lang));
 }
 
+const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/** The email that delivers a certificate: its picture and a button to the profile, in Arabic and then English. */
+export function certificateContent(title: string, imageUrl: string): EmailContent {
+  const picture = escapeHtml(imageUrl.startsWith('/') ? `${FRONTEND_ORIGIN}${imageUrl}` : imageUrl);
+  const profile = `${FRONTEND_ORIGIN}/profile`;
+  const name = escapeHtml(title);
+  const button = (label: string) =>
+    `<p style="text-align:center;margin:20px 0"><a href="${profile}" style="display:inline-block;background:#8a1538;color:#ffffff;padding:12px 28px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:15px">${label}</a></p>`;
+  return {
+    subject: 'شهادتك من أنيس · Your Anees certificate',
+    html: `<div style="font-family:Tahoma,Arial,sans-serif;background:#f6f1ea;padding:24px">
+  <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;padding:28px;border:1px solid #eadfd2;text-align:center">
+    <h1 style="color:#8a1538;margin:0 0 12px;font-size:24px">أنيس · Anees 🦅</h1>
+    <p dir="rtl" style="font-size:16px;color:#222;line-height:1.7">مبروك! حصلتَ على شهادة جديدة:</p>
+    <p style="font-size:18px;font-weight:bold;color:#8a1538;margin:6px 0">${name}</p>
+    <img src="${picture}" alt="${name}" width="240" style="max-width:100%;height:auto;margin:14px auto;display:block">
+    <p style="font-size:16px;color:#222;line-height:1.6">Congratulations! You earned a new certificate.</p>
+    ${button('عرض شهادتي · View my certificate')}
+    <p style="font-size:13px;color:#666;line-height:1.6">تجدها دائمًا في ملفك الشخصي · You can always find it on your profile.</p>
+  </div>
+</div>`,
+    text: `مبروك! حصلتَ على شهادة جديدة: ${title}\nCongratulations! You earned a new certificate: ${title}\n\n${profile}`,
+  };
+}
+
+/** Sends a certificate to its owner. Needs Resend (RESEND_API_KEY + EMAIL_FROM); without it nothing is sent. */
+export function sendCertificateEmail(to: string, title: string, imageUrl: string): Promise<SendResult> {
+  if (!resendConfigured) return Promise.resolve({ ok: false, error: 'RESEND_NOT_CONFIGURED' });
+  return postToResend(to, certificateContent(title, imageUrl));
+}
+
 /** Sends the account-verification LINK email.
  *
  * With Resend configured (RESEND_API_KEY + EMAIL_FROM) and a Firebase service account available,

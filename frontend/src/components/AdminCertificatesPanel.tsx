@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
-import { CertificatePlaque, PLAQUE_IMAGE } from './CertificatePlaque';
-import { rankName } from '../lib/medalLevels';
+import { PLAQUE_IMAGE } from './CertificatePlaque';
 import { CERT_TYPES, CERT_PALETTES, CERT_TYPE_LABEL_KEY, certPillBackground, type CertificateType } from '../lib/certificateTiers';
 
 type AdminUserSummary = { id: number; username: string; displayName: string; role: 'student' | 'teacher' | 'admin' };
@@ -18,14 +17,21 @@ type Certificate = {
   type: CertificateType;
   imageUrl: string;
   issuedByName: string | null;
+  /** sent by the site when the student reached the level (no admin) */
+  automatic: boolean;
+  emailedAt: string | null;
+  revokedAt: string | null;
+  revokedReason: string | null;
+  revokedByName: string | null;
   createdAt: string;
 };
 
 /** Admin-only: upload a certificate image and hand-issue it to a student or teacher's
  * profile (routes/users.ts profileSummary shows it there; CertificateAwardPopup announces
- * it with confetti on their next visit), plus a history of everything sent so far. The
- * certificate IS the uploaded image -- nothing is drawn on top of it, so issuing one only
- * needs a recipient, a name, and a category. */
+ * it with confetti on their next visit), plus a history of everything sent so far -- the level
+ * certificates the site sends by itself (lib/rankCertificates.ts) and these -- from which any
+ * one can be taken back. The certificate IS the uploaded image -- nothing is drawn on top of it,
+ * so issuing one only needs a recipient, a name, and a category. */
 export function AdminCertificatesPanel() {
   const { t, lang } = useLanguage();
   const [search, setSearch] = useState('');
@@ -40,32 +46,6 @@ export function AdminCertificatesPanel() {
   const [formError, setFormError] = useState<string | null>(null);
   const [certificates, setCertificates] = useState<Certificate[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-
-  // Students who reached a new level and are waiting for their shield certificate to be approved.
-  type CertRequest = { id: number; userId: number; tier: CertificateType; username: string; displayName: string; totalXp: number; createdAt: string };
-  const [requests, setRequests] = useState<CertRequest[] | null>(null);
-  const [requestBusy, setRequestBusy] = useState<number | null>(null);
-
-  function loadRequests() {
-    api
-      .get<{ requests: CertRequest[] }>('/admin/certificate-requests')
-      .then((data) => setRequests(data.requests))
-      .catch(() => setRequests([]));
-  }
-  useEffect(loadRequests, []);
-
-  async function decideRequest(id: number, action: 'approve' | 'decline') {
-    setRequestBusy(id);
-    try {
-      await api.post(`/admin/certificate-requests/${id}/${action}`, {});
-      setRequests((prev) => (prev ? prev.filter((r) => r.id !== id) : prev));
-      if (action === 'approve') loadCertificates();
-    } catch (err) {
-      setFormError(err instanceof ApiError ? translateApiError(lang, err.message) : t('admin.certSendError'));
-    } finally {
-      setRequestBusy(null);
-    }
-  }
 
   function loadCertificates() {
     api
@@ -135,13 +115,15 @@ export function AdminCertificatesPanel() {
   }
 
   async function handleRevoke(cert: Certificate) {
-    if (!window.confirm(t('admin.certRevokeConfirm', { name: cert.recipientDisplayName }))) return;
+    // the reason is kept on record, so it is asked for (and cancelling the box cancels the revoke)
+    const reason = window.prompt(t('admin.certRevokePrompt', { name: cert.recipientDisplayName }))?.trim();
+    if (!reason) return;
     try {
-      await api.delete(`/admin/certificates/${cert.id}`);
-      setCertificates((prev) => (prev ? prev.filter((c) => c.id !== cert.id) : prev));
-    } catch {
-      loadCertificates();
+      await api.post(`/admin/certificates/${cert.id}/revoke`, { reason });
+    } catch (err) {
+      setFormError(err instanceof ApiError ? translateApiError(lang, err.message) : t('admin.loadError'));
     }
+    loadCertificates();
   }
 
   return (
@@ -265,7 +247,12 @@ export function AdminCertificatesPanel() {
       </div>
 
       <div className="card stack">
-        <h3 style={{ fontSize: 16, margin: 0 }}>{t('admin.certSentTitle')}</h3>
+        <div>
+          <h3 style={{ fontSize: 16, margin: 0 }}>{t('admin.certSentTitle')}</h3>
+          <p className="muted" style={{ fontSize: 13, margin: '4px 0 0' }}>
+            {t('admin.certSentSubtitle')}
+          </p>
+        </div>
         {loadError && <div className="form-error-banner">{loadError}</div>}
         {!certificates && !loadError && (
           <div className="empty-state">
@@ -277,7 +264,7 @@ export function AdminCertificatesPanel() {
           {certificates?.map((c) => {
             const palette = CERT_PALETTES[c.type];
             return (
-              <div key={c.id} className="list-row flex-between" style={{ alignItems: 'center' }}>
+              <div key={c.id} className="list-row flex-between" style={{ alignItems: 'center', opacity: c.revokedAt ? 0.6 : 1 }}>
                 <div className="flex gap-md" style={{ alignItems: 'center' }}>
                   <img
                     src={c.imageUrl}
@@ -305,51 +292,27 @@ export function AdminCertificatesPanel() {
                       {c.recipientDisplayName} (<bdi dir="ltr">@{c.recipientUsername}</bdi>) ·{' '}
                       {new Date(c.createdAt.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US')}
                     </p>
+                    <p className="muted" style={{ margin: '2px 0 0', fontSize: 12.5 }}>
+                      {c.automatic ? t('admin.certAutomatic') : t('admin.certByAdmin', { name: c.issuedByName ?? '' })} ·{' '}
+                      {c.emailedAt ? t('admin.certEmailed') : t('admin.certNotEmailed')}
+                    </p>
+                    {c.revokedAt && (
+                      <p style={{ margin: '2px 0 0', fontSize: 12.5, color: 'var(--danger)' }}>
+                        {t('admin.certRevokedLine', { name: c.revokedByName ?? '', reason: c.revokedReason ?? '' })}
+                      </p>
+                    )}
                   </div>
                 </div>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleRevoke(c)}>
-                  {t('admin.certRevokeButton')}
-                </button>
+                {c.revokedAt ? (
+                  <span className="badge badge-maroon">{t('admin.certRevokedBadge')}</span>
+                ) : (
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleRevoke(c)}>
+                    {t('admin.certRevokeButton')}
+                  </button>
+                )}
               </div>
             );
           })}
-        </div>
-      </div>
-
-      <div className="card stack">
-        <div>
-          <h3 style={{ fontSize: 16, margin: 0 }}>
-            {t('admin.certRequestsTitle')}
-            {requests && requests.length > 0 && <span className="badge badge-gold" style={{ marginInlineStart: 8 }}>{requests.length}</span>}
-          </h3>
-          <p className="muted" style={{ fontSize: 13, margin: '4px 0 0' }}>
-            {t('admin.certRequestsSubtitle')}
-          </p>
-        </div>
-        {requests && requests.length === 0 && <p className="muted" style={{ margin: 0 }}>{t('admin.certRequestsNone')}</p>}
-        <div className="stack" style={{ gap: 10 }}>
-          {requests?.map((r) => (
-            <div key={r.id} className="list-row flex-between" style={{ alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <div className="flex gap-md" style={{ alignItems: 'center' }}>
-                <CertificatePlaque tier={r.tier} label={t(CERT_TYPE_LABEL_KEY[r.tier])} width={40} interactive={false} />
-                <div>
-                  <strong>{r.displayName}</strong> <span className="muted"><bdi dir="ltr">@{r.username}</bdi></span>
-                  <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>
-                    {t('admin.certRequestReached', { level: rankName(r.tier, lang, true), points: r.totalXp })} ·{' '}
-                    {new Date(r.createdAt.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US')}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-sm">
-                <button type="button" className="btn btn-primary btn-sm" disabled={requestBusy === r.id} onClick={() => decideRequest(r.id, 'approve')}>
-                  {t('admin.certRequestApprove')}
-                </button>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={requestBusy === r.id} onClick={() => decideRequest(r.id, 'decline')}>
-                  {t('admin.certRequestDismiss')}
-                </button>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </div>
