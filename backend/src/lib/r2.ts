@@ -11,12 +11,14 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 //   R2_BUCKET             the bucket's name
 //   R2_PUBLIC_URL         where the bucket's files are served publicly, no trailing slash: the bucket's custom domain, or its r2.dev address
 //   R2_ENDPOINT           (optional) the S3 address, https://<account id>.r2.cloudflarestorage.com by default
-const accountId = process.env.R2_ACCOUNT_ID;
-const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-const bucket = process.env.R2_BUCKET;
-const publicBase = process.env.R2_PUBLIC_URL?.replace(/\/+$/, '');
-const endpoint = process.env.R2_ENDPOINT ?? (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined);
+// A value pasted into a host's settings page often carries a stray space, a new line or a pair of quotes: those are dropped.
+const clean = (v: string | undefined) => v?.trim().replace(/^["']+|["']+$/g, '').trim() || undefined;
+const accountId = clean(process.env.R2_ACCOUNT_ID);
+const accessKeyId = clean(process.env.R2_ACCESS_KEY_ID);
+const secretAccessKey = clean(process.env.R2_SECRET_ACCESS_KEY);
+const bucket = clean(process.env.R2_BUCKET);
+const publicBase = clean(process.env.R2_PUBLIC_URL)?.replace(/\/+$/, '');
+const endpoint = clean(process.env.R2_ENDPOINT) ?? (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined);
 
 export const r2Enabled = !!(accessKeyId && secretAccessKey && bucket && publicBase && endpoint);
 
@@ -71,8 +73,18 @@ function describeError(err: unknown): string {
  * from, and the bucket's CORS rule for the site. The test file is removed again. Never returns the keys.
  * (A browser cannot tell these apart: R2's error replies carry no CORS header, so any rejection looks like "couldn't reach the storage".)
  */
-export async function r2SelfTest(siteOrigin: string): Promise<{ configured: boolean; steps: SelfTestStep[] }> {
-  if (!r2Enabled || !client) return { configured: false, steps: [] };
+export async function r2SelfTest(siteOrigin: string): Promise<{ configured: boolean; settings: Record<string, unknown>; steps: SelfTestStep[] }> {
+  // Only lengths and the like, never a key: an R2 account id and access key id are 32 characters, a secret access key 64 (anything else was pasted wrong).
+  const settings = {
+    accountIdLength: accountId?.length ?? 0,
+    accessKeyIdLength: accessKeyId?.length ?? 0,
+    secretAccessKeyLength: secretAccessKey?.length ?? 0,
+    expectedLengths: { accountId: 32, accessKeyId: 32, secretAccessKey: 64 },
+    accessKeyIdLooksLikeApiToken: /^cfut_|^cf[a-z]{2}_/i.test(process.env.R2_ACCESS_KEY_ID ?? ''),
+    bucket: bucket ?? null,
+    publicUrl: publicBase ?? null,
+  };
+  if (!r2Enabled || !client) return { configured: false, settings, steps: [] };
   const steps: SelfTestStep[] = [];
   const key = `diagnostics/selftest-${Date.now()}.txt`;
   const body = Buffer.from('anees r2 self-test');
@@ -86,7 +98,7 @@ export async function r2SelfTest(siteOrigin: string): Promise<{ configured: bool
       ok: false,
       detail: describeError(err) + ' -- wrong R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_ACCOUNT_ID / R2_BUCKET, or the token lacks Object Read & Write on this bucket',
     });
-    return { configured: true, steps };
+    return { configured: true, settings, steps };
   }
 
   const stepName2 = '2. Upload link: send a file the way the browser does';
@@ -122,5 +134,5 @@ export async function r2SelfTest(siteOrigin: string): Promise<{ configured: bool
   }
 
   await r2Delete(key).catch(() => {});
-  return { configured: true, steps };
+  return { configured: true, settings, steps };
 }
