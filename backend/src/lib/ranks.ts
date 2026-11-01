@@ -1,7 +1,7 @@
 export type RankTierKey = 'iron' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'warrior' | 'champion';
 
 type RankTierDef = {
-  key: RankTierKey;
+  key: string;
   name: string;
   nameAr: string;
   color: string;
@@ -15,7 +15,7 @@ type RankTierDef = {
 // the tier certificates (lib/rankCertificates.ts). Eighteen divisions in all -- Iron 1-3, Bronze 1-3, Silver 1-3, Gold 1-3,
 // Platinum 1-3, Diamond, Warrior, Champion -- and every division is the same number of points wide, so what gets harder on the way up
 // is not the points but the questions (see difficultyTierFor).
-export const RANK_TIERS: RankTierDef[] = [
+export const RANK_TIERS: (RankTierDef & { key: RankTierKey })[] = [
   { key: 'iron', name: 'Iron', nameAr: 'حديدي', color: '#9aa3b0', colorDark: '#5f6875', divisions: 3 },
   { key: 'bronze', name: 'Bronze', nameAr: 'برونزي', color: '#c88355', colorDark: '#8a5a35', divisions: 3 },
   { key: 'silver', name: 'Silver', nameAr: 'فضي', color: '#c8ccd4', colorDark: '#8b9099', divisions: 3 },
@@ -26,19 +26,38 @@ export const RANK_TIERS: RankTierDef[] = [
   { key: 'champion', name: 'Champion', nameAr: 'بطل', color: '#b97bf2', colorDark: '#6a2fb0', divisions: 1 },
 ];
 
+/**
+ * Teachers climb their own ladder, named for the job rather than for metals: Teacher, Guide, Specialist, Expert, Professor,
+ * Consultant (معلّم، مُرشد، أخصائي، خبير، أستاذ بروفسيور، استشاري) -- 16 divisions, the first five tiers in three, so every rank but the last is 300 teacher points wide. The keys are also the
+ * file names of the badges (public/images/ranks/<key>.webp). Mirrored by TEACHER_RANK_LADDER in the frontend's lib/medalLevels.ts.
+ */
+export const TEACHER_RANK_TIERS: RankTierDef[] = [
+  { key: 'teacher_teacher', name: 'Teacher', nameAr: 'معلّم', color: '#3f9a63', colorDark: '#1f5a35', divisions: 3 },
+  { key: 'teacher_guide', name: 'Guide', nameAr: 'مُرشد', color: '#5fb0ad', colorDark: '#2a6f6c', divisions: 3 },
+  { key: 'teacher_specialist', name: 'Specialist', nameAr: 'أخصائي', color: '#9a6fd0', colorDark: '#5a3a8a', divisions: 3 },
+  { key: 'teacher_expert', name: 'Expert', nameAr: 'خبير', color: '#e0b04a', colorDark: '#a8741a', divisions: 3 },
+  { key: 'teacher_professor', name: 'Professor', nameAr: 'أستاذ بروفسيور', color: '#4a6fcf', colorDark: '#1f3a85', divisions: 3 },
+  { key: 'teacher_consultant', name: 'Consultant', nameAr: 'استشاري', color: '#e6d9a8', colorDark: '#a89050', divisions: 1 },
+];
+
+const expandDivisions = (tiers: RankTierDef[]) =>
+  tiers.flatMap((tier) => Array.from({ length: tier.divisions }, (_, i) => ({ tier, division: tier.divisions > 1 ? i + 1 : null })));
+
 /** Every division, lowest first: 18 of them. `division` is 1-3, or null for the single-division tiers. */
-const DIVISIONS = RANK_TIERS.flatMap((tier) => Array.from({ length: tier.divisions }, (_, i) => ({ tier, division: tier.divisions > 1 ? i + 1 : null })));
+const DIVISIONS = expandDivisions(RANK_TIERS);
 export const DIVISION_COUNT = DIVISIONS.length;
+const TEACHER_DIVISIONS = expandDivisions(TEACHER_RANK_TIERS);
 
 /** Points one division is wide, for students (total XP) and for teachers (teacher points, a smaller scale: they earn 10-30 at a time). */
 export const POINTS_PER_DIVISION = 250;
-export const TEACHER_POINTS_PER_DIVISION = 50;
+export const TEACHER_POINTS_PER_DIVISION = 100;
 
-function ladderFor(points: number, per: number) {
-  const index = Math.min(DIVISION_COUNT - 1, Math.max(0, Math.floor(points / per)));
-  const { tier, division } = DIVISIONS[index];
+function ladderFor(points: number, per: number, divisions: { tier: RankTierDef; division: number | null }[] = DIVISIONS) {
+  const last = divisions.length - 1;
+  const index = Math.min(last, Math.max(0, Math.floor(points / per)));
+  const { tier, division } = divisions[index];
   const minXp = index * per;
-  const nextMinXp = index < DIVISION_COUNT - 1 ? (index + 1) * per : null;
+  const nextMinXp = index < last ? (index + 1) * per : null;
   return {
     key: tier.key,
     // "Silver 2" -- the name already carries the division, so every place that shows the rank shows it
@@ -56,11 +75,12 @@ function ladderFor(points: number, per: number) {
 }
 
 export function getRankTier(totalXp: number) {
-  return ladderFor(totalXp, POINTS_PER_DIVISION);
+  const tier = ladderFor(totalXp, POINTS_PER_DIVISION);
+  return { ...tier, key: tier.key as RankTierKey };
 }
 
 export function getTeacherRankTier(teacherPoints: number) {
-  return ladderFor(teacherPoints, TEACHER_POINTS_PER_DIVISION);
+  return ladderFor(teacherPoints, TEACHER_POINTS_PER_DIVISION, TEACHER_DIVISIONS);
 }
 
 export const RANK_KEYS = RANK_TIERS.map((t) => t.key) as [RankTierKey, ...RankTierKey[]];

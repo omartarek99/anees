@@ -3,7 +3,7 @@ import { QuizIcon } from './QuizIcon';
 import { XpIcon } from './XpIcon';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../lib/language-context';
-import { Avatar } from './Avatar';
+import { RankFramedAvatar } from './RankFramedAvatar';
 
 /** TikTok-desktop-style action rail: sits OUTSIDE the reel frame (not overlaid on the video)
  * on desktop, always reflecting whichever reel is currently active. Rendered once by
@@ -22,7 +22,7 @@ export function ReelActionRail({
   muted,
   onToggleMute,
 }: {
-  author: { username: string; displayName: string; avatarKey: string; avatarUrl: string | null } | null;
+  author: { username: string; displayName: string; avatarKey: string; avatarUrl: string | null; rankKey?: string } | null;
   liked: boolean;
   likeCount: number;
   onToggleLike: () => void;
@@ -44,7 +44,7 @@ export function ReelActionRail({
           title={t('reels.lessonBy', { name: author.displayName })}
           aria-label={t('reels.lessonBy', { name: author.displayName })}
         >
-          <Avatar avatarKey={author.avatarKey} photoUrl={author.avatarUrl} size={48} />
+          <RankFramedAvatar rankKey={author.rankKey} avatarKey={author.avatarKey} photoUrl={author.avatarUrl} frame={76} />
         </Link>
       ) : (
         <span className="reel-rail-brand" aria-hidden>

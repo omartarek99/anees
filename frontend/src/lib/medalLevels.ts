@@ -18,36 +18,65 @@ export const RANK_LADDER: { key: RankKey; name: string; nameAr: string; color: s
   { key: 'champion', name: 'Champion', nameAr: 'بطل', color: '#b97bf2', colorDark: '#6a2fb0', divisions: 1 },
 ];
 
-/** Every division, lowest first (18): its tier, its number 1-3 (null for the single-division tiers) and where it starts. */
-export const DIVISIONS = RANK_LADDER.flatMap((tier) => Array.from({ length: tier.divisions }, (_, i) => ({ tier, division: tier.divisions > 1 ? i + 1 : null })))
-  .map((d, index) => ({ ...d, index, start: index * POINTS_PER_DIVISION }));
+type LadderTier = { key: string; name: string; nameAr: string; color: string; colorDark: string; divisions: 1 | 3 };
 
-export const divisionLabel = (d: (typeof DIVISIONS)[number], lang: string) => `${lang === 'ar' ? d.tier.nameAr : d.tier.name}${d.division ? ` ${d.division}` : ''}`;
+/** A ladder of tiers whose divisions are all `per` points wide: its divisions (lowest first), and where a given number of points puts someone. */
+export function makeLadder<T extends LadderTier>(tiers: T[], per: number) {
+  /** Every division, lowest first: its tier, its number 1-3 (null for the single-division tiers) and where it starts. */
+  const divisions = tiers
+    .flatMap((tier) => Array.from({ length: tier.divisions }, (_, i) => ({ tier, division: tier.divisions > 1 ? i + 1 : null })))
+    .map((d, index) => ({ ...d, index, start: index * per }));
+  /** The points at which each tier of the ladder starts (the number shown under its logo). */
+  const tierStart = tiers.map((t) => divisions.find((d) => d.tier.key === t.key)!.start);
 
-/** Where a student's points put them: the division they are in, the next one (null at the top) and how far through this one they are, 0..1. */
-export function standingFor(points: number) {
-  const p = Math.max(0, points);
-  const current = DIVISIONS[Math.min(DIVISIONS.length - 1, Math.floor(p / POINTS_PER_DIVISION))];
-  const next = DIVISIONS[current.index + 1] ?? null;
-  return { current, next, progress: next ? (p - current.start) / POINTS_PER_DIVISION : 1 };
+  /** Where the points put someone: the division they are in, the next one (null at the top) and how far through this one they are, 0..1. */
+  function standingFor(points: number) {
+    const p = Math.max(0, points);
+    const current = divisions[Math.min(divisions.length - 1, Math.floor(p / per))];
+    const next = divisions[current.index + 1] ?? null;
+    return { current, next, progress: next ? (p - current.start) / per : 1 };
+  }
+
+  /**
+   * How far along the line of rank logos someone is, 0..1. The logos are evenly spaced, so the line reaches a logo when they reach that
+   * tier, and sits between two logos while they are between those two tiers (in proportion to their points).
+   */
+  function lineFraction(points: number): number {
+    const p = Math.max(0, points);
+    const n = tiers.length;
+    let i = n - 1;
+    while (i > 0 && p < tierStart[i]) i--;
+    const end = i < n - 1 ? tierStart[i + 1] : tierStart[n - 1] + per;
+    const within = Math.min(1, (p - tierStart[i]) / (end - tierStart[i]));
+    return Math.min(1, (i + within) / (n - 1));
+  }
+
+  return { tiers, per, divisions, tierStart, standingFor, lineFraction };
 }
 
-/** The points at which each tier of the ladder starts (the number shown under its logo). */
-export const TIER_START = RANK_LADDER.map((t) => DIVISIONS.find((d) => d.tier.key === t.key)!.start);
+export const STUDENT_LADDER = makeLadder(RANK_LADDER, POINTS_PER_DIVISION);
+export const DIVISIONS = STUDENT_LADDER.divisions;
+export const TIER_START = STUDENT_LADDER.tierStart;
+export const standingFor = STUDENT_LADDER.standingFor;
+export const lineFraction = STUDENT_LADDER.lineFraction;
+
+export const divisionLabel = (d: { tier: { name: string; nameAr: string }; division: number | null }, lang: string) =>
+  `${lang === 'ar' ? d.tier.nameAr : d.tier.name}${d.division ? ` ${d.division}` : ''}`;
 
 /**
- * How far along the line of rank logos a student is, 0..1. The logos are evenly spaced, so the line reaches a logo when the student
- * reaches that tier, and sits between two logos while they are between those two tiers (in proportion to their points).
+ * The teachers' ladder: Teacher, Guide, Specialist, Expert, Professor, Consultant, a division being 100 teacher points (300 a rank). Mirrors
+ * TEACHER_RANK_TIERS in backend/src/lib/ranks.ts; the keys are also the badges' file names (public/images/ranks/<key>.webp).
  */
-export function lineFraction(points: number): number {
-  const p = Math.max(0, points);
-  const n = RANK_LADDER.length;
-  let i = n - 1;
-  while (i > 0 && p < TIER_START[i]) i--;
-  const end = i < n - 1 ? TIER_START[i + 1] : TIER_START[n - 1] + POINTS_PER_DIVISION;
-  const within = Math.min(1, (p - TIER_START[i]) / (end - TIER_START[i]));
-  return Math.min(1, (i + within) / (n - 1));
-}
+export const TEACHER_POINTS_PER_DIVISION = 100;
+export const TEACHER_RANK_LADDER: LadderTier[] = [
+  { key: 'teacher_teacher', name: 'Teacher', nameAr: 'معلّم', color: '#3f9a63', colorDark: '#1f5a35', divisions: 3 },
+  { key: 'teacher_guide', name: 'Guide', nameAr: 'مُرشد', color: '#5fb0ad', colorDark: '#2a6f6c', divisions: 3 },
+  { key: 'teacher_specialist', name: 'Specialist', nameAr: 'أخصائي', color: '#9a6fd0', colorDark: '#5a3a8a', divisions: 3 },
+  { key: 'teacher_expert', name: 'Expert', nameAr: 'خبير', color: '#e0b04a', colorDark: '#a8741a', divisions: 3 },
+  { key: 'teacher_professor', name: 'Professor', nameAr: 'أستاذ بروفسيور', color: '#4a6fcf', colorDark: '#1f3a85', divisions: 3 },
+  { key: 'teacher_consultant', name: 'Consultant', nameAr: 'استشاري', color: '#e6d9a8', colorDark: '#a89050', divisions: 1 },
+];
+export const TEACHER_LADDER = makeLadder(TEACHER_RANK_LADDER, TEACHER_POINTS_PER_DIVISION);
 
 /** A rank's name in the current language. With `definite`, Arabic gets "ال" (المستوى الذهبي), as after the word "level". */
 export const rankName = (key: string, lang: string, definite = false) => {

@@ -90,7 +90,7 @@ export function getMapLevel(userId: number): number {
 
 // A user's level grows with their points: everyone starts at level 1 and gains a level every 100 points (students, by total XP) or every
 // 20 points (teachers, by teacher points, a smaller scale like their rank ladder in lib/ranks.ts). A rank division is 250 points wide
-// (50 for teachers), so a division is two and a half levels.
+// (100 for teachers), so a division is two and a half levels.
 export const POINTS_PER_LEVEL = 100;
 export const TEACHER_POINTS_PER_LEVEL = 20;
 

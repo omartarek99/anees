@@ -22,7 +22,7 @@ export type ReelSlideData = {
   subjectName: string;
   // Only set for teacher-authored reels (null for seeded curriculum content, which has
   // no single author to credit).
-  author: { username: string; displayName: string; avatarKey: string; avatarUrl: string | null } | null;
+  author: { username: string; displayName: string; avatarKey: string; avatarUrl: string | null; rankKey?: string } | null;
   questions: QuizQuestion[];
   completed: boolean;
   stars: number;
