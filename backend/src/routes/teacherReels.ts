@@ -51,9 +51,11 @@ const handleVideoUpload = handleUpload(videoUpload, 'Please upload a valid video
 // An upload sits in memory (up to 100MB) and is then transcoded, so one at a time per teacher and three across
 // the server keeps RAM and ffmpeg bounded however many requests arrive. Runs before multer buffers anything.
 const uploadsInFlight = new Set<number>();
+// Teachers whose video is being compressed and stored in the background right now (the upload request has already been answered by then).
+const processingVideos = new Set<number>();
 function limitConcurrentUploads(req: Request, res: Response, next: NextFunction) {
   const userId = req.userId!;
-  if (uploadsInFlight.has(userId) || uploadsInFlight.size >= 3) {
+  if (uploadsInFlight.has(userId) || processingVideos.has(userId) || uploadsInFlight.size + processingVideos.size >= 3) {
     res.status(429).json({ error: 'An upload is already in progress. Please wait for it to finish.' });
     return;
   }
@@ -175,6 +177,7 @@ teacherReelsRouter.get('/', requireAuth, requireRole('teacher'), (req, res) => {
       title: r.title,
       titleAr: r.title_ar,
       videoUrl: r.video_url,
+      videoStatus: r.video_status ?? null,
       grade: r.grade,
       subjectName: r.subject_name,
       subjectNameAr: r.subject_name_ar,
@@ -239,6 +242,7 @@ teacherReelsRouter.get('/:id', requireAuth, requireRole('teacher'), (req, res) =
     scriptText: reel.script_text,
     scriptTextAr: reel.script_text_ar,
     videoUrl: reel.video_url,
+    videoStatus: reel.video_status ?? null,
     durationSec: reel.duration_sec,
     questions: questions.map((q) => ({
       id: q.id,
@@ -401,52 +405,55 @@ teacherReelsRouter.post(
       return;
     }
 
-    let compressed: Buffer;
-    let durationSeconds: number | null;
-    try {
-      ({ buffer: compressed, durationSeconds } = await compressVideo(video.buffer));
-    } catch (err) {
-      console.error('Video compression failed:', err instanceof Error ? err.message : err);
-      res.status(500).json({ error: "We couldn't process the video. Please try a different file." });
-      return;
-    }
+    // Compressing and storing a video takes a while (minutes on a small server), longer than the host in front of the API waits for an answer, so
+    // the request is answered right away and the work carries on in the background: reels.video_status says how it is going, and the lesson list polls it.
+    db.prepare(`UPDATE reels SET video_status = 'processing' WHERE id = ?`).run(reel.id);
+    processingVideos.add(req.userId!);
+    res.status(202).json({ status: 'processing' });
+    void processVideoUpload(reel.id, req.userId!, video.buffer);
+  }
+);
+
+/** The background half of a video upload: compress it, store it, then point the lesson at it (and pay the teacher for it). */
+async function processVideoUpload(reelId: number, userId: number, original: Buffer) {
+  try {
+    if (!supabaseAdmin) throw new Error('storage not configured');
+    const { buffer: compressed, durationSeconds } = await compressVideo(original);
 
     // Compression always outputs mp4 (see videoCompression.ts) regardless of the original
     // container, so the stored file's extension/content-type reflect that, not the upload.
-    const path = `${VIDEO_PATH_PREFIX}${reel.id}-${Date.now()}.mp4`;
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from(VIDEO_BUCKET)
-      .upload(path, compressed, { contentType: 'video/mp4' });
-    if (uploadError) {
-      console.error('Video upload failed:', uploadError.message);
-      res.status(500).json({ error: "We couldn't upload the video. Please try again." });
-      return;
-    }
-
+    const path = `${VIDEO_PATH_PREFIX}${reelId}-${Date.now()}.mp4`;
+    const { error: uploadError } = await supabaseAdmin.storage.from(VIDEO_BUCKET).upload(path, compressed, { contentType: 'video/mp4' });
+    if (uploadError) throw new Error(`storage upload: ${uploadError.message}`);
     const { data: publicUrlData } = supabaseAdmin.storage.from(VIDEO_BUCKET).getPublicUrl(path);
 
-    await deleteReelVideoIfAny(reel.video_url);
+    const current = db.prepare(`SELECT video_url FROM reels WHERE id = ?`).get(reelId) as { video_url: string | null } | undefined;
+    if (!current) {
+      // the lesson was deleted while its video was being processed: nothing to attach it to
+      await supabaseAdmin.storage.from(VIDEO_BUCKET).remove([path]);
+      return;
+    }
+    await deleteReelVideoIfAny(current.video_url);
     // The real, measured video duration replaces whatever placeholder duration the teacher's
     // composer form had -- it drives the reel's progress bar and the watch-points thresholds
     // (routes/reels.ts POST /:reelId/watch), so it has to match the actual file, not a guess.
     if (durationSeconds !== null && durationSeconds > 0) {
-      db.prepare(`UPDATE reels SET video_url = ?, duration_sec = ? WHERE id = ?`).run(
-        publicUrlData.publicUrl,
-        Math.round(durationSeconds),
-        reel.id
-      );
+      db.prepare(`UPDATE reels SET video_url = ?, duration_sec = ?, video_status = 'ready' WHERE id = ?`).run(publicUrlData.publicUrl, Math.round(durationSeconds), reelId);
       // 10 teacher points per 30s of real video duration, capped at 90s counted (see
       // lib/xp.ts) -- awarded on every successful upload, including replacing an
       // existing video, same as every other point source in this app pays out per action.
       const points = teacherVideoUploadPoints(durationSeconds);
-      if (points > 0) awardTeacherPoints(req.userId!, points, 'video_upload');
+      if (points > 0) awardTeacherPoints(userId, points, 'video_upload');
     } else {
-      db.prepare(`UPDATE reels SET video_url = ? WHERE id = ?`).run(publicUrlData.publicUrl, reel.id);
+      db.prepare(`UPDATE reels SET video_url = ?, video_status = 'ready' WHERE id = ?`).run(publicUrlData.publicUrl, reelId);
     }
-
-    res.json({ videoUrl: publicUrlData.publicUrl });
+  } catch (err) {
+    console.error('Video processing failed:', err instanceof Error ? err.message : err);
+    db.prepare(`UPDATE reels SET video_status = 'failed' WHERE id = ?`).run(reelId);
+  } finally {
+    processingVideos.delete(userId);
   }
-);
+}
 
 teacherReelsRouter.delete('/:id', requireAuth, requireRole('teacher'), requireCsrfHeader, async (req, res) => {
   const reel = getOwnReel(Number(req.params.id), req.userId!);

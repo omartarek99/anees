@@ -428,3 +428,12 @@ db.exec(`INSERT INTO user_warnings (user_id, warning_number, message, created_at
   SELECT id, 1, warning_message, COALESCE(warning_issued_at, datetime('now')) FROM users
   WHERE warning_message IS NOT NULL AND NOT EXISTS (SELECT 1 FROM user_warnings w WHERE w.user_id = users.id)`);
 db.exec(`UPDATE users SET warning_number = 1 WHERE warning_message IS NOT NULL AND warning_number IS NULL`);
+
+// A teacher's video is processed in the background (routes/teacherReels.ts): reels.video_status is 'processing' while that runs, 'ready' when the
+// video is stored and 'failed' if it could not be (NULL: no upload has been made). The work lives in the server's memory, so one still marked
+// 'processing' when the server starts was cut off by a restart.
+const reelColsForVideoStatus = db.prepare(`PRAGMA table_info(reels)`).all() as { name: string }[];
+if (!reelColsForVideoStatus.some((c) => c.name === 'video_status')) {
+  db.exec(`ALTER TABLE reels ADD COLUMN video_status TEXT`);
+}
+db.exec(`UPDATE reels SET video_status = 'failed' WHERE video_status = 'processing'`);

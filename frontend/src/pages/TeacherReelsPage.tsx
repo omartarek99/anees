@@ -57,6 +57,8 @@ type ReelSummary = {
   title: string;
   titleAr?: string | null;
   videoUrl: string | null;
+  /** How the last video upload is going: still being processed in the background, stored, or failed (null: none uploaded). */
+  videoStatus: 'processing' | 'ready' | 'failed' | null;
   grade: number;
   subjectName: string;
   subjectNameAr?: string | null;
@@ -134,6 +136,15 @@ export function TeacherReelsPage() {
     loadReels();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A video is compressed in the background after the upload is accepted: keep checking the list until none is still processing.
+  const anyProcessing = !!reels?.some((r) => r.videoStatus === 'processing');
+  useEffect(() => {
+    if (!anyProcessing) return;
+    const timer = window.setTimeout(loadReels, 4000);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anyProcessing, reels]);
 
   function resetForm() {
     setEditingId(null);
@@ -550,6 +561,12 @@ export function TeacherReelsPage() {
                     questions: String(reel.questionCount),
                   })}
                 </p>
+                {reel.videoStatus === 'processing' && (
+                  <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--gold-dark, #b07a10)' }}>⏳ {t('teacherReels.videoProcessing')}</p>
+                )}
+                {reel.videoStatus === 'failed' && (
+                  <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--danger)' }}>⚠️ {t('teacherReels.videoFailed')}</p>
+                )}
               </div>
               <div className="flex gap-sm">
                 <button type="button" className="btn btn-secondary" onClick={() => handleEdit(reel.id)}>
