@@ -11,7 +11,8 @@ import { path as ffmpegPath } from '@ffmpeg-installer/ffmpeg';
 const MAX_DIMENSION = 720;
 const CRF = 28;
 const AUDIO_BITRATE = '128k';
-const TIMEOUT_MS = 120_000;
+// The work runs in the background (nothing is waiting on it), but a small shared server can be slow: allow a long video a good while.
+const TIMEOUT_MS = 15 * 60_000;
 
 function runFfmpeg(inputPath: string, outputPath: string): Promise<{ durationSeconds: number | null }> {
   return new Promise((resolve, reject) => {
@@ -81,6 +82,18 @@ function runFfmpeg(inputPath: string, outputPath: string): Promise<{ durationSec
  * of whatever placeholder duration a teacher may have typed into the composer form, since
  * that number drives real things (the reel's progress bar, the watch-points thresholds).
  */
+/** Same as compressVideo, for a video that is already a file on disk (so a 100MB upload never has to sit in memory). */
+export async function compressVideoFile(inputPath: string): Promise<{ buffer: Buffer; durationSeconds: number | null }> {
+  const workDir = await mkdtemp(join(tmpdir(), 'anees-video-'));
+  const outputPath = join(workDir, 'output.mp4');
+  try {
+    const { durationSeconds } = await runFfmpeg(inputPath, outputPath);
+    return { buffer: await readFile(outputPath), durationSeconds };
+  } finally {
+    await rm(workDir, { recursive: true, force: true });
+  }
+}
+
 export async function compressVideo(buffer: Buffer): Promise<{ buffer: Buffer; durationSeconds: number | null }> {
   const workDir = await mkdtemp(join(tmpdir(), 'anees-video-'));
   const inputPath = join(workDir, 'input');

@@ -60,6 +60,8 @@ type ReelSummary = {
   videoUrl: string | null;
   /** How the last video upload is going: still being processed in the background, stored, or failed (null: none uploaded). */
   videoStatus: 'processing' | 'ready' | 'failed' | null;
+  /** Why the last upload failed: timeout (too slow), storage, unreadable (a broken file), restart (the server restarted), other. */
+  videoError?: string | null;
   grade: number;
   subjectName: string;
   subjectNameAr?: string | null;
@@ -591,7 +593,7 @@ export function TeacherReelsPage() {
                   <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--gold-dark, #b07a10)' }}>⏳ {t('teacherReels.videoProcessing')}</p>
                 )}
                 {reel.videoStatus === 'failed' && (
-                  <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--danger)' }}>⚠️ {t('teacherReels.videoFailed')}</p>
+                  <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--danger)' }}>⚠️ {t(`teacherReels.videoFailed_${reel.videoError && ['timeout', 'storage', 'unreadable', 'restart'].includes(reel.videoError) ? reel.videoError : 'other'}`)}</p>
                 )}
               </div>
               <div className="flex gap-sm">

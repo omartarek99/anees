@@ -436,4 +436,7 @@ const reelColsForVideoStatus = db.prepare(`PRAGMA table_info(reels)`).all() as {
 if (!reelColsForVideoStatus.some((c) => c.name === 'video_status')) {
   db.exec(`ALTER TABLE reels ADD COLUMN video_status TEXT`);
 }
-db.exec(`UPDATE reels SET video_status = 'failed' WHERE video_status = 'processing'`);
+if (!reelColsForVideoStatus.some((c) => c.name === 'video_error')) {
+  db.exec(`ALTER TABLE reels ADD COLUMN video_error TEXT`); // why the last upload failed: timeout / storage / unreadable / restart / other
+}
+db.exec(`UPDATE reels SET video_status = 'failed', video_error = 'restart' WHERE video_status = 'processing'`);

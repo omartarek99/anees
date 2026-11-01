@@ -2,11 +2,6 @@ import { api, ApiError } from './api';
 
 /** The most the server accepts for one lesson video (backend/src/routes/teacherReels.ts). */
 export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
-/**
- * Up to this size a video goes straight to Supabase Storage (fast, nothing re-encoded); Supabase takes at most 50MB in one file on the free plan.
- * A bigger one is sent to our server, which compresses it in the background. Same number as DIRECT_VIDEO_BYTES in the backend.
- */
-export const DIRECT_VIDEO_BYTES = 49 * 1024 * 1024;
 
 type Sent = { status: number; body: string };
 
@@ -39,15 +34,22 @@ function errorOf(sent: Sent): ApiError {
 }
 
 /**
- * Uploads a lesson's video. Up to DIRECT_VIDEO_BYTES: a one-time link from the server, the file sent straight to Supabase, then the server checks
- * what was stored and attaches it -- the video is ready when this resolves. Bigger: the file is sent to the server, which answers at once and
- * compresses it in the background (the lesson list then shows "processing" until it is ready) -- resolves with 'processing'.
+ * Uploads a lesson's video. Normally: a one-time link from the server, the file sent straight to cloud storage (Cloudflare R2, or Supabase), then the
+ * server checks what was stored and attaches it -- the video is ready when this resolves. Only when the server says the file is too big for the
+ * storage it uses for direct uploads (Supabase's free plan, 50MB) is the file sent to the server instead, which answers at once and compresses it in
+ * the background (the lesson list then shows "processing" until it is ready) -- resolves with 'processing'.
  * `onProgress` gets 0..1 while the file is being sent; `onChecking` is called when the file is up and the server is checking it.
  */
 export async function uploadLessonVideo(reelId: number, file: File, onProgress: (fraction: number) => void, onChecking: () => void): Promise<'ready' | 'processing'> {
-  if (file.size <= DIRECT_VIDEO_BYTES) {
-    const link = await api.post<{ signedUrl: string; path: string }>(`/teacher-reels/${reelId}/video/upload-url`, { contentType: file.type, size: file.size });
-    const sent = await send('PUT', link.signedUrl, { 'Content-Type': file.type, 'x-upsert': 'false' }, file, onProgress, false);
+  let link: { signedUrl: string; path: string; headers: Record<string, string> } | null = null;
+  try {
+    link = await api.post(`/teacher-reels/${reelId}/video/upload-url`, { contentType: file.type, size: file.size });
+  } catch (err) {
+    // 'use_server': too big for a direct upload to the storage in use -- send it to the server instead (below)
+    if (!(err instanceof ApiError && (err.body as { code?: string } | null)?.code === 'use_server')) throw err;
+  }
+  if (link) {
+    const sent = await send('PUT', link.signedUrl, link.headers, file, onProgress, false);
     if (sent.status < 200 || sent.status >= 300) throw new ApiError("We couldn't upload the video. Please try again.", sent.status);
     onChecking();
     await api.post(`/teacher-reels/${reelId}/video/complete`, { path: link.path });
