@@ -404,3 +404,27 @@ const userColsForGoogle = db.prepare(`PRAGMA table_info(users)`).all() as { name
 if (!userColsForGoogle.some((c) => c.name === 'profile_complete')) {
   db.exec(`ALTER TABLE users ADD COLUMN profile_complete INTEGER NOT NULL DEFAULT 1`);
 }
+
+// Admin warnings are numbered: each one an admin sends is kept (1st, 2nd, 3rd ...) even after the person dismisses the pop-up. users.warning_message
+// stays the warning still showing; users.warning_number is which one it is.
+db.exec(`CREATE TABLE IF NOT EXISTS user_warnings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  warning_number INTEGER NOT NULL,
+  message TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (user_id, warning_number)
+)`);
+const warningCols = db.prepare(`PRAGMA table_info(user_warnings)`).all() as { name: string }[];
+if (!warningCols.some((c) => c.name === 'issued_by')) {
+  db.exec(`ALTER TABLE user_warnings ADD COLUMN issued_by INTEGER REFERENCES users(id) ON DELETE SET NULL`); // the admin who sent it
+}
+const userColsForWarningNumber = db.prepare(`PRAGMA table_info(users)`).all() as { name: string }[];
+if (!userColsForWarningNumber.some((c) => c.name === 'warning_number')) {
+  db.exec(`ALTER TABLE users ADD COLUMN warning_number INTEGER`);
+}
+// a warning that was already showing before the numbering existed is the account's first
+db.exec(`INSERT INTO user_warnings (user_id, warning_number, message, created_at)
+  SELECT id, 1, warning_message, COALESCE(warning_issued_at, datetime('now')) FROM users
+  WHERE warning_message IS NOT NULL AND NOT EXISTS (SELECT 1 FROM user_warnings w WHERE w.user_id = users.id)`);
+db.exec(`UPDATE users SET warning_number = 1 WHERE warning_message IS NOT NULL AND warning_number IS NULL`);

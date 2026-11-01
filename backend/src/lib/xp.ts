@@ -57,7 +57,7 @@ export const TEACHER_VIDEO_MAX_COUNTED_SECONDS = 90;
 // mint leaderboard points by looping it. 300 is thirty prints, or ten full-length video uploads, a day.
 export const TEACHER_DAILY_POINT_CAP = 300;
 const teacherPointsToday = db.prepare(
-  `SELECT COALESCE(SUM(amount), 0) AS s FROM teacher_point_events WHERE user_id = ? AND created_at >= date('now')`
+  `SELECT COALESCE(SUM(amount), 0) AS s FROM teacher_point_events WHERE user_id = ? AND created_at >= date('now') AND reason != 'admin_adjust'`
 );
 
 export function awardTeacherPoints(userId: number, amount: number, reason: string) {

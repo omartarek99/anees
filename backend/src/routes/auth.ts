@@ -95,6 +95,7 @@ function publicUser(user: any) {
     teacherSubject: user.teacher_subject ?? null,
     createdAt: user.created_at,
     warningMessage: user.warning_message ?? null,
+    warningNumber: user.warning_number ?? null,
     hasShield: hasShield(user.id),
     // false for a Google sign-up that has not given its name / school / grade (or ID) yet: the app shows the profile step until then
     profileComplete: user.profile_complete !== 0,
@@ -731,7 +732,7 @@ authRouter.get('/me', requireAuth, (req, res) => {
 // The account owner clears their own warning once they've seen it (e.g. dismissing the
 // in-app banner) -- an admin can also clear it directly from the admin panel.
 authRouter.post('/dismiss-warning', requireAuth, requireCsrfHeader, (req, res) => {
-  db.prepare(`UPDATE users SET warning_message = NULL, warning_issued_at = NULL WHERE id = ?`).run(req.userId!);
+  db.prepare(`UPDATE users SET warning_message = NULL, warning_issued_at = NULL, warning_number = NULL WHERE id = ?`).run(req.userId!);
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!);
   res.json({ user: publicUser(user) });
 });

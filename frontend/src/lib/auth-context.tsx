@@ -25,6 +25,8 @@ export type User = {
   teacherSubject: string | null;
   createdAt: string;
   warningMessage: string | null;
+  /** Which warning the one showing is (1st, 2nd ...). */
+  warningNumber?: number | null;
   /** Won the treasure battle (level 50 of the adventure map). */
   hasShield?: boolean;
   /** False for a Google sign-up that has not yet given its name / school / grade (or ID): the app shows only the profile step until then. */

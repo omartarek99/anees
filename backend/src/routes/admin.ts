@@ -89,6 +89,15 @@ function adminUser(row: any, rank: number | null = null) {
     emailVerified: !!row.email_verified,
     warningMessage: row.warning_message ?? null,
     warningIssuedAt: row.warning_issued_at ?? null,
+    // which warning the one showing is (1st, 2nd ...), and every warning this account has been sent
+    warningNumber: row.warning_number ?? null,
+    warnings: (
+      db
+        .prepare(
+          `SELECT w.warning_number, w.message, w.created_at, a.display_name AS issuer FROM user_warnings w LEFT JOIN users a ON a.id = w.issued_by WHERE w.user_id = ? ORDER BY w.warning_number`
+        )
+        .all(row.id) as { warning_number: number; message: string; created_at: string; issuer: string | null }[]
+    ).map((w) => ({ number: w.warning_number, message: w.message, issuedAt: w.created_at, issuedBy: w.issuer })),
     bannedUntil: row.banned_until ?? null,
     isBanned: isCurrentlyBanned(row.banned_until),
     createdAt: row.created_at,
@@ -199,17 +208,24 @@ adminRouter.delete('/users/:id', requireCsrfHeader, async (req, res) => {
   res.json({ ok: true });
 });
 
-// Sets or clears (message: null/"") the account's warning banner. No self-block here --
+// Sends a warning (kept as the account's next numbered one: 1st, 2nd, 3rd ...) or clears (message: null/"") the one showing -- the numbered
+// history stays either way. No self-block here --
 // unlike role/active/delete there's no lockout risk, but self-warning is nonsensical so the
 // UI simply doesn't offer it; the backend doesn't need to enforce what isn't dangerous.
 adminRouter.patch('/users/:id/warning', requireCsrfHeader, validateBody(adminSetWarningSchema), (req, res) => {
   const targetId = Number(req.params.id);
   const { message } = req.body as { message: string | null };
-  applyUserUpdate(res, targetId, () =>
-    db
-      .prepare(`UPDATE users SET warning_message = ?, warning_issued_at = ? WHERE id = ?`)
-      .run(message, message ? new Date().toISOString() : null, targetId)
-  );
+  applyUserUpdate(res, targetId, () => {
+    if (!message) return db.prepare(`UPDATE users SET warning_message = NULL, warning_issued_at = NULL, warning_number = NULL WHERE id = ?`).run(targetId);
+    const last = db.prepare(`SELECT COALESCE(MAX(warning_number), 0) AS n FROM user_warnings WHERE user_id = ?`).get(targetId) as { n: number };
+    const number = last.n + 1;
+    const now = new Date().toISOString();
+    const result = db
+      .prepare(`UPDATE users SET warning_message = ?, warning_issued_at = ?, warning_number = ? WHERE id = ?`)
+      .run(message, now, number, targetId);
+    if (result.changes) db.prepare(`INSERT INTO user_warnings (user_id, warning_number, message, created_at, issued_by) VALUES (?,?,?,?,?)`).run(targetId, number, message, now, req.userId!);
+    return result;
+  });
 });
 
 // Timed suspension -- bannedUntil: null lifts it immediately, otherwise an ISO datetime in
@@ -232,7 +248,19 @@ adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSch
     return;
   }
   const { totalXp } = req.body as { totalXp: number };
-  const before = db.prepare(`SELECT total_xp FROM users WHERE id = ?`).get(targetId) as { total_xp: number } | undefined;
+  const before = db.prepare(`SELECT role, total_xp, teacher_points FROM users WHERE id = ?`).get(targetId) as
+    | { role: string; total_xp: number; teacher_points: number }
+    | undefined;
+  // A teacher earns teacher_points (a separate currency, lib/xp.ts), so that is what the admin's number sets for them; everyone else's is total_xp.
+  if (before?.role === 'teacher') {
+    applyUserUpdate(res, targetId, () => {
+      const result = db.prepare(`UPDATE users SET teacher_points = ? WHERE id = ?`).run(totalXp, targetId);
+      const delta = totalXp - (before.teacher_points ?? 0);
+      if (result.changes && delta !== 0) db.prepare(`INSERT INTO teacher_point_events (user_id, amount, reason) VALUES (?,?,?)`).run(targetId, delta, 'admin_adjust');
+      return result;
+    });
+    return;
+  }
   applyUserUpdate(res, targetId, () => {
     const result = db.prepare(`UPDATE users SET total_xp = ? WHERE id = ?`).run(totalXp, targetId);
     if (result.changes && before) {
