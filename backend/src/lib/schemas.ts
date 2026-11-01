@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { VIOLATION_KEYS } from './violations.js';
 import { RANK_KEYS } from './ranks.js';
 import { passwordSchema } from './password.js';
 
@@ -152,6 +153,17 @@ export const adminSetWarningSchema = z.object({
     .max(500, 'Warning message is too long.')
     .nullable()
     .transform((v) => (v && v.length > 0 ? v : null)),
+});
+
+export const adminRevokeCertificateSchema = z.object({
+  reason: z.string().trim().min(3, 'Please say why the certificate is taken back.').max(300, 'That reason is too long.'),
+});
+
+export const adminApplyViolationSchema = z.object({
+  violation: z.enum(VIOLATION_KEYS),
+  note: z.string().trim().max(300, 'That note is too long.').optional(),
+  // how many points were gained unfairly (used only by the measures that take points off)
+  points: z.number().int().min(0).max(1_000_000).optional(),
 });
 
 export const adminSetBanSchema = z.object({

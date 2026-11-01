@@ -51,7 +51,7 @@ export function WarningModal() {
           >
             <div style={{ fontSize: 44 }}>⚠️</div>
             <h2 style={{ fontSize: 21, marginTop: 8, color: 'var(--danger)' }}>{user?.warningNumber ? warningName(user.warningNumber, lang) : t('warning.title')}</h2>
-            <p style={{ fontSize: 15.5, lineHeight: 1.5, margin: '4px 0 0' }}>{user?.warningMessage}</p>
+            <p style={{ fontSize: 15.5, lineHeight: 1.5, margin: '4px 0 0', whiteSpace: 'pre-line' }}>{user?.warningMessage}</p>
             <button className="btn btn-primary btn-block" style={{ marginTop: 20 }} disabled={dismissing} onClick={handleDismiss}>
               {t('common.dismiss')}
             </button>

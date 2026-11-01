@@ -283,12 +283,20 @@ CREATE TABLE IF NOT EXISTS certificates (
   -- Set once the recipient has dismissed the celebratory award popup (CertificateAwardPopup.tsx)
   -- for this certificate -- NULL means it still needs to be announced on their next visit.
   viewed_at TEXT,
+  -- NULL for a rank certificate sent automatically (lib/rankCertificates.ts), the admin's id for one sent by hand.
   issued_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Taking a certificate back (a violation, a mistake): the row stays, with who and why, but it leaves the owner's profile.
+  revoked_at TEXT,
+  revoked_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  revoked_reason TEXT,
+  -- When the certificate was emailed to its owner -- NULL if email is not set up or the send failed.
+  emailed_at TEXT
 );
 
--- A student who reaches a new level, Bronze or higher (lib/rankCertificates.ts) gets a congratulation popup and a request here;
--- an admin approves it on the Certificates page and the tier's certificate is sent (routes/admin.ts), or dismisses it.
+-- A student who reaches a new level, Bronze or higher (lib/rankCertificates.ts) gets the level pop-out and a row here, and the tier's certificate
+-- is sent straight away. One row per student and tier, kept for good, so a revoked certificate is not sent again. (Rows made when an admin still
+-- approved each one are 'approved' or 'declined'; 'pending' ones are sent at start-up.)
 CREATE TABLE IF NOT EXISTS certificate_requests (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -427,3 +435,20 @@ CREATE TABLE IF NOT EXISTS battle_status (
   window_start TEXT,
   locked_until TEXT
 );
+
+-- The rules students broke, as an admin recorded them (lib/violations.ts): which rule, which time for that rule (1st, 2nd ...), and what
+-- was done about it.
+CREATE TABLE IF NOT EXISTS user_violations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  violation TEXT NOT NULL,
+  offense INTEGER NOT NULL,
+  note TEXT,
+  points_removed INTEGER NOT NULL DEFAULT 0,
+  certificates_revoked INTEGER NOT NULL DEFAULT 0,
+  suspended_days INTEGER NOT NULL DEFAULT 0,
+  deactivated INTEGER NOT NULL DEFAULT 0,
+  issued_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_user_violations_user ON user_violations(user_id, violation);

@@ -37,15 +37,15 @@ function teacherVideos(userId: number) {
   }));
 }
 
-// Certificates an admin has issued to this account (routes/admin.ts POST /certificates) --
-// shown on the profile as a portfolio, same idea as a teacher's videos below, most recent
+// Certificates this account holds -- sent automatically at a new level (lib/rankCertificates.ts) or by an admin (routes/admin.ts POST
+// /certificates), minus any taken back -- shown on the profile as a portfolio, same idea as a teacher's videos below, most recent
 // first so a newly-issued certificate is the first thing the recipient sees.
 function userCertificates(userId: number) {
   const rows = db
     .prepare(
       `SELECT c.*, u.display_name as issuer_display_name FROM certificates c
        LEFT JOIN users u ON u.id = c.issued_by
-       WHERE c.user_id = ? ORDER BY c.created_at DESC`
+       WHERE c.user_id = ? AND c.revoked_at IS NULL ORDER BY c.created_at DESC`
     )
     .all(userId) as any[];
   return rows.map((r) => ({

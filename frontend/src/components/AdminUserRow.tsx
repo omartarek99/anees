@@ -5,6 +5,7 @@ import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { XpIcon } from './XpIcon';
 import { warningName } from '../lib/warningOrdinal';
+import { AdminViolationForm } from './AdminViolationForm';
 
 export type AdminUser = {
   id: number;
@@ -26,6 +27,18 @@ export type AdminUser = {
   warningNumber: number | null;
   /** Every warning this account has been sent, oldest first. */
   warnings: { number: number; message: string; issuedAt: string; issuedBy: string | null }[];
+  /** Every rule this account was recorded breaking, oldest first (backend lib/violations.ts). */
+  violations: {
+    key: string;
+    offense: number;
+    note: string | null;
+    pointsRemoved: number;
+    certificatesRevoked: number;
+    suspendedDays: number;
+    deactivated: boolean;
+    issuedAt: string;
+    issuedBy: string | null;
+  }[];
   bannedUntil: string | null;
   isBanned: boolean;
   createdAt: string;
@@ -304,6 +317,8 @@ export function AdminUserRow({
               </div>
             </div>
           )}
+
+          {!isSelf && u.role === 'student' && <AdminViolationForm user={u} onUpdated={onUpdated} />}
         </div>
       )}
     </div>

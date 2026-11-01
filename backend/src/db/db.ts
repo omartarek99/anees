@@ -395,6 +395,17 @@ if (requestsRow && !requestsRow.sql.includes(`'champion'`)) {
   }
 }
 
+// Revoking and emailing certificates (lib/rankCertificates.ts), added after the rebuilds above (which only copy the columns that existed then).
+const certificateColsNow = (db.prepare(`PRAGMA table_info(certificates)`).all() as { name: string }[]).map((c) => c.name);
+for (const [name, type] of [
+  ['revoked_at', 'TEXT'],
+  ['revoked_by', 'INTEGER REFERENCES users(id) ON DELETE SET NULL'],
+  ['revoked_reason', 'TEXT'],
+  ['emailed_at', 'TEXT'],
+] as const) {
+  if (!certificateColsNow.includes(name)) db.exec(`ALTER TABLE certificates ADD COLUMN ${name} ${type}`);
+}
+
 // Silver certificates made before Silver had its own plaque point at the Platinum picture: repoint them (nothing happens once they are right).
 db.exec("UPDATE certificates SET image_url = '/images/certificates/silver.webp' WHERE type = 'silver' AND image_url = '/images/certificates/platinum.webp'");
 

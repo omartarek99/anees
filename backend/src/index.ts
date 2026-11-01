@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { seed } from './db/seed.js';
 import { applyMapQuestions, applyLevelPool, removeDefaultVideos } from './lib/mapQuestions.js';
 import { backfillAdminPoints } from './lib/pointsBackfill.js';
+import { issuePendingRankCertificates } from './lib/rankCertificates.js';
 import { db } from './db/db.js';
 import { startDatabaseBackups } from './lib/dbBackup.js';
 import { apiLimiter } from './middleware/rateLimit.js';
@@ -24,6 +25,7 @@ import { analyticsRouter } from './routes/analytics.js';
 import { certificatesRouter } from './routes/certificates.js';
 import { guideRouter } from './routes/guide.js';
 import { challengesRouter } from './routes/challenges.js';
+import { violationsRouter } from './routes/violations.js';
 import { applyChallengePool } from './lib/challengePool.js';
 import { FRONTEND_ORIGIN } from './lib/config.js';
 
@@ -32,6 +34,7 @@ applyMapQuestions();
 applyLevelPool();
 removeDefaultVideos();
 backfillAdminPoints();
+issuePendingRankCertificates();
 applyChallengePool();
 startDatabaseBackups(db);
 
@@ -110,6 +113,7 @@ app.use('/api/analytics', analyticsRouter);
 app.use('/api/certificates', requireAuth, certificatesRouter);
 app.use('/api/guide', requireAuth, guideRouter);
 app.use('/api/challenges', requireAuth, challengesRouter);
+app.use('/api/violations', violationsRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found.' });

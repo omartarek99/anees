@@ -10,6 +10,8 @@ import {
   adminSetBanSchema,
   adminSetXpSchema,
   adminIssueCertificateSchema,
+  adminRevokeCertificateSchema,
+  adminApplyViolationSchema,
 } from '../lib/schemas.js';
 import { deleteUserById } from '../lib/deleteUser.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
@@ -22,8 +24,9 @@ import { mailStatus } from '../lib/mailer.js';
 import { parseRoleFilter, parseGrade, pageViewStats, countReportUsers, queryReportRows, reportTotals, monthlyWatch, trailingMonthKeys, SINCE_30_DAYS, quizzesSolvedTotal, pageViewsLast30Days } from '../lib/reportData.js';
 import { buildReportWorkbook } from '../lib/reportExcel.js';
 import { recentIssues } from '../lib/diagnostics.js';
-import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX, deleteCertificateImageIfAny } from '../lib/certificateImage.js';
-import { PLAQUE_PATH, issueTierCertificate, requestRankCertificates, type CertificateTier } from '../lib/rankCertificates.js';
+import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX } from '../lib/certificateImage.js';
+import { PLAQUE_PATH, issueRankCertificates, emailCertificate, revokeCertificate } from '../lib/rankCertificates.js';
+import { applyViolation } from '../lib/violations.js';
 import { getRankTier } from '../lib/ranks.js';
 
 import type { Response } from 'express';
@@ -59,7 +62,7 @@ function clampPage(requestedPage: number, total: number) {
  * column/value: run an UPDATE, 404 if nothing matched, otherwise re-SELECT and respond with
  * the fresh adminUser(). Only the self-block message and the UPDATE statement itself differ
  * between routes, so those are the only things each caller still supplies. */
-function applyUserUpdate(res: Response, targetId: number, runUpdate: () => { changes: number | bigint }) {
+function applyUserUpdate(res: Response, targetId: number, runUpdate: () => { changes: number | bigint }, extra: object = {}) {
   const result = runUpdate();
   if (result.changes === 0) {
     res.status(404).json({ error: 'User not found.' });
@@ -69,7 +72,7 @@ function applyUserUpdate(res: Response, targetId: number, runUpdate: () => { cha
   // Recomputed here too (not just the /users list) -- otherwise a role change or an XP
   // edit would blank out that row's rank badge in the response until the next full reload.
   const rank = row.role === 'student' ? buildRankMap('student').get(row.id) ?? null : row.role === 'teacher' ? buildRankMap('teacher').get(row.id) ?? null : null;
-  res.json({ user: adminUser(row, rank) });
+  res.json({ user: adminUser(row, rank), ...extra });
 }
 
 function adminUser(row: any, rank: number | null = null) {
@@ -99,6 +102,24 @@ function adminUser(row: any, rank: number | null = null) {
         )
         .all(row.id) as { warning_number: number; message: string; created_at: string; issuer: string | null }[]
     ).map((w) => ({ number: w.warning_number, message: w.message, issuedAt: w.created_at, issuedBy: w.issuer })),
+    // the rules this account was recorded breaking (lib/violations.ts), oldest first
+    violations: (
+      db
+        .prepare(
+          `SELECT v.*, a.display_name AS issuer FROM user_violations v LEFT JOIN users a ON a.id = v.issued_by WHERE v.user_id = ? ORDER BY v.id`
+        )
+        .all(row.id) as any[]
+    ).map((v) => ({
+      key: v.violation,
+      offense: v.offense,
+      note: v.note,
+      pointsRemoved: v.points_removed,
+      certificatesRevoked: v.certificates_revoked,
+      suspendedDays: v.suspended_days,
+      deactivated: !!v.deactivated,
+      issuedAt: v.created_at,
+      issuedBy: v.issuer,
+    })),
     bannedUntil: row.banned_until ?? null,
     isBanned: isCurrentlyBanned(row.banned_until),
     createdAt: row.created_at,
@@ -242,6 +263,24 @@ adminRouter.patch('/users/:id/ban', requireCsrfHeader, validateBody(adminSetBanS
   applyUserUpdate(res, targetId, () => db.prepare(`UPDATE users SET banned_until = ? WHERE id = ?`).run(bannedUntil, targetId));
 });
 
+// Records a rule a student broke and applies its measures (lib/violations.ts): a numbered warning, points off, certificates taken back, a
+// suspension or closing the account -- whatever the rule says for this being the 1st, 2nd or 3rd time.
+adminRouter.post('/users/:id/violations', requireCsrfHeader, validateBody(adminApplyViolationSchema), (req, res) => {
+  const targetId = Number(req.params.id);
+  const target = db.prepare(`SELECT role FROM users WHERE id = ?`).get(targetId) as { role: string } | undefined;
+  if (!target) {
+    res.status(404).json({ error: 'User not found.' });
+    return;
+  }
+  if (target.role !== 'student') {
+    res.status(400).json({ error: 'Violations are recorded against student accounts.' });
+    return;
+  }
+  const { violation, note, points } = req.body as { violation: string; note?: string; points?: number };
+  const applied = applyViolation(targetId, violation, req.userId!, { note, points });
+  applyUserUpdate(res, targetId, () => ({ changes: 1 }), { applied });
+});
+
 adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSchema), (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
@@ -269,7 +308,7 @@ adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSch
       // adds up that history, moves with it -- and the tier certificates are checked, as after any other points award.
       const delta = totalXp - before.total_xp;
       if (delta !== 0) db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`).run(targetId, delta, 'admin_adjust');
-      requestRankCertificates(targetId);
+      issueRankCertificates(targetId);
     }
     return result;
   });
@@ -311,6 +350,11 @@ function adminCertificate(row: any) {
     type: row.type,
     imageUrl: row.image_url,
     issuedByName: row.issuer_display_name ?? null,
+    automatic: row.issued_by == null,
+    emailedAt: row.emailed_at ?? null,
+    revokedAt: row.revoked_at ?? null,
+    revokedReason: row.revoked_reason ?? null,
+    revokedByName: row.revoker_display_name ?? null,
     createdAt: row.created_at,
   };
 }
@@ -319,10 +363,11 @@ adminRouter.get('/certificates', (_req, res) => {
   const rows = db
     .prepare(
       `SELECT c.*, ru.username as recipient_username, ru.display_name as recipient_display_name,
-              ru.role as recipient_role, iu.display_name as issuer_display_name
+              ru.role as recipient_role, iu.display_name as issuer_display_name, vu.display_name as revoker_display_name
        FROM certificates c
        JOIN users ru ON ru.id = c.user_id
        LEFT JOIN users iu ON iu.id = c.issued_by
+       LEFT JOIN users vu ON vu.id = c.revoked_by
        ORDER BY c.created_at DESC`
     )
     .all() as any[];
@@ -351,6 +396,7 @@ adminRouter.post('/certificates', requireCsrfHeader, handleCertificateImageUploa
         .prepare(`INSERT INTO certificates (user_id, title, type, image_url, issued_by) VALUES (?,?,?,?,?)`)
         .run(userId, title, type, PLAQUE_PATH[type], req.userId!).lastInsertRowid
     );
+    void emailCertificate(id);
     res.status(201).json({ id });
     return;
   }
@@ -380,64 +426,18 @@ adminRouter.post('/certificates', requireCsrfHeader, handleCertificateImageUploa
       .prepare(`INSERT INTO certificates (user_id, title, type, image_url, issued_by) VALUES (?,?,?,?,?)`)
       .run(userId, title, type, publicUrlData.publicUrl, req.userId!).lastInsertRowid
   );
+  void emailCertificate(id);
   res.status(201).json({ id });
 });
 
-// Students who reached a new level (Bronze, Silver or Gold) and are waiting for their shield certificate to be approved.
-adminRouter.get('/certificate-requests', (_req, res) => {
-  const rows = db
-    .prepare(
-      `SELECT r.id, r.user_id, r.tier, r.created_at, u.username, u.display_name, u.total_xp
-       FROM certificate_requests r JOIN users u ON u.id = r.user_id
-       WHERE r.status = 'pending' ORDER BY r.created_at ASC, r.id ASC`
-    )
-    .all() as any[];
-  res.json({
-    requests: rows.map((r) => ({
-      id: r.id,
-      userId: r.user_id,
-      tier: r.tier,
-      username: r.username,
-      displayName: r.display_name,
-      totalXp: r.total_xp,
-      createdAt: r.created_at,
-    })),
-  });
-});
-
-// Approving sends the tier's certificate; the student sees it as the award popup on their next visit.
-adminRouter.post('/certificate-requests/:id/approve', requireCsrfHeader, (req, res) => {
-  const row = db.prepare(`SELECT * FROM certificate_requests WHERE id = ? AND status = 'pending'`).get(Number(req.params.id)) as any;
-  if (!row) {
+// Taking a certificate back (a violation, a mistake). The row stays, with who and why, so the record is kept and the tier is not sent again
+// (lib/rankCertificates.ts); it just leaves the owner's profile.
+adminRouter.post('/certificates/:id/revoke', requireCsrfHeader, validateBody(adminRevokeCertificateSchema), (req, res) => {
+  const { reason } = req.body as { reason: string };
+  if (!revokeCertificate(Number(req.params.id), req.userId!, reason)) {
     res.status(404).json({ error: 'Not found.' });
     return;
   }
-  const certificateId = issueTierCertificate(row.user_id, row.tier as CertificateTier, req.userId!);
-  db.prepare(`UPDATE certificate_requests SET status = 'approved', decided_at = datetime('now'), decided_by = ? WHERE id = ?`).run(req.userId!, row.id);
-  res.json({ ok: true, certificateId });
-});
-
-adminRouter.post('/certificate-requests/:id/decline', requireCsrfHeader, (req, res) => {
-  const result = db
-    .prepare(`UPDATE certificate_requests SET status = 'declined', decided_at = datetime('now'), decided_by = ? WHERE id = ? AND status = 'pending'`)
-    .run(req.userId!, Number(req.params.id));
-  if (result.changes === 0) {
-    res.status(404).json({ error: 'Not found.' });
-    return;
-  }
-  res.json({ ok: true });
-});
-
-adminRouter.delete('/certificates/:id', requireCsrfHeader, async (req, res) => {
-  const row = db.prepare(`SELECT image_url FROM certificates WHERE id = ?`).get(Number(req.params.id)) as
-    | { image_url: string | null }
-    | undefined;
-  if (!row) {
-    res.status(404).json({ error: 'Not found.' });
-    return;
-  }
-  db.prepare(`DELETE FROM certificates WHERE id = ?`).run(Number(req.params.id));
-  await deleteCertificateImageIfAny(row.image_url);
   res.json({ ok: true });
 });
 
@@ -683,7 +683,7 @@ adminRouter.get('/dashboard', (req, res) => {
       students: count(`SELECT COUNT(*) AS n FROM users WHERE is_seed = 0 AND role = 'student'`),
       teachers: count(`SELECT COUNT(*) AS n FROM users WHERE is_seed = 0 AND role = 'teacher'`),
       videos: count(`SELECT COUNT(*) AS n FROM reels WHERE author_user_id IS NOT NULL`),
-      certificates: count(`SELECT COUNT(*) AS n FROM certificates`),
+      certificates: count(`SELECT COUNT(*) AS n FROM certificates WHERE revoked_at IS NULL`),
     },
     daily,
     xpByActivity: xpByActivitySince(since),

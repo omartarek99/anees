@@ -12,7 +12,7 @@ certificatesRouter.get('/unseen', (req, res) => {
     .prepare(
       `SELECT c.*, u.display_name as issuer_display_name FROM certificates c
        LEFT JOIN users u ON u.id = c.issued_by
-       WHERE c.user_id = ? AND c.viewed_at IS NULL
+       WHERE c.user_id = ? AND c.viewed_at IS NULL AND c.revoked_at IS NULL
        ORDER BY c.created_at ASC`
     )
     .all(req.userId!) as any[];

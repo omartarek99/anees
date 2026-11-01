@@ -1,5 +1,6 @@
 import { useLanguage } from '../lib/language-context';
 import { LegalPageShell, LegalSection } from '../components/LegalPageShell';
+import { ConductRules } from '../components/ConductRules';
 
 const EFFECTIVE_DATE = '6 September 2026';
 const EFFECTIVE_DATE_AR = '٦ سبتمبر ٢٠٢٦';
@@ -116,6 +117,7 @@ export function TermsPage() {
       {CONTENT[lang].map((s) => (
         <LegalSection key={s.heading} heading={s.heading} body={s.body} />
       ))}
+      <ConductRules />
     </LegalPageShell>
   );
 }
