@@ -56,3 +56,71 @@ export async function r2Delete(key: string): Promise<void> {
   if (!client) return;
   await client.send(new DeleteObjectCommand({ Bucket: bucket!, Key: key }));
 }
+
+type SelfTestStep = { step: string; ok: boolean; detail: string };
+
+/** What went wrong, from an S3-style error, without anything secret in it. */
+function describeError(err: unknown): string {
+  const e = err as { name?: string; Code?: string; $metadata?: { httpStatusCode?: number }; message?: string };
+  return [e?.Code ?? e?.name, e?.$metadata?.httpStatusCode ? 'HTTP ' + e.$metadata.httpStatusCode : null].filter(Boolean).join(' · ') || (e?.message ?? String(err)).slice(0, 200);
+}
+
+/**
+ * Tries what a lesson upload needs, step by step, and says which one fails (admin diagnostics, GET /api/admin/diagnostics): the keys and bucket
+ * (a direct write), the one-time link the browser will use (a signed PUT, exactly as a browser sends it), the public address the video is played
+ * from, and the bucket's CORS rule for the site. The test file is removed again. Never returns the keys.
+ * (A browser cannot tell these apart: R2's error replies carry no CORS header, so any rejection looks like "couldn't reach the storage".)
+ */
+export async function r2SelfTest(siteOrigin: string): Promise<{ configured: boolean; steps: SelfTestStep[] }> {
+  if (!r2Enabled || !client) return { configured: false, steps: [] };
+  const steps: SelfTestStep[] = [];
+  const key = `diagnostics/selftest-${Date.now()}.txt`;
+  const body = Buffer.from('anees r2 self-test');
+
+  try {
+    await client.send(new PutObjectCommand({ Bucket: bucket!, Key: key, Body: body, ContentType: 'text/plain' }));
+    steps.push({ step: '1. Keys and bucket: write a test file', ok: true, detail: 'ok' });
+  } catch (err) {
+    steps.push({
+      step: '1. Keys and bucket: write a test file',
+      ok: false,
+      detail: describeError(err) + ' -- wrong R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_ACCOUNT_ID / R2_BUCKET, or the token lacks Object Read & Write on this bucket',
+    });
+    return { configured: true, steps };
+  }
+
+  const stepName2 = '2. Upload link: send a file the way the browser does';
+  try {
+    const res = await fetch(await r2UploadUrl(key, 'text/plain', body.length), { method: 'PUT', headers: { 'Content-Type': 'text/plain' }, body });
+    steps.push({ step: stepName2, ok: res.ok, detail: res.ok ? 'ok' : 'HTTP ' + res.status + ' ' + ((await res.text()).match(/<Code>(.*?)<\/Code>/)?.[1] ?? '') });
+  } catch (err) {
+    steps.push({ step: stepName2, ok: false, detail: String(err).slice(0, 200) });
+  }
+
+  const stepName3 = '3. Public address: read the file back from R2_PUBLIC_URL';
+  try {
+    const res = await fetch(r2PublicUrl(key));
+    steps.push({
+      step: stepName3,
+      ok: res.ok,
+      detail: res.ok ? 'ok' : 'HTTP ' + res.status + ' -- is the bucket public (Public Development URL enabled, or a custom domain) and R2_PUBLIC_URL that address, with no / at the end?',
+    });
+  } catch (err) {
+    steps.push({ step: stepName3, ok: false, detail: String(err).slice(0, 200) });
+  }
+
+  const stepName4 = '4. CORS: the bucket allows the site (' + siteOrigin + ') to upload';
+  try {
+    const res = await fetch(await r2UploadUrl(key, 'text/plain', body.length), {
+      method: 'OPTIONS',
+      headers: { Origin: siteOrigin, 'Access-Control-Request-Method': 'PUT', 'Access-Control-Request-Headers': 'content-type' },
+    });
+    const allowed = res.headers.get('access-control-allow-origin');
+    steps.push({ step: stepName4, ok: allowed === siteOrigin || allowed === '*', detail: allowed ? 'ok' : 'HTTP ' + res.status + " -- add this site to the bucket's CORS rule (AllowedMethods PUT, GET, HEAD)" });
+  } catch (err) {
+    steps.push({ step: stepName4, ok: false, detail: String(err).slice(0, 200) });
+  }
+
+  await r2Delete(key).catch(() => {});
+  return { configured: true, steps };
+}

@@ -28,6 +28,8 @@ import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX } from '../lib/
 import { PLAQUE_PATH, issueRankCertificates, emailCertificate, revokeCertificate } from '../lib/rankCertificates.js';
 import { applyViolation } from '../lib/violations.js';
 import { getRankTier } from '../lib/ranks.js';
+import { r2SelfTest } from '../lib/r2.js';
+import { FRONTEND_ORIGIN } from '../lib/config.js';
 
 import type { Response } from 'express';
 
@@ -38,7 +40,7 @@ adminRouter.use(requireAuth, requireRole('admin'));
 // Admin-only: how email is configured, and the latest failures that users only see as a generic
 // message. Never returns secrets (only key lengths/prefixes and error codes).
 adminRouter.get('/diagnostics', async (_req, res) => {
-  res.json({ mail: await mailStatus(), recentIssues: recentIssues(), node: process.version, env: process.env.NODE_ENV ?? null });
+  res.json({ mail: await mailStatus(), r2: await r2SelfTest(FRONTEND_ORIGIN), recentIssues: recentIssues(), node: process.version, env: process.env.NODE_ENV ?? null });
 });
 
 // Manually kicks off a double-quiz-points window right now, on top of the automatic random
