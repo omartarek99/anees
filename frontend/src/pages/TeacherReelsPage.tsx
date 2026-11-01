@@ -1,3 +1,4 @@
+import { MAX_VIDEO_BYTES, uploadLessonVideo } from '../lib/videoUpload';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
@@ -49,9 +50,6 @@ function TeacherWatchReport() {
     </div>
   );
 }
-
-/** The most the server accepts for one lesson video (backend/src/routes/teacherReels.ts). */
-const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 
 type SubjectOption = { id: number; key: string; name: string; nameAr?: string | null; icon: string };
 
@@ -109,6 +107,8 @@ export function TeacherReelsPage() {
   const [existingVideoUrl, setExistingVideoUrl] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
+  // how the video's upload is going while saving: a percentage while it is being sent, 'checking' once it is up
+  const [uploadState, setUploadState] = useState<number | 'checking' | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   // The Create / Auto-generate buttons are far below this banner -- bring a new error into view.
   const formErrorRef = useRef<HTMLDivElement>(null);
@@ -332,9 +332,8 @@ export function TeacherReelsPage() {
       }
 
       if (videoFile) {
-        const formData = new FormData();
-        formData.append('video', videoFile);
-        await api.postForm(`/teacher-reels/${reelId}/video`, formData);
+        setUploadState(0);
+        await uploadLessonVideo(reelId, videoFile, (f) => setUploadState(Math.round(f * 100)), () => setUploadState('checking'));
       }
 
       resetForm();
@@ -344,6 +343,7 @@ export function TeacherReelsPage() {
       setFormError(translateApiError(lang, message));
     } finally {
       setSubmitting(false);
+      setUploadState(null);
     }
   }
 
@@ -547,7 +547,15 @@ export function TeacherReelsPage() {
 
           <div className="flex gap-sm">
             <button className="btn btn-primary" type="submit" disabled={submitting}>
-              {submitting ? t('teacherReels.saving') : editingId ? t('teacherReels.saveChanges') : t('teacherReels.createButton')}
+              {submitting
+                ? uploadState === 'checking'
+                  ? t('teacherReels.checkingVideo')
+                  : typeof uploadState === 'number'
+                    ? t('teacherReels.uploadingVideo', { pct: String(uploadState) })
+                    : t('teacherReels.saving')
+                : editingId
+                  ? t('teacherReels.saveChanges')
+                  : t('teacherReels.createButton')}
             </button>
             {editingId && (
               <button type="button" className="btn btn-secondary" onClick={resetForm}>
