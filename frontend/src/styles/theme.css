@@ -981,6 +981,10 @@ button.list-row.selected {
 :root[data-rank][data-theme='dark'] {
   --home-glow: color-mix(in srgb, var(--rk-b) 24%, transparent);
 }
+/* normal: the site's own colours (the picker's "Normal" button; a page with no data-rank is the same) */
+.aura-option[data-rank='normal'] {
+  --rk-a: #d43e6b; --rk-b: #f0a83a; --rk-c: #645ceb; --rk-d: #28bebe;
+}
 /* iron */
 :root[data-rank='iron'],
 .aura-option[data-rank='iron'] {
@@ -3463,4 +3467,22 @@ label,
 }
 @media (prefers-reduced-motion: reduce) {
   .rank-pop img, .rank-pop-glow { animation: none; }
+}
+
+/* ---------------- Teacher rank badges (RankBadge.tsx) ----------------
+   A teacher's badge has a steady glow in its own colour (no blinking, nothing moving). */
+.rank-shine > img {
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--shine-glow) 90%, transparent)) drop-shadow(0 3px 7px rgba(0, 0, 0, 0.35)) saturate(1.2) contrast(1.06);
+}
+
+/* the teachers' bar shows every rank in full colour (a student's greys the ones not reached yet); the current one is a little bigger */
+.medal-bar.is-teacher .medal-tier {
+  opacity: 1;
+  filter: none;
+}
+.medal-bar.is-teacher .medal-tier:not(.is-reached) {
+  opacity: 0.92;
+}
+.medal-bar.is-teacher .medal-tier.is-current img {
+  transform: scale(1.14);
 }

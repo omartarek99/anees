@@ -3,7 +3,7 @@ import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { NewsCard } from '../components/NewsCard';
-import { Topbar } from '../components/Topbar';
+import { TeacherFramedTop } from '../components/TeacherFramedTop';
 
 type NewsPost = {
   id: number;
@@ -90,7 +90,7 @@ export function TeacherHomePage() {
 
   return (
     <div className="stack">
-      <Topbar title={t('teacher.homeTitle')} subtitle={t('teacher.homeSubtitle')} />
+      <TeacherFramedTop title={t('teacher.homeTitle')} subtitle={t('teacher.homeSubtitle')} />
 
       <div className="card">
         <h3 style={{ fontSize: 16, marginBottom: 12 }}>{t('teacher.composerTitle')}</h3>

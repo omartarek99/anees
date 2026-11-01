@@ -3,6 +3,7 @@ import { m, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
+import { warningName } from '../lib/warningOrdinal';
 
 /** Pops up an admin-issued warning as a modal dialog (not just an inline banner) until the
  * account owner dismisses it -- a message serious enough for an admin to send deserves to
@@ -10,7 +11,7 @@ import { useEscapeToClose } from '../lib/useEscapeToClose';
  * nothing when there's no active warning. */
 export function WarningModal() {
   const { user, dismissWarning } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [dismissing, setDismissing] = useState(false);
   const open = !!user?.warningMessage;
 
@@ -49,7 +50,7 @@ export function WarningModal() {
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ fontSize: 44 }}>⚠️</div>
-            <h2 style={{ fontSize: 21, marginTop: 8, color: 'var(--danger)' }}>{t('warning.title')}</h2>
+            <h2 style={{ fontSize: 21, marginTop: 8, color: 'var(--danger)' }}>{user?.warningNumber ? warningName(user.warningNumber, lang) : t('warning.title')}</h2>
             <p style={{ fontSize: 15.5, lineHeight: 1.5, margin: '4px 0 0' }}>{user?.warningMessage}</p>
             <button className="btn btn-primary btn-block" style={{ marginTop: 20 }} disabled={dismissing} onClick={handleDismiss}>
               {t('common.dismiss')}

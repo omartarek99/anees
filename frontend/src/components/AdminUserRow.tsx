@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import type { Role } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { XpIcon } from './XpIcon';
+import { warningName } from '../lib/warningOrdinal';
 
 export type AdminUser = {
   id: number;
@@ -22,6 +23,9 @@ export type AdminUser = {
   emailVerified: boolean;
   warningMessage: string | null;
   warningIssuedAt: string | null;
+  warningNumber: number | null;
+  /** Every warning this account has been sent, oldest first. */
+  warnings: { number: number; message: string; issuedAt: string; issuedBy: string | null }[];
   bannedUntil: string | null;
   isBanned: boolean;
   createdAt: string;
@@ -47,7 +51,10 @@ export function AdminUserRow({
   const { t, lang } = useLanguage();
   const [expanded, setExpanded] = useState(false);
   const [rowError, setRowError] = useState<string | null>(null);
-  const [xpDraft, setXpDraft] = useState(String(u.totalXp));
+  // a teacher's points are their teacher points, everyone else's their XP
+  const points = u.role === 'teacher' ? u.teacherPoints : u.totalXp;
+  const [xpDraft, setXpDraft] = useState(String(points));
+  useEffect(() => setXpDraft(String(points)), [points]);
   const [warningDraft, setWarningDraft] = useState('');
   const [customBanDate, setCustomBanDate] = useState('');
   const [busy, setBusy] = useState(false);
@@ -193,6 +200,11 @@ export function AdminUserRow({
           <span className={`badge ${u.isActive ? 'badge-success' : 'badge-maroon'}`}>
             {u.isActive ? t('admin.statusActive') : t('admin.statusInactive')}
           </span>
+          {u.warnings.length > 0 && (
+            <span className="badge badge-maroon" title={warningName(u.warnings.length, lang)}>
+              ⚠️ {u.warnings.length}
+            </span>
+          )}
           {u.isBanned && <span className="badge badge-gold">{t('admin.bannedUntil', { date: new Date(u.bannedUntil!).toLocaleDateString(lang === 'ar' ? 'ar' : 'en-US') })}</span>}
           <button type="button" className="btn btn-secondary" disabled={isSelf} onClick={handleToggleActive}>
             {u.isActive ? t('admin.deactivateButton') : t('admin.activateButton')}
@@ -231,10 +243,17 @@ export function AdminUserRow({
 
           <div className="field" style={{ margin: 0 }}>
             <label style={{ fontSize: 13, fontWeight: 600 }}>{t('admin.warningLabel')}</label>
-            {u.warningMessage && (
-              <p className="muted" style={{ fontSize: 13, marginTop: 2 }}>
-                {t('admin.currentWarning', { message: u.warningMessage })}
-              </p>
+            {u.warnings.length > 0 && (
+              <ol className="muted" style={{ fontSize: 13, margin: '4px 0 8px', paddingInlineStart: 18 }}>
+                {u.warnings.map((w) => (
+                  <li key={w.number}>
+                    <strong>{warningName(w.number, lang)}</strong>
+                    {w.number === u.warningNumber ? ` (${t('admin.warningShowing')})` : ''}: "{w.message}" ·{' '}
+                    {new Date(w.issuedAt).toLocaleDateString(lang === 'ar' ? 'ar' : 'en-US')}
+                    {w.issuedBy ? ` · ${w.issuedBy}` : ''}
+                  </li>
+                ))}
+              </ol>
             )}
             {!isSelf && (
               <>
@@ -247,7 +266,7 @@ export function AdminUserRow({
                 />
                 <div className="flex gap-sm" style={{ marginTop: 6 }}>
                   <button type="button" className="btn btn-secondary" disabled={busy || !warningDraft.trim()} onClick={handleSendWarning}>
-                    {t('admin.sendWarningButton')}
+                    {t('admin.sendWarningButton')} · {warningName(u.warnings.length + 1, lang)}
                   </button>
                   {u.warningMessage && (
                     <button type="button" className="btn btn-secondary" disabled={busy} onClick={handleClearWarning}>

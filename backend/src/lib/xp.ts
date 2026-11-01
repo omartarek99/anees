@@ -57,7 +57,7 @@ export const TEACHER_VIDEO_MAX_COUNTED_SECONDS = 90;
 // mint leaderboard points by looping it. 300 is thirty prints, or ten full-length video uploads, a day.
 export const TEACHER_DAILY_POINT_CAP = 300;
 const teacherPointsToday = db.prepare(
-  `SELECT COALESCE(SUM(amount), 0) AS s FROM teacher_point_events WHERE user_id = ? AND created_at >= date('now')`
+  `SELECT COALESCE(SUM(amount), 0) AS s FROM teacher_point_events WHERE user_id = ? AND created_at >= date('now') AND reason != 'admin_adjust'`
 );
 
 export function awardTeacherPoints(userId: number, amount: number, reason: string) {
@@ -90,7 +90,7 @@ export function getMapLevel(userId: number): number {
 
 // A user's level grows with their points: everyone starts at level 1 and gains a level every 100 points (students, by total XP) or every
 // 20 points (teachers, by teacher points, a smaller scale like their rank ladder in lib/ranks.ts). A rank division is 250 points wide
-// (50 for teachers), so a division is two and a half levels.
+// (100 for teachers), so a division is two and a half levels.
 export const POINTS_PER_LEVEL = 100;
 export const TEACHER_POINTS_PER_LEVEL = 20;
 

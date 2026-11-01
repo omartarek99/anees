@@ -17,16 +17,20 @@ export type User = {
   teacherPoints: number;
   playerLevel: number;
   rankTier: RankTier;
-  /** The rank colour a student picked for their pages (one they have reached); null follows their current rank. */
-  auraRank?: RankKey | null;
+  /** The page colour a student picked: 'normal' (the site's own colours) or a rank they have reached; null follows their rank (see RankAura.tsx). */
+  auraRank?: RankKey | 'normal' | null;
   role: Role;
   grade: number | null;
   schoolName: string | null;
   teacherSubject: string | null;
   createdAt: string;
   warningMessage: string | null;
+  /** Which warning the one showing is (1st, 2nd ...). */
+  warningNumber?: number | null;
   /** Won the treasure battle (level 50 of the adventure map). */
   hasShield?: boolean;
+  /** False for a Google sign-up that has not yet given its name / school / grade (or ID): the app shows only the profile step until then. */
+  profileComplete?: boolean;
 };
 
 type AuthContextValue = {
@@ -51,6 +55,10 @@ type AuthContextValue = {
     lang?: 'en' | 'ar';
   }) => Promise<{ email: string; idToken: string; method: 'otp' | 'link' }>;
   login: (input: { username: string; password: string }) => Promise<void>;
+  /** Signs in (or, with a `role`, signs up) with a Firebase ID token from the Google popup. `needsRole` = a new Google account that still has to pick student / teacher. */
+  loginWithGoogle: (idToken: string, role?: 'student' | 'teacher') => Promise<{ needsRole: boolean; created: boolean }>;
+  /** The step after a Google sign-up: name, school and grade (student) or subject + ID photo (teacher). */
+  completeProfile: (input: { displayName: string; schoolName: string; grade?: number; teacherSubject?: string; idDocument?: File }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   verifyEmail: (oobCode: string) => Promise<void>;
@@ -132,6 +140,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   };
 
+  const loginWithGoogle: AuthContextValue['loginWithGoogle'] = async (idToken, role) => {
+    const data = await api.post<{ user?: User; created?: boolean; needsRole?: boolean }>('/auth/google', { idToken, role });
+    if (data.needsRole || !data.user) return { needsRole: true, created: false };
+    setUser(data.user);
+    return { needsRole: false, created: !!data.created };
+  };
+
+  const completeProfile: AuthContextValue['completeProfile'] = async (input) => {
+    const formData = new FormData();
+    formData.append('displayName', input.displayName);
+    formData.append('schoolName', input.schoolName);
+    if (input.grade !== undefined) formData.append('grade', String(input.grade));
+    if (input.teacherSubject) formData.append('teacherSubject', input.teacherSubject);
+    if (input.idDocument) formData.append('idDocument', input.idDocument);
+    const data = await api.postForm<{ user: User }>('/auth/complete-profile', formData);
+    setUser(data.user);
+  };
+
   const logout = async () => {
     await api.post('/auth/logout');
     // Both updates land in one render, so ProtectedLayout shows the landing page at "/" instead of bouncing the
@@ -162,7 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, signup, login, logout, refreshUser, verifyEmail, resendVerification, verifyOtp, dismissWarning }}
+      value={{ user, loading, signup, login, loginWithGoogle, completeProfile, logout, refreshUser, verifyEmail, resendVerification, verifyOtp, dismissWarning }}
     >
       {children}
     </AuthContext.Provider>

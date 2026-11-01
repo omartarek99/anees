@@ -374,6 +374,7 @@ export function ProfilePage() {
       )}
 
       {profile.role === 'student' && <MedalLevelBar points={profile.totalXp} />}
+      {profile.role === 'teacher' && <MedalLevelBar points={profile.teacherPoints} teacher />}
       {profile.role === 'student' && isOwnProfile && <AuraPicker />}
 
       {profile.certificates.length > 0 && (

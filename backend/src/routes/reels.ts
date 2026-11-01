@@ -4,6 +4,7 @@ import { db } from '../db/db.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { awardXp, getPlayerLevel, VIDEO_HALF_WATCH_POINTS, VIDEO_FULL_WATCH_POINTS, QUIZ_PASS_POINTS, QUIZ_FAIL_POINTS } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
+import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { getDoublePointsStatus, DOUBLE_POINTS_MULTIPLIER } from '../lib/doublePoints.js';
 
 export const reelsRouter = asyncRouter();
@@ -24,15 +25,17 @@ function visibleReel(userId: number, reelId: number): any | null {
   return user && (user.role === 'teacher' || user.grade === reel.grade) ? reel : null;
 }
 
+// `rankKey` is the rank the uploader's picture is framed with (the frame files are named after it)
 function loadAuthor(
   userId: number | null
-): { username: string; displayName: string; avatarKey: string; avatarUrl: string | null } | null {
+): { username: string; displayName: string; avatarKey: string; avatarUrl: string | null; rankKey: string } | null {
   if (!userId) return null;
-  const row = db.prepare(`SELECT username, display_name, avatar_key, avatar_url FROM users WHERE id = ?`).get(userId) as
-    | { username: string; display_name: string; avatar_key: string; avatar_url: string | null }
+  const row = db.prepare(`SELECT username, display_name, avatar_key, avatar_url, role, total_xp, teacher_points FROM users WHERE id = ?`).get(userId) as
+    | { username: string; display_name: string; avatar_key: string; avatar_url: string | null; role: string; total_xp: number; teacher_points: number }
     | undefined;
   if (!row) return null;
-  return { username: row.username, displayName: row.display_name, avatarKey: row.avatar_key, avatarUrl: row.avatar_url };
+  const rankKey = row.role === 'teacher' ? getTeacherRankTier(row.teacher_points ?? 0).key : getRankTier(row.total_xp ?? 0).key;
+  return { username: row.username, displayName: row.display_name, avatarKey: row.avatar_key, avatarUrl: row.avatar_url, rankKey };
 }
 
 function loadQuestions(reelId: number) {

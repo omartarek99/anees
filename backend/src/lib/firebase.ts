@@ -49,7 +49,7 @@ export function firebaseSignIn(email: string, password: string) {
 }
 
 export function firebaseLookup(idToken: string) {
-  return call<{ users: { email: string; emailVerified: boolean; localId: string }[] }>('lookup', {
+  return call<{ users: { email: string; emailVerified: boolean; localId: string; displayName?: string; providerUserInfo?: { providerId: string }[] }[] }>('lookup', {
     idToken,
   });
 }

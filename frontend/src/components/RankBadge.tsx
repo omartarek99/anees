@@ -1,8 +1,10 @@
+import type { CSSProperties } from 'react';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 
 export type RankTier = {
-  key: 'iron' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'warrior' | 'champion';
+  /** A student's metal (iron ... champion) or, for a teacher, teacher_teacher ... teacher_consultant: also the badge's file name */
+  key: 'iron' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'warrior' | 'champion' | `teacher_${string}`;
   /** the name already carries the division: "Silver 2" */
   name: string;
   nameAr: string;
@@ -20,12 +22,18 @@ export type RankTier = {
 export function RankBadge({ tier, size = 28, showName = true, showIcon = true }: { tier: RankTier; size?: number; showName?: boolean; showIcon?: boolean }) {
   const { lang } = useLanguage();
   const name = pickText(lang, tier.name, tier.nameAr);
+  // A teacher's badge glows in its own colour and has a light sweep gliding across it (theme.css, .rank-shine)
+  const shine = tier.key.startsWith('teacher_') && size >= 24;
+  const src = `/images/ranks/${tier.key}.webp?v=6`;
 
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
       {showIcon && (
-        <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
-          <img src={`/images/ranks/${tier.key}.webp?v=4`} width={size} height={size} alt="" decoding="async" />
+        <span
+          className={shine ? 'rank-shine' : undefined}
+          style={{ position: 'relative', display: 'inline-flex', flexShrink: 0, ...(shine ? ({ '--shine-img': `url(${src})`, '--shine-glow': tier.color } as CSSProperties) : null) }}
+        >
+          <img src={src} width={size} height={size} alt="" decoding="async" />
           {tier.division && size >= 24 && <DivisionChip tier={tier} size={size} />}
         </span>
       )}

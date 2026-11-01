@@ -6,11 +6,12 @@ import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { AuthShell } from '../components/AuthShell';
 import { OtpVerifyForm } from '../components/OtpVerifyForm';
+import { GoogleSignInButton } from '../components/GoogleSignInButton';
 
 const UNVERIFIED_ERROR = 'Please verify your email before logging in.';
 
 export function LoginPage() {
-  const { login, resendVerification } = useAuth();
+  const { login, loginWithGoogle, resendVerification } = useAuth();
   const { t, lang } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -24,6 +25,8 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+  // A Google account we don't know yet: its token is kept while the person says whether they are a student or a teacher.
+  const [googleToken, setGoogleToken] = useState<string | null>(null);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -64,6 +67,43 @@ export function LoginPage() {
     } finally {
       setResending(false);
     }
+  }
+
+  async function chooseGoogleRole(role: 'student' | 'teacher') {
+    if (!googleToken) return;
+    setError(null);
+    try {
+      await loginWithGoogle(googleToken, role);
+    } catch (err) {
+      setGoogleToken(null);
+      setError(translateApiError(lang, err instanceof ApiError ? err.message : 'Something went wrong. Please try again.'));
+    }
+  }
+
+  if (googleToken) {
+    return (
+      <AuthShell title={t('auth.googleRoleTitle')} subtitle={t('auth.googleRoleSubtitle')}>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => chooseGoogleRole('student')}>
+            {t('auth.roleStudent')}
+          </button>
+          <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => chooseGoogleRole('teacher')}>
+            {t('auth.roleTeacher')}
+          </button>
+        </div>
+        <p className="text-center muted" style={{ marginTop: 18 }}>
+          <a
+            href="/login"
+            onClick={(e) => {
+              e.preventDefault();
+              setGoogleToken(null);
+            }}
+          >
+            {t('auth.backToLogin')}
+          </a>
+        </p>
+      </AuthShell>
+    );
   }
 
   if (otpToken) {
@@ -134,6 +174,12 @@ export function LoginPage() {
           {submitting ? t('auth.loggingIn') : t('auth.loginButton')}
         </button>
       </form>
+      <div className="muted" style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '16px 0', fontSize: 13 }}>
+        <span style={{ flex: 1, height: 1, background: 'currentColor', opacity: 0.2 }} />
+        {t('auth.google_or')}
+        <span style={{ flex: 1, height: 1, background: 'currentColor', opacity: 0.2 }} />
+      </div>
+      <GoogleSignInButton label={t('auth.googleLogin')} onNeedsRole={setGoogleToken} onError={setError} />
       <p className="text-center muted" style={{ marginTop: 18 }}>
         {t('auth.newHere')} <Link to="/signup">{t('auth.createAccount')}</Link>
       </p>
