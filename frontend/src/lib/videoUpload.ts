@@ -16,8 +16,9 @@ function send(method: string, url: string, headers: Record<string, string>, body
       if (e.lengthComputable) onProgress(e.loaded / e.total);
     };
     xhr.onload = () => resolve({ status: xhr.status, body: xhr.responseText });
-    xhr.onerror = () => reject(new ApiError("We couldn't upload the video. Please try again.", 0));
-    xhr.onabort = () => reject(new ApiError("We couldn't upload the video. Please try again.", 0));
+    // no answer at all: no connection, or the storage's CORS rule does not allow this site (the browser then hides the reason)
+    xhr.onerror = () => reject(new ApiError("We couldn't reach the video storage. Please check your internet connection and try again.", 0));
+    xhr.onabort = () => reject(new ApiError("We couldn't reach the video storage. Please check your internet connection and try again.", 0));
     xhr.send(body);
   });
 }
@@ -50,7 +51,10 @@ export async function uploadLessonVideo(reelId: number, file: File, onProgress: 
   }
   if (link) {
     const sent = await send('PUT', link.signedUrl, link.headers, file, onProgress, false);
-    if (sent.status < 200 || sent.status >= 300) throw new ApiError("We couldn't upload the video. Please try again.", sent.status);
+    if (sent.status < 200 || sent.status >= 300) {
+      console.error('Video storage refused the upload:', sent.status, sent.body.slice(0, 300));
+      throw new ApiError('The video storage refused the upload. Please try again, and tell the Anees team if it keeps happening.', sent.status);
+    }
     onChecking();
     await api.post(`/teacher-reels/${reelId}/video/complete`, { path: link.path });
     return 'ready';

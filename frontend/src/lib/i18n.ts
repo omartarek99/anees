@@ -2167,6 +2167,8 @@ const apiErrorMap: Record<string, string> = {
   'This video format can not be played on every device (it is probably HEVC / H.265). Please export it as an MP4 (H.264) and upload it again.': 'لا يمكن تشغيل صيغة هذا الفيديو على كل الأجهزة (غالبًا HEVC / H.265). صدّره بصيغة MP4 (H.264) ثم ارفعه مرة أخرى.',
   "We couldn't check the uploaded video. Please try again.": 'تعذّر فحص الفيديو المرفوع. حاول مرة أخرى.',
   "We couldn't find the uploaded video. Please upload it again.": 'لم نجد الفيديو المرفوع. ارفعه مرة أخرى.',
+  "We couldn't reach the video storage. Please check your internet connection and try again.": 'تعذّر الوصول إلى مخزن الفيديو. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.',
+  'The video storage refused the upload. Please try again, and tell the Anees team if it keeps happening.': 'رفض مخزن الفيديو عملية الرفع. حاول مرة أخرى، وأبلغ فريق أنيس إن تكرر ذلك.',
   'This video is larger than 100MB. Please choose a smaller video.': 'حجم هذا الفيديو أكبر من 100 ميغابايت. اختر فيديو أصغر.',
   'Please upload a valid video (MP4, WebM, or MOV, under 100MB).':
     'يرجى تحميل فيديو صالح (MP4 أو WebM أو MOV، بحجم أقل من 100 ميغابايت).',

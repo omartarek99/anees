@@ -21,7 +21,16 @@ const endpoint = process.env.R2_ENDPOINT ?? (accountId ? `https://${accountId}.r
 export const r2Enabled = !!(accessKeyId && secretAccessKey && bucket && publicBase && endpoint);
 
 const client = r2Enabled
-  ? new S3Client({ region: 'auto', endpoint, credentials: { accessKeyId: accessKeyId!, secretAccessKey: secretAccessKey! }, forcePathStyle: true })
+  ? new S3Client({
+      region: 'auto',
+      endpoint,
+      credentials: { accessKeyId: accessKeyId!, secretAccessKey: secretAccessKey! },
+      forcePathStyle: true,
+      // Newer versions of the AWS library add a checksum of the (still unknown) body to an upload link -- of an empty file -- and R2 then rejects the real
+      // upload as not matching it. Only add checksums where an operation requires one.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
+    })
   : null;
 
 /** A one-time link the browser can PUT one file to, good for 15 minutes. The type and exact size are part of the signature, so nothing else is accepted. */
