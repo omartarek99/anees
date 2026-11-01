@@ -1,0 +1,1136 @@
+{
+  "schema": "anees.boss.fsm/1.0",
+  "meta": {
+    "id": "sandworm-sentinel",
+    "levelNumber": 5,
+    "artKey": "sandworm",
+    "mechanic": "standard",
+    "zone": "Desert Oasis",
+    "name": { "en": "Sandworm Sentinel", "ar": "حارس دودة الرمال" },
+    "mechanicName": { "en": "Steady Strikes", "ar": "ضربات ثابتة" },
+    "phases": {
+      "1": { "en": "The Steady Litany", "ar": "الوِرْدُ الثَّابِتُ" },
+      "2": { "en": "The Desecrated Meter", "ar": "الإِيقَاعُ المُدَنَّسُ" }
+    },
+    "units": "Keys ending in F are simulation frames at 60 FPS and timescale 1.0. Keys ending in R are real 60 FPS frames and are never scaled. Ms and Sec are milliseconds and seconds. Angles are degrees, distances metres.",
+    "guardLanguage": "Guards are pure expressions over ctx: dotted identifiers, numbers, quoted strings, comparison, && || !, parentheses. No calls, no assignment, no eval.",
+    "fallback": "2D BossArena when WebGL is absent or the lazy chunk fails"
+  },
+
+  "time": {
+    "fps": 60,
+    "frameMs": 16.667,
+    "bpm": 60,
+    "beatF": 60,
+    "eighthF": 30,
+    "measureF": 240,
+    "beatPositionsF": { "1": 0, "1&": 30, "2": 60, "2&": 90, "3": 120, "3&": 150, "4": 180, "4&": 210 },
+    "timescale": {
+      "normal": 1.0,
+      "question": 0.15,
+      "easeInR": 12,
+      "easeOutR": 18,
+      "easeIn": "s(i) = 1 - 0.85 * (i / 12)^2",
+      "easeOut": "s(j) = 0.15 + 0.85 * (1 - (1 - j / 18)^2)",
+      "reprisalSnapF": 3,
+      "realTimeSystems": ["ui", "inputSampling", "questionTimer", "network", "audioClock"],
+      "hitStopFreezes": ["simulation", "viewmodel"],
+      "hitStopDoesNotFreeze": ["cameraShake"]
+    }
+  },
+
+  "controls": {
+    "move": { "kbm": "W A S D", "pad": "Left stick", "touch": "Left virtual stick" },
+    "look": { "kbm": "Mouse (Pointer Lock)", "pad": "Right stick", "touch": "Drag right half" },
+    "slashThrust": { "kbm": "LMB (hold = Thrust)", "pad": "RT", "touch": "Big button (hold = Thrust)" },
+    "guardParry": { "kbm": "RMB (tap = Parry)", "pad": "LT", "touch": "Medium button" },
+    "dash": { "kbm": "Q left / E right", "pad": "LB / RB", "touch": "Two arrow buttons" },
+    "jump": { "kbm": "Space", "pad": "A", "touch": "Small button" },
+    "pause": { "kbm": "Esc", "pad": "Start", "touch": "Menu button" },
+    "answer": { "kbm": "W top, D right, S bottom, A left; or arrows; or 1-4", "pad": "Y top, B right, A bottom, X left (D-Pad mirrors)", "touch": "Tap a stone or flick from centre" }
+  },
+
+  "constants": {
+    "player": {
+      "eyeHeightM": 1.65,
+      "walkMps": 5.0,
+      "sandWalkMps": 3.75,
+      "sandDashDistanceMult": 0.75,
+      "pitchLimitDeg": 85,
+      "fovBaseDeg": 90,
+      "fovRangeDeg": [70, 110],
+      "slash": { "startupF": 10, "activeF": 6, "recoveryF": 12, "chainMax": 3, "linkWindowF": 8 },
+      "thrust": { "holdF": 30, "startupF": 16, "activeF": 6, "recoveryF": 20 },
+      "guard": { "raiseF": 6, "damageMult": 0.3, "breathCost": 15, "guardBreakStaggerF": 30, "roundedDamage": true, "appliesTo": ["SMS", "PCL"], "ignoredBy": ["PGC", "DSR", "SB", "VGL", "TR"] },
+      "parry": {
+        "windowF": 10,
+        "perfectF": 4,
+        "pressFormula": "[impactF - windowF, impactF - 1]",
+        "perfectFormula": "[impactF - perfectF, impactF - 1]",
+        "whiffRecoveryF": 24,
+        "coneDeg": 25,
+        "posture": 15,
+        "posturePerfect": 25,
+        "hitStopLandedF": 3,
+        "hitStopPerfectF": 6,
+        "maxWindowF": 18
+      },
+      "dash": { "startupF": 2, "iFramesF": [2, 13], "travelF": 14, "travelM": 3.2, "lockoutF": 36, "breathCost": 20 },
+      "jump": { "airF": 44, "aboveThresholdM": 0.6, "aboveFramesF": [8, 36], "apexM": 1.1, "bufferF": 6 },
+      "inputBufferF": { "jump": 6, "dash": 4, "slash": 4, "parry": 2, "parryNeverAcrossWhiffLockout": true }
+    },
+    "sentinel": {
+      "bodyRadiusM": 1.6,
+      "rearedEyeHeightM": 4.6,
+      "headLoweredHeightM": 1.7,
+      "gulletDiameterM": 3.6,
+      "lengthM": 38,
+      "softNeckBandM": [0.9, 1.6],
+      "blind": true
+    },
+    "arena": {
+      "pitRadiusM": 3.0,
+      "pitDepthM": 6.0,
+      "flagstoneRadiusM": [3.0, 11.0],
+      "deepSandRadiusM": [11.0, 16.0],
+      "spawn": { "radiusM": 8.0, "azimuthDeg": 180, "facing": "N" },
+      "surfacingAnchors": { "count": 12, "radiusM": 7.0 }
+    },
+    "server": {
+      "questions": 6,
+      "passRatio": 0.7,
+      "passCorrectOfTotal": 5,
+      "maxTries": 3,
+      "lockoutHours": 24,
+      "xpFirstDefeat": 300,
+      "xpReplay": 0
+    }
+  },
+
+  "meters": {
+    "vigor": { "max": 100, "beads": 10, "perBead": 10, "display": "left-wrist tasbih rosary", "burrowMend": 20, "cap": 100, "consumables": false },
+    "breath": { "max": 100, "regenPerSec": 25, "regenDelaySec": 0.5, "dashCost": 20, "guardHitCost": 15, "parryCost": 0, "jumpCost": 0 },
+    "posture": {
+      "min": 0,
+      "max": 100,
+      "decayPerSec": 4,
+      "decayDelaySec": 3,
+      "breakAt": 100,
+      "afterCorrect": 45,
+      "afterWrong": 0,
+      "sources": { "parry": 15, "perfectParry": 25, "neckSlash": 6, "neckThrust": 14, "otherPart": 1 }
+    },
+    "penance": {
+      "seals": 6,
+      "hpPercentFormula": "100 - correctAnswers * 16.667",
+      "phaseTwoAtCorrect": 3,
+      "changedBy": "Judgement only",
+      "meleeEffect": "cosmetic cracks on the current Seal"
+    }
+  },
+
+  "cameraShake": {
+    "model": "rotation = peakDeg * slider * exp(-3 * t / durationF) * noise(rateHz); overlapping presets take the stronger, never the sum; slider 0-100 percent",
+    "presets": {
+      "S1": { "name": "Tick", "peakDeg": 0.4, "durationF": 6, "rollDeg": 0, "rateHz": 28, "axis": "even" },
+      "S2": { "name": "Thud", "peakDeg": 1.2, "durationF": 12, "rollDeg": 0, "rateHz": 22, "axis": "yaw70" },
+      "S3": { "name": "Slam", "peakDeg": 3.0, "durationF": 24, "rollDeg": 0, "rateHz": 16, "axis": "pitch80" },
+      "S4": { "name": "Breach", "peakDeg": 4.5, "durationF": 36, "rollDeg": 5, "rateHz": 12, "axis": "pitch70" },
+      "S5": { "name": "Reprisal", "peakDeg": 6.0, "durationF": 45, "rollDeg": 10, "rateHz": 9, "axis": "roll+pitch" }
+    },
+    "tierRule": "A strike that does not land at full damage (dodged, guarded, parried) plays one preset lower than its hit preset; Perfect Parry plays S2 as a reward. TR and hit-stop are never tiered.",
+    "zeroPercent": "hit-stop, sparks, audio and viewmodel recoil still play"
+  },
+
+  "hitResolution": {
+    "hitTest": "Every Active frame. The first frame on which the player capsule overlaps an attack volume resolves the strike. A strike resolves at most once per Active window.",
+    "order": [
+      { "outcome": "clear", "when": "geometry check passes: PGC lateral >= 2.2 m from line centre, SB and VGL player outside ring radius, DSR feet above 0.6 m on every Active frame" },
+      { "outcome": "dodged", "when": "player.dashIFramesActive" },
+      { "outcome": "perfectParry", "when": "attack.parriable && player.parryPressedIn[impact-4, impact-1] && reticleWithinConeDeg <= 25" },
+      { "outcome": "parried", "when": "attack.parriable && player.parryPressedIn[impact-windowF, impact-1] && reticleWithinConeDeg <= 25" },
+      { "outcome": "blocked", "when": "player.guardHeld && attack.guardable; damage = round(full * 0.3); Breath -15; Guard Break if Breath < 15" },
+      { "outcome": "hit", "when": "otherwise; full damage" }
+    ],
+    "onParried": { "sentinelRecoils": true, "postureGain": 15, "hitStopF": 3, "recoveryUses": "recoveryParriedF where defined" },
+    "onPerfectParry": { "postureGain": 25, "hitStopF": 6 },
+    "onWhiffedParry": { "playerLockoutF": 24 }
+  },
+
+  "attacks": {
+    "SMS": {
+      "id": "A1",
+      "name": { "en": "Serrated Mandible Sweep", "ar": "كَنْسَةُ الفَكِّ المُسَنَّنِ" },
+      "counters": { "primary": "parry", "alsoSafe": ["block", "dash"] },
+      "parriable": true,
+      "guardable": true,
+      "hitbox": { "shape": "arc", "arcDeg": 140, "reachM": [1.2, 3.4], "heightM": [0.4, 2.0], "originSides": ["L", "R"], "headCockDeg": 35 },
+      "damage": { "full": 18, "guarded": 5 },
+      "phase1": {
+        "windUpF": 60,
+        "impactF": 60,
+        "activeF": 8,
+        "recoveryF": 54,
+        "recoveryParriedF": 90,
+        "parry": { "pressF": [50, 59], "perfectF": [56, 59] },
+        "dashPressF": [54, 58],
+        "cues": [
+          { "anchor": "T0", "offsetF": 0, "audio": "C01", "note": "chain-click" },
+          { "anchor": "impact", "offsetF": -24, "untilOffsetF": -12, "visual": "bridleBitGleam", "audio": "C02", "note": "2.6 kHz ting, head lowered to 1.7 m, jaw open 20 degrees" },
+          { "anchor": "impact", "offsetF": 0, "audio": "C01", "note": "second click is the impact" }
+        ],
+        "shake": { "hit": "S2", "guard": "S1", "parry": "S1", "perfect": "S2", "dodge": "S1" }
+      },
+      "phase2": {
+        "recoveryF": 54,
+        "recoveryParriedF": 90,
+        "plain": { "windUpF": 60, "impactF": 60, "parry": { "pressF": [50, 59], "perfectF": [56, 59] } },
+        "feint": {
+          "stallStartF": 40,
+          "stallF": 18,
+          "stallFCycles5to6": 24,
+          "impactF": 78,
+          "impactFCycles5to6": 84,
+          "falseClickF": 40,
+          "falseClickAudio": "C09",
+          "creakF": 58,
+          "creakFCycles5to6": 64,
+          "creakAudio": "C10",
+          "parry": { "pressF": [68, 77], "perfectF": [74, 77] },
+          "parryCycles5to6": { "pressF": [74, 83], "perfectF": [80, 83] },
+          "trapSlotF": [50, 59],
+          "trapOutcome": "whiff, 24 f player lockout, full damage"
+        }
+      }
+    },
+
+    "PGC": {
+      "id": "A2",
+      "name": { "en": "Piercing Gullet Charge", "ar": "انْقِضَاضُ الحَلْقِ الثَّاقِبِ" },
+      "counters": { "primary": "dash", "alsoSafe": [] },
+      "parriable": false,
+      "guardable": false,
+      "hitbox": { "shape": "line", "widthM": 3.0, "startDistanceM": 14, "lethalHalfWidthM": 2.2, "endsUprightBeyondLockM": 1.2 },
+      "damage": { "full": 22 },
+      "phase1": {
+        "windUpF": 120,
+        "impactF": 120,
+        "activeF": 24,
+        "recoveryF": 72,
+        "furrowLockF": 60,
+        "surfaceF": 85,
+        "dashPressF": [60, 118],
+        "rush": { "fromF": 85, "toF": 120, "frames": 35, "metresPerF": 0.4 },
+        "cues": [
+          { "anchor": "T0", "offsetF": 0, "untilOffsetF": 60, "audio": "C03", "visual": "furrowDraws" },
+          { "anchor": "T0", "offsetF": 60, "audio": "C04", "visual": "furrowEdgesFlashCrimson", "note": "lock; brass drone rises to impact" },
+          { "anchor": "T0", "offsetF": 85, "untilOffsetF": 120, "audio": "C05", "visual": "gulletRush" }
+        ],
+        "shake": { "hit": "S3", "guard": "S2", "dodge": "S2" }
+      },
+      "phase2": {
+        "windUpF": 96,
+        "impactF": 96,
+        "activeF": 24,
+        "recoveryF": 72,
+        "furrowLockF": 48,
+        "surfaceF": 61,
+        "dashPressF": [48, 94],
+        "rush": { "fromF": 61, "toF": 96, "frames": 35, "metresPerF": 0.4 },
+        "furrowFlashes": 2
+      }
+    },
+
+    "VGL": {
+      "id": "A3",
+      "name": { "en": "Vertical Guillotine Lunge", "ar": "هَوِيُّ المِقْصَلَةِ" },
+      "counters": { "primary": "dash", "alsoSafe": [] },
+      "parriable": false,
+      "guardable": false,
+      "unblockable": true,
+      "hitbox": { "shape": "ring", "radiusM": 2.2, "rearedEyeHeightM": 4.6, "lodgedHeadAheadM": 3.0 },
+      "damage": { "full": 30, "knockdownF": 30 },
+      "phase1": {
+        "windUpF": 120,
+        "impactF": 120,
+        "activeF": 10,
+        "recoveryF": 96,
+        "rearF": [0, 60],
+        "embersFromF": 48,
+        "ringAppearsF": 72,
+        "ringLockF": 100,
+        "dashPressF": [100, 118],
+        "cues": [
+          { "anchor": "T0", "offsetF": 48, "untilOffsetF": 120, "audio": "C06", "visual": "crimsonEmbersFromBothEyes" },
+          { "anchor": "T0", "offsetF": 72, "visual": "redRingAppearsAndFollows" },
+          { "anchor": "T0", "offsetF": 100, "audio": "C04", "visual": "ringLocks" }
+        ],
+        "shake": { "hit": "S3", "dodge": "S2" }
+      },
+      "phase2": {
+        "windUpF": 96,
+        "impactF": 96,
+        "activeF": 10,
+        "recoveryF": 96,
+        "embersFromF": 24,
+        "ringAppearsF": 48,
+        "ringLockF": 84,
+        "dashPressF": { "first": [84, 94], "echo": [120, 130] },
+        "echoSlam": { "delayF": 36, "impactF": 132, "activeF": 10, "damage": 30, "radiusM": 2.2, "zone": "dodge landing zone", "ringOutlineFromF": 96, "ringLockF": 120, "breathForTwoDashes": 40 },
+        "recoveryStartsAfter": "echoSlam active"
+      }
+    },
+
+    "DSR": {
+      "id": "A4",
+      "name": { "en": "Dune Scythe Ripple", "ar": "تَمَوُّجُ مِنْجَلِ الكَثِيبِ" },
+      "counters": { "primary": "jump", "alsoSafe": [] },
+      "parriable": false,
+      "guardable": false,
+      "hitbox": { "shape": "ridge", "heightM": 0.55, "arcWidthM": 7, "clearsWhenFeetAboveM": 0.6 },
+      "damage": { "full": 15, "sandDrag": { "moveMult": 0.7, "durationF": 60 } },
+      "phase1": {
+        "windUpF": 60,
+        "impactF": 60,
+        "activeF": 12,
+        "activeFramesF": [60, 71],
+        "recoveryF": 72,
+        "ridgeVisibleF": 24,
+        "jumpPressF": [35, 52],
+        "jumpDerivation": "P + 8 <= 60 and P + 36 >= 71",
+        "cues": [
+          { "anchor": "T0", "offsetF": 24, "untilOffsetF": 60, "audio": "C07", "visual": "crescentSlumpAndOchreCrest" }
+        ],
+        "shake": { "hit": "S2", "dodge": "S1" }
+      },
+      "phase2": {
+        "twinRidge": {
+          "ridge1ActiveF": [60, 71],
+          "ridge2OffsetF": 42,
+          "ridge2ActiveF": [102, 113],
+          "ridge2JumpPressF": [77, 94],
+          "inputBufferF": 6,
+          "scrapeRepeat": "minor third higher"
+        },
+        "windUpF": 60,
+        "recoveryF": 72
+      }
+    },
+
+    "SB": {
+      "id": "A5",
+      "name": { "en": "Subterranean Breach", "ar": "الاِنْبِثَاقُ مِنَ الجَوْفِ" },
+      "counters": { "primary": "dash", "alsoSafe": ["runOutOfRing"] },
+      "parriable": false,
+      "guardable": false,
+      "hitbox": { "shape": "ring", "radiusM": 2.4 },
+      "damage": { "full": 20 },
+      "phase1": {
+        "windUpF": 120,
+        "impactF": 120,
+        "activeF": 8,
+        "recoveryF": 60,
+        "rumbleF": 0,
+        "ringAppearsF": 54,
+        "ringLockF": 96,
+        "dashPressF": [96, 118],
+        "runOutLatestStartF": 84,
+        "cues": [
+          { "anchor": "T0", "offsetF": 0, "untilOffsetF": 96, "audio": "C08", "note": "38 Hz sub-bass panned to the eruption azimuth" },
+          { "anchor": "T0", "offsetF": 54, "visual": "dustGeyserRingWithGoldenPaper" },
+          { "anchor": "T0", "offsetF": 96, "audio": "C04", "visual": "ringLocks" }
+        ],
+        "shake": { "hit": "S4", "dodge": "S3" }
+      },
+      "phase2": {
+        "windUpF": 120,
+        "activeF": 8,
+        "recoveryF": 60,
+        "twinBreach": { "rings": 2, "separationM": 3.0, "bothLockF": 96 }
+      }
+    },
+
+    "PCL": {
+      "id": "A6",
+      "name": { "en": "Penitent's Chain Lash", "ar": "سَوْطُ السِّلْسِلَةِ" },
+      "counters": { "primary": "parry", "alsoSafe": [] },
+      "parriable": true,
+      "guardable": true,
+      "hitbox": { "shape": "chainHead", "coneDeg": 25, "origin": ["highLeft", "highRight"] },
+      "damage": { "full": 14, "guarded": 4 },
+      "phase1": null,
+      "phase2": {
+        "windUpF": 54,
+        "impactF": 54,
+        "activeF": 6,
+        "recoveryF": 48,
+        "parry": { "pressF": [44, 53], "perfectF": [50, 53] },
+        "cues": [
+          { "anchor": "T0", "offsetF": 20, "audio": "C09", "note": "false click announces the lash (Module 4 f20)" },
+          { "anchor": "impact", "offsetF": -24, "untilOffsetF": -12, "visual": "gleamOnChainHead" }
+        ],
+        "feint": {
+          "stallStartF": 40,
+          "stallF": 18,
+          "stallFCycles5to6": 24,
+          "impactF": 72,
+          "impactFCycles5to6": 78,
+          "parry": { "pressF": [62, 71], "perfectF": [68, 71] },
+          "parryCycles5to6": { "pressF": [68, 77], "perfectF": [74, 77] },
+          "trapSlotF": [44, 53]
+        },
+        "shake": { "hit": "S2", "guard": "S1", "parry": "S1", "perfect": "S2" }
+      }
+    },
+
+    "TR": {
+      "id": "P1",
+      "name": { "en": "Tail Reprisal", "ar": "قِصَاصُ الذَّنَبِ" },
+      "counters": { "primary": "none", "scripted": true },
+      "parriable": false,
+      "guardable": false,
+      "unblockable": true,
+      "damage": { "full": 30, "mercy": 15, "lostCause": 0, "finalPassingCap": "leave at least 1 Vigor" },
+      "phase1": { "windUpF": 12, "activeF": 6, "afterTimescaleSnap": true },
+      "phase2": { "windUpF": 12, "activeF": 6, "afterTimescaleSnap": true },
+      "concussion": { "durationF": 240, "blurPx": 6, "doubleVisionPx": 8, "tinnitusHz": 2800, "tinnitusFadeLastR": 60 },
+      "shake": { "hit": "S5", "tiered": false },
+      "hitStopF": 3
+    }
+  },
+
+  "litany": {
+    "cyclesPerFight": 6,
+    "questionsPerCycle": 1,
+    "versesPerCycle": 6,
+    "verseF": 240,
+    "phase1": {
+      "order": ["SMS-L", "SMS-R", "PGC", "SMS-L", "DSR", "VGL"],
+      "cycle2PlusMaySwapVerses": [3, 5],
+      "t0AtVerseStartF": 0,
+      "impactsOnBeat": true
+    },
+    "phase2": {
+      "impactFramesInVerse": [90, 210],
+      "guitarAccentsF": [0, 90, 180],
+      "chainClickLattice": "30 f offset from the beat grid",
+      "slots": { "A": { "impactF": 90 }, "B": { "impactF": 210 } },
+      "heavyAttacks": ["PGC", "VGL", "SB", "DSR"],
+      "heavySlot": "B",
+      "restBeforeHeavy": "the Slot A before a heavy is a rest, because T0 = Impact - wind-up would fall before the measure (PGC and VGL -6, SB -30)",
+      "closingNeck": "a Recovery ends on the frame before the next T0, so the neck window is cut, never overlapped",
+      "parryCancelsSlotB": true,
+      "attackPairing": "Module 4 section 4.4 Phase II cycle table, loaded by the Verse Director"
+    },
+    "cycleRule": "Exactly one question per cycle: Posture Break, or Burrow after Verse 6 if no Break occurred. A Break pre-empts a Burrow."
+  },
+
+  "question": {
+    "worldTimescale": 0.15,
+    "windowWorldSec": 6.0,
+    "relicBonusWorldSec": 1.5,
+    "scholarMult": 2,
+    "clockFormulaRealFrames": "round((windowWorldSec + relicBonusWorldSec * relicEquipped) * scholarMult * 400)",
+    "table": [
+      { "mode": "base", "worldSec": 6.0, "realSec": 40.0, "realFrames": 2400 },
+      { "mode": "relic", "worldSec": 7.5, "realSec": 50.0, "realFrames": 3000 },
+      { "mode": "scholar", "worldSec": 12.0, "realSec": 80.0, "realFrames": 4800 },
+      { "mode": "scholar+relic", "worldSec": 15.0, "realSec": 100.0, "realFrames": 6000 }
+    ],
+    "emberRedAtRealSec": 10,
+    "tick": { "hz1200": true, "intervalSecAbove10": 2.0, "intervalSecBelow10": 1.0, "intervalSecBelow3": 0.5 },
+    "prelude": { "totalR": 132, "tabletGatherR": [12, 42], "stemBurnR": [42, 102], "stonesRiseR": [102, 132], "clockStartsAt": "Tablet Ready (R132)" },
+    "commitBeat": { "worldSec": 0.4, "realFrames": 160 },
+    "answerMap": {
+      "0": { "stone": "top", "letter": { "en": "A", "ar": "أ" }, "kbm": ["KeyW", "ArrowUp", "Digit1"], "pad": ["button3", "button12"] },
+      "1": { "stone": "right", "letter": { "en": "B", "ar": "ب" }, "kbm": ["KeyD", "ArrowRight", "Digit2"], "pad": ["button1", "button15"] },
+      "2": { "stone": "bottom", "letter": { "en": "C", "ar": "ج" }, "kbm": ["KeyS", "ArrowDown", "Digit3"], "pad": ["button0", "button13"] },
+      "3": { "stone": "left", "letter": { "en": "D", "ar": "د" }, "kbm": ["KeyA", "ArrowLeft", "Digit4"], "pad": ["button2", "button14"] }
+    },
+    "inputRules": { "freshEdgeOnly": true, "simultaneousAnswersIgnored": true, "sealOnPress": true, "touchSealOnRelease": true, "mouseButtonsInert": true },
+    "gazeLeash": { "yawDeg": 30, "pitchDeg": 20 },
+    "expiry": "equals a wrong answer; /check is sent with choiceIndex -1",
+    "pause": { "clockPaused": true, "resumeGraceR": 60 },
+    "explanation": { "shownOn": "flagstones as sand-script", "afterBlurClears": true, "stayR": 720, "wordCap": 25 }
+  },
+
+  "modifiers": {
+    "chastened": {
+      "arms": "Judgement",
+      "attacks": 2,
+      "forceAttack": "SMS",
+      "originSequence": ["L", "R"],
+      "windUpF": 90,
+      "parryWindowFloorF": 14,
+      "damage": 0,
+      "feints": false,
+      "phase1T0F": 30,
+      "phase2T0F": [0, 120],
+      "breatherAfterRestoreF": 240,
+      "effectiveParryWindowF": { "none": 14, "relic": 14, "relicAndMercy": 18 }
+    },
+    "quickened": {
+      "arms": "Reprisal",
+      "attacks": 3,
+      "windUpMult": 0.8,
+      "rounding": "nearest",
+      "windUpF": { "SMS": 48, "PGC": 96, "VGL": 96, "DSR": 48, "SB": 96, "PCL": 43, "PGC_II": 77, "VGL_II": 77 },
+      "cutsLeadInOnly": true,
+      "feintStallScaled": false,
+      "parryWindowF": 10,
+      "readingGraceF": 360,
+      "firstAttackT0AfterGraceF": 12,
+      "disabledBy": ["mercy", "lostCause"]
+    },
+    "mercy": {
+      "offeredAfterFalls": 2,
+      "alsoInSettings": true,
+      "damageMult": 0.5,
+      "parryWindowBonusF": 4,
+      "quickened": false,
+      "unchanged": ["questionText", "questionWindow", "sealCount", "passRule"]
+    },
+    "scholar": { "questionTimeMult": 2, "appliesFrom": "next question" },
+    "lostCause": {
+      "triggeredBy": "second wrong or timed-out answer (best possible 4/6)",
+      "name": { "en": "Litany of Review", "ar": "وِرْدُ المُرَاجَعَةِ" },
+      "damage": false,
+      "falls": false,
+      "postureFrozen": true,
+      "sentinelOnlyBurrows": true,
+      "burrowEveryF": 600,
+      "explanationsFor": "every remaining question",
+      "endsIn": "Endures"
+    }
+  },
+
+  "relic": {
+    "key": "eye_of_the_buried_pilgrim",
+    "name": { "en": "Eye of the Buried Pilgrim", "ar": "عَيْنُ الحَاجِّ الدَّفِينِ" },
+    "grant": { "when": "/submit passed on an uncleared boss", "server": "INSERT OR IGNORE INTO user_relics", "response": "relicsGranted[]", "statusField": "GET /api/map/boss/5 relics[]" },
+    "modifiers": {
+      "parryWindowBonusF": 4,
+      "perfectParryBonusF": 0,
+      "questionWindowBonusWorldSec": 1.5,
+      "incenseNotchEveryRealSec": 10,
+      "reviewShowsLatency": true
+    },
+    "derived": {
+      "parryWindowF": 14,
+      "parryWindowMs": 233.3,
+      "perfectParryF": 4,
+      "perfectParryMs": 66.7,
+      "questionWindowWorldSec": 7.5,
+      "questionWindowRealSec": 50.0,
+      "questionWindowRealFrames": 3000,
+      "bonusRealSec": 10.0,
+      "withMercyParryWindowF": 18,
+      "withScholarQuestionRealSec": 100.0
+    },
+    "stacking": { "parry": "additive with Mercy: 10 + 4 + 4 = 18, capped at 18 (Module 4 section 4.1.1)", "time": "bonus added before the Scholar multiplier" },
+    "suppressedIn": ["trainingPost"],
+    "appliesFrom": "next question or attack after equipping",
+    "neverModifies": ["answerReveal", "questionCount", "questionOrder", "sealCount", "passRule", "grading", "xp", "damage", "posture", "perfectParryWindow", "chastenedFloor"]
+  },
+
+  "api": {
+    "headers": "same CSRF-bearing helper as the 2D BossArena",
+    "bossStatus": {
+      "method": "GET",
+      "path": "/api/map/boss/5",
+      "calledBy": "ControlsBriefing.enter",
+      "uses": ["questions[6] in served order", "battle.triesLeft", "battle.maxTries", "battle.lockedUntil", "relics[] (additive)"],
+      "errors": { "429": "lockout panel with countdown, no 3D", "403": "locked", "comingSoon": "map message" }
+    },
+    "check": {
+      "method": "POST",
+      "path": "/api/map/boss/5/check",
+      "calledBy": "QuestionActive.Sealed.enter and QuestionActive.Expired.enter",
+      "body": { "questionId": "number", "choiceIndex": "-1..3 (-1 = no answer, needs the additive backend change)" },
+      "response": ["isCorrect", "correctIndex", "explanation", "explanationAr"],
+      "attempts": 3,
+      "attemptTimeoutMs": 1500,
+      "backoffMs": 250,
+      "worstCaseMs": 5000,
+      "idempotent": true,
+      "onFailure": "QuestionActive.Silent with Retry; clock stays stopped",
+      "olderBackend400": "play Reprisal anyway; take the explanation from submit results[]"
+    },
+    "submit": {
+      "method": "POST",
+      "path": "/api/map/boss/5/submit",
+      "calledBy": "Judgement or Reprisal that resolves the final question, or the end of the Litany of Review",
+      "body": { "answers": "sealed answers only, built by the 2D BossArena helper; time-outs omitted" },
+      "response": ["passed", "correctCount", "total", "xpEarned", "results[]", "battle", "relicsGranted[] (additive)", "leveledUp", "newPlayerLevel"],
+      "retry": "never blind: re-read bossStatus and re-send only if triesLeft is unchanged; payload mirrored in sessionStorage per attempt",
+      "429": "end the fight and return to the map",
+      "serverWins": "server correctCount overrides the client tally"
+    }
+  },
+
+  "telemetry": {
+    "events": {
+      "boss_briefing_shown": { "payload": ["visit", "device", "triesLeft", "lang"], "firedBy": "ControlsBriefing.enter" },
+      "boss_briefing_confirmed": { "payload": ["device", "trainingCompleted"], "firedBy": "ControlsBriefing.exit" },
+      "question_presented": { "payload": ["questionId", "trigger", "cycle", "phase"], "firedBy": "QuestionActive.Open.enter" },
+      "question_answered": { "payload": ["questionId", "choiceIndex", "latencyMs", "timedOut", "correct"], "additive": ["checkAttempts", "checkRttMs", "scholar", "relic", "mercy"], "firedBy": "Judgement.enter or Reprisal.enter" },
+      "seal_broken": { "payload": ["n"], "additive": ["source"], "firedBy": "Judgement R66, or Execution f722 when one Seal remains" },
+      "phase_shift": { "payload": [], "firedBy": "PhaseShift.enter" },
+      "player_fall": { "payload": ["n"], "firedBy": "PlayerFall.enter" },
+      "mercy_mode": { "payload": ["accepted"], "firedBy": "mercy offer or Settings" },
+      "boss_result": { "payload": ["passed", "correctCount", "durationMs"], "additive": ["execution", "combatSummary"], "firedBy": "submit response applied" }
+    },
+    "executionAdditive": { "viewed": "boolean", "skipped": "boolean", "pullHeaves": "0-3", "drove": "boolean" },
+    "durationMsDefinition": "unpaused real milliseconds from boss_briefing_confirmed to the /submit request",
+    "transport": "batched, flushed with keepalive fetch on pagehide; feature-flagged off until the privacy review"
+  },
+
+  "neckWindow": {
+    "exposedFrom": "Recovery.enter",
+    "hiddenAt": "Recovery.exit",
+    "closingNeck": "In Phase II the next T0 ends the Recovery, so the window closes on the frame before it (Module 4 section 4.4); a parried Slot A cancels Slot B and the Sentinel re-enters at the next downbeat",
+    "postureOnHit": { "slash": 6, "thrust": 14, "elsewhere": 1 },
+    "visual": "soft neck pulses golden once per 60 f while exposed"
+  },
+
+  "pause": {
+    "triggers": ["Esc", "Start", "Menu", "pointerLockLost", "tabHidden"],
+    "timescale": 0,
+    "audioFadeTo": 0.25,
+    "audioFadeF": 12,
+    "resumeGuardF": 90,
+    "countInF": { "combat": 180, "question": 60, "execution": 60 },
+    "ui": "Controls Card in paused mode"
+  },
+
+  "globalTransitions": [
+    { "from": ["Idle", "Telegraph", "ActiveStrike", "Recovery", "Reprisal"], "to": "PlayerFall", "guard": "ctx.player.vigor <= 0", "priority": 0 },
+    { "from": ["Idle", "Telegraph", "ActiveStrike", "Recovery"], "to": "PostureBreak", "guard": "ctx.sentinel.posture >= 100 && !ctx.cycle.askedThisCycle && !ctx.score.lostCause", "priority": 1 }
+  ],
+
+  "initialState": "ControlsBriefing",
+
+  "states": {
+    "ControlsBriefing": {
+      "kind": "gate",
+      "timescale": 0,
+      "simTicks": 0,
+      "input": "ui",
+      "sentinel": "dormant",
+      "rules": { "cards": 3, "dwellMsPerCard": 3000, "dwellF": 180, "trainingSkipHoldMs": 2000, "pointerLockTimeoutF": 30, "enterButton": { "en": "Enter the Cistern", "ar": "ادخل الجُبّ" } },
+      "enter": [
+        { "api": "bossStatus" },
+        { "emit": "boss_briefing_shown", "payload": { "visit": "ctx.briefing.visit", "device": "ctx.device", "triesLeft": "ctx.battle.triesLeft", "lang": "ctx.lang" } }
+      ],
+      "exit": [
+        { "emit": "boss_briefing_confirmed", "payload": { "device": "ctx.device", "trainingCompleted": "ctx.briefing.trainingCompleted" } },
+        { "dissolveOverlayF": 18 }
+      ],
+      "audio": [],
+      "vfx": [{ "dormantHead": "half-buried, no animation" }],
+      "edu": ["rehearse Parry, Dash, Jump on the Training Post", "practice question never calls /check"],
+      "transitions": [
+        { "to": "@lockoutPanel", "guard": "ctx.api.bossStatus.status == 429", "priority": 0 },
+        { "to": "@boss2dFallback", "guard": "!ctx.webgl.ok", "priority": 0 },
+        { "to": "Idle", "guard": "ctx.briefing.confirmed && (ctx.pointerLock.ok || ctx.pointerLock.cursorSteer || ctx.device != 'kbm')", "priority": 1 }
+      ]
+    },
+
+    "Idle": {
+      "kind": "wait",
+      "timescale": 1.0,
+      "input": "combat",
+      "holdBeforeFirstVerseF": { "attemptStart": 240, "afterJudgement": 240, "afterPhaseShift": 60, "afterReprisalFromBlurClear": 360 },
+      "enter": [
+        { "if": "ctx.attempt.firstIdle", "do": [{ "vfx": "nameplateBurnsIntoFlagstones", "frames": 90 }, { "audio": "W1", "atF": 30, "fadeOutAtTelegraphF": 12 }] },
+        { "if": "ctx.verse.index == 0", "do": [{ "clear": "cycle.askedThisCycle" }] }
+      ],
+      "exit": [],
+      "audio": [{ "stems": "phase stems; cajon on quarter notes, chain-click on the lattice" }],
+      "vfx": [{ "breath": "trunk swell 3 percent over f0-f120, dust exhale at f120" }, { "beatRing": "contracts 3.0 to 0.4 degrees per 60 f" }],
+      "edu": [],
+      "transitions": [
+        { "to": "Telegraph", "guard": "ctx.verse.nextT0Reached && !ctx.score.lostCause", "priority": 2 },
+        { "to": "Burrow", "guard": "ctx.score.lostCause && ctx.review.burrowDue && ctx.score.answered < 6", "priority": 2 },
+        { "to": "Endures", "guard": "ctx.score.lostCause && ctx.score.answered == 6", "priority": 3 }
+      ]
+    },
+
+    "Telegraph": {
+      "kind": "attack",
+      "timescale": 1.0,
+      "input": "combat",
+      "durationF": "attack.windUpF, plus the feint stall when the variant has one",
+      "enter": [
+        { "set": "attack", "from": "VerseDirector.next" },
+        { "scheduleCues": "attack.cues, anchored to T0 or to Impact; Quickened and Chastened keep each cue's distance from Impact" },
+        { "if": "ctx.verse.attackInVerse == 1", "do": [{ "increment": "verse.index" }] }
+      ],
+      "exit": [],
+      "audio": ["C01 chain-click at T0 and Impact", "attack-specific cue per attacks[*].cues"],
+      "vfx": ["attack-specific tell: bronze gleam (Parry), crimson (Dash), ochre ridge (Jump), geyser ring (Breach)", "Parry-now flash on cycle 1 verses V1 and V2 only (ting f36 to f66), suppressed once a Parry has landed on this boss"],
+      "camera": "tremor ramps only (S1-capped), no hit shake",
+      "edu": [],
+      "transitions": [
+        { "to": "PostureBreak", "guard": "ctx.sentinel.posture >= 100 && !ctx.cycle.askedThisCycle && !ctx.score.lostCause", "priority": 1, "note": "a Break cancels the pending strike" },
+        { "to": "ActiveStrike", "guard": "ctx.state.frame >= ctx.attack.impactF", "priority": 2 }
+      ]
+    },
+
+    "ActiveStrike": {
+      "kind": "attack",
+      "timescale": 1.0,
+      "input": "combat",
+      "durationF": "attack.activeF; multi-hit attacks (VGL Echo Slam, DSR Twin Ridge) span first Active start to last Active end",
+      "enter": [
+        { "resolve": "hitResolution" },
+        { "shakeBy": "attack.shake[outcome]" },
+        { "hitStopF": "3 on a landed hit or parry, 6 on a Perfect Parry" }
+      ],
+      "exit": [],
+      "audio": ["C12 impact, geyser flutter or parry clash"],
+      "vfx": ["sparks on parry (40-60), sand or ichor splatter per Module 2 section 1.3"],
+      "edu": [],
+      "transitions": [
+        { "to": "PostureBreak", "guard": "ctx.sentinel.posture >= 100 && !ctx.cycle.askedThisCycle && !ctx.score.lostCause", "priority": 1 },
+        { "to": "Recovery", "guard": "ctx.state.frame >= ctx.attack.activeEndF", "priority": 2 }
+      ]
+    },
+
+    "Recovery": {
+      "kind": "attack",
+      "timescale": 1.0,
+      "input": "combat",
+      "durationF": "attack.recoveryF, or recoveryParriedF when the outcome was parried",
+      "enter": [{ "set": "sentinel.neckExposed", "value": true }],
+      "exit": [{ "set": "sentinel.neckExposed", "value": false }],
+      "audio": ["chain-click continues on the lattice"],
+      "vfx": ["soft neck pulses golden once per 60 f", "ichor streak on neck hits, sparks on other parts"],
+      "edu": [],
+      "transitions": [
+        { "to": "PostureBreak", "guard": "ctx.sentinel.posture >= 100 && !ctx.cycle.askedThisCycle && !ctx.score.lostCause", "priority": 1 },
+        { "to": "Burrow", "guard": "ctx.state.frame >= ctx.attack.recoveryDurationF && ctx.verse.index == 6 && ctx.verse.isLastAttack && ctx.sentinel.posture < 100 && !ctx.cycle.askedThisCycle", "priority": 2 },
+        { "to": "Telegraph", "guard": "ctx.sentinel.phase == 2 && ctx.verse.nextT0Reached", "priority": 3, "note": "Closing Neck: the Recovery ends here and the neck window closes" },
+        { "to": "Idle", "guard": "ctx.state.frame >= ctx.attack.recoveryDurationF", "priority": 4 }
+      ]
+    },
+
+    "PostureBreak": {
+      "kind": "questionTrigger",
+      "name": { "en": "Penitent Contemplation", "ar": "تَأَمُّلُ التَّائِبِ" },
+      "timescale": 1.0,
+      "durationF": 6,
+      "input": "none",
+      "enter": [
+        { "hitStop": "plays first and is not counted" },
+        { "set": "question.trigger", "value": "posture_break" },
+        { "discard": "buffered combat input" }
+      ],
+      "exit": [],
+      "audio": ["one bridle-bell toll", "stop cajon and chain-click; halt the music transport"],
+      "vfx": ["head snaps up and back, mandible slack"],
+      "camera": { "shake": "none until the crash" },
+      "edu": [],
+      "transitions": [
+        { "to": "QuestionActive", "guard": "ctx.state.frame >= 6 && (!ctx.player.airborne || ctx.state.waitedF >= 44)", "priority": 1, "note": "ease-in waits for landing, at most 44 f; dash velocity is damped over the 12 R drop" }
+      ]
+    },
+
+    "Burrow": {
+      "kind": "questionTrigger",
+      "name": { "en": "Subterranean Hover", "ar": "التَّحْوِيمُ الجَوْفِيُّ" },
+      "timescale": 1.0,
+      "durationF": 48,
+      "input": "combat",
+      "enter": [
+        { "heal": "vigor", "amount": 20, "cap": 100, "unless": "ctx.score.lostCause" },
+        { "set": "question.trigger", "value": "hover" },
+        { "funnel": { "spawnF": 30, "aheadM": 2.2, "widthM": 4.0, "lookPitchBiasDeg": -8 } }
+      ],
+      "exit": [{ "fadeWhispers": 12 }],
+      "audio": ["C08 38 Hz rumble panned to the funnel azimuth", "W1 at f30 and W2 at f270 on the orbit clock; hard-faded when QuestionActive begins"],
+      "vfx": ["body arcs into the sand; S2 Thud at f24 as the mass passes under the flagstones", "amber beads flare at the mend"],
+      "camera": { "shake": "S2 at f24" },
+      "edu": [],
+      "transitions": [
+        { "to": "QuestionActive", "guard": "ctx.state.frame >= 48 && (!ctx.player.airborne || ctx.state.waitedF >= 44)", "priority": 1 }
+      ]
+    },
+
+    "QuestionActive": {
+      "kind": "question",
+      "timescale": "0.15 after the 12 R ease-in",
+      "movement": "suspended",
+      "damageSourcesLive": false,
+      "input": "answerCross",
+      "enter": [
+        { "set": "cycle.askedThisCycle", "value": true },
+        { "timescaleCurve": "easeIn", "frames": 12 },
+        { "camera": { "eyeHeightM": [1.65, 1.35], "overR": 30 } },
+        { "grade": { "exposureEv": -0.4, "saturation": -0.2, "overR": 12 } },
+        { "fadeDecalsR": 18 },
+        { "fadeVignette": { "from": 0.55, "to": 0.15, "ifPhase": 2 } },
+        { "hide": "beatRing" }
+      ],
+      "exit": [],
+      "substates": {
+        "Prelude": {
+          "durationR": 132,
+          "steps": [
+            { "fromR": 12, "toR": 42, "ev": "tablet gathers from golden dust 2.2 m ahead" },
+            { "fromR": 42, "toR": 102, "ev": "stem burns in line by line; line time = 60 / lines" },
+            { "fromR": 102, "toR": 132, "ev": "answer stones rise top, right, bottom, left; 6 R apart, 12 R each" }
+          ],
+          "next": "Open"
+        },
+        "Open": {
+          "enter": [{ "emit": "question_presented", "payload": { "questionId": "ctx.question.id", "trigger": "ctx.question.trigger", "cycle": "ctx.cycle.index", "phase": "ctx.sentinel.phase" } }, { "lightIncense": true }],
+          "clockR": "question.clockFormulaRealFrames",
+          "inputs": "question.answerMap",
+          "next": { "pressed": "Sealed", "clockExpired": "Expired" }
+        },
+        "Sealed": {
+          "durationR": 160,
+          "enter": [{ "stopClock": true }, { "lockInput": true }, { "api": "check", "choiceIndex": "ctx.question.sealedIndex" }, { "viewmodel": "right arm draws the Veiled Blade back; other stones dim to 30 percent" }],
+          "weighingHold": "if no result at R160, hold the full-draw pose while attempts continue to 5.0 s",
+          "silentOverlay": { "en": "The sands are silent", "ar": "الرِّمَالُ صَامِتَةٌ", "retry": "press on the sealed stone; Esc offers Leave the cistern with no try lost" }
+        },
+        "Expired": {
+          "durationR": 160,
+          "enter": [{ "ev": "incense gutters; tablet text fades from the bottom" }, { "api": "check", "choiceIndex": -1 }]
+        }
+      },
+      "audio": ["music crossfades to the pulseless Contemplation bed on D Phrygian dominant", "world SFX rate follows timescale to a floor of 0.4, low-pass 12 kHz to 700 Hz", "incense tick real-time, 1.2 kHz, centred"],
+      "vfx": ["frozen close-up debris at 15 percent speed", "stone tablet, answer cross, forearm key-cap glyphs, incense timer"],
+      "camera": { "kneelEyeHeightM": 1.35 },
+      "edu": ["question_presented at Tablet Ready", "latencyMs measured from Tablet Ready to the seal", "aria-live mirror of the question text, no answers leaked"],
+      "transitions": [
+        { "to": "Judgement", "guard": "ctx.question.result.ready && ctx.question.result.isCorrect && ctx.state.commitDone", "priority": 1 },
+        { "to": "Reprisal", "guard": "ctx.question.result.ready && !ctx.question.result.isCorrect && ctx.state.commitDone", "priority": 1 }
+      ]
+    },
+
+    "Judgement": {
+      "kind": "resolution",
+      "name": { "en": "Judgement Strike", "ar": "ضَرْبَةُ الحُكْمِ" },
+      "timescale": "stays 0.15 through the thrust; restore begins at R66",
+      "durationR": 84,
+      "origin": "R0 = S160, the frame the correct result is applied",
+      "enter": [
+        { "emit": "question_answered", "payload": { "questionId": "ctx.question.id", "choiceIndex": "ctx.question.sealedIndex", "latencyMs": "ctx.question.latencyMs", "timedOut": false, "correct": true } },
+        { "increment": "score.answered" },
+        { "increment": "score.correct" },
+        { "if": "ctx.score.answered == ctx.score.total", "do": [{ "api": "submit" }] }
+      ],
+      "reviewVariant": { "when": "ctx.score.lostCause", "plays": "soft golden-dust ripple only; no Seal change, no Posture change, no Chastened; the timescale restore still runs R0-R18" },
+      "timelineR": [
+        { "r": 0, "ev": "chosen stone ignites gold; the other three crack and fall (R0-R11)" },
+        { "r": 0, "toR": 59, "ev": "thrust travel, 9 W / 0.15 = 60 R; camera lunges 1.2 m" },
+        { "r": 60, "ev": "contact with the eye; hit-stop 6 R; shake S3; 800 golden dust and 400 ichor particles" },
+        { "r": 66, "ev": "restore begins (18 R); Seal n shatters", "emit": "seal_broken", "payload": { "n": "ctx.score.correct", "source": "judgement" } },
+        { "r": 66, "ev": "Posture set to 45; Chastened Rhythm armed for 2 attacks" },
+        { "r": 84, "ev": "timescale 1.0; the explanation is not shown on a correct answer" }
+      ],
+      "variants": {
+        "postureBreak": { "target": "near eye of the head on the flagstones, 1.0 m above stone", "camera": { "forwardM": 1.2, "pitchDeg": -8 }, "blade": "one-handed forward thrust" },
+        "hover": { "target": "pale eye in the funnel, 0.1 m below the lip", "camera": { "forwardM": 1.2, "eyeHeightM": [1.35, 0.9], "pitchDeg": [0, -62] }, "blade": "two-handed plunging thrust" }
+      },
+      "audio": ["golden chime tail", "Phase II stems fade in at music restart when entering PhaseShift"],
+      "vfx": ["black ichor and golden dust splash; sun elevation drops 3 degrees per broken Seal"],
+      "edu": ["seal_broken", "explanation withheld; the student was right"],
+      "transitions": [
+        { "to": "PhaseShift", "guard": "ctx.state.done && ctx.score.correct == 3 && ctx.sentinel.phase == 1 && !ctx.score.lostCause", "priority": 1 },
+        { "to": "Execution", "guard": "ctx.state.done && ctx.score.answered == 6 && ctx.submit.ready && ctx.submit.passed", "priority": 2 },
+        { "to": "Endures", "guard": "ctx.state.done && ctx.score.answered == 6 && ctx.submit.ready && !ctx.submit.passed", "priority": 2 },
+        { "to": "Idle", "guard": "ctx.state.done && ctx.score.answered < 6", "priority": 3 }
+      ]
+    },
+
+    "Reprisal": {
+      "kind": "resolution",
+      "name": { "en": "Tail Reprisal", "ar": "قِصَاصُ الذَّنَبِ" },
+      "timescale": "snaps to 1.0 within 3 f",
+      "durationF": 60,
+      "origin": "f0 = S160, the frame the wrong or time-out result is applied",
+      "enter": [
+        { "emit": "question_answered", "payload": { "questionId": "ctx.question.id", "choiceIndex": "ctx.question.sealedIndex", "latencyMs": "ctx.question.latencyMs", "timedOut": "ctx.question.timedOut", "correct": false } },
+        { "increment": "score.answered" },
+        { "increment": "score.wrong" },
+        { "if": "ctx.score.wrong >= 2", "do": [{ "set": "score.lostCause", "value": true }] },
+        { "if": "ctx.score.answered == ctx.score.total", "do": [{ "api": "submit" }] }
+      ],
+      "reviewVariant": { "when": "ctx.score.lostCause", "plays": "the tail still plays as the consequence of the answer but with damage 0 and no Quickened; in later review questions a wrong answer shows only the explanation, with no tail" },
+      "timelineF": [
+        { "f": 0, "ev": "timescale 0.15 to 1.0 over 3 f; the chosen stone cracks black" },
+        { "f": 3, "ev": "TR T0; tail rises into the lower-left of the frame" },
+        { "f": 15, "toF": 20, "ev": "TR Active; Vigor loss; hit-stop 3; Posture set to 0; shake S5 (45 f); concussion begins" },
+        { "f": 60, "ev": "control returns (stagger ends)" },
+        { "f": 255, "ev": "blur clears; correct answer and explanation write themselves on the flagstones" }
+      ],
+      "damage": { "base": 30, "mercy": 15, "lostCause": 0, "finalPassingRun": "cap so Vigor stays at least 1" },
+      "afterEffects": { "quickenedAttacks": 3, "unless": ["mercy", "lostCause"], "concussion": "attacks.TR.concussion" },
+      "audio": ["C11 tail whoosh", "2.8 kHz tinnitus for 240 f, cut 12 dB under any P1 cue"],
+      "vfx": ["heavy splatter", "6 px blur, 8 px double-vision offset for 240 f; heat distortion suppressed"],
+      "camera": { "shake": "S5, never tiered down" },
+      "edu": ["explanation delivered only after the blur clears", "Lost-Cause declared when the second check result arrives"],
+      "transitions": [
+        { "to": "Execution", "guard": "ctx.state.done && ctx.score.answered == 6 && ctx.submit.ready && ctx.submit.passed", "priority": 1, "note": "Execution waits for the concussion and the 360 R Reading Grace" },
+        { "to": "Endures", "guard": "ctx.state.done && ctx.score.answered == 6 && ctx.submit.ready && !ctx.submit.passed", "priority": 1 },
+        { "to": "Idle", "guard": "ctx.state.done && ctx.score.answered < 6", "priority": 2 }
+      ]
+    },
+
+    "PhaseShift": {
+      "kind": "cinematic",
+      "timescale": 1.0,
+      "durationF": 180,
+      "damageSourcesLive": false,
+      "enter": [
+        { "emit": "phase_shift" },
+        { "set": "sentinel.phase", "value": 2 },
+        { "set": "arena.dustStorm", "value": "builds 0 to full over 180 f" }
+      ],
+      "exit": [],
+      "audio": ["Phase II stems restart at the 240 f breather mark", "storm bed band-limited 150-1800 Hz"],
+      "vfx": ["three collar plates shear off and fall", "ribbon drips double", "storm vignette opacity 0.55, peripheral visibility about 70 percent"],
+      "camera": { "shake": "S2 as each plate falls" },
+      "edu": ["phase_shift"],
+      "transitions": [
+        { "to": "Idle", "guard": "ctx.state.frame >= 180", "priority": 1 }
+      ]
+    },
+
+    "Execution": {
+      "kind": "cinematic",
+      "name": { "en": "The Fatal Execution", "ar": "الضَّرْبَةُ القَاضِيَةُ" },
+      "timescale": 1.0,
+      "durationF": 1020,
+      "durationMs": 17000,
+      "damageSourcesLive": false,
+      "failable": false,
+      "entry": {
+        "requires": "ctx.score.answered == 6 && ctx.submit.passed",
+        "from": { "Judgement": "starts at the end of the restore (R84)", "Reprisal": "waits for the 240 f concussion plus the 360 R Reading Grace" },
+        "sealsRemaining": "6 - ctx.score.correct",
+        "anchor": "nearest Surfacing Anchor to the player's azimuth; jaw chain loop 3.0 m ahead at 1.2 m height; head at 1.7 m"
+      },
+      "camera": { "base": "scripted track, FOV deltas relative to the player's FOV setting", "lookLeashDeg": { "yaw": 12, "pitch": 8 }, "lookLeashStrikeDeg": { "yaw": 6, "pitch": 4 }, "reducedMotion": "shake 0, FOV deltas halved, roll off" },
+      "segments": [
+        { "id": "E1", "name": "The Hush", "fromF": 0, "toF": 119, "beats": 2 },
+        { "id": "E2", "name": "The Approach", "fromF": 120, "toF": 299, "beats": 3 },
+        { "id": "E3", "name": "The Grapple", "fromF": 300, "toF": 419, "beats": 2 },
+        { "id": "E4", "name": "The Wrench", "fromF": 420, "toF": 599, "beats": 3 },
+        { "id": "E5", "name": "The Drive", "fromF": 600, "toF": 719, "beats": 2 },
+        { "id": "E6", "name": "The Burst", "fromF": 720, "toF": 839, "beats": 2 },
+        { "id": "E7", "name": "The Quiet", "fromF": 840, "toF": 1019, "beats": 3 }
+      ],
+      "cameraTrack": [
+        { "f": 0, "eyeM": 1.65, "pitchDeg": 0, "fovDeltaDeg": 0 },
+        { "f": 120, "eyeM": 1.65, "pitchDeg": -2, "fovDeltaDeg": 0 },
+        { "f": 240, "eyeM": 1.65, "pitchDeg": -4, "fovDeltaDeg": -2 },
+        { "f": 360, "eyeM": 1.55, "pitchDeg": -8, "fovDeltaDeg": -4, "leanForwardM": 0.5 },
+        { "f": 456, "eyeM": 1.50, "pitchDeg": -13, "fovDeltaDeg": -6 },
+        { "f": 516, "eyeM": 1.45, "pitchDeg": -18, "fovDeltaDeg": -8 },
+        { "f": 576, "eyeM": 1.40, "pitchDeg": -23, "fovDeltaDeg": -10 },
+        { "f": 660, "eyeM": 1.40, "pitchDeg": -23, "fovDeltaDeg": -14 },
+        { "f": 719, "eyeM": 1.38, "pitchDeg": -26, "fovDeltaDeg": -16 },
+        { "f": 726, "eyeM": 1.38, "pitchDeg": -24, "fovDeltaDeg": 2 },
+        { "f": 780, "eyeM": 1.40, "pitchDeg": -20, "fovDeltaDeg": 0 },
+        { "f": 840, "eyeM": 1.45, "pitchDeg": -35, "fovDeltaDeg": 0 },
+        { "f": 899, "eyeM": 1.55, "pitchDeg": -10, "fovDeltaDeg": -6 },
+        { "f": 930, "eyeM": 1.65, "pitchDeg": -10, "fovDeltaDeg": 0 },
+        { "f": 1019, "eyeM": 1.65, "pitchDeg": -32, "fovDeltaDeg": 0 }
+      ],
+      "shakeEvents": [
+        { "f": 360, "preset": "S1" }, { "f": 456, "preset": "S1" }, { "f": 516, "preset": "S2" },
+        { "f": 576, "preset": "S3" }, { "f": 660, "preset": "S3" }, { "f": 720, "preset": "S4" }
+      ],
+      "hitStops": [{ "f": 660, "frames": 6 }],
+      "agency": {
+        "failable": false,
+        "pull": {
+          "prompt": { "en": "Hold Guard to pull", "ar": "اضغط مطوّلًا على الاحتراس للسحب", "showFromF": 390, "untilF": 599, "glyphOn": "left forearm wrap" },
+          "heaves": [{ "startF": 420, "endF": 455 }, { "startF": 480, "endF": 515 }, { "startF": 540, "endF": 575 }],
+          "rule": "A heave plays its strained variant when Guard is held on its start frame +1; otherwise the auto variant. Both reach the same head pose.",
+          "strainedAdds": ["arm tremor", "camera roll 0.5 degrees at 8 Hz", "pad rumble 0.3 for 36 f", "a brighter chain-click"],
+          "telemetry": "execution.pullHeaves"
+        },
+        "drive": {
+          "prompt": { "en": "Press Slash to drive", "ar": "اضغط الضربة للطعن", "showFromF": 570, "untilF": 659, "glyphOn": "right forearm wrap" },
+          "rule": "Any Slash press in f570-f659 sets driveCommitted. The thrust launches at f636 and lands at f660 regardless.",
+          "committedAdds": ["brighter armed flash", "second pad pulse", "seam light +30 percent"],
+          "telemetry": "execution.drove"
+        },
+        "noInput": "auto-completes with the base variants at identical frames"
+      },
+      "skip": {
+        "allowedWhen": "ctx.flags.executionSeen",
+        "flag": "localStorage anees.boss5.execSeen.<userId>, written at f840, wrapped in try/catch; unavailable storage means no skip",
+        "input": { "kbm": "hold Space", "pad": "hold A", "touch": "hold the small button" },
+        "holdF": 120,
+        "holdFreeAlternative": "press twice within 2000 ms",
+        "promptAppearsAfterF": 30,
+        "availableFromF": 0,
+        "availableUntilF": 839,
+        "targetF": 840,
+        "transition": { "fadeOutF": 12, "blackHoldF": 6, "fadeInF": 12 },
+        "fastForward": "run every effect and telemetry event with f <= 840 in order without rendering, then pose the world as at f840"
+      },
+      "effects": [
+        { "f": 0, "ev": "hideSealEcho", "overF": 30 },
+        { "f": 0, "ev": "relocateToMark", "dipF": { "fadeOut": 8, "hold": 6, "fadeIn": 16 } },
+        { "f": 722, "ev": "sealBreak", "if": "ctx.execution.sealsRemaining == 1", "emit": "seal_broken", "payload": { "n": 6, "source": "execution" } },
+        { "f": 804, "ev": "relicInPalm", "set": "ctx.relic.cardPending", "value": "ctx.submit.relicsGranted.length > 0" },
+        { "f": 840, "ev": "writeExecutionSeenFlag" }
+      ],
+      "timeline": {
+        "viewmodel": [
+          { "f": 0, "clip": "lowGuardIdle" },
+          { "f": 90, "clip": "leftFingersFlex" },
+          { "f": 120, "clip": "processionGait", "footfallsF": [120, 180, 240] },
+          { "f": 270, "clip": "leftForearmRaise" },
+          { "f": 300, "clip": "leftReach", "extensionM": 0.7 },
+          { "f": 360, "clip": "leftGrip" },
+          { "f": 420, "clip": "leftHeave", "beats": 3, "fistHeightM": [1.2, 0.9] },
+          { "f": 600, "clip": "rightDraw" },
+          { "f": 630, "clip": "armedFlash" },
+          { "f": 636, "clip": "rightThrust", "travelF": 24 },
+          { "f": 666, "clip": "bladeSeat", "frames": 24 },
+          { "f": 720, "clip": "braceAndSealBurst" },
+          { "f": 780, "clip": "leftOpenChainRuns" },
+          { "f": 800, "clip": "bladeWithdraw" },
+          { "f": 804, "clip": "beadInPalm" },
+          { "f": 840, "clip": "beadRaise" },
+          { "f": 930, "clip": "beadToRosary" },
+          { "f": 990, "clip": "beadOnCord" }
+        ],
+        "sentinel": [
+          { "f": 0, "clip": "yieldPose", "headHeightM": 1.7, "distanceM": 3.0 },
+          { "f": 60, "clip": "headTurn", "yawDeg": 20 },
+          { "f": 240, "clip": "bitRattle" },
+          { "f": 300, "clip": "firstBreath" },
+          { "f": 360, "clip": "jawGroan" },
+          { "f": 420, "clip": "wrench", "headHeightsM": [1.7, 1.467, 1.233, 1.0], "heaveF": 36, "holdF": 24, "noseDownDeg": 35 },
+          { "f": 576, "clip": "platesPart", "gapM": 0.18 },
+          { "f": 580, "clip": "pilgrimGlint" },
+          { "f": 660, "clip": "glintDims", "untilF": 689 },
+          { "f": 690, "clip": "stillness" },
+          { "f": 720, "clip": "seamOpens", "gapM": [0.18, 0.5] },
+          { "f": 780, "clip": "crumble", "segments": 12, "everyF": 5, "untilF": 839 }
+        ],
+        "vfx": [
+          { "f": 0, "ev": "stormCollapse", "vignette": [0.55, 0], "overF": 60 },
+          { "f": 0, "ev": "sunDescent", "elevationDeg": [4, 0], "untilF": 720 },
+          { "f": 660, "ev": "ichorDrops", "count": 8 },
+          { "f": 690, "ev": "seamLightRamp", "opacity": [0.25, 0.6], "untilF": 719 },
+          { "f": 720, "ev": "burst", "particles": { "goldenDust": 1000, "ichor": 600, "screenDroplets": 200 }, "whiteout": { "peakOpacity": 0.55, "rampF": 12, "decayF": 48 }, "visorDecals": { "ichor": 12, "goldFlecks": 6 }, "singleRampNoStrobe": true },
+          { "f": 780, "ev": "chitinToPaleSand" },
+          { "f": 840, "ev": "firstDrip" },
+          { "f": 870, "ev": "springsOpen", "count": 12, "anchorRadiusM": 7.0, "radiusM": [0, 0.6], "untilF": 1019 },
+          { "f": 899, "ev": "beadStarGlint", "rampF": 12 },
+          { "f": 960, "ev": "allIchorDecalsGone" }
+        ],
+        "audio": [
+          { "f": 0, "cue": "musicRestart", "stems": ["oud D2 and A2"], "gainDb": -8, "note": "bar 1; no cajon, no guitar" },
+          { "f": 30, "cue": "W2", "durationF": 180, "mono": true, "pannerBypass": true, "dbfs": -24, "fadeF": 12 },
+          { "f": 120, "cue": "footfall", "everyF": 60, "count": 3 },
+          { "f": 360, "cue": "C01", "note": "first true chain-click since the question; head-locked left" },
+          { "f": 370, "cue": "brassGroan", "hz": 73.4 },
+          { "f": 420, "cue": "C01", "everyF": 60, "count": 3 },
+          { "f": 480, "cue": "cajonBassTone", "everyF": 60, "untilF": 689, "gainDb": -8 },
+          { "f": 576, "cue": "plateGrind", "untilF": 599 },
+          { "f": 580, "cue": "pilgrimTone", "hz": 880, "dbfs": -20, "untilF": 689 },
+          { "f": 636, "cue": "clothWhoosh" },
+          { "f": 660, "cue": "bladeIn", "layers": ["tileCrack", "C01"] },
+          { "f": 690, "cue": "dropout", "mutes": ["oud", "cajon", "chain"], "keeps": ["sub38Hz"], "sub38RiseDbfs": [-30, -12], "untilF": 719 },
+          { "f": 720, "cue": "burst", "layers": ["bronzeBowlD3", "dustHiss", "ichorPatter"] },
+          { "f": 720, "cue": "oudF#2", "hz": 92.5, "note": "drone lifts to D major: D2 73.42, F#2 92.50, A2 110.00" },
+          { "f": 722, "cue": "waxCrack", "khz": 1.8 },
+          { "f": 780, "cue": "chainRun", "clicks": 24, "lastF": 839, "spacingF": [1, 4] },
+          { "f": 780, "cue": "sub38Descend", "untilF": 839 },
+          { "f": 804, "cue": "beadTick" },
+          { "f": 840, "cue": "guitarNote", "notes": [{ "f": 840, "hz": 146.83 }, { "f": 900, "hz": 185.0 }, { "f": 960, "hz": 220.0 }] },
+          { "f": 840, "cue": "waterDrip" },
+          { "f": 870, "cue": "springs", "emitters": 3 },
+          { "f": 990, "cue": "beadOnCordClick" },
+          { "f": 1019, "cue": "holdChord" }
+        ]
+      },
+      "aftermath": {
+        "water": {
+          "pitFloorYM": -6.0,
+          "startF": 780,
+          "riseMetresPerSec": 0.095,
+          "riseMetresPerF": 0.0015833,
+          "yAtF1019M": -5.62,
+          "brimYM": -0.3,
+          "fullAfterF": 3600,
+          "continuesUnderResultsScreen": true,
+          "audio": "3 HRTF emitters: pit, left springs, right springs"
+        },
+        "replays": "framed as the cistern remembering (Codex 1); same cinematic, no relic card"
+      },
+      "handoff": {
+        "atF": 1020,
+        "submitDeadlineF": 900,
+        "ifSubmitMissing": "hold the f899 pose; retry with backoff over a still frame",
+        "sequence": ["relicCard when relicsGranted is non-empty", "resultsScreen"],
+        "resultsFields": ["passed", "correctCount", "total", "xpEarned", "results[]", "battle", "leveledUp", "newPlayerLevel"],
+        "xp": { "firstDefeat": 300, "replay": 0 },
+        "fadeInF": 24,
+        "canvasKeepsRunning": true
+      },
+      "edu": ["seal_broken when one Seal remains", "boss_result with the execution additive block", "results[] lists each missed question with its explanation"],
+      "transitions": [
+        { "to": "@relicCardThenResults", "guard": "ctx.state.frame >= 1020 && ctx.submit.ready", "priority": 1 }
+      ]
+    },
+
+    "Endures": {
+      "kind": "cinematic",
+      "name": { "en": "The Sentinel Endures", "ar": "الحَارِسُ البَاقِي" },
+      "timescale": 1.0,
+      "durationF": 360,
+      "damageSourcesLive": false,
+      "enter": [{ "if": "ctx.submit.pending", "do": [{ "holdStillFrame": true }] }],
+      "timelineF": [
+        { "f": 0, "ev": "light turns pale; the storm clears; HUD stays hidden" },
+        { "f": 60, "ev": "the head withdraws into the sand, unhurried" },
+        { "f": 180, "ev": "sand closes over the pit; ribbons weep gold" },
+        { "f": 300, "ev": "stillness; the lamp at the Mihrab Arch burns steady" },
+        { "f": 360, "ev": "hand-off to the results screen: missed questions with explanations, tries left, lockout countdown if any" }
+      ],
+      "audio": ["oud drone D2 and A2 only", "no whisper, no tinnitus, no cajon"],
+      "vfx": ["no violence, no shaming copy"],
+      "edu": ["boss_result", "results[] explanations lead the screen", "no relic card"],
+      "transitions": [
+        { "to": "@resultsScreen", "guard": "ctx.state.frame >= 360 && ctx.submit.ready", "priority": 1 }
+      ]
+    },
+
+    "PlayerFall": {
+      "kind": "recovery",
+      "name": { "en": "Penitent's Fall", "ar": "سَقْطَةُ التَّائِبِ" },
+      "timescale": 1.0,
+      "durationF": 150,
+      "consumesTry": false,
+      "enter": [
+        { "increment": "player.falls" },
+        { "emit": "player_fall", "payload": { "n": "ctx.player.falls" } },
+        { "sepiaFadeOutF": 90 }
+      ],
+      "timelineF": [
+        { "f": 90, "ev": "respawn at the south flagstones, radius 8.0 m, azimuth 180 degrees, facing north" },
+        { "f": 90, "ev": "Vigor 100, Breath 100, Posture 0; verse counter restarts; pending Chastened and Quickened cleared; answered questions stay final" },
+        { "f": 90, "toF": 149, "ev": "sepia fades in" }
+      ],
+      "exit": [{ "if": "ctx.player.falls == 2 && !ctx.mercy.offered", "do": [{ "offer": "mercyMode" }, { "emit": "mercy_mode", "payload": { "accepted": "ctx.mercy.accepted" } }] }],
+      "audio": ["music low-passed during the fade"],
+      "vfx": ["all decals cleared instantly"],
+      "edu": ["a pending explanation from a fatal Reprisal is written at the respawn point"],
+      "transitions": [
+        { "to": "Idle", "guard": "ctx.state.frame >= 150 && !ctx.mercy.offerOpen", "priority": 1 }
+      ]
+    }
+  }
+}
