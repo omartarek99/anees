@@ -132,7 +132,8 @@ async function pickWithAi(pool: BankLesson[], topic: string): Promise<BankLesson
     `A teacher wants questions on this lesson: "${topic}".\nBelow is the list of lessons of the school book (Arabic). Return the numbers of the 1 or 2 lessons that match it best, best first. Return an empty list if none of them matches.\n\n${list}`,
     PICK_SCHEMA,
     0,
-    12_000
+    12_000,
+    { thinking: 'minimal' } // picking from a list needs no long thinking
   );
   if (!r.ok) return [];
   const ids = (r.data as { lessons?: unknown })?.lessons;

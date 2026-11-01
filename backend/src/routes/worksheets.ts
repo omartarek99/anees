@@ -8,6 +8,7 @@ import { worksheetAiLimiter } from '../middleware/rateLimit.js';
 import { awardXp, awardTeacherPoints, TEACHER_PRINT_POINTS, WORKSHEET_XP_PER_CORRECT } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
 import { generateQuizQuestions } from '../lib/gemini.js';
+import { verifyArithmetic } from '../lib/arithmeticCheck.js';
 import { findBankMatch } from '../lib/questionBank.js';
 import { moderateContent } from '../lib/moderation.js';
 import { teacherReelQuestionSchema } from '../lib/schemas.js';
@@ -202,7 +203,10 @@ async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise
     if (valid.length === 0) {
       console.error('Gemini worksheet response had no valid questions.');
     } else {
-      for (const q of valid) {
+      for (const asked of valid) {
+        // a question that is a plain sum gets its right answer from the arithmetic itself; one with no right choice is dropped
+        const q = verifyArithmetic(asked);
+        if (!q) continue;
         if (q.correctIndex < 0 || q.correctIndex > 3 || known.has(q.questionText)) continue;
         // Nobody reviews AI output before a student sees it here (unlike the teacher
         // composer), so run the same content filter lesson text goes through.

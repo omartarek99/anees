@@ -23,6 +23,8 @@ const urlFor = (model: string) => `https://generativelanguage.googleapis.com/v1b
 // so re-asking it on every click only adds latency.
 const QUOTA_SKIP_MS = 30 * 60 * 1000;
 const quotaSkipUntil = new Map<string, number>();
+// Models that answered 400 to a thinking setting (not every model accepts every level): asked again without it, and remembered.
+const thinkingRejected = new Set<string>();
 
 // Gemini's structured-output schema is an OpenAPI-3.0-ish subset, not literal JSON Schema
 // (uppercase type names, no `minItems`/`maxItems` on arrays -- length is enforced by the
@@ -40,6 +42,8 @@ const QUESTIONS_RESPONSE_SCHEMA = {
       explanation: { type: 'STRING' },
       explanationAr: { type: 'STRING' },
     },
+    // The working (explanation) is written before the answer (correctIndex): the model solves the question in its own output first.
+    propertyOrdering: ['questionText', 'choices', 'explanation', 'correctIndex', 'questionTextAr', 'choicesAr', 'explanationAr'],
     required: ['questionText', 'questionTextAr', 'choices', 'choicesAr', 'correctIndex', 'explanation', 'explanationAr'],
   },
 };
@@ -154,11 +158,12 @@ ${params.avoidQuestions.map((q) => `- ${q}`).join('\n')}
 
 Return ONLY the JSON array, matching the provided schema exactly.`;
 
-  return callGemini(prompt, QUESTIONS_RESPONSE_SCHEMA, params.avoidQuestions && params.avoidQuestions.length > 0 ? 0.9 : 0.6);
+  // 'minimal' thinking: by default the faster models "think" for thousands of tokens before writing the questions (10s instead of 3s for five of them).
+  return callGemini(prompt, QUESTIONS_RESPONSE_SCHEMA, params.avoidQuestions && params.avoidQuestions.length > 0 ? 0.9 : 0.6, 60_000, { thinking: 'minimal' });
 }
 
 // One structured-output call down the model fallback chain; the caller validates what comes back.
-export async function callGemini(prompt: string, schema: unknown, temperature: number, budgetMs = 60_000): Promise<GeminiResult<unknown>> {
+export async function callGemini(prompt: string, schema: unknown, temperature: number, budgetMs = 60_000, options: { thinking?: 'minimal' } = {}): Promise<GeminiResult<unknown>> {
   if (!GEMINI_API_KEY) {
     return { ok: false, error: 'NOT_CONFIGURED' };
   }
@@ -177,21 +182,30 @@ export async function callGemini(prompt: string, schema: unknown, temperature: n
       let r: Response;
       let d: any;
       try {
-        r = await fetch(`${urlFor(model)}?key=${GEMINI_API_KEY}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          // A hung upstream must not hang the user's request forever.
-          signal: AbortSignal.timeout(Math.min(40_000, budget)),
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              responseMimeType: 'application/json',
-              responseSchema: schema,
-              temperature,
-            },
-          }),
-        });
+        const post = (withThinking: boolean) =>
+          fetch(`${urlFor(model)}?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            // A hung upstream must not hang the user's request forever.
+            signal: AbortSignal.timeout(Math.min(25_000, budget)), // a model that has not answered in 25s is not going to help: try the next one
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                responseMimeType: 'application/json',
+                responseSchema: schema,
+                temperature,
+                ...(withThinking ? { thinkingConfig: { thinkingLevel: options.thinking } } : {}),
+              },
+            }),
+          });
+        const useThinking = !!options.thinking && !thinkingRejected.has(model);
+        r = await post(useThinking);
         d = await r.json();
+        if (useThinking && r.status === 400 && /thinking/i.test(String(d?.error?.message ?? ''))) {
+          thinkingRejected.add(model);
+          r = await post(false);
+          d = await r.json();
+        }
       } catch {
         continue; // timeout / network blip on this model -- try the next one
       }
