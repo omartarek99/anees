@@ -24,6 +24,7 @@ import { buildReportWorkbook } from '../lib/reportExcel.js';
 import { recentIssues } from '../lib/diagnostics.js';
 import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX, deleteCertificateImageIfAny } from '../lib/certificateImage.js';
 import { PLAQUE_PATH, issueTierCertificate, requestRankCertificates, type CertificateTier } from '../lib/rankCertificates.js';
+import { getRankTier } from '../lib/ranks.js';
 
 import type { Response } from 'express';
 
@@ -552,6 +553,22 @@ adminRouter.get('/reports/export.xlsx', async (req, res) => {
   }
 });
 
+// Student XP since a date, by what earned it. The worksheet reasons ('worksheet_easy', ...) fold into one activity (their
+// difficulty split is its own chart); anything unrecognised lands in 'other'. `since` is an SQL expression, safe to interpolate.
+function xpByActivitySince(since: string) {
+  return db
+    .prepare(
+      `SELECT CASE WHEN e.reason LIKE 'worksheet_%' THEN 'worksheet'
+                   WHEN e.reason IN ('reel_watch', 'reel_quiz', 'boss_defeat', 'craft_puzzle') THEN e.reason
+                   ELSE 'other' END as activity,
+              SUM(e.amount) as xp
+       FROM xp_events e JOIN users u ON u.id = e.user_id
+       WHERE u.is_seed = 0 AND u.role = 'student' AND e.amount > 0 AND e.created_at >= ${since}
+       GROUP BY activity ORDER BY xp DESC`
+    )
+    .all() as { activity: string; xp: number }[];
+}
+
 // First-party pageview analytics (see routes/analytics.ts / schema.sql) -- top paths and a
 // daily total for the last 30 days. Intentionally just that: this is a usage-visibility
 // count, not a marketing-analytics product, so it doesn't grow into referrers/devices/funnels.
@@ -574,19 +591,7 @@ adminRouter.get('/analytics/summary', (_req, res) => {
 
   const totalViews = daily.reduce((sum, d) => sum + d.views, 0);
 
-  // Student XP in the same window, by what earned it. The worksheet reasons ('worksheet_easy', ...) fold into
-  // one activity (their difficulty split is its own chart); anything unrecognised lands in 'other'.
-  const xpByActivity = db
-    .prepare(
-      `SELECT CASE WHEN e.reason LIKE 'worksheet_%' THEN 'worksheet'
-                   WHEN e.reason IN ('reel_watch', 'reel_quiz', 'boss_defeat', 'craft_puzzle') THEN e.reason
-                   ELSE 'other' END as activity,
-              SUM(e.amount) as xp
-       FROM xp_events e JOIN users u ON u.id = e.user_id
-       WHERE u.is_seed = 0 AND u.role = 'student' AND e.amount > 0 AND e.created_at >= ${SINCE_30_DAYS}
-       GROUP BY activity ORDER BY xp DESC`
-    )
-    .all() as { activity: string; xp: number }[];
+  const xpByActivity = xpByActivitySince(SINCE_30_DAYS);
 
   const worksheetsByDifficulty = db
     .prepare(
@@ -598,4 +603,63 @@ adminRouter.get('/analytics/summary', (_req, res) => {
     .all() as { difficulty: string; submitted: number }[];
 
   res.json({ topPaths, daily, totalViews, quizzesSolved: quizzesSolvedTotal(), xpByActivity, worksheetsByDifficulty });
+});
+
+// The admin dashboard (the first admin page): headline counts, the points students earned per day and by source over the chosen
+// period, the newest accounts and the top students. Real accounts only (is_seed = 0), like every other admin number.
+const DASHBOARD_PERIODS = [7, 30, 90];
+
+adminRouter.get('/dashboard', (req, res) => {
+  const asked = Number(req.query.days);
+  const days = DASHBOARD_PERIODS.includes(asked) ? asked : 30;
+  const since = `date('now', '-${days - 1} days')`; // today plus the days before it, like SINCE_30_DAYS
+  const count = (sql: string) => (db.prepare(sql).get() as { n: number }).n;
+
+  const perDay = new Map(
+    (
+      db
+        .prepare(
+          `SELECT date(e.created_at) AS day, SUM(e.amount) AS xp
+           FROM xp_events e JOIN users u ON u.id = e.user_id
+           WHERE u.is_seed = 0 AND u.role = 'student' AND e.amount > 0 AND e.created_at >= ${since}
+           GROUP BY day`
+        )
+        .all() as { day: string; xp: number }[]
+    ).map((r) => [r.day, r.xp])
+  );
+  // Every day of the window, so a quiet day is a point on the line instead of a gap.
+  const daily = Array.from({ length: days }, (_, i) => {
+    const day = new Date(Date.now() - (days - 1 - i) * 86_400_000).toISOString().slice(0, 10);
+    return { day, xp: perDay.get(day) ?? 0 };
+  });
+
+  const person = (row: any) => ({
+    id: row.id,
+    username: row.username,
+    displayName: row.display_name,
+    avatarKey: row.avatar_key,
+    avatarUrl: row.avatar_url ?? null,
+    grade: row.grade,
+  });
+
+  const newest = db
+    .prepare(`SELECT * FROM users WHERE is_seed = 0 ORDER BY created_at DESC, id DESC LIMIT 4`)
+    .all() as any[];
+  const top = db
+    .prepare(`SELECT * FROM users WHERE is_seed = 0 AND role = 'student' ORDER BY total_xp DESC, id ASC LIMIT 3`)
+    .all() as any[];
+
+  res.json({
+    days,
+    totals: {
+      students: count(`SELECT COUNT(*) AS n FROM users WHERE is_seed = 0 AND role = 'student'`),
+      teachers: count(`SELECT COUNT(*) AS n FROM users WHERE is_seed = 0 AND role = 'teacher'`),
+      videos: count(`SELECT COUNT(*) AS n FROM reels WHERE author_user_id IS NOT NULL`),
+      certificates: count(`SELECT COUNT(*) AS n FROM certificates`),
+    },
+    daily,
+    xpByActivity: xpByActivitySince(since),
+    newest: newest.map((r) => ({ ...person(r), role: r.role, points: r.role === 'teacher' ? r.teacher_points : r.total_xp, createdAt: r.created_at })),
+    top: top.map((r) => ({ ...person(r), totalXp: r.total_xp, rankTier: getRankTier(r.total_xp) })),
+  });
 });
