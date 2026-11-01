@@ -9,6 +9,7 @@ import { moderateContent } from '../lib/moderation.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { teacherReelSchema, teacherReelQuestionSchema, generateQuestionsSchema } from '../lib/schemas.js';
 import { compressVideo } from '../lib/videoCompression.js';
+import { probeVideoUrl } from '../lib/videoProbe.js';
 import { awardTeacherPoints, teacherVideoUploadPoints } from '../lib/xp.js';
 import { VIDEO_BUCKET, VIDEO_PATH_PREFIX, deleteReelVideoIfAny } from '../lib/reelVideo.js';
 import { generateQuizQuestions } from '../lib/gemini.js';
@@ -17,9 +18,24 @@ import { aiGenerationLimiter, videoUploadLimiter } from '../middleware/rateLimit
 
 export const teacherReelsRouter = asyncRouter();
 
-// Accepted upload containers -- compression (see videoCompression.ts) always re-encodes to
-// mp4 before storage regardless of which of these the teacher uploaded, so no extension
-// mapping is needed here, just membership.
+// A lesson video up to DIRECT_VIDEO_BYTES goes from the teacher's browser straight to Supabase Storage (a one-time signed upload link from
+// POST /:id/video/upload-url), so the file never passes through Vercel or this server -- which is what made big uploads slow and, behind the host's
+// two-minute proxy limit, fail. There is no re-encoding: POST /:id/video/complete only looks at the stored file (size, type, codec, real duration) and
+// attaches it to the lesson. Supabase refuses a single file over 50MB on the free plan (a project-wide setting), so a video from there up to the 100MB
+// the app accepts goes the other way, POST /:id/video, and is compressed by this server in the background; raise DIRECT_VIDEO_BYTES (to 100MB) if the
+// Supabase plan's file size limit is raised.
+const VIDEO_TYPE_EXTENSIONS: Record<string, string> = { 'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov' };
+export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+/** The most Supabase takes in one file from the browser on the free plan is 50MB; a little under it leaves room for the upload's own overhead. */
+export const DIRECT_VIDEO_BYTES = 49 * 1024 * 1024;
+const VIDEO_TOO_LARGE = 'This video is larger than 100MB. Please choose a smaller video.';
+const VIDEO_BAD_TYPE = 'Please upload a valid video (MP4, WebM, or MOV, under 100MB).';
+// Phones record HEVC (H.265), which many browsers cannot play, and nothing re-encodes it now: ask for an H.264 / VP8 / VP9 / AV1 video instead.
+const PLAYABLE_CODECS = new Set(['h264', 'vp8', 'vp9', 'av1']);
+
+// BIG videos (over what Supabase accepts straight from the browser, see DIRECT_VIDEO_BYTES) are sent to this server instead, which compresses them in the
+// background. Accepted upload containers -- compression (see videoCompression.ts) always re-encodes to mp4 before storage regardless of which of these
+// the teacher uploaded, so no extension mapping is needed here, just membership.
 const ACCEPTED_VIDEO_MIME_TYPES = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
 
 const videoUpload = multer({
@@ -46,14 +62,20 @@ function looksLikeVideo(buffer: Buffer, mimetype: string): boolean {
   return buffer.length >= 8 && buffer.toString('ascii', 4, 8) === 'ftyp';
 }
 
-const handleVideoUpload = handleUpload(videoUpload, 'Please upload a valid video (MP4, WebM, or MOV, under 100MB).');
+const handleVideoUpload = handleUpload(
+  videoUpload,
+  'Please upload a valid video (MP4, WebM, or MOV, under 100MB).',
+  'This video is larger than 100MB. Please choose a smaller video.'
+);
 
 // An upload sits in memory (up to 100MB) and is then transcoded, so one at a time per teacher and three across
 // the server keeps RAM and ffmpeg bounded however many requests arrive. Runs before multer buffers anything.
 const uploadsInFlight = new Set<number>();
+// Teachers whose video is being compressed and stored in the background right now (the upload request has already been answered by then).
+const processingVideos = new Set<number>();
 function limitConcurrentUploads(req: Request, res: Response, next: NextFunction) {
   const userId = req.userId!;
-  if (uploadsInFlight.has(userId) || uploadsInFlight.size >= 3) {
+  if (uploadsInFlight.has(userId) || processingVideos.has(userId) || uploadsInFlight.size + processingVideos.size >= 3) {
     res.status(429).json({ error: 'An upload is already in progress. Please wait for it to finish.' });
     return;
   }
@@ -175,6 +197,7 @@ teacherReelsRouter.get('/', requireAuth, requireRole('teacher'), (req, res) => {
       title: r.title,
       titleAr: r.title_ar,
       videoUrl: r.video_url,
+      videoStatus: r.video_status ?? null,
       grade: r.grade,
       subjectName: r.subject_name,
       subjectNameAr: r.subject_name_ar,
@@ -239,6 +262,7 @@ teacherReelsRouter.get('/:id', requireAuth, requireRole('teacher'), (req, res) =
     scriptText: reel.script_text,
     scriptTextAr: reel.script_text_ar,
     videoUrl: reel.video_url,
+    videoStatus: reel.video_status ?? null,
     durationSec: reel.duration_sec,
     questions: questions.map((q) => ({
       id: q.id,
@@ -377,6 +401,117 @@ teacherReelsRouter.patch(
   }
 );
 
+// Step 1: a one-time link the browser uploads the video to. The size and type are checked here (before anything is sent) and again on the stored file.
+teacherReelsRouter.post('/:id/video/upload-url', requireAuth, requireRole('teacher'), requireCsrfHeader, videoUploadLimiter, async (req, res) => {
+  const reel = getOwnReel(Number(req.params.id), req.userId!);
+  if (!reel) {
+    res.status(404).json({ error: 'Not found.' });
+    return;
+  }
+  const { contentType, size } = (req.body ?? {}) as { contentType?: unknown; size?: unknown };
+  const extension = typeof contentType === 'string' ? VIDEO_TYPE_EXTENSIONS[contentType] : undefined;
+  if (!extension || typeof size !== 'number' || !Number.isFinite(size) || size < 1) {
+    res.status(400).json({ error: VIDEO_BAD_TYPE });
+    return;
+  }
+  if (size > MAX_VIDEO_BYTES) {
+    res.status(400).json({ error: VIDEO_TOO_LARGE });
+    return;
+  }
+  if (size > DIRECT_VIDEO_BYTES) {
+    // too big for a direct upload to Supabase: it has to be sent to POST /:id/video instead
+    res.status(400).json({ error: 'This video is too large to upload directly.' });
+    return;
+  }
+  if (!supabaseAdmin) {
+    res.status(500).json({ error: "We couldn't upload the video. Please try again." });
+    return;
+  }
+  const path = `${VIDEO_PATH_PREFIX}${reel.id}-${Date.now()}.${extension}`;
+  const { data, error } = await supabaseAdmin.storage.from(VIDEO_BUCKET).createSignedUploadUrl(path);
+  if (error || !data) {
+    console.error('Signed upload link failed:', error?.message);
+    res.status(500).json({ error: "We couldn't upload the video. Please try again." });
+    return;
+  }
+  res.json({ signedUrl: data.signedUrl, path });
+});
+
+// Step 2: the browser has uploaded the file; check what was actually stored, and only then attach it to the lesson. A file that fails is removed.
+teacherReelsRouter.post('/:id/video/complete', requireAuth, requireRole('teacher'), requireCsrfHeader, async (req, res) => {
+  const reel = getOwnReel(Number(req.params.id), req.userId!);
+  if (!reel) {
+    res.status(404).json({ error: 'Not found.' });
+    return;
+  }
+  const { path } = (req.body ?? {}) as { path?: unknown };
+  // only a file made for THIS lesson by the link above: teacher-reels/<lessonId>-<time>.<ext>
+  if (typeof path !== 'string' || !new RegExp(`^${VIDEO_PATH_PREFIX}${reel.id}-\\d+\\.(mp4|webm|mov)$`).test(path)) {
+    res.status(400).json({ error: VIDEO_BAD_TYPE });
+    return;
+  }
+  if (!supabaseAdmin) {
+    res.status(500).json({ error: "We couldn't upload the video. Please try again." });
+    return;
+  }
+  const storage = supabaseAdmin.storage.from(VIDEO_BUCKET);
+  const reject = async (status: number, error: string) => {
+    await storage.remove([path]);
+    res.status(status).json({ error });
+  };
+
+  const publicUrl = storage.getPublicUrl(path).data.publicUrl;
+  let head: globalThis.Response;
+  try {
+    head = await fetch(publicUrl, { method: 'HEAD' });
+  } catch {
+    res.status(502).json({ error: "We couldn't check the uploaded video. Please try again." });
+    return;
+  }
+  if (!head.ok) {
+    res.status(400).json({ error: "We couldn't find the uploaded video. Please upload it again." });
+    return;
+  }
+  const bytes = Number(head.headers.get('content-length') ?? 0);
+  if (bytes > MAX_VIDEO_BYTES) {
+    await reject(400, VIDEO_TOO_LARGE);
+    return;
+  }
+  // the bucket is public, so what is served must be a video and nothing else (a web page would otherwise be served from the storage domain)
+  if (!(head.headers.get('content-type') ?? '').startsWith('video/')) {
+    await reject(400, VIDEO_BAD_TYPE);
+    return;
+  }
+
+  let probe;
+  try {
+    probe = await probeVideoUrl(publicUrl);
+  } catch (err) {
+    console.error('Video probe failed:', err instanceof Error ? err.message : err);
+    res.status(502).json({ error: "We couldn't check the uploaded video. Please try again." });
+    return;
+  }
+  if (!probe.videoCodec || !probe.durationSeconds || probe.durationSeconds <= 0) {
+    await reject(400, "We couldn't read this video. Please try a different file.");
+    return;
+  }
+  if (!PLAYABLE_CODECS.has(probe.videoCodec)) {
+    await reject(400, 'This video format can not be played on every device (it is probably HEVC / H.265). Please export it as an MP4 (H.264) and upload it again.');
+    return;
+  }
+
+  await deleteReelVideoIfAny(reel.video_url);
+  // The real, measured video duration replaces whatever placeholder duration the teacher's composer form had -- it drives the reel's progress bar
+  // and the watch-points thresholds (routes/reels.ts POST /:reelId/watch), so it has to match the actual file, not a guess.
+  db.prepare(`UPDATE reels SET video_url = ?, duration_sec = ?, video_status = 'ready' WHERE id = ?`).run(publicUrl, Math.round(probe.durationSeconds), reel.id);
+  // 10 teacher points per 30s of real video duration, capped at 90s counted (see lib/xp.ts) -- awarded on every successful upload, including
+  // replacing an existing video, same as every other point source in this app pays out per action.
+  const points = teacherVideoUploadPoints(probe.durationSeconds);
+  if (points > 0) awardTeacherPoints(req.userId!, points, 'video_upload');
+  res.json({ videoUrl: publicUrl });
+});
+
+// BIG videos (over DIRECT_VIDEO_BYTES): received here, answered at once, then compressed and stored in the background (reels.video_status).
 teacherReelsRouter.post(
   '/:id/video',
   requireAuth,
@@ -401,52 +536,55 @@ teacherReelsRouter.post(
       return;
     }
 
-    let compressed: Buffer;
-    let durationSeconds: number | null;
-    try {
-      ({ buffer: compressed, durationSeconds } = await compressVideo(video.buffer));
-    } catch (err) {
-      console.error('Video compression failed:', err instanceof Error ? err.message : err);
-      res.status(500).json({ error: "We couldn't process the video. Please try a different file." });
-      return;
-    }
+    // Compressing and storing a video takes a while (minutes on a small server), longer than the host in front of the API waits for an answer, so
+    // the request is answered right away and the work carries on in the background: reels.video_status says how it is going, and the lesson list polls it.
+    db.prepare(`UPDATE reels SET video_status = 'processing' WHERE id = ?`).run(reel.id);
+    processingVideos.add(req.userId!);
+    res.status(202).json({ status: 'processing' });
+    void processVideoUpload(reel.id, req.userId!, video.buffer);
+  }
+);
+
+/** The background half of a video upload: compress it, store it, then point the lesson at it (and pay the teacher for it). */
+async function processVideoUpload(reelId: number, userId: number, original: Buffer) {
+  try {
+    if (!supabaseAdmin) throw new Error('storage not configured');
+    const { buffer: compressed, durationSeconds } = await compressVideo(original);
 
     // Compression always outputs mp4 (see videoCompression.ts) regardless of the original
     // container, so the stored file's extension/content-type reflect that, not the upload.
-    const path = `${VIDEO_PATH_PREFIX}${reel.id}-${Date.now()}.mp4`;
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from(VIDEO_BUCKET)
-      .upload(path, compressed, { contentType: 'video/mp4' });
-    if (uploadError) {
-      console.error('Video upload failed:', uploadError.message);
-      res.status(500).json({ error: "We couldn't upload the video. Please try again." });
-      return;
-    }
-
+    const path = `${VIDEO_PATH_PREFIX}${reelId}-${Date.now()}.mp4`;
+    const { error: uploadError } = await supabaseAdmin.storage.from(VIDEO_BUCKET).upload(path, compressed, { contentType: 'video/mp4' });
+    if (uploadError) throw new Error(`storage upload: ${uploadError.message}`);
     const { data: publicUrlData } = supabaseAdmin.storage.from(VIDEO_BUCKET).getPublicUrl(path);
 
-    await deleteReelVideoIfAny(reel.video_url);
+    const current = db.prepare(`SELECT video_url FROM reels WHERE id = ?`).get(reelId) as { video_url: string | null } | undefined;
+    if (!current) {
+      // the lesson was deleted while its video was being processed: nothing to attach it to
+      await supabaseAdmin.storage.from(VIDEO_BUCKET).remove([path]);
+      return;
+    }
+    await deleteReelVideoIfAny(current.video_url);
     // The real, measured video duration replaces whatever placeholder duration the teacher's
     // composer form had -- it drives the reel's progress bar and the watch-points thresholds
     // (routes/reels.ts POST /:reelId/watch), so it has to match the actual file, not a guess.
     if (durationSeconds !== null && durationSeconds > 0) {
-      db.prepare(`UPDATE reels SET video_url = ?, duration_sec = ? WHERE id = ?`).run(
-        publicUrlData.publicUrl,
-        Math.round(durationSeconds),
-        reel.id
-      );
+      db.prepare(`UPDATE reels SET video_url = ?, duration_sec = ?, video_status = 'ready' WHERE id = ?`).run(publicUrlData.publicUrl, Math.round(durationSeconds), reelId);
       // 10 teacher points per 30s of real video duration, capped at 90s counted (see
       // lib/xp.ts) -- awarded on every successful upload, including replacing an
       // existing video, same as every other point source in this app pays out per action.
       const points = teacherVideoUploadPoints(durationSeconds);
-      if (points > 0) awardTeacherPoints(req.userId!, points, 'video_upload');
+      if (points > 0) awardTeacherPoints(userId, points, 'video_upload');
     } else {
-      db.prepare(`UPDATE reels SET video_url = ? WHERE id = ?`).run(publicUrlData.publicUrl, reel.id);
+      db.prepare(`UPDATE reels SET video_url = ?, video_status = 'ready' WHERE id = ?`).run(publicUrlData.publicUrl, reelId);
     }
-
-    res.json({ videoUrl: publicUrlData.publicUrl });
+  } catch (err) {
+    console.error('Video processing failed:', err instanceof Error ? err.message : err);
+    db.prepare(`UPDATE reels SET video_status = 'failed' WHERE id = ?`).run(reelId);
+  } finally {
+    processingVideos.delete(userId);
   }
-);
+}
 
 teacherReelsRouter.delete('/:id', requireAuth, requireRole('teacher'), requireCsrfHeader, async (req, res) => {
   const reel = getOwnReel(Number(req.params.id), req.userId!);

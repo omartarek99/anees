@@ -1,3 +1,4 @@
+import { MAX_VIDEO_BYTES, uploadLessonVideo } from '../lib/videoUpload';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
@@ -57,6 +58,8 @@ type ReelSummary = {
   title: string;
   titleAr?: string | null;
   videoUrl: string | null;
+  /** How the last video upload is going: still being processed in the background, stored, or failed (null: none uploaded). */
+  videoStatus: 'processing' | 'ready' | 'failed' | null;
   grade: number;
   subjectName: string;
   subjectNameAr?: string | null;
@@ -104,6 +107,8 @@ export function TeacherReelsPage() {
   const [existingVideoUrl, setExistingVideoUrl] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
+  // how the video's upload is going while saving: a percentage while it is being sent, 'checking' once it is up
+  const [uploadState, setUploadState] = useState<number | 'checking' | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   // The Create / Auto-generate buttons are far below this banner -- bring a new error into view.
   const formErrorRef = useRef<HTMLDivElement>(null);
@@ -134,6 +139,15 @@ export function TeacherReelsPage() {
     loadReels();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A video is compressed in the background after the upload is accepted: keep checking the list until none is still processing.
+  const anyProcessing = !!reels?.some((r) => r.videoStatus === 'processing');
+  useEffect(() => {
+    if (!anyProcessing) return;
+    const timer = window.setTimeout(loadReels, 4000);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anyProcessing, reels]);
 
   function resetForm() {
     setEditingId(null);
@@ -282,6 +296,10 @@ export function TeacherReelsPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setFormError(null);
+    if (videoFile && videoFile.size > MAX_VIDEO_BYTES) {
+      setFormError(t('teacherReels.videoTooLarge'));
+      return;
+    }
     setSubmitting(true);
     try {
       const payload = {
@@ -314,9 +332,8 @@ export function TeacherReelsPage() {
       }
 
       if (videoFile) {
-        const formData = new FormData();
-        formData.append('video', videoFile);
-        await api.postForm(`/teacher-reels/${reelId}/video`, formData);
+        setUploadState(0);
+        await uploadLessonVideo(reelId, videoFile, (f) => setUploadState(Math.round(f * 100)), () => setUploadState('checking'));
       }
 
       resetForm();
@@ -326,6 +343,7 @@ export function TeacherReelsPage() {
       setFormError(translateApiError(lang, message));
     } finally {
       setSubmitting(false);
+      setUploadState(null);
     }
   }
 
@@ -406,7 +424,18 @@ export function TeacherReelsPage() {
               id="reelVideo"
               type="file"
               accept="video/mp4,video/webm,video/quicktime"
-              onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+                if (file && file.size > MAX_VIDEO_BYTES) {
+                  // too big: say so now, and drop the choice so it can't be sent
+                  setFormError(t('teacherReels.videoTooLarge'));
+                  e.target.value = '';
+                  setVideoFile(null);
+                  return;
+                }
+                setFormError(null);
+                setVideoFile(file);
+              }}
             />
             <small className="muted">{t('teacherReels.videoHint')}</small>
             {existingVideoUrl && !videoFile && (
@@ -518,7 +547,15 @@ export function TeacherReelsPage() {
 
           <div className="flex gap-sm">
             <button className="btn btn-primary" type="submit" disabled={submitting}>
-              {submitting ? t('teacherReels.saving') : editingId ? t('teacherReels.saveChanges') : t('teacherReels.createButton')}
+              {submitting
+                ? uploadState === 'checking'
+                  ? t('teacherReels.checkingVideo')
+                  : typeof uploadState === 'number'
+                    ? t('teacherReels.uploadingVideo', { pct: String(uploadState) })
+                    : t('teacherReels.saving')
+                : editingId
+                  ? t('teacherReels.saveChanges')
+                  : t('teacherReels.createButton')}
             </button>
             {editingId && (
               <button type="button" className="btn btn-secondary" onClick={resetForm}>
@@ -550,6 +587,12 @@ export function TeacherReelsPage() {
                     questions: String(reel.questionCount),
                   })}
                 </p>
+                {reel.videoStatus === 'processing' && (
+                  <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--gold-dark, #b07a10)' }}>⏳ {t('teacherReels.videoProcessing')}</p>
+                )}
+                {reel.videoStatus === 'failed' && (
+                  <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--danger)' }}>⚠️ {t('teacherReels.videoFailed')}</p>
+                )}
               </div>
               <div className="flex gap-sm">
                 <button type="button" className="btn btn-secondary" onClick={() => handleEdit(reel.id)}>
