@@ -21,6 +21,7 @@ import { ChallengeHost } from './components/ChallengeHost';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { GuideHost } from './components/GuideHost';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { CompleteProfilePage } from './pages/CompleteProfilePage';
 import { TermsPage } from './pages/TermsPage';
 import { CookiePolicyPage } from './pages/CookiePolicyPage';
 import { LoginPage } from './pages/LoginPage';
@@ -125,6 +126,8 @@ function ProtectedLayout() {
   if (loading) return <FullScreenLoader />;
   // A visitor who isn't signed in lands on the public landing page at "/"; any other private URL still goes to login.
   if (!user) return pathname === '/' ? <LandingPage /> : <Navigate to="/login" replace />;
+  // A Google sign-up has to give its name / school / grade (and a teacher's ID) before anything else.
+  if (user.profileComplete === false) return <CompleteProfilePage />;
   // Reels is a full-viewport, TikTok-style feed (see ReelsPage's own negative-margin/100vh
   // sizing) -- a footer peeking in below it would just reintroduce the page scroll that
   // sizing is specifically trying to avoid, and a persistent footer has no place in an

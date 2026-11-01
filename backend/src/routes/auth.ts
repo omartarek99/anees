@@ -7,7 +7,7 @@ import { moderateText } from '../lib/moderation.js';
 import { validateBody, requireCsrfHeader, handleUpload } from '../middleware/validate.js';
 import { authLimiter } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
-import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema, changePasswordSchema, forgotPasswordSchema, resetPasswordSchema } from '../lib/schemas.js';
+import { googleAuthSchema, completeStudentProfileSchema, completeTeacherProfileSchema, signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema, changePasswordSchema, forgotPasswordSchema, resetPasswordSchema } from '../lib/schemas.js';
 import { getPlayerLevel } from '../lib/xp.js';
 import { hasShield } from '../lib/battle.js';
 import { earnedAuraRank, getRankTier, getTeacherRankTier } from '../lib/ranks.js';
@@ -28,6 +28,7 @@ import { recordIssue } from '../lib/diagnostics.js';
 import { getFirebaseAdminAuth } from '../lib/firebaseAdmin.js';
 import { encrypt, decrypt, hashForLookup } from '../lib/encryption.js';
 import { BCRYPT_COST } from '../lib/password.js';
+import { createGoogleUser, findGoogleUser, verifyGoogleToken } from '../lib/googleAuth.js';
 
 export const authRouter = asyncRouter();
 
@@ -95,6 +96,8 @@ function publicUser(user: any) {
     createdAt: user.created_at,
     warningMessage: user.warning_message ?? null,
     hasShield: hasShield(user.id),
+    // false for a Google sign-up that has not given its name / school / grade (or ID) yet: the app shows the profile step until then
+    profileComplete: user.profile_complete !== 0,
   };
 }
 
@@ -339,6 +342,124 @@ authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSche
   res.cookie(SESSION_COOKIE, token, cookieOptions);
   const updated = db.prepare(`SELECT * FROM users WHERE id = ?`).get(user.id);
   res.json({ user: publicUser(updated) });
+});
+
+// Sign up or sign in with Google. A person who already has an account is signed in; a new one needs `role` (student / teacher) -- without it we answer
+// needsRole so the page can ask -- and gets an account that is held on the profile step (see lib/googleAuth.ts).
+authRouter.post('/google', authLimiter, requireCsrfHeader, validateBody(googleAuthSchema), async (req, res) => {
+  const { idToken, role } = req.body as { idToken: string; role?: 'student' | 'teacher' };
+  const verified = await verifyGoogleToken(idToken);
+  if (!verified.ok) {
+    if (verified.error !== 'NOT_GOOGLE' && verified.error !== 'EMAIL_NOT_VERIFIED') console.error('Google sign-in could not be verified:', verified.error);
+    if (verified.error === 'NOT_CONFIGURED') {
+      res.status(503).json({ error: 'Google sign-in is not available right now.' });
+      return;
+    }
+    res.status(401).json({ error: "We couldn't verify your Google account. Please try again." });
+    return;
+  }
+
+  let user = findGoogleUser(verified.identity);
+  let created = false;
+  if (!user) {
+    if (!role) {
+      res.json({ needsRole: true });
+      return;
+    }
+    const id = createGoogleUser(verified.identity, role);
+    user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(id);
+    created = true;
+  } else if (!user.firebase_uid) {
+    // someone who signed up with this email and a password before: from now on Google works for them too
+    db.prepare(`UPDATE users SET firebase_uid = ?, email_verified = 1 WHERE id = ? AND NOT EXISTS (SELECT 1 FROM users WHERE firebase_uid = ?)`).run(
+      verified.identity.uid, user.id, verified.identity.uid
+    );
+    user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(user.id);
+  }
+
+  if (!user.is_active) {
+    res.status(403).json({ error: 'This account has been deactivated. Contact an administrator.' });
+    return;
+  }
+  if (isCurrentlyBanned(user.banned_until)) {
+    res.status(403).json({ error: 'This account is temporarily suspended.', bannedUntil: user.banned_until });
+    return;
+  }
+
+  const { token } = createSession(user.id);
+  res.cookie(SESSION_COOKIE, token, cookieOptions);
+  res.status(created ? 201 : 200).json({ user: publicUser(user), created });
+});
+
+// The step after a Google sign-up: a student gives name, school and grade; a teacher name, school, subject and a Qatar ID photo (checked and stored
+// exactly as at an ordinary teacher signup). Until it is done every other call is refused (middleware/auth.ts).
+authRouter.post('/complete-profile', authLimiter, requireCsrfHeader, requireAuth, handleIdDocumentUpload, async (req, res) => {
+  const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!) as any;
+  if (!user || user.profile_complete !== 0) {
+    res.status(409).json({ error: 'Your profile is already complete.' });
+    return;
+  }
+  const parsed = (user.role === 'teacher' ? completeTeacherProfileSchema : completeStudentProfileSchema).safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Invalid request.', details: parsed.error.flatten() });
+    return;
+  }
+  const data = parsed.data as { displayName: string; schoolName: string; grade?: number; teacherSubject?: string };
+  if (!moderateText(data.displayName).allowed) {
+    res.status(400).json({ error: 'Please choose an appropriate display name.' });
+    return;
+  }
+  if (!moderateText(data.schoolName).allowed) {
+    res.status(400).json({ error: 'Please enter an appropriate school name.' });
+    return;
+  }
+
+  let idDocumentPath: string | null = null;
+  if (user.role === 'teacher') {
+    const idDocument = req.file;
+    if (!idDocument) {
+      res.status(400).json({ error: 'Please upload your ID to verify your account.' });
+      return;
+    }
+    if (idChecksRunning >= MAX_CONCURRENT_ID_CHECKS) {
+      res.status(503).json({ error: 'We are busy right now. Please try again in a minute.' });
+      return;
+    }
+    idChecksRunning++;
+    let verification: Awaited<ReturnType<typeof verifyQatarIdPhoto>>;
+    try {
+      verification = await verifyQatarIdPhoto(idDocument.buffer);
+    } finally {
+      idChecksRunning--;
+    }
+    if (!verification.ok) {
+      res.status(400).json({ error: ID_VERIFICATION_MESSAGES[verification.reason] });
+      return;
+    }
+    if (!supabaseAdmin) {
+      res.status(500).json({ error: "We couldn't upload your ID. Please try again." });
+      return;
+    }
+    idDocumentPath = `teacher-ids/${user.id}-${Date.now()}.${ID_DOCUMENT_MIME_TO_EXT[idDocument.mimetype]}`;
+    const { error: uploadError } = await supabaseAdmin.storage.from(ID_DOCUMENT_BUCKET).upload(idDocumentPath, idDocument.buffer, { contentType: idDocument.mimetype });
+    if (uploadError) {
+      console.error('Supabase ID upload failed:', uploadError.message);
+      res.status(500).json({ error: "We couldn't upload your ID. Please try again." });
+      return;
+    }
+  }
+
+  db.prepare(
+    `UPDATE users SET display_name = ?, school_name = ?, grade = ?, teacher_subject = ?, id_document_path = COALESCE(?, id_document_path), profile_complete = 1 WHERE id = ?`
+  ).run(
+    data.displayName,
+    data.schoolName,
+    user.role === 'student' ? data.grade ?? null : null,
+    user.role === 'teacher' ? data.teacherSubject ?? null : null,
+    idDocumentPath,
+    user.id
+  );
+  res.json({ user: publicUser(db.prepare(`SELECT * FROM users WHERE id = ?`).get(user.id)) });
 });
 
 authRouter.post(

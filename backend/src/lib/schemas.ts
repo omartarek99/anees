@@ -131,8 +131,8 @@ export const updateProfileSchema = z.object({
   avatarKey: avatarKeySchema.optional(),
   bio: bioSchema.optional(),
   avatar3d: avatar3dSchema.optional(),
-  // A tier key, or null to follow the current rank; users.ts checks the student has reached it.
-  auraRank: z.enum(RANK_KEYS).nullable().optional(),
+  // A tier key or 'normal' (the site's own colours), or null to follow the current rank; users.ts checks the student has reached it.
+  auraRank: z.enum([...RANK_KEYS, 'normal']).nullable().optional(),
 });
 
 export const adminSetRoleSchema = z.object({
@@ -204,4 +204,24 @@ export const teacherReelSchema = z.object({
   durationSec: z.number().int().min(10).max(300).optional().default(60),
   // Optional -- a lesson can be video/script only, with no quiz at all.
   questions: z.array(teacherReelQuestionSchema).max(10).optional().default([]),
+});
+
+// Sign up / sign in with Google (routes/auth.ts POST /google): the Firebase ID token from the Google popup, and -- for someone with no account yet --
+// whether they are signing up as a student or a teacher.
+export const googleAuthSchema = z.object({
+  idToken: z.string().min(20).max(6000),
+  role: z.enum(['student', 'teacher']).optional(),
+});
+
+// The "complete your profile" step after a Google sign-up (routes/auth.ts POST /complete-profile). The account's role is already known, so the two
+// roles have their own fields: a student gives name, school and grade; a teacher name, school and subject (plus the ID photo, uploaded alongside).
+export const completeStudentProfileSchema = z.object({
+  displayName: displayNameSchema,
+  schoolName: schoolNameSchema,
+  grade: gradeSchema,
+});
+export const completeTeacherProfileSchema = z.object({
+  displayName: displayNameSchema,
+  schoolName: schoolNameSchema,
+  teacherSubject: teacherSubjectSchema,
 });

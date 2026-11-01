@@ -6,8 +6,11 @@ import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { RANK_LADDER, rankName, type RankKey } from '../lib/medalLevels';
 
-// "Page colours" on a student's own profile: the site takes the colour of their rank (RankAura.tsx), and here they can pick the colour of
-// any rank they have reached instead -- or go back to "my rank", which follows them as they climb. The server checks the pick is a rank
+type Pick = RankKey | 'normal' | null;
+
+// "Page colours" on a student's own profile: a new student has the site's own colours ("Normal") and the site takes a rank's colour by
+// itself when they reach it (RankAura.tsx); here they can pick Normal or the colour of any rank they have reached instead -- or go back to
+// "My rank", which follows them as they climb. The server checks the pick is a rank
 // they have reached (routes/users.ts); the ranks above theirs are shown locked.
 export function AuraPicker() {
   const { user, refreshUser } = useAuth();
@@ -20,7 +23,7 @@ export function AuraPicker() {
   const reached = RANK_LADDER.findIndex((r) => r.key === current);
   const picked = user.auraRank ?? null;
 
-  async function pick(auraRank: RankKey | null) {
+  async function pick(auraRank: Pick) {
     setSaving(true);
     setError(null);
     try {
@@ -40,10 +43,14 @@ export function AuraPicker() {
         <p className="muted" style={{ fontSize: 13, margin: '2px 0 0' }}>{t('profile.auraHint')}</p>
       </div>
       <div className="aura-options" role="group" aria-label={t('profile.auraTitle')}>
-        <button type="button" className="aura-option" data-rank={current} aria-pressed={picked === null} disabled={saving} onClick={() => pick(null)}>
+        <button type="button" className="aura-option" data-rank={current === 'iron' ? 'normal' : current} aria-pressed={picked === null} disabled={saving} onClick={() => pick(null)}>
           <span className="rank-swatch" />
           <span>{t('profile.auraAuto')}</span>
           <small>{t('profile.auraAutoHint')}</small>
+        </button>
+        <button type="button" className="aura-option" data-rank="normal" aria-pressed={picked === 'normal'} disabled={saving} onClick={() => pick('normal')}>
+          <span className="rank-swatch" />
+          <span>{t('profile.auraNormal')}</span>
         </button>
         {RANK_LADDER.map((r, i) => {
           const locked = i > reached;

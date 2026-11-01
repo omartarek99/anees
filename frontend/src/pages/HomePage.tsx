@@ -55,7 +55,7 @@ export function HomePage() {
   }, []);
 
   const level = profile?.playerLevel ?? user?.playerLevel ?? 1;
-  const rank = (user?.auraRank ?? user?.rankTier.key) as RankKey | undefined;
+  const rank = ((user?.auraRank && user.auraRank !== 'normal' ? user.auraRank : null) ?? user?.rankTier.key) as RankKey | undefined;
   const fr = rank ? RANK_FRAMES[rank] : undefined;
   const hole = Math.round((fr?.hole ?? 132) * (narrow ? 0.62 : 1)); // the picture's round window, css px
   const pic = Math.round(hole * 1.06);

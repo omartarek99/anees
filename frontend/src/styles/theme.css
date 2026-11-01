@@ -981,6 +981,10 @@ button.list-row.selected {
 :root[data-rank][data-theme='dark'] {
   --home-glow: color-mix(in srgb, var(--rk-b) 24%, transparent);
 }
+/* normal: the site's own colours (the picker's "Normal" button; a page with no data-rank is the same) */
+.aura-option[data-rank='normal'] {
+  --rk-a: #d43e6b; --rk-b: #f0a83a; --rk-c: #645ceb; --rk-d: #28bebe;
+}
 /* iron */
 :root[data-rank='iron'],
 .aura-option[data-rank='iron'] {

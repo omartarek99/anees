@@ -397,3 +397,10 @@ if (requestsRow && !requestsRow.sql.includes(`'champion'`)) {
 
 // Silver certificates made before Silver had its own plaque point at the Platinum picture: repoint them (nothing happens once they are right).
 db.exec("UPDATE certificates SET image_url = '/images/certificates/silver.webp' WHERE type = 'silver' AND image_url = '/images/certificates/platinum.webp'");
+
+// Accounts made with Google start without a name, school or grade and are held on a "complete your profile" step until they are given (lib/googleAuth.ts).
+// Every other account is complete from the start.
+const userColsForGoogle = db.prepare(`PRAGMA table_info(users)`).all() as { name: string }[];
+if (!userColsForGoogle.some((c) => c.name === 'profile_complete')) {
+  db.exec(`ALTER TABLE users ADD COLUMN profile_complete INTEGER NOT NULL DEFAULT 1`);
+}

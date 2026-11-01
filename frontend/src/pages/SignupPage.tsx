@@ -10,6 +10,7 @@ import { OtpVerifyForm } from '../components/OtpVerifyForm';
 import { PasswordRules } from '../components/PasswordRules';
 import { isStrongPassword } from '../lib/password';
 import { TEACHER_SUBJECTS } from '../lib/teacherSubjects';
+import { GoogleSignInButton } from '../components/GoogleSignInButton';
 
 /** "By signing up you agree to our Terms and Privacy Policy" with the two names as real links —
  * split on the {terms}/{privacy} placeholders since t() only returns plain text. */
@@ -185,6 +186,16 @@ export function SignupPage() {
             >
               {t('auth.roleTeacher')}
             </button>
+          </div>
+        </div>
+
+        {/* Google: the role chosen above is used for a new account; name, school and grade (or the teacher's ID) are asked right after. */}
+        <div className="field">
+          <GoogleSignInButton label={t('auth.googleSignup')} role={role} onError={setError} />
+          <div className="muted" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, fontSize: 13 }}>
+            <span style={{ flex: 1, height: 1, background: 'currentColor', opacity: 0.2 }} />
+            {t('auth.google_or')}
+            <span style={{ flex: 1, height: 1, background: 'currentColor', opacity: 0.2 }} />
           </div>
         </div>
 

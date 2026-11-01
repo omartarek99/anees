@@ -155,7 +155,7 @@ usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProf
     return;
   }
   // A rank colour is only for a student, and only one they have reached (their own rank or a lower one); null goes back to following their rank.
-  if (auraRank) {
+  if (auraRank && auraRank !== 'normal') {
     const me = db.prepare(`SELECT role, total_xp FROM users WHERE id = ?`).get(req.userId!) as { role: string; total_xp: number };
     if (me.role !== 'student' || earnedAuraRank(auraRank, me.total_xp) !== auraRank) {
       res.status(400).json({ error: 'You can only pick the colour of a rank you have reached.' });
