@@ -14,11 +14,14 @@ export function validateBody(schema: ZodTypeAny) {
 }
 
 /** Wraps a multer middleware so any upload error (wrong type, too large, ...) becomes one 400 with `message`. */
-export function handleUpload(upload: RequestHandler, message: string): RequestHandler {
+export function handleUpload(upload: RequestHandler, message: string, tooLargeMessage?: string): RequestHandler {
   return (req, res, next) =>
     upload(req, res, (err?: unknown) => {
-      if (err) res.status(400).json({ error: message });
-      else next();
+      if (err) {
+        // a file over the size limit can say so, instead of the general "not a valid file" message
+        const tooLarge = tooLargeMessage && (err as { code?: string }).code === 'LIMIT_FILE_SIZE';
+        res.status(400).json({ error: tooLarge ? tooLargeMessage : message });
+      } else next();
     });
 }
 

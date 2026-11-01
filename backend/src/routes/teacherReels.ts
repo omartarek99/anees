@@ -46,7 +46,11 @@ function looksLikeVideo(buffer: Buffer, mimetype: string): boolean {
   return buffer.length >= 8 && buffer.toString('ascii', 4, 8) === 'ftyp';
 }
 
-const handleVideoUpload = handleUpload(videoUpload, 'Please upload a valid video (MP4, WebM, or MOV, under 100MB).');
+const handleVideoUpload = handleUpload(
+  videoUpload,
+  'Please upload a valid video (MP4, WebM, or MOV, under 100MB).',
+  'This video is larger than 100MB. Please choose a smaller video.'
+);
 
 // An upload sits in memory (up to 100MB) and is then transcoded, so one at a time per teacher and three across
 // the server keeps RAM and ffmpeg bounded however many requests arrive. Runs before multer buffers anything.

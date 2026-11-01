@@ -50,6 +50,9 @@ function TeacherWatchReport() {
   );
 }
 
+/** The most the server accepts for one lesson video (backend/src/routes/teacherReels.ts). */
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+
 type SubjectOption = { id: number; key: string; name: string; nameAr?: string | null; icon: string };
 
 type ReelSummary = {
@@ -293,6 +296,10 @@ export function TeacherReelsPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setFormError(null);
+    if (videoFile && videoFile.size > MAX_VIDEO_BYTES) {
+      setFormError(t('teacherReels.videoTooLarge'));
+      return;
+    }
     setSubmitting(true);
     try {
       const payload = {
@@ -417,7 +424,18 @@ export function TeacherReelsPage() {
               id="reelVideo"
               type="file"
               accept="video/mp4,video/webm,video/quicktime"
-              onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+                if (file && file.size > MAX_VIDEO_BYTES) {
+                  // too big: say so now, and drop the choice so it can't be sent
+                  setFormError(t('teacherReels.videoTooLarge'));
+                  e.target.value = '';
+                  setVideoFile(null);
+                  return;
+                }
+                setFormError(null);
+                setVideoFile(file);
+              }}
             />
             <small className="muted">{t('teacherReels.videoHint')}</small>
             {existingVideoUrl && !videoFile && (

@@ -184,6 +184,7 @@ const en = {
     scriptArLabel: 'Lesson Script (Arabic, optional)',
     videoLabel: 'Video',
     videoHint: 'MP4, WebM, or MOV, under 100MB',
+    videoTooLarge: 'This video is larger than 100MB, so it can\'t be uploaded. Please choose a smaller video (you can shorten it or lower its quality first).',
     currentVideo: 'This lesson already has a video — choose a file to replace it.',
     videoProcessing: 'Your video was received and is being processed — it will appear here when it is ready.',
     videoFailed: 'The video could not be processed. Press Edit and upload it again (or try a different file).',
@@ -1177,6 +1178,7 @@ const ar: typeof en = {
     scriptArLabel: 'نص الدرس (بالعربية، اختياري)',
     videoLabel: 'الفيديو',
     videoHint: 'MP4 أو WebM أو MOV، بحجم أقل من 100 ميغابايت',
+    videoTooLarge: 'حجم هذا الفيديو أكبر من 100 ميغابايت، لذلك لا يمكن رفعه. اختر فيديو أصغر (يمكنك تقصيره أو تقليل جودته أولًا).',
     currentVideo: 'يحتوي هذا الدرس بالفعل على فيديو — اختر ملفًا لاستبداله.',
     videoProcessing: 'تم استلام الفيديو وجارٍ معالجته — سيظهر هنا عندما يكون جاهزًا.',
     videoFailed: 'تعذّرت معالجة الفيديو. اضغط تعديل وارفعه مرة أخرى (أو جرّب ملفًا آخر).',
@@ -2093,6 +2095,7 @@ const apiErrorMap: Record<string, string> = {
   'Please keep your announcement appropriate.': 'يرجى الحفاظ على إعلان مناسب.',
   'Please keep your lesson content appropriate.': 'يرجى الحفاظ على محتوى درس مناسب.',
   'Invalid subject.': 'مادة غير صالحة.',
+  'This video is larger than 100MB. Please choose a smaller video.': 'حجم هذا الفيديو أكبر من 100 ميغابايت. اختر فيديو أصغر.',
   'Please upload a valid video (MP4, WebM, or MOV, under 100MB).':
     'يرجى تحميل فيديو صالح (MP4 أو WebM أو MOV، بحجم أقل من 100 ميغابايت).',
   "We couldn't upload the video. Please try again.": 'تعذّر تحميل الفيديو. يرجى المحاولة مرة أخرى.',
