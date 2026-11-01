@@ -11,7 +11,7 @@ import { moderateContent } from '../lib/moderation.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { teacherReelSchema, teacherReelQuestionSchema, generateQuestionsSchema } from '../lib/schemas.js';
 import { compressVideoFile } from '../lib/videoCompression.js';
-import { probeVideoUrl } from '../lib/videoProbe.js';
+import { probeVideoFromUrl } from '../lib/videoProbe.js';
 import { r2Delete, r2Enabled, r2PublicUrl, r2UploadUrl } from '../lib/r2.js';
 import { awardTeacherPoints, teacherVideoUploadPoints } from '../lib/xp.js';
 import { VIDEO_BUCKET, VIDEO_PATH_PREFIX, deleteReelVideoIfAny } from '../lib/reelVideo.js';
@@ -514,7 +514,7 @@ teacherReelsRouter.post('/:id/video/complete', requireAuth, requireRole('teacher
 
   let probe;
   try {
-    probe = await probeVideoUrl(publicUrl);
+    probe = await probeVideoFromUrl(publicUrl, MAX_VIDEO_BYTES + 1024 * 1024);
   } catch (err) {
     console.error('Video probe failed:', err instanceof Error ? err.message : err);
     res.status(502).json({ error: "We couldn't check the uploaded video. Please try again." });
