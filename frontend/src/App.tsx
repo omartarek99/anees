@@ -287,7 +287,7 @@ export default function App() {
                   <Route path="/teacher/reels" element={<TeacherReelsPage />} />
                 </Route>
                 <Route element={<AdminOnly />}>
-                  <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
+                  <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
                   <Route path="/admin/:tab" element={<AdminPage />} />
                 </Route>
                 <Route path="/password" element={<ChangePasswordPage />} />

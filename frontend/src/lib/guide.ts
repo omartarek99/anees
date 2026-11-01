@@ -79,6 +79,7 @@ export const PAGE_IDS: Record<string, string> = {
   '/friends': 'friends',
   '/profile': 'profile',
   '/teacher/reels': 'myReels',
+  '/admin/dashboard': 'adminDashboard',
   '/admin/reports': 'adminReports',
   '/admin/users': 'adminUsers',
   '/admin/videos': 'adminVideos',
@@ -91,6 +92,7 @@ export type TourStop = { target: string; id: string };
 export function tourStops(role: Role): TourStop[] {
   if (role === 'admin') {
     return [
+      { target: '/admin/dashboard', id: 'adminDashboard' },
       { target: '/admin/reports', id: 'adminReports' },
       { target: '/admin/users', id: 'adminUsers' },
       { target: '/admin/videos', id: 'adminVideos' },

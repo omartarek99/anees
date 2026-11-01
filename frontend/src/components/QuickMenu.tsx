@@ -15,7 +15,7 @@ import { InstallAppButton } from './InstallAppButton';
 export function QuickMenu() {
   const { t, lang, toggleLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -52,12 +52,15 @@ export function QuickMenu() {
       </button>
       {open && (
         <div className="quick-menu-panel" role="menu">
-          <NavLink to="/profile" className="quick-menu-item" role="menuitem" onClick={() => setOpen(false)}>
-            <span className="quick-menu-icon" aria-hidden>
-              <RiUserFill size={17} />
-            </span>
-            {t('profile.editProfile')}
-          </NavLink>
+          {/* An admin has no profile of its own (the /profile route forwards it back to the dashboard), so no entry. */}
+          {user?.role !== 'admin' && (
+            <NavLink to="/profile" className="quick-menu-item" role="menuitem" onClick={() => setOpen(false)}>
+              <span className="quick-menu-icon" aria-hidden>
+                <RiUserFill size={17} />
+              </span>
+              {t('profile.editProfile')}
+            </NavLink>
+          )}
           <NavLink to="/password" className="quick-menu-item" role="menuitem" onClick={() => setOpen(false)}>
             <span className="quick-menu-icon" aria-hidden>
               <RiLockPasswordLine size={17} />

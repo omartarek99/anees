@@ -8,11 +8,12 @@ import { AdminUserRow, type AdminUser } from '../components/AdminUserRow';
 import { AdminVideosPanel } from '../components/AdminVideosPanel';
 import { AdminReportsPanel, ExportButton } from '../components/AdminReportsPanel';
 import { AdminCertificatesPanel } from '../components/AdminCertificatesPanel';
+import { AdminDashboardPanel, DashboardPeriodSelect, type DashboardPeriod } from '../components/AdminDashboardPanel';
 import { Pagination } from '../components/Pagination';
 import { GradeFilterSelect, type GradeFilter } from '../components/GradeFilterSelect';
 
 type RoleFilter = 'all' | Role;
-type Tab = 'users' | 'videos' | 'reports' | 'certificates';
+type Tab = 'dashboard' | 'users' | 'videos' | 'reports' | 'certificates';
 
 function AdminUsersPanel() {
   const { user: me } = useAuth();
@@ -107,29 +108,36 @@ function AdminUsersPanel() {
   );
 }
 
-const TABS: Tab[] = ['users', 'videos', 'reports', 'certificates'];
+const TABS: Tab[] = ['dashboard', 'users', 'videos', 'reports', 'certificates'];
+
+const TITLES: Record<Tab, { title: string; subtitle: string }> = {
+  dashboard: { title: 'admin.tabDashboard', subtitle: 'admin.subtitleDashboard' },
+  users: { title: 'admin.tabUsers', subtitle: 'admin.pageSubtitle' },
+  videos: { title: 'admin.tabVideos', subtitle: 'admin.subtitleVideos' },
+  reports: { title: 'admin.tabReports', subtitle: 'admin.subtitleReports' },
+  certificates: { title: 'admin.tabCertificates', subtitle: 'admin.subtitleCertificates' },
+};
 
 // Each section used to be an in-page tab switcher; it's now its own icon-bar entry
 // (see Sidebar.tsx's ADMIN_LINKS) and its own route, matching every other page in the
-// app -- Users/Videos/Reports/Friends/etc. are each reached by clicking a distinct icon,
+// app -- Dashboard/Users/Videos/Reports/etc. are each reached by clicking a distinct icon,
 // not by a secondary in-page control.
 export function AdminPage() {
   const { t } = useLanguage();
   const [reportGrade, setReportGrade] = useState<GradeFilter>('all');
+  const [period, setPeriod] = useState<DashboardPeriod>(30);
   const { tab: rawTab } = useParams<{ tab: string }>();
-  if (!TABS.includes(rawTab as Tab)) return <Navigate to="/admin/users" replace />;
+  if (!TABS.includes(rawTab as Tab)) return <Navigate to="/admin/dashboard" replace />;
   const tab = rawTab as Tab;
 
-  const titleKey =
-    tab === 'users' ? 'admin.tabUsers' : tab === 'videos' ? 'admin.tabVideos' : tab === 'reports' ? 'admin.tabReports' : 'admin.tabCertificates';
-
-  const subtitleKey =
-    tab === 'users' ? 'admin.pageSubtitle' : tab === 'videos' ? 'admin.subtitleVideos' : tab === 'reports' ? 'admin.subtitleReports' : 'admin.subtitleCertificates';
+  const actions =
+    tab === 'reports' ? <ExportButton gradeFilter={reportGrade} /> : tab === 'dashboard' ? <DashboardPeriodSelect value={period} onChange={setPeriod} /> : undefined;
 
   return (
     <div className="stack">
-      <Topbar title={t(titleKey)} subtitle={t(subtitleKey)} actions={tab === 'reports' ? <ExportButton gradeFilter={reportGrade} /> : undefined} />
+      <Topbar title={t(TITLES[tab].title)} subtitle={t(TITLES[tab].subtitle)} actions={actions} />
 
+      {tab === 'dashboard' && <AdminDashboardPanel days={period} />}
       {tab === 'users' && <AdminUsersPanel />}
       {tab === 'videos' && <AdminVideosPanel />}
       {tab === 'reports' && <AdminReportsPanel gradeFilter={reportGrade} onGradeChange={setReportGrade} />}

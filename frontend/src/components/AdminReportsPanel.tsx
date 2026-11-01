@@ -48,7 +48,7 @@ type AnalyticsSummary = {
 };
 
 // A palette slot belongs to its activity, so a quiet month never repaints the survivors.
-const ACTIVITIES: Record<string, { labelKey: string; color: string }> = {
+export const ACTIVITIES: Record<string, { labelKey: string; color: string }> = {
   reel_watch: { labelKey: 'admin.analyticsActivityReelWatch', color: 'var(--viz-1)' },
   reel_quiz: { labelKey: 'admin.analyticsActivityReelQuiz', color: 'var(--viz-2)' },
   boss_defeat: { labelKey: 'admin.analyticsActivityBoss', color: 'var(--viz-3)' },
@@ -64,7 +64,7 @@ function lastDays(count: number) {
   return Array.from({ length: count }, (_, i) => new Date(Date.now() - (count - 1 - i) * 86_400_000).toISOString().slice(0, 10));
 }
 
-function dayLabel(day: string, lang: 'en' | 'ar') {
+export function dayLabel(day: string, lang: 'en' | 'ar') {
   return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-QA' : 'en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${day}T00:00:00Z`));
 }
 

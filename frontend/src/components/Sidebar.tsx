@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
+  RiDashboardFill,
   RiVideoFill,
   RiMapFill,
   RiHome2Line,
@@ -45,9 +46,10 @@ const GAME_LINKS: SidebarLink[] = [
 const TEACHER_LINKS: SidebarLink[] = [{ to: '/teacher/reels', key: 'nav.myReels', icon: <RiMovie2Line size={20} /> }];
 
 // Admin is a pure account-management role, not a gameplay one -- instead of the shared
-// game surface it gets one icon per section (Users/Videos/Reports), each its own route
+// game surface it gets one icon per section (Dashboard/Reports/Users/Videos/Certificates), each its own route
 // (see App.tsx's /admin/:tab), same as every other page in the app.
 const ADMIN_LINKS: SidebarLink[] = [
+  { to: '/admin/dashboard', key: 'nav.adminDashboard', icon: <RiDashboardFill size={20} /> },
   { to: '/admin/reports', key: 'nav.adminReports', icon: <RiBarChartBoxFill size={20} /> },
   { to: '/admin/users', key: 'nav.adminUsers', icon: <RiGroupFill size={20} /> },
   { to: '/admin/videos', key: 'nav.adminVideos', icon: <RiFilmFill size={20} /> },
