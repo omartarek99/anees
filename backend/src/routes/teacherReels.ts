@@ -118,13 +118,14 @@ function moderateReelContent(body: {
   return texts.filter(Boolean).every((t) => moderateContent(t).allowed);
 }
 
-function getOwnReel(id: number, userId: number) {
+// A teacher reaches their own lessons; an admin reaches every teacher's (admin panel > Videos: edit, replace the video, add one).
+function getOwnReel(id: number, userId: number, isAdmin = false) {
   const reel = db.prepare(`SELECT * FROM reels WHERE id = ?`).get(id) as any;
-  if (!reel || reel.author_user_id !== userId) return null;
+  if (!reel || (!isAdmin && reel.author_user_id !== userId)) return null;
   return reel;
 }
 
-teacherReelsRouter.get('/options', requireAuth, requireRole('teacher'), (_req, res) => {
+teacherReelsRouter.get('/options', requireAuth, requireRole('teacher', 'admin'), (_req, res) => {
   const subjects = db.prepare(`SELECT id, key, name, name_ar, icon FROM subjects`).all() as any[];
 
   res.json({
@@ -141,7 +142,7 @@ teacherReelsRouter.get('/options', requireAuth, requireRole('teacher'), (_req, r
 teacherReelsRouter.post(
   '/generate-questions',
   requireAuth,
-  requireRole('teacher'),
+  requireRole('teacher', 'admin'),
   requireCsrfHeader,
   aiGenerationLimiter,
   validateBody(generateQuestionsSchema),
@@ -195,7 +196,7 @@ teacherReelsRouter.post(
   }
 );
 
-teacherReelsRouter.get('/', requireAuth, requireRole('teacher'), (req, res) => {
+teacherReelsRouter.get('/', requireAuth, requireRole('teacher', 'admin'), (req, res) => {
   const rows = db
     .prepare(
       `SELECT r.*, s.name as subject_name, s.name_ar as subject_name_ar,
@@ -260,8 +261,30 @@ teacherReelsRouter.get('/reports/watch-time', requireAuth, requireRole('teacher'
   });
 });
 
-teacherReelsRouter.get('/:id', requireAuth, requireRole('teacher'), (req, res) => {
-  const reel = getOwnReel(Number(req.params.id), req.userId!);
+// Messages an admin sent about this teacher's lessons that they have not closed yet: the app pops them up (components/AdminMessageModal.tsx).
+teacherReelsRouter.get('/messages', requireAuth, requireRole('teacher'), (req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT m.id, m.message, m.created_at, m.reel_id, r.title, r.title_ar, a.display_name AS admin_name
+       FROM reel_messages m
+       JOIN reels r ON r.id = m.reel_id
+       LEFT JOIN users a ON a.id = m.admin_id
+       WHERE m.teacher_id = ? AND m.read_at IS NULL
+       ORDER BY m.id`
+    )
+    .all(req.userId!) as any[];
+  res.json({
+    messages: rows.map((r) => ({ id: r.id, message: r.message, createdAt: r.created_at, reelId: r.reel_id, reelTitle: r.title, reelTitleAr: r.title_ar, adminName: r.admin_name ?? null })),
+  });
+});
+
+teacherReelsRouter.post('/messages/:id/read', requireAuth, requireRole('teacher'), requireCsrfHeader, (req, res) => {
+  const result = db.prepare(`UPDATE reel_messages SET read_at = datetime('now') WHERE id = ? AND teacher_id = ? AND read_at IS NULL`).run(Number(req.params.id), req.userId!);
+  res.json({ ok: true, changed: Number(result.changes) });
+});
+
+teacherReelsRouter.get('/:id', requireAuth, requireRole('teacher', 'admin'), (req, res) => {
+  const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
   if (!reel) {
     res.status(404).json({ error: 'Not found.' });
     return;
@@ -348,7 +371,7 @@ function validateReelBody(res: Response, body: TeacherReelBody) {
 teacherReelsRouter.post(
   '/',
   requireAuth,
-  requireRole('teacher'),
+  requireRole('teacher', 'admin'),
   requireCsrfHeader,
   validateBody(teacherReelSchema),
   (req, res) => {
@@ -384,11 +407,11 @@ teacherReelsRouter.post(
 teacherReelsRouter.patch(
   '/:id',
   requireAuth,
-  requireRole('teacher'),
+  requireRole('teacher', 'admin'),
   requireCsrfHeader,
   validateBody(teacherReelSchema),
   (req, res) => {
-    const reel = getOwnReel(Number(req.params.id), req.userId!);
+    const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
     if (!reel) {
       res.status(404).json({ error: 'Not found.' });
       return;
@@ -420,8 +443,8 @@ teacherReelsRouter.patch(
 );
 
 // Step 1: a one-time link the browser uploads the video to. The size and type are checked here (before anything is sent) and again on the stored file.
-teacherReelsRouter.post('/:id/video/upload-url', requireAuth, requireRole('teacher'), requireCsrfHeader, videoUploadLimiter, async (req, res) => {
-  const reel = getOwnReel(Number(req.params.id), req.userId!);
+teacherReelsRouter.post('/:id/video/upload-url', requireAuth, requireRole('teacher', 'admin'), requireCsrfHeader, videoUploadLimiter, async (req, res) => {
+  const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
   if (!reel) {
     res.status(404).json({ error: 'Not found.' });
     return;
@@ -466,8 +489,8 @@ teacherReelsRouter.post('/:id/video/upload-url', requireAuth, requireRole('teach
 });
 
 // Step 2: the browser has uploaded the file; check what was actually stored, and only then attach it to the lesson. A file that fails is removed.
-teacherReelsRouter.post('/:id/video/complete', requireAuth, requireRole('teacher'), requireCsrfHeader, async (req, res) => {
-  const reel = getOwnReel(Number(req.params.id), req.userId!);
+teacherReelsRouter.post('/:id/video/complete', requireAuth, requireRole('teacher', 'admin'), requireCsrfHeader, async (req, res) => {
+  const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
   if (!reel) {
     res.status(404).json({ error: 'Not found.' });
     return;
@@ -536,7 +559,7 @@ teacherReelsRouter.post('/:id/video/complete', requireAuth, requireRole('teacher
   // 10 teacher points per 30s of real video duration, capped at 90s counted (see lib/xp.ts) -- awarded on every successful upload, including
   // replacing an existing video, same as every other point source in this app pays out per action.
   const points = teacherVideoUploadPoints(probe.durationSeconds);
-  if (points > 0) awardTeacherPoints(req.userId!, points, 'video_upload');
+  if (points > 0 && req.userRole === 'teacher') awardTeacherPoints(req.userId!, points, 'video_upload');
   res.json({ videoUrl: publicUrl });
 });
 
@@ -544,7 +567,7 @@ teacherReelsRouter.post('/:id/video/complete', requireAuth, requireRole('teacher
 teacherReelsRouter.post(
   '/:id/video',
   requireAuth,
-  requireRole('teacher'),
+  requireRole('teacher', 'admin'),
   requireCsrfHeader,
   videoUploadLimiter,
   limitConcurrentUploads,
@@ -552,7 +575,7 @@ teacherReelsRouter.post(
   async (req, res) => {
     const video = req.file;
     const discard = () => (video ? unlink(video.path).catch(() => {}) : Promise.resolve());
-    const reel = getOwnReel(Number(req.params.id), req.userId!);
+    const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
     if (!reel) {
       await discard();
       res.status(404).json({ error: 'Not found.' });
@@ -574,12 +597,12 @@ teacherReelsRouter.post(
     db.prepare(`UPDATE reels SET video_status = 'processing', video_error = NULL WHERE id = ?`).run(reel.id);
     processingVideos.add(req.userId!);
     res.status(202).json({ status: 'processing' });
-    void processVideoUpload(reel.id, req.userId!, video.path);
+    void processVideoUpload(reel.id, req.userId!, video.path, req.userRole === 'teacher');
   }
 );
 
 /** The background half of a video upload: compress it, store it, then point the lesson at it (and pay the teacher for it). */
-async function processVideoUpload(reelId: number, userId: number, originalPath: string) {
+async function processVideoUpload(reelId: number, userId: number, originalPath: string, payTeacher: boolean) {
   try {
     if (!supabaseAdmin) throw new Error('storage not configured');
     const { buffer: compressed, durationSeconds } = await compressVideoFile(originalPath);
@@ -607,7 +630,7 @@ async function processVideoUpload(reelId: number, userId: number, originalPath: 
       // lib/xp.ts) -- awarded on every successful upload, including replacing an
       // existing video, same as every other point source in this app pays out per action.
       const points = teacherVideoUploadPoints(durationSeconds);
-      if (points > 0) awardTeacherPoints(userId, points, 'video_upload');
+      if (points > 0 && payTeacher) awardTeacherPoints(userId, points, 'video_upload');
     } else {
       db.prepare(`UPDATE reels SET video_url = ?, video_status = 'ready', video_error = NULL WHERE id = ?`).run(publicUrlData.publicUrl, reelId);
     }
@@ -623,8 +646,8 @@ async function processVideoUpload(reelId: number, userId: number, originalPath: 
   }
 }
 
-teacherReelsRouter.delete('/:id', requireAuth, requireRole('teacher'), requireCsrfHeader, async (req, res) => {
-  const reel = getOwnReel(Number(req.params.id), req.userId!);
+teacherReelsRouter.delete('/:id', requireAuth, requireRole('teacher', 'admin'), requireCsrfHeader, async (req, res) => {
+  const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
   if (!reel) {
     res.status(404).json({ error: 'Not found.' });
     return;

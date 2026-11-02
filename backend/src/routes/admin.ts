@@ -460,9 +460,45 @@ function adminReel(row: any) {
     subjectNameAr: row.subject_name_ar,
     authorUsername: row.author_username,
     authorDisplayName: row.author_display_name,
+    // a message can only go to a teacher: not to a lesson an admin made
+    authorRole: row.author_role ?? null,
     createdAt: row.created_at,
   };
 }
+
+// A message to the teacher who made a lesson: it pops up for them (until they close it) with the lesson's title.
+adminRouter.post('/reels/:id/message', requireCsrfHeader, (req, res) => {
+  const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
+  if (message.length < 1 || message.length > 500) {
+    res.status(400).json({ error: 'Please write a message (up to 500 characters).' });
+    return;
+  }
+  const reel = db.prepare(`SELECT r.id, r.author_user_id, u.role AS author_role FROM reels r LEFT JOIN users u ON u.id = r.author_user_id WHERE r.id = ?`).get(Number(req.params.id)) as
+    | { id: number; author_user_id: number | null; author_role: string | null }
+    | undefined;
+  if (!reel) {
+    res.status(404).json({ error: 'Video not found.' });
+    return;
+  }
+  if (!reel.author_user_id || reel.author_role !== 'teacher') {
+    res.status(400).json({ error: 'This video was not made by a teacher, so there is nobody to send a message to.' });
+    return;
+  }
+  const info = db.prepare(`INSERT INTO reel_messages (reel_id, teacher_id, admin_id, message) VALUES (?,?,?,?)`).run(reel.id, reel.author_user_id, req.userId!, message);
+  res.status(201).json({ id: Number(info.lastInsertRowid) });
+});
+
+// The messages already sent about a lesson, newest first, and whether the teacher has closed each.
+adminRouter.get('/reels/:id/messages', (req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT m.id, m.message, m.created_at, m.read_at, a.display_name AS admin_name
+       FROM reel_messages m LEFT JOIN users a ON a.id = m.admin_id
+       WHERE m.reel_id = ? ORDER BY m.id DESC`
+    )
+    .all(Number(req.params.id)) as any[];
+  res.json({ messages: rows.map((r) => ({ id: r.id, message: r.message, createdAt: r.created_at, readAt: r.read_at, adminName: r.admin_name ?? null })) });
+});
 
 adminRouter.get('/reels', (req, res) => {
   const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
@@ -476,7 +512,7 @@ adminRouter.get('/reels', (req, res) => {
   const rows = db
     .prepare(
       `SELECT r.*, s.name as subject_name, s.name_ar as subject_name_ar,
-              u.username as author_username, u.display_name as author_display_name
+              u.username as author_username, u.display_name as author_display_name, u.role as author_role
        FROM reels r
        JOIN subjects s ON s.id = r.subject_id
        LEFT JOIN users u ON u.id = r.author_user_id

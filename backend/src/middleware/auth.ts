@@ -53,9 +53,9 @@ export function forbidRole(role: 'student' | 'teacher' | 'admin') {
   };
 }
 
-export function requireRole(role: 'student' | 'teacher' | 'admin') {
+export function requireRole(...roles: ('student' | 'teacher' | 'admin')[]) {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (req.userRole !== role) {
+    if (!roles.includes(req.userRole as 'student' | 'teacher' | 'admin')) {
       res.status(403).json({ error: 'This account type does not have access to this.' });
       return;
     }

@@ -451,3 +451,15 @@ if (!reelColsForVideoStatus.some((c) => c.name === 'video_error')) {
   db.exec(`ALTER TABLE reels ADD COLUMN video_error TEXT`); // why the last upload failed: timeout / storage / unreadable / restart / other
 }
 db.exec(`UPDATE reels SET video_status = 'failed', video_error = 'restart' WHERE video_status = 'processing'`);
+
+// A message an admin sends a teacher about one of their lessons (admin panel > Videos): it pops up for the teacher until they close it.
+db.exec(`CREATE TABLE IF NOT EXISTS reel_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  reel_id INTEGER NOT NULL REFERENCES reels(id) ON DELETE CASCADE,
+  teacher_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  admin_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  message TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  read_at TEXT
+)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_reel_messages_teacher ON reel_messages(teacher_id, read_at)`);

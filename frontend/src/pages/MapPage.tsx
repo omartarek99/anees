@@ -96,6 +96,19 @@ export function MapPage() {
 
   const flatMap = levels && <Map2D levels={levels} onOpen={openLevel} />;
 
+  // The full-screen button, in the top-left corner of the map (whichever way the page reads).
+  const fsButton = (
+    <button
+      type="button"
+      className="map-fs-btn"
+      onClick={toggleFullscreen}
+      title={isFullscreen ? t('map.exitFullscreen') : t('map.fullscreen')}
+      aria-label={isFullscreen ? t('map.exitFullscreen') : t('map.fullscreen')}
+    >
+      {isFullscreen ? '✕' : '⛶'}
+    </button>
+  );
+
   return (
     <div className="stack">
       <h1 className="craft-title map-title title-ease">{t('map.title')}</h1>
@@ -111,15 +124,7 @@ export function MapPage() {
 
       {levels && (
         <div ref={fsRef} className={`map-fs-root${isFullscreen ? ' is-fullscreen' : ''}`}>
-          <button
-            type="button"
-            className="map-fs-btn"
-            onClick={toggleFullscreen}
-            title={isFullscreen ? t('map.exitFullscreen') : t('map.fullscreen')}
-            aria-label={isFullscreen ? t('map.exitFullscreen') : t('map.fullscreen')}
-          >
-            {isFullscreen ? '✕' : '⛶'}
-          </button>
+          {fsButton}
 
           {flat ? (
             flatMap

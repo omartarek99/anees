@@ -22,6 +22,7 @@ import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { GuideHost } from './components/GuideHost';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { CompleteProfilePage } from './pages/CompleteProfilePage';
+import { AdminMessageModal } from './components/AdminMessageModal';
 import { TermsPage } from './pages/TermsPage';
 import { CookiePolicyPage } from './pages/CookiePolicyPage';
 import { LoginPage } from './pages/LoginPage';
@@ -139,6 +140,7 @@ function ProtectedLayout() {
       <div className="app-content-col">
         <main className="app-main">
           <WarningModal />
+          <AdminMessageModal />
           {/* A page's chunk can fail to download (offline, or a stale filename after a redeploy) -- show an
               error here instead of letting the rejected lazy import blank the whole app. */}
           <AvatarBoundary fallback={<div className="form-error-banner">{t('messages.loadError')}</div>}>

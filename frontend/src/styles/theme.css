@@ -3493,8 +3493,8 @@ label,
 }
 .map-fs-btn {
   position: absolute;
-  inset-block-end: 14px;
-  inset-inline-end: 14px;
+  top: 12px;
+  left: 12px; /* the top-left corner, whichever way the page reads */
   z-index: 60; /* above the 3D canvas and its controls */
   inline-size: 38px;
   block-size: 38px;
@@ -3510,6 +3510,21 @@ label,
   line-height: 1;
   cursor: pointer;
   transition: background-color 0.15s ease, transform 0.15s ease;
+}
+/* The map's own controls keep clear of the button in the corner: where they would start under it (the zones when the page reads left to right, the "my level" and
+   view buttons when it reads right to left) they are moved aside, not the button. */
+:root[dir='ltr'] .map-fs-root .map3d-zones {
+  margin-left: 50px;
+}
+:root[dir='rtl'] .map-fs-root .map3d-side {
+  margin-top: 48px; /* the view buttons stay on the left edge, below the button */
+}
+:root[dir='rtl'] .map-fs-root .map3d-here {
+  /* 'my level' on the same row as the button, to its right, wherever the other controls wrap to */
+  position: absolute;
+  top: 0;
+  left: 50px;
+  pointer-events: auto;
 }
 .map-fs-btn:hover {
   background: rgba(16, 20, 32, 0.8);
@@ -3537,5 +3552,11 @@ label,
 }
 .level-quiz-panel {
   max-width: 640px;
+  max-height: 92vh;
+}
+
+/* ---------------- Pop-up windows of the admin panel (AdminVideosPanel.tsx): the lesson form and the message to a teacher ---------------- */
+.admin-window {
+  max-width: 860px;
   max-height: 92vh;
 }

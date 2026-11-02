@@ -125,6 +125,13 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
   const [hitTrigger, setHitTrigger] = useState(0);
   const [lastHitKind, setLastHitKind] = useState<'hit' | 'miss'>('hit');
 
+  // Leave a fight that is under way. Nothing is counted against the player (a fight is only won or lost when all the answers are sent at the end), but
+  // the answers given so far are gone, so ask first once there are some.
+  function cancelFight() {
+    if (answers.length > 0 && !window.confirm(t('boss.cancelConfirm'))) return;
+    onClose();
+  }
+
   useEffect(() => {
     setBanner(randomFrom(cheers.start));
     api
@@ -226,7 +233,7 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
   return (
     <div className="modal-overlay">
       {/* No Escape-to-close here on purpose: a boss fight is a required gameplay gate
-          (see reels.ts/map.ts), not a dismissable info panel. */}
+          (see reels.ts/map.ts), not a dismissable info panel. The Withdraw button under Attack (cancelFight) is a deliberate choice instead. */}
       <div className="boss-arena-panel" role="dialog" aria-modal="true" aria-label={detail ? pickText(lang, detail.level.title, detail.level.titleAr) : undefined} onClick={(e) => e.stopPropagation()}>
         {error && <div className="form-error-banner">{error}</div>}
 
@@ -373,6 +380,9 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
                         {qIndex + 1 < total ? t('boss.nextQuestion') : t('boss.finalStrike')}
                       </button>
                     )}
+                    <button type="button" className="btn btn-secondary btn-block" onClick={cancelFight} disabled={checking || submitting} title={t('boss.withdrawHint')}>
+                      🏳️ {t('boss.withdraw')}
+                    </button>
                   </div>
                 )}
               </div>
