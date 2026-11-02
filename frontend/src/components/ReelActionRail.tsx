@@ -67,7 +67,7 @@ export function ReelActionRail({
         <span className="reel-rail-count">{likeCount}</span>
       </button>
 
-      <button type="button" className="reel-rail-btn" onClick={onToggleMute} aria-label={t(muted ? 'reels.unmute' : 'reels.mute')}>
+      <button type="button" className="reel-rail-btn" data-sound-toggle onClick={onToggleMute} aria-label={t(muted ? 'reels.unmute' : 'reels.mute')}>
         <span className="notif-bell" style={{ fontSize: 20 }}>
           {muted ? <RiVolumeMuteFill size={20} /> : <RiVolumeUpFill size={20} />}
         </span>

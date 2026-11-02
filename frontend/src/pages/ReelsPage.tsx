@@ -59,10 +59,34 @@ export function ReelsPage() {
   }, []);
 
   // Sound preference persists across swipes (TikTok-style) rather than resetting per slide.
-  // Starts muted -- browsers require that for <video autoPlay> to work without a user gesture;
-  // the action rail's speaker button is the first real gesture that can turn it on.
-  const [muted, setMuted] = useState(true);
-  const toggleMute = useCallback(() => setMuted((m) => !m), []);
+  // Starts with the sound ON. A browser only lets a video start with sound after the person has touched the page (so on a fresh load of
+  // /reels -- a reload, a bookmark -- it refuses): ReelSlide then reports it (onSoundBlocked), the video plays muted instead, and the first tap
+  // anywhere on the page switches the sound on. Coming from another page of the app (a click already happened) it just plays with sound.
+  const [muted, setMuted] = useState(false);
+  const [soundBlocked, setSoundBlocked] = useState(false);
+  const toggleMute = useCallback(() => {
+    setSoundBlocked(false);
+    setMuted((m) => !m);
+  }, []);
+  const handleSoundBlocked = useCallback(() => {
+    setMuted(true);
+    setSoundBlocked(true);
+  }, []);
+  useEffect(() => {
+    if (!soundBlocked) return;
+    const unmute = (e: Event) => {
+      // the speaker button handles its own tap
+      if ((e.target as Element | null)?.closest?.('[data-sound-toggle]')) return;
+      setSoundBlocked(false);
+      setMuted(false);
+    };
+    window.addEventListener('pointerdown', unmute, { capture: true, once: true });
+    window.addEventListener('keydown', unmute, { capture: true, once: true });
+    return () => {
+      window.removeEventListener('pointerdown', unmute, { capture: true });
+      window.removeEventListener('keydown', unmute, { capture: true });
+    };
+  }, [soundBlocked]);
 
   // The action rail's diamond opens this -- a quick explainer of how points work.
   const [pointsInfoOpen, setPointsInfoOpen] = useState(false);
@@ -251,6 +275,7 @@ export function ReelsPage() {
                 data={slide}
                 isActive={i === (activeIndex ?? initialIndex)}
                 muted={muted}
+                onSoundBlocked={handleSoundBlocked}
                 onCompleted={handleCompleted}
                 onNext={() => swiperRef.current?.slideNext()}
                 hasNext={loopEnabled}

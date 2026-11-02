@@ -76,10 +76,15 @@ reelsRouter.get('/feed', (req, res) => {
       gradeReelsById.set(reel.id, reel);
     }
   }
-  // Newest upload first: ids only ever grow, so the highest id is the most recent video. A video uploaded a minute
-  // ago is the first thing anyone opening Reels sees, then older ones, oldest last.
+  // Random order, new every time Reels is opened (not newest or oldest first): the lessons are shuffled here, and the page keeps that order for the
+  // whole visit (ReelsPage's handleCompleted refreshes the lessons in place without moving any).
+  const shuffled = [...gradeReelsById.values()];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
   const gradeFeed: any[] = [];
-  for (const reel of [...gradeReelsById.values()].sort((a, b) => b.id - a.id)) {
+  for (const reel of shuffled) {
     const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(reel.subject_id) as any;
     gradeFeed.push({
       comingSoon: false,

@@ -489,6 +489,8 @@ const en = {
   },
   map: {
     title: 'The Adventure Map',
+    fullscreen: 'Full screen',
+    exitFullscreen: 'Exit full screen',
     loadError: 'Could not load the map right now.',
     zoneDesert: 'Desert Oasis',
     zoneSouq: 'The Souq Quarter',
@@ -1516,6 +1518,8 @@ const ar: typeof en = {
   },
   map: {
     title: 'خريطة المغامرة',
+    fullscreen: 'ملء الشاشة',
+    exitFullscreen: 'إنهاء ملء الشاشة',
     loadError: 'تعذّر تحميل الخريطة حاليًا.',
     zoneDesert: 'واحة الصحراء',
     zoneSouq: 'حي السوق',

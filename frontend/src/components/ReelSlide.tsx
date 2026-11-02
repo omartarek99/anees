@@ -59,6 +59,7 @@ export function ReelSlide({
   data,
   isActive,
   muted,
+  onSoundBlocked,
   onCompleted,
   onNext,
   hasNext,
@@ -70,6 +71,8 @@ export function ReelSlide({
    * stays muted regardless while inactive -- only the one active slide can ever have sound,
    * and even then only when the student has turned it on. */
   muted: boolean;
+  /** The browser refused to start the video with sound (no tap on the page yet): the page switches to muted and unmutes on the first tap. */
+  onSoundBlocked: () => void;
   onCompleted: (result: SubmitResult) => void;
   onNext: () => void;
   hasNext: boolean;
@@ -182,8 +185,16 @@ export function ReelSlide({
     setWatchProgress(0);
     loopCountRef.current = 0;
     setStillWatching(false);
-    if (isActive) v.play().catch(() => {});
-    else v.pause();
+    if (isActive) {
+      v.play().catch((err: unknown) => {
+        // autoplay with sound is only allowed after the person has touched the page: play muted instead, and tell the page
+        if ((err as { name?: string })?.name === 'NotAllowedError' && !v.muted) {
+          onSoundBlocked();
+          v.muted = true;
+          v.play().catch(() => {});
+        }
+      });
+    } else v.pause();
   }, [isActive]);
 
   // Real top-bar timer, driven by the video's own currentTime/duration instead of a fixed
