@@ -1,5 +1,6 @@
 import { db } from '../db/db.js';
 import { revokeUserCertificates } from './rankCertificates.js';
+import { noteRankDrop } from './xp.js';
 
 // The rules a student can break, and what happens when they do. An admin records a violation from the Users page (routes/admin.ts) and the
 // measures below are applied for them, so the same thing happens to everyone who breaks the same rule. Each rule climbs with repeats: `steps`
@@ -164,6 +165,7 @@ export function applyViolation(userId: number, key: string, adminId: number, inp
     if (pointsRemoved) {
       db.prepare(`UPDATE users SET total_xp = total_xp - ? WHERE id = ?`).run(pointsRemoved, userId);
       db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`).run(userId, -pointsRemoved, 'violation');
+      noteRankDrop(userId, user.total_xp, user.total_xp - pointsRemoved);
     }
     const certificatesRevoked = measure.revoke ? revokeUserCertificates(userId, adminId, `${violation.title} (${offense})`, measure.revoke) : 0;
     if (suspendedUntil) db.prepare(`UPDATE users SET banned_until = ? WHERE id = ?`).run(suspendedUntil, userId);

@@ -2,7 +2,7 @@ import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
-import { awardXp, getPlayerLevel, getMapLevel, BOSS_DEFEAT_XP_BONUS, BOSS_PASS_RATIO } from '../lib/xp.js';
+import { awardXp, penalizeWrongAnswers, getPlayerLevel, getMapLevel, BOSS_DEFEAT_XP_BONUS, BOSS_PASS_RATIO } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
 import { getBattleStatus, recordBattleLoss } from '../lib/battle.js';
 import { registerLevelQuiz } from './mapQuiz.js';
@@ -131,8 +131,11 @@ mapRouter.post('/boss/:levelNumber/check', requireCsrfHeader, validateBody(bossC
   }
 
   const isCorrect = choiceIndex === question.correct_index;
+  // Charged here, as each answer is given, and not again at /submit (which grades the same answers): a fight left half-way still costs its wrong answers.
+  const xpLost = isCorrect ? 0 : penalizeWrongAnswers(req.userId!, 1);
   res.json({
     isCorrect,
+    xpLost,
     correctIndex: question.correct_index,
     explanation: question.explanation,
     explanationAr: question.explanation_ar,

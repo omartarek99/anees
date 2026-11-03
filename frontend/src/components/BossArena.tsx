@@ -57,7 +57,7 @@ function BattleWait({ until, onClose }: { until: string; onClose: () => void }) 
   );
 }
 
-type CheckResponse = { isCorrect: boolean; correctIndex: number; explanation: string; explanationAr: string };
+type CheckResponse = { isCorrect: boolean; correctIndex: number; explanation: string; explanationAr: string; xpLost: number };
 
 const IDLE_FRAMES = ['translateY(0) rotate(0deg)', 'translateY(-8px) rotate(1.5deg)', 'translateY(0) rotate(0deg)', 'translateY(-4px) rotate(-1deg)'];
 const ENRAGE_FRAMES = ['translate(0,0)', 'translate(-6px,-2px)', 'translate(6px,2px)', 'translate(-4px,-1px)', 'translate(4px,1px)'];
@@ -124,11 +124,13 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
   const [posed, setPosed] = useState(false);
   const [hitTrigger, setHitTrigger] = useState(0);
   const [lastHitKind, setLastHitKind] = useState<'hit' | 'miss'>('hit');
+  const [xpLost, setXpLost] = useState(0); // what the wrong answers so far have cost (each is charged as it is checked)
 
-  // Leave a fight that is under way. Nothing is counted against the player (a fight is only won or lost when all the answers are sent at the end), but
-  // the answers given so far are gone, so ask first once there are some.
+  // Leave a fight that is under way. The fight itself is only won or lost when all the answers are sent at the end, so nothing of that is counted, but the
+  // answers given so far are gone -- and the wrong ones have already cost their points -- so ask first once there are some.
   function cancelFight() {
     if (answers.length > 0 && !window.confirm(t('boss.cancelConfirm'))) return;
+    if (xpLost > 0) void refreshUser();
     onClose();
   }
 
@@ -188,6 +190,7 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
         choiceIndex: selected,
       });
       setFeedback(res);
+      setXpLost((n) => n + res.xpLost);
       setLastHitKind(res.isCorrect ? 'hit' : 'miss');
       setHitTrigger((n) => n + 1);
       setAnswers((prev) => [...prev, { questionId: currentQ.id, choiceIndex: selected }]);
@@ -367,6 +370,7 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
                     {feedback && (
                       <div className={feedback.isCorrect ? 'form-success-banner' : 'form-error-banner'}>
                         {pickText(lang, feedback.explanation, feedback.explanationAr)}
+                        {feedback.xpLost > 0 && <div style={{ marginTop: 6, fontWeight: 700 }}>{t('common.xpLost', { xp: feedback.xpLost })}</div>}
                       </div>
                     )}
 

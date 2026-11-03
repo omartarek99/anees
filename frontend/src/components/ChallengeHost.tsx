@@ -130,9 +130,9 @@ export function ChallengeHost() {
     if (ch?.status === 'active' && remainingMs <= 0 && !submittedRef.current) void submit();
   }, [remainingMs, ch?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // points were paid: refresh the points shown around the app, once per game
+  // points were paid, or taken for wrong answers: refresh the points shown around the app, once per game
   useEffect(() => {
-    if (ch?.status === 'finished' && ch.result && ch.result.points > 0 && ch.result.winner === 'me' && paidRef.current !== ch.id) {
+    if (ch?.status === 'finished' && ch.result && paidRef.current !== ch.id) {
       paidRef.current = ch.id;
       void refreshUser();
     }

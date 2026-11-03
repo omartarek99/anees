@@ -3,7 +3,7 @@ import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
-import { awardXp, craftPuzzleTierForXp, CRAFT_PUZZLE_XP_BY_TIER } from '../lib/xp.js';
+import { awardXp, penalizeWrongAnswers, craftPuzzleTierForXp, CRAFT_PUZZLE_XP_BY_TIER } from '../lib/xp.js';
 import { generateCraftPuzzle } from '../lib/craftPuzzles.js';
 
 export const craftRouter = asyncRouter();
@@ -111,6 +111,7 @@ craftRouter.post('/puzzle/:puzzleId/answer', requireCsrfHeader, validateBody(ans
   const correct = choice === pending.answer;
   const xpEarned = correct ? CRAFT_PUZZLE_XP_BY_TIER[pending.tier - 1] : 0;
   if (correct) awardXp(req.userId!, xpEarned, 'craft_puzzle');
+  const xpLost = correct ? 0 : penalizeWrongAnswers(req.userId!, 1);
 
-  res.json({ correct, correctAnswer: pending.answer, xpEarned });
+  res.json({ correct, correctAnswer: pending.answer, xpEarned, xpLost });
 });

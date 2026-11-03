@@ -22,13 +22,15 @@ export type GradedResult = {
 export function gradeAnswers<T extends GradableQuestion>(
   questions: T[],
   answers: SubmittedAnswer[]
-): { results: GradedResult[]; correctCount: number } {
+): { results: GradedResult[]; correctCount: number; wrongCount: number } {
   let correctCount = 0;
+  let wrongCount = 0; // answered and wrong -- a question left blank is not counted
   const results = questions.map((q) => {
     const answer = answers.find((a) => a.questionId === q.id);
     const chosenIndex = answer ? answer.choiceIndex : -1;
     const isCorrect = chosenIndex === q.correct_index;
     if (isCorrect) correctCount += 1;
+    else if (answer) wrongCount += 1;
     return {
       questionId: q.id,
       chosenIndex,
@@ -38,5 +40,5 @@ export function gradeAnswers<T extends GradableQuestion>(
       explanationAr: q.explanation_ar,
     };
   });
-  return { results, correctCount };
+  return { results, correctCount, wrongCount };
 }

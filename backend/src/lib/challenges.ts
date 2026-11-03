@@ -1,5 +1,5 @@
 import { db } from '../db/db.js';
-import { awardXp } from './xp.js';
+import { awardXp, penalizeWrongAnswers } from './xp.js';
 
 // Friend challenges ("تحدى صديقك"): one friend challenges another on a subject, a difficulty and a number of questions taken from the school
 // question bank. The friend accepts or declines; if they accept, both get the same questions and 5 minutes. The first to submit ends the game
@@ -40,13 +40,20 @@ function scoreOf(questions: any[], answers: Answers): number {
   return questions.reduce((n, q) => n + (answers[String(q.id)] === q.correct_index ? 1 : 0), 0);
 }
 
+/** Questions answered and wrong (one the player never got to does not count). */
+function wrongOf(questions: any[], answers: Answers): number {
+  return questions.reduce((n, q) => n + (answers[String(q.id)] !== undefined && answers[String(q.id)] !== q.correct_index ? 1 : 0), 0);
+}
+
 /** Ends an active game: grades both players from their saved answers, picks the winner and pays the points. Safe to call twice. */
 export function finishChallenge(id: number, submittedBy: number | null) {
   const row = db.prepare(`SELECT * FROM friend_challenges WHERE id = ?`).get(id) as any;
   if (!row || row.status !== 'active') return;
   const questions = questionsOf(row);
-  const challengerScore = scoreOf(questions, parse(row.challenger_answers_json));
-  const challengedScore = scoreOf(questions, parse(row.challenged_answers_json));
+  const challengerAnswers = parse(row.challenger_answers_json);
+  const challengedAnswers = parse(row.challenged_answers_json);
+  const challengerScore = scoreOf(questions, challengerAnswers);
+  const challengedScore = scoreOf(questions, challengedAnswers);
   const winnerId = challengerScore === challengedScore ? null : challengerScore > challengedScore ? row.challenger_id : row.challenged_id;
 
   let points = 0;
@@ -66,7 +73,11 @@ export function finishChallenge(id: number, submittedBy: number | null) {
        WHERE id = ? AND status = 'active'`
     )
     .run(Date.now(), submittedBy, challengerScore, challengedScore, winnerId, points, id);
-  if (done.changes && winnerId !== null && points > 0) awardXp(winnerId, points, 'friend_challenge');
+  if (!done.changes) return;
+  // every wrong answer costs the player who gave it, winner or not -- charged before the prize is paid, so only the net can move a rank (lib/xp.ts)
+  penalizeWrongAnswers(row.challenger_id, wrongOf(questions, challengerAnswers));
+  penalizeWrongAnswers(row.challenged_id, wrongOf(questions, challengedAnswers));
+  if (winnerId !== null && points > 0) awardXp(winnerId, points, 'friend_challenge');
 }
 
 /** Lapses invitations nobody answered and finishes games whose 5 minutes are up, for one player's challenges. */

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { Router } from 'express';
 import { db } from '../db/db.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
-import { awardXp, getPlayerLevel, QUIZ_PASS_POINTS, QUIZ_FAIL_POINTS } from '../lib/xp.js';
+import { awardXp, penalizeWrongAnswers, getPlayerLevel, QUIZ_PASS_POINTS, QUIZ_FAIL_POINTS } from '../lib/xp.js';
 import { difficultyTierFor } from '../lib/ranks.js';
 import { getDoublePointsStatus, DOUBLE_POINTS_MULTIPLIER } from '../lib/doublePoints.js';
 import { gradeAnswers } from '../lib/grading.js';
@@ -115,7 +115,7 @@ export function registerLevelQuiz(router: Router) {
       return;
     }
 
-    const { results, correctCount } = gradeAnswers(questions, answers);
+    const { results, correctCount, wrongCount } = gradeAnswers(questions, answers);
     const total = questions.length;
     const scoreRatio = correctCount / total;
     const stars = scoreRatio === 1 ? 3 : scoreRatio >= 0.75 ? 2 : scoreRatio >= 0.5 ? 1 : 0;
@@ -126,6 +126,8 @@ export function registerLevelQuiz(router: Router) {
     const basePoints = passed ? QUIZ_PASS_POINTS : QUIZ_FAIL_POINTS;
     const xpEarned = doublePoints.active ? basePoints * DOUBLE_POINTS_MULTIPLIER : basePoints;
     const levelBeforeXp = getPlayerLevel(req.userId!);
+    // wrong answers are charged first, so only the net of this submission can move a rank (see lib/xp.ts)
+    const xpLost = penalizeWrongAnswers(req.userId!, wrongCount);
     awardXp(req.userId!, xpEarned, 'level_quiz');
 
     // Passing (at least half right) completes the level -- sticky, a later poor retry never undoes it -- and opens the next one.
@@ -158,6 +160,7 @@ export function registerLevelQuiz(router: Router) {
       correctCount,
       total,
       xpEarned,
+      xpLost,
       stars,
       passed,
       doublePointsActive: doublePoints.active,

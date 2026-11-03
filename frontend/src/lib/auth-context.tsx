@@ -19,6 +19,8 @@ export type User = {
   rankTier: RankTier;
   /** The page colour a student picked: 'normal' (the site's own colours) or a rank they have reached; null follows their rank (see RankAura.tsx). */
   auraRank?: RankKey | 'normal' | null;
+  /** Set while a student has a "your rank dropped" pop-up to see: the division they fell from, and the page colour they had picked there (RankDemotionPopup.tsx). */
+  rankDrop?: { from: RankTier; auraBefore: RankKey | 'normal' | null } | null;
   role: Role;
   grade: number | null;
   schoolName: string | null;
@@ -67,6 +69,8 @@ type AuthContextValue = {
   /** Confirms the 6-digit code; on success the account is verified and the user is logged in. */
   verifyOtp: (idToken: string, code: string) => Promise<void>;
   dismissWarning: () => Promise<void>;
+  /** The student has seen the rank-dropped pop-up. */
+  dismissRankDrop: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -186,9 +190,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   };
 
+  const dismissRankDrop = async () => {
+    setUser((u) => (u ? { ...u, rankDrop: null } : u)); // gone at once; the server forgets it when this lands
+    try {
+      const data = await api.post<{ user: User }>('/auth/dismiss-rank-drop');
+      setUser(data.user);
+    } catch {
+      // it comes back on the next visit, harmless
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, signup, login, loginWithGoogle, completeProfile, logout, refreshUser, verifyEmail, resendVerification, verifyOtp, dismissWarning }}
+      value={{ user, loading, signup, login, loginWithGoogle, completeProfile, logout, refreshUser, verifyEmail, resendVerification, verifyOtp, dismissWarning, dismissRankDrop }}
     >
       {children}
     </AuthContext.Provider>

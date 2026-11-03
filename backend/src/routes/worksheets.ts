@@ -5,7 +5,7 @@ import { db } from '../db/db.js';
 import { forbidRole, requireRole } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { worksheetAiLimiter } from '../middleware/rateLimit.js';
-import { awardXp, awardTeacherPoints, TEACHER_PRINT_POINTS, WORKSHEET_XP_PER_CORRECT } from '../lib/xp.js';
+import { awardXp, penalizeWrongAnswers, awardTeacherPoints, TEACHER_PRINT_POINTS, WORKSHEET_XP_PER_CORRECT } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
 import { generateQuizQuestions } from '../lib/gemini.js';
 import { verifyArithmetic } from '../lib/arithmeticCheck.js';
@@ -460,17 +460,19 @@ worksheetsRouter.post('/:id/submit', forbidRole('admin'), requireCsrfHeader, val
   const questions = questionIds.map((id) => rowById.get(id)).filter((q): q is NonNullable<typeof q> => q !== undefined);
   const { answers } = req.body as { answers: { questionId: number; choiceIndex: number }[] };
 
-  const { results, correctCount } = gradeAnswers(questions, answers);
+  const { results, correctCount, wrongCount } = gradeAnswers(questions, answers);
 
   const xpPerCorrect = WORKSHEET_XP_PER_CORRECT[attempt.difficulty as 'easy' | 'medium' | 'hard'];
   const xpEarned = correctCount * xpPerCorrect;
+  // wrong answers are charged first, so only the net of this submission can move a rank (see lib/xp.ts)
+  const xpLost = penalizeWrongAnswers(req.userId!, wrongCount);
   if (xpEarned > 0) awardXp(req.userId!, xpEarned, `worksheet_${attempt.difficulty}`);
 
   db.prepare(
     `UPDATE worksheet_attempts SET score = ?, xp_earned = ?, answers_json = ?, status = 'submitted' WHERE id = ?`
   ).run(correctCount, xpEarned, JSON.stringify(answers), attempt.id);
 
-  res.json({ results, correctCount, total: questions.length, xpEarned });
+  res.json({ results, correctCount, total: questions.length, xpEarned, xpLost });
 });
 
 // Called right before window.print() on the teacher's printable worksheet (frontend

@@ -118,6 +118,7 @@ type PuzzleModal = {
   chosen?: number;
   correct?: boolean;
   correctAnswer?: number;
+  xpLost?: number;
 };
 
 const glyph = (id: number) => ITEM[id]?.emoji ?? ITEM[id]?.label ?? '▪';
@@ -1363,10 +1364,10 @@ export function CraftPage() {
     if (!puzzle || puzzleBusy) return;
     setPuzzleBusy(true);
     try {
-      const d = await api.post<{ correct: boolean; correctAnswer: number; xpEarned: number }>(`/craft/puzzle/${puzzle.puzzleId}/answer`, {
+      const d = await api.post<{ correct: boolean; correctAnswer: number; xpEarned: number; xpLost: number }>(`/craft/puzzle/${puzzle.puzzleId}/answer`, {
         choice: choiceVal,
       });
-      setPuzzle((p) => (p ? { ...p, phase: 'result', chosen: choiceVal, correct: d.correct, correctAnswer: d.correctAnswer } : p));
+      setPuzzle((p) => (p ? { ...p, phase: 'result', chosen: choiceVal, correct: d.correct, correctAnswer: d.correctAnswer, xpLost: d.xpLost } : p));
       const g = gameRef.current;
       if (d.correct && g) {
         if (puzzle.kind === 'rune' && puzzle.x !== undefined && puzzle.y !== undefined && puzzle.z !== undefined) {
@@ -1376,6 +1377,8 @@ export function CraftPage() {
           rebuildChunkAtRef.current(puzzle.x, puzzle.z);
         }
         g.dirty = true;
+        void refreshUser();
+      } else if (d.xpLost > 0) {
         void refreshUser();
       }
       setTimeout(() => {
@@ -1926,6 +1929,7 @@ export function CraftPage() {
             {puzzle.phase === 'result' && (
               <p style={{ fontWeight: 800, fontSize: 14, color: puzzle.correct ? 'var(--success)' : 'var(--danger)', marginTop: 10 }}>
                 {puzzle.correct ? t('craft.correct', { xp: puzzle.xpReward }) : t('craft.incorrect', { answer: puzzle.correctAnswer ?? '' })}
+                {!puzzle.correct && !!puzzle.xpLost && ` ${t('common.xpLost', { xp: puzzle.xpLost })}`}
               </p>
             )}
             {puzzle.phase === 'asking' && (

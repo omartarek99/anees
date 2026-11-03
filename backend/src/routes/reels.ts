@@ -2,7 +2,7 @@ import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
-import { awardXp, getPlayerLevel, VIDEO_HALF_WATCH_POINTS, VIDEO_FULL_WATCH_POINTS, QUIZ_PASS_POINTS, QUIZ_FAIL_POINTS } from '../lib/xp.js';
+import { awardXp, penalizeWrongAnswers, getPlayerLevel, VIDEO_HALF_WATCH_POINTS, VIDEO_FULL_WATCH_POINTS, QUIZ_PASS_POINTS, QUIZ_FAIL_POINTS } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { getDoublePointsStatus, DOUBLE_POINTS_MULTIPLIER } from '../lib/doublePoints.js';
@@ -217,7 +217,7 @@ reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema
   const questions = db.prepare(`SELECT * FROM reel_questions WHERE reel_id = ?`).all(reelId) as any[];
   const { answers } = req.body as { answers: { questionId: number; choiceIndex: number }[] };
 
-  const { results, correctCount } = gradeAnswers(questions, answers);
+  const { results, correctCount, wrongCount } = gradeAnswers(questions, answers);
 
   const total = questions.length;
   const scoreRatio = total > 0 ? correctCount / total : 0;
@@ -234,6 +234,8 @@ reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema
   const watchRow = db.prepare(`SELECT * FROM reel_watch_progress WHERE user_id = ? AND reel_id = ?`).get(req.userId!, reelId) as any;
 
   const levelBeforeXp = getPlayerLevel(req.userId!);
+  // wrong answers are charged first, so only the net of this submission can move a rank (see lib/xp.ts)
+  const xpLost = penalizeWrongAnswers(req.userId!, wrongCount);
   awardXp(req.userId!, xpEarned, 'reel_quiz');
 
   // passed_quiz is sticky -- once a reel has been passed at >=50%, a later poor retry
@@ -255,6 +257,7 @@ reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema
     correctCount,
     total,
     xpEarned,
+    xpLost,
     stars,
     doublePointsActive: doublePoints.active,
     leveledUp: levelAfterXp > levelBeforeXp,

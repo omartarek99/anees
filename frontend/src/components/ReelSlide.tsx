@@ -33,6 +33,7 @@ type SubmitResult = {
   correctCount: number;
   total: number;
   xpEarned: number;
+  xpLost: number;
   stars: number;
   leveledUp: boolean;
   newPlayerLevel: number;
@@ -528,6 +529,7 @@ export function ReelSlide({
               <p className="badge badge-gold" style={{ fontSize: 15, marginTop: 8 }}>
                 {t('common.xpGained', { xp: result.xpEarned })}
               </p>
+              {result.xpLost > 0 && <p className="muted" style={{ margin: '6px 0 0', fontSize: 14 }}>{t('common.xpLost', { xp: result.xpLost })}</p>}
             </div>
             <QuizResults questions={data.questions} results={result.results} />
             {hasNext && (

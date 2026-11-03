@@ -17,6 +17,7 @@ type SubmitResponse = {
   correctCount: number;
   total: number;
   xpEarned: number;
+  xpLost: number;
   stars: number;
   passed: boolean;
   leveledUp: boolean;
@@ -108,6 +109,7 @@ export function LevelQuizModal({ levelNumber, onClose }: { levelNumber: number; 
               <p className="badge badge-gold" style={{ fontSize: 15 }}>
                 {t('common.xpGained', { xp: result.xpEarned })}
               </p>
+              {result.xpLost > 0 && <p className="muted" style={{ margin: '6px 0 0', fontSize: 14 }}>{t('common.xpLost', { xp: result.xpLost })}</p>}
               <p style={{ marginTop: 10, fontWeight: 700 }}>{result.passed ? t('levelQuiz.passed') : t('levelQuiz.failed')}</p>
             </div>
             <QuizResults questions={questions} results={result.results} />

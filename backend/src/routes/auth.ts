@@ -10,7 +10,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { googleAuthSchema, completeStudentProfileSchema, completeTeacherProfileSchema, signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema, changePasswordSchema, forgotPasswordSchema, resetPasswordSchema } from '../lib/schemas.js';
 import { getPlayerLevel } from '../lib/xp.js';
 import { hasShield } from '../lib/battle.js';
-import { earnedAuraRank, getRankTier, getTeacherRankTier } from '../lib/ranks.js';
+import { earnedAuraRank, getRankTier, getTeacherRankTier, rankDropOf } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import {
   firebaseSignUp,
@@ -89,6 +89,8 @@ function publicUser(user: any) {
     rankTier: user.role === 'teacher' ? getTeacherRankTier(user.teacher_points ?? 0) : getRankTier(user.total_xp),
     // The rank colour a student picked for their pages (a rank they have reached), or null to follow their current rank.
     auraRank: user.role === 'student' ? earnedAuraRank(user.aura_rank, user.total_xp) : null,
+    // Set while a student has a "your rank dropped" pop-up to see (the division they fell from, and the page colour they had there).
+    rankDrop: user.role === 'student' ? rankDropOf(user) : null,
     role: user.role,
     grade: user.grade,
     schoolName: user.school_name ?? null,
@@ -731,6 +733,13 @@ authRouter.get('/me', requireAuth, (req, res) => {
 
 // The account owner clears their own warning once they've seen it (e.g. dismissing the
 // in-app banner) -- an admin can also clear it directly from the admin panel.
+// The student has seen the "your rank dropped" pop-up (frontend RankDemotionPopup).
+authRouter.post('/dismiss-rank-drop', requireAuth, requireCsrfHeader, (req, res) => {
+  db.prepare(`UPDATE users SET rank_drop_from = NULL WHERE id = ?`).run(req.userId!);
+  const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!);
+  res.json({ user: publicUser(user) });
+});
+
 authRouter.post('/dismiss-warning', requireAuth, requireCsrfHeader, (req, res) => {
   db.prepare(`UPDATE users SET warning_message = NULL, warning_issued_at = NULL, warning_number = NULL WHERE id = ?`).run(req.userId!);
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!);

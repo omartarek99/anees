@@ -95,6 +95,16 @@ export function earnedAuraRank(picked: string | null | undefined, totalXp: numbe
   return i >= 0 && i <= RANK_KEYS.indexOf(getRankTier(totalXp).key) ? RANK_KEYS[i] : null;
 }
 
+/**
+ * The pending "your rank dropped" pop-up of a student (users.rank_drop_from, set by lib/xp.ts noteRankDrop): the division they fell from and the page
+ * colour they had picked there, so the client can show which perks changed. Null when there is nothing to show -- or when they have climbed back.
+ */
+export function rankDropOf(row: { total_xp: number; rank_drop_from?: number | null; aura_rank?: string | null }) {
+  if (row.rank_drop_from == null || getRankTier(row.total_xp).index >= row.rank_drop_from) return null;
+  const from = getRankTier(row.rank_drop_from * POINTS_PER_DIVISION);
+  return { from, auraBefore: earnedAuraRank(row.aura_rank, from.minXp) };
+}
+
 /** The points at which a tier's first division starts (Bronze 1 = 750 for students). */
 export function tierStartXp(key: RankTierKey, per = POINTS_PER_DIVISION): number {
   return DIVISIONS.findIndex((d) => d.tier.key === key) * per;

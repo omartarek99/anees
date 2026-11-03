@@ -48,6 +48,27 @@ const CraftPage = lazy(() => import('./pages/CraftPage').then((m) => ({ default:
 const MapPreviewPage = import.meta.env.DEV ? lazy(() => import('./pages/MapPreviewPage').then((m) => ({ default: m.MapPreviewPage }))) : null;
 const AnimalPreviewPage = import.meta.env.DEV ? lazy(() => import('./pages/AnimalPreviewPage').then((m) => ({ default: m.AnimalPreviewPage }))) : null;
 
+// The "your rank dropped" pop-up is rare, so it is its own chunk: fetched a few seconds after sign-in, ready long before a drop needs it. Until it is
+// there, a plain dark veil already covers the page.
+const loadRankDemotion = () => import('./components/RankDemotionPopup').then((m) => ({ default: m.RankDemotionPopup }));
+const RankDemotionPopup = lazy(loadRankDemotion);
+
+function RankDemotion() {
+  const { user } = useAuth();
+  const isStudent = user?.role === 'student';
+  useEffect(() => {
+    if (!isStudent) return;
+    const id = window.setTimeout(() => void loadRankDemotion().catch(() => {}), 4000);
+    return () => window.clearTimeout(id);
+  }, [isStudent]);
+  if (!user?.rankDrop) return null;
+  return (
+    <Suspense fallback={<div className="rank-drop-veil" aria-hidden />}>
+      <RankDemotionPopup />
+    </Suspense>
+  );
+}
+
 // Navigating to a new page starts at its top (e.g. the Terms link at the bottom of signup).
 // Back/forward (POP) keep the browser's own scroll restoration.
 function ScrollToTop() {
@@ -160,6 +181,7 @@ function ProtectedLayout() {
       {user.role !== 'admin' && <ChallengeHost />}
       {user.role !== 'admin' && <RankMilestonePopup />}
       {user.role !== 'admin' && <CertificateAwardPopup />}
+      <RankDemotion />
     </div>
   );
 }
