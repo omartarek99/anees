@@ -1917,6 +1917,26 @@ button.list-row.selected {
 .password-rules .flaw::before {
   content: '✕';
 }
+/* A long form in two columns (signup). A field that should span both gets .field-full; under 600px it is one column again. */
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 14px;
+}
+.field-grid > .field-full {
+  grid-column: 1 / -1;
+}
+.field-grid > .password-rules {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: -6px 0 16px;
+}
+@media (max-width: 600px) {
+  .field-grid,
+  .field-grid > .password-rules {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .stack {
   display: flex;
   flex-direction: column;

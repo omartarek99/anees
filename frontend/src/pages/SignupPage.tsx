@@ -149,7 +149,7 @@ export function SignupPage() {
   }
 
   return (
-    <AuthShell title={t('auth.signupTitle')} subtitle={t(role === 'teacher' ? 'auth.signupSubtitleTeacher' : 'auth.signupSubtitle')}>
+    <AuthShell wide title={t('auth.signupTitle')} subtitle={t(role === 'teacher' ? 'auth.signupSubtitleTeacher' : 'auth.signupSubtitle')}>
       <form onSubmit={handleSubmit}>
         <AnimatePresence>
           {error && (
@@ -199,97 +199,99 @@ export function SignupPage() {
           </div>
         </div>
 
-        <div className="field">
-          <label htmlFor="displayName">{t('auth.name')}</label>
-          <input
-            id="displayName"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            required
-            minLength={2}
-            maxLength={40}
-            autoComplete="name"
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="username">{t('auth.username')}</label>
-          <input
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            pattern="[a-zA-Z0-9_]{3,20}"
-            title={t('auth.usernameHint')}
-            autoComplete="username"
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="email">{t(role === 'teacher' ? 'auth.email' : 'auth.parentEmail')}</label>
-          <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-        </div>
-        <div className="field">
-          <label htmlFor="password">{t('auth.password')}</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-            aria-describedby="password-hint"
-          />
+        {/* Two columns: name | username, email | password (its checklist spans both), school | grade (students) or subject (teachers), then the teacher's ID. */}
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="displayName">{t('auth.name')}</label>
+            <input
+              id="displayName"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              required
+              minLength={2}
+              maxLength={40}
+              autoComplete="name"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="username">{t('auth.username')}</label>
+            <input
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              pattern="[a-zA-Z0-9_]{3,20}"
+              title={t('auth.usernameHint')}
+              autoComplete="username"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="email">{t(role === 'teacher' ? 'auth.email' : 'auth.parentEmail')}</label>
+            <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+          </div>
+          <div className="field">
+            <label htmlFor="password">{t('auth.password')}</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="new-password"
+              aria-describedby="password-hint"
+            />
+          </div>
           <PasswordRules id="password-hint" value={password} />
-        </div>
 
-        {/* School + class (students) / subject taught + ID (teachers) come last, after the
-            account basics above. */}
-        <div className="field">
-          <label htmlFor="schoolName">{t('auth.school')}</label>
-          <input
-            id="schoolName"
-            value={schoolName}
-            onChange={(e) => setSchoolName(e.target.value)}
-            required
-            minLength={2}
-            maxLength={80}
-            placeholder={t('auth.schoolPlaceholder')}
-            autoComplete="organization"
-          />
-        </div>
-        <AnimatePresence initial={false}>
-          {role === 'student' && (
-            <m.div
-              key="student-grade"
-              className="field"
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2 }}
-            >
-              <label htmlFor="grade">{t('auth.grade')}</label>
-              <input
-                id="grade"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={12}
-                placeholder={t('auth.gradePlaceholder')}
-                value={grade}
-                onChange={(e) => setGrade(e.target.value)}
-                required
-                title={t('auth.gradeHint')}
-              />
-            </m.div>
-          )}
-          {role === 'teacher' && (
-            <m.div
-              key="teacher-extras"
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="field">
+          {/* School + class (students) / subject taught + ID (teachers) come last, after the
+              account basics above. */}
+          <div className="field">
+            <label htmlFor="schoolName">{t('auth.school')}</label>
+            <input
+              id="schoolName"
+              value={schoolName}
+              onChange={(e) => setSchoolName(e.target.value)}
+              required
+              minLength={2}
+              maxLength={80}
+              placeholder={t('auth.schoolPlaceholder')}
+              autoComplete="organization"
+            />
+          </div>
+          <AnimatePresence initial={false}>
+            {role === 'student' && (
+              <m.div
+                key="student-grade"
+                className="field"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2 }}
+              >
+                <label htmlFor="grade">{t('auth.grade')}</label>
+                <input
+                  id="grade"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={12}
+                  placeholder={t('auth.gradePlaceholder')}
+                  value={grade}
+                  onChange={(e) => setGrade(e.target.value)}
+                  required
+                  title={t('auth.gradeHint')}
+                />
+              </m.div>
+            )}
+            {role === 'teacher' && (
+              <m.div
+                key="teacher-subject"
+                className="field"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2 }}
+              >
                 <label htmlFor="teacherSubject">{t('auth.teacherSubject')}</label>
                 <select id="teacherSubject" value={teacherSubject} onChange={(e) => setTeacherSubject(e.target.value)} required>
                   <option value="" disabled>
@@ -301,8 +303,17 @@ export function SignupPage() {
                     </option>
                   ))}
                 </select>
-              </div>
-              <div className="field">
+              </m.div>
+            )}
+            {role === 'teacher' && (
+              <m.div
+                key="teacher-id"
+                className="field field-full"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2 }}
+              >
                 <label htmlFor="idDocument">{t('auth.teacherIdLabel')}</label>
                 <input
                   id="idDocument"
@@ -313,10 +324,10 @@ export function SignupPage() {
                   title={t('auth.teacherIdHint')}
                 />
                 <small className="muted">{t('auth.teacherIdHint')}</small>
-              </div>
-            </m.div>
-          )}
-        </AnimatePresence>
+              </m.div>
+            )}
+          </AnimatePresence>
+        </div>
         {/* Honeypot -- invisible and unreachable by keyboard/AT for a real person (clipped to
             nothing, not display:none, since some bots specifically skip display:none fields),
             but a generic bot filling every input it finds fills this too. Kept inside the card

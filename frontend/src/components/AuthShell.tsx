@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import { m, MotionConfig } from 'framer-motion';
 import { useLanguage } from '../lib/language-context';
 
-export function AuthShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+/** `wide` is for long forms (signup) that lay their fields out in two columns; the other auth screens keep the narrow card. */
+export function AuthShell({ title, subtitle, children, wide }: { title: string; subtitle: string; children: ReactNode; wide?: boolean }) {
   const { t } = useLanguage();
   return (
     <div
@@ -21,7 +22,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
           opacity/color transitions but drops spatial movement (scale/y) for anyone who asked for
           reduced motion. */}
       <MotionConfig reducedMotion="user">
-        <div style={{ width: '100%', maxWidth: 420 }}>
+        <div style={{ width: '100%', maxWidth: wide ? 640 : 420 }}>
           <div className="text-center" style={{ marginBottom: 20 }}>
             {/* The logo already spells out the name, so it IS the page's h1 (its alt text
                 carries the heading) instead of sitting above a duplicate visible title.
