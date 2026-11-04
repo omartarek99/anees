@@ -21,7 +21,7 @@ export const displayNameSchema = z
 
 // What a teacher teaches -- shown as a dropdown at signup. Keys are stored; the Arabic/English
 // labels live in frontend/src/lib/i18n.ts (auth.subject*).
-export const TEACHER_SUBJECT_KEYS = ['math', 'science', 'islamic', 'english', 'arabic', 'ict', 'social'] as const;
+export const TEACHER_SUBJECT_KEYS = ['math', 'science', 'islamic', 'english', 'arabic', 'ict', 'social', 'art'] as const;
 export const teacherSubjectSchema = z.enum(TEACHER_SUBJECT_KEYS);
 
 export const schoolNameSchema = z

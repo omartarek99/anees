@@ -3889,3 +3889,45 @@ label,
   max-width: 860px;
   max-height: 92vh;
 }
+
+/* The lesson title and script are written in Arabic or English (dir="auto" follows what is typed). While the box is empty its hint should still sit on the right on an Arabic page. */
+:root[dir='rtl'] .lesson-text-field:placeholder-shown {
+  direction: rtl;
+  text-align: right;
+}
+
+/* ---------------- Locked subject pills in the worksheet generator (WorksheetsPage.tsx) ----------------
+   Subjects with no worksheets yet: shown greyed, not clickable, and a small label ("not available yet") appears when they are pointed at. */
+.pill-locked {
+  position: relative;
+  display: inline-flex;
+  cursor: not-allowed;
+}
+.pill-locked > .category-pill {
+  pointer-events: none; /* the wrapper takes the pointer, so the label shows even though a disabled button does not react */
+  opacity: 0.5;
+  filter: grayscale(0.85);
+}
+.pill-locked::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(4px);
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(20, 16, 32, 0.94);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 30;
+}
+.pill-locked:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

@@ -317,7 +317,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
 
           <div className="field">
             <label htmlFor="reelTitle">{t('teacherReels.titleLabel')}</label>
-            <input id="reelTitle" dir="auto" value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={120} placeholder={t('teacherReels.anyLanguageHint')} />
+            <input id="reelTitle" className="lesson-text-field" dir="auto" value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={120} placeholder={t('teacherReels.anyLanguageHint')} />
           </div>
           {hasArabicExtra && (
             <div className="field">
@@ -329,6 +329,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
             <label htmlFor="reelScript">{t('teacherReels.scriptLabel')}</label>
             <textarea
               id="reelScript"
+              className="lesson-text-field"
               dir="auto"
               placeholder={t('teacherReels.anyLanguageHint')}
               value={scriptText}

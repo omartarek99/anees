@@ -9,6 +9,7 @@ const EXTRA_SUBJECTS: { key: string; name: string; nameAr: string; icon: string 
   { key: 'english', name: 'English Language', nameAr: 'اللغة الإنجليزية', icon: '\u{1F524}' },
   { key: 'ict', name: 'Computing & Information Technology', nameAr: 'الحوسبة وتكنولوجيا المعلومات', icon: '\u{1F4BB}' },
   { key: 'social', name: 'Social Studies', nameAr: 'الاجتماعيات', icon: '\u{1F30D}' },
+  { key: 'art', name: 'Art Education', nameAr: 'التربية الفنية', icon: '\u{1F3A8}' },
 ];
 
 export function ensureSubjects() {

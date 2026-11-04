@@ -11,6 +11,9 @@ import { DifficultyDial, type DialOption } from '../components/DifficultyDial';
 import { PrintableWorksheet } from '../components/PrintableWorksheet';
 
 type Subject = 'math' | 'science';
+
+// The other subjects lessons can be about. Worksheets are only made for Math and Science for now, so these are shown but locked ("not available yet" when pointed at).
+const LOCKED_SUBJECTS = ['islamic', 'arabic', 'english', 'ict', 'social', 'art'] as const;
 type Difficulty = 'easy' | 'medium' | 'hard';
 
 // The artwork for the two subjects and three difficulty levels (public/images/worksheets/<name>.webp).
@@ -234,6 +237,14 @@ export function WorksheetsPage() {
                 <span className="category-pill-icon"><img src={art('science')} alt="" /></span>
                 {t('worksheets.science')}
               </button>
+              {LOCKED_SUBJECTS.map((key) => (
+                <span key={key} className="pill-locked" data-tip={t('worksheets.notAvailable')}>
+                  <button type="button" className="category-pill" disabled aria-disabled="true" tabIndex={-1} aria-label={`${t(`worksheets.subject_${key}`)} — ${t('worksheets.notAvailable')}`}>
+                    <span className="category-pill-icon"><img src={art(key)} alt="" /></span>
+                    {t(`worksheets.subject_${key}`)}
+                  </button>
+                </span>
+              ))}
             </div>
           </div>
 
