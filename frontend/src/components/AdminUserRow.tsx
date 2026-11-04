@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import type { Role } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -66,8 +66,13 @@ export function AdminUserRow({
   const [rowError, setRowError] = useState<string | null>(null);
   // a teacher's points are their teacher points, everyone else's their XP
   const points = u.role === 'teacher' ? u.teacherPoints : u.totalXp;
-  const [xpDraft, setXpDraft] = useState(String(points));
-  useEffect(() => setXpDraft(String(points)), [points]);
+  // Points are added or removed (not typed over): a choice from a list, how many, and an optional reason. The person gets a pop-up window about it.
+  const [pointsAction, setPointsAction] = useState<'add' | 'remove'>('add');
+  const [pointsAmount, setPointsAmount] = useState('');
+  const [pointsNote, setPointsNote] = useState('');
+  const [pointsSent, setPointsSent] = useState(false);
+  const pointsAmountNumber = Number(pointsAmount);
+  const pointsAmountValid = Number.isInteger(pointsAmountNumber) && pointsAmountNumber >= 1;
   const [warningDraft, setWarningDraft] = useState('');
   const [customBanDate, setCustomBanDate] = useState('');
   const [busy, setBusy] = useState(false);
@@ -108,14 +113,21 @@ export function AdminUserRow({
     }
   }
 
-  async function handleSaveXp() {
-    const totalXp = Number(xpDraft);
-    if (!Number.isInteger(totalXp) || totalXp < 0) return;
+  async function handleApplyPoints() {
+    if (!pointsAmountValid) return;
     setBusy(true);
     setRowError(null);
+    setPointsSent(false);
     try {
-      const data = await api.patch<{ user: AdminUser }>(`/admin/users/${u.id}/xp`, { totalXp });
+      const data = await api.post<{ user: AdminUser }>(`/admin/users/${u.id}/points`, {
+        action: pointsAction,
+        amount: pointsAmountNumber,
+        ...(pointsNote.trim() ? { note: pointsNote.trim() } : {}),
+      });
       onUpdated(data.user);
+      setPointsAmount('');
+      setPointsNote('');
+      setPointsSent(true);
     } catch (err) {
       reportError(err);
     } finally {
@@ -239,19 +251,44 @@ export function AdminUserRow({
 
       {expanded && (
         <div className="stack" style={{ gap: 12, marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-          <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
-            <label style={{ fontSize: 13, fontWeight: 600 }}>{t('admin.pointsLabel')}</label>
-            <input
-              type="number"
-              min={0}
-              value={xpDraft}
-              onChange={(e) => setXpDraft(e.target.value)}
-              style={{ width: 110 }}
-              disabled={isSelf}
-            />
-            <button type="button" className="btn btn-secondary" disabled={isSelf || busy} onClick={handleSaveXp}>
-              {t('admin.saveButton')}
-            </button>
+          <div className="field" style={{ margin: 0 }}>
+            <label style={{ fontSize: 13, fontWeight: 600 }}>
+              {t(u.role === 'teacher' ? 'admin.teacherPointsLabel' : 'admin.pointsLabel')} · {t('admin.pointsNow', { n: String(points) })}
+            </label>
+            <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+              <select value={pointsAction} onChange={(e) => setPointsAction(e.target.value as 'add' | 'remove')} disabled={isSelf} aria-label={t('admin.pointsActionLabel')}>
+                <option value="add">➕ {t('admin.pointsAdd')}</option>
+                <option value="remove">➖ {t('admin.pointsRemove')}</option>
+              </select>
+              <input
+                type="number"
+                min={1}
+                step={1}
+                value={pointsAmount}
+                onChange={(e) => {
+                  setPointsAmount(e.target.value);
+                  setPointsSent(false);
+                }}
+                placeholder={t('admin.pointsAmount')}
+                aria-label={t('admin.pointsAmount')}
+                style={{ width: 110 }}
+                disabled={isSelf}
+              />
+              <input
+                type="text"
+                maxLength={120}
+                value={pointsNote}
+                onChange={(e) => setPointsNote(e.target.value)}
+                placeholder={t('admin.pointsNotePlaceholder')}
+                aria-label={t('admin.pointsNotePlaceholder')}
+                style={{ flex: '1 1 200px', minWidth: 0 }}
+                disabled={isSelf}
+              />
+              <button type="button" className="btn btn-primary" disabled={isSelf || busy || !pointsAmountValid} onClick={handleApplyPoints}>
+                {t('admin.pointsApply')}
+              </button>
+            </div>
+            {pointsSent && <p style={{ color: 'var(--success, #2e7d4f)', fontWeight: 700, fontSize: 13.5, margin: '6px 0 0' }}>✓ {t('admin.pointsSent')}</p>}
           </div>
 
           <div className="field" style={{ margin: 0 }}>

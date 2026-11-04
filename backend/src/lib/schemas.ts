@@ -171,6 +171,14 @@ export const adminSetBanSchema = z.object({
   bannedUntil: z.string().datetime().nullable(),
 });
 
+// Admin panel > Users: add points to, or take points from, an account (the person gets a pop-up about it).
+export const adminAdjustPointsSchema = z.object({
+  action: z.enum(['add', 'remove']),
+  amount: z.number().int().min(1).max(1_000_000),
+  // why, shown to the person in the pop-up (optional)
+  note: z.string().trim().max(120).optional(),
+});
+
 export const adminSetXpSchema = z.object({
   totalXp: z.number().int().min(0).max(1_000_000),
 });
