@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { m } from 'framer-motion';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
-import { formatHms, useCountdown, type BattleStatus } from '../lib/battle';
 import { MapRiddle } from './MapRiddle';
 import { KeyChestReveal, KeyGiftArt, TreasureScene } from './StoryArt';
 import { StoryArtView } from './StoryArtView';
@@ -78,12 +77,11 @@ const ART: Record<Milestone['id'], ReactNode> = {
   shield: <StoryArtView kind="final" fallback={<TreasureScene />} />,
 };
 
-export function StoryPanel({ levels, battle, onBattleOver }: { levels: readonly ApiLevel[]; battle: BattleStatus | null; onBattleOver: () => void }) {
+export function StoryPanel({ levels }: { levels: readonly ApiLevel[] }) {
   const { user } = useAuth();
   const s = useStoryText();
   const [seen, setSeen] = useState<Seen | null>(() => (user ? readSeen(user.id) : null));
   const [riddleLater, setRiddleLater] = useState(false);
-  const waitLeft = useCountdown(battle?.lockedUntil ?? null, onBattleOver);
   if (!user || !seen) return null;
 
   const keys = keysEarned(levels);
@@ -126,12 +124,6 @@ export function StoryPanel({ levels, battle, onBattleOver }: { levels: readonly 
             </li>
           ))}
         </ul>
-        {battle && (
-          <p className={`story-tries${waitLeft !== null ? ' is-waiting' : ''}`}>
-            <span aria-hidden="true">⚔️</span>{' '}
-            {waitLeft !== null ? s('waitShort', { time: formatHms(waitLeft) }) : `${s('tries')}: ${s('triesLeft', { n: battle.triesLeft })}`}
-          </p>
-        )}
         <p className="story-next">{next ? s('nextItem', { more: more(next.keysLeft), item: itemName(next.milestone) }) : s('allDone')}</p>
       </section>
 

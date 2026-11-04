@@ -44,9 +44,7 @@ newsRouter.get('/', requireAuth, (req, res) => {
 
 const createNewsSchema = z.object({
   title: z.string().trim().min(3, 'Title is too short.').max(120),
-  titleAr: z.string().trim().max(120).optional().default(''),
   body: z.string().trim().min(3, 'Body is too short.').max(2000),
-  bodyAr: z.string().trim().max(2000).optional().default(''),
   icon: z.string().trim().max(8).optional().default('📣'),
   subject: z.enum(['math', 'science']).optional(),
 });
@@ -55,10 +53,10 @@ const createNewsSchema = z.object({
 // same home-page news feed students already read — graded, moderated the same way any
 // other student-facing text on this platform is.
 newsRouter.post('/', requireAuth, requireRole('teacher'), requireCsrfHeader, validateBody(createNewsSchema), (req, res) => {
-  const { title, titleAr, body, bodyAr, icon, subject } = req.body as z.infer<typeof createNewsSchema>;
+  const { title, body, icon, subject } = req.body as z.infer<typeof createNewsSchema>;
 
-  // The Arabic copies and the icon reach students too; blank ones are skipped (moderateText rejects '').
-  if (!([title, titleAr, body, bodyAr, icon].filter((t): t is string => !!t).every((t) => moderateText(t).allowed))) {
+  // One title and one message, in Arabic or English as the teacher wrote them; the icon reaches students too.
+  if (!([title, body, icon].filter((t): t is string => !!t).every((t) => moderateText(t).allowed))) {
     res.status(400).json({ error: 'Please keep your announcement appropriate.' });
     return;
   }
@@ -69,7 +67,7 @@ newsRouter.post('/', requireAuth, requireRole('teacher'), requireCsrfHeader, val
     .prepare(
       `INSERT INTO news_posts (subject_id, title, title_ar, body, body_ar, icon, author_user_id) VALUES (?,?,?,?,?,?,?)`
     )
-    .run(subjectId, title, titleAr || '', body, bodyAr || '', icon || '📣', req.userId!);
+    .run(subjectId, title, '', body, '', icon || '📣', req.userId!);
 
   res.status(201).json({ id: Number(result.lastInsertRowid) });
 });

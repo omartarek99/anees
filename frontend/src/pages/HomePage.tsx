@@ -12,6 +12,9 @@ import { RANK_FRAMES } from '../lib/frames';
 import type { RankKey } from '../lib/medalLevels';
 import { ChallengePickerModal } from '../components/ChallengePickerModal';
 import { ChallengeSetupModal } from '../components/ChallengeSetupModal';
+import { NewsCard } from '../components/NewsCard';
+
+type NewsPost = { id: number; title: string; titleAr?: string | null; body: string; bodyAr?: string | null; icon: string; subject: string | null; publishedAt: string };
 
 type Profile = {
   levelsCompleted: number;
@@ -42,6 +45,8 @@ export function HomePage() {
   // The frame waits for the profile (or its failure) so a student with a customised character never sees the default one flash first.
   const [loaded, setLoaded] = useState(false);
   const narrow = useNarrow();
+  // announcements from teachers, shown at the bottom (the newest few)
+  const [news, setNews] = useState<NewsPost[]>([]);
   // "تحدى صديقك": pick a friend, then set the challenge up
   const [picking, setPicking] = useState(false);
   const [challengeFor, setChallengeFor] = useState<{ username: string; displayName: string } | null>(null);
@@ -52,6 +57,10 @@ export function HomePage() {
       .then((d) => setProfile(d.profile))
       .catch(() => {})
       .finally(() => setLoaded(true));
+    api
+      .get<{ posts: NewsPost[] }>('/news')
+      .then((d) => setNews(d.posts.slice(0, 5)))
+      .catch(() => {});
   }, []);
 
   const level = profile?.playerLevel ?? user?.playerLevel ?? 1;
@@ -159,6 +168,21 @@ export function HomePage() {
           ))}
         </div>
       </section>
+
+      {news.length > 0 && (
+        <section className="home-news" aria-labelledby="home-news-title">
+          <h2 id="home-news-title" className="home-section-title">
+            {t('home.announcements')}
+          </h2>
+          <div className="stack" style={{ gap: 10, maxWidth: 760, margin: '16px auto 0' }}>
+            {news.map((p) => (
+              <div key={p.id} className="card">
+                <NewsCard post={p} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       <ChallengePickerModal
         open={picking}
         onClose={() => setPicking(false)}

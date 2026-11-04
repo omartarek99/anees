@@ -3127,13 +3127,47 @@ label,
   font-size: 0.9rem;
   opacity: 0.85;
 }
-.story-tries {
+/* the battle tries, in the bottom-right corner of the map (MapPage.tsx), whichever way the page reads */
+.map-tries {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 60;
   margin: 0;
+  color: #fff;
   font-size: 0.9rem;
   font-weight: 700;
+  pointer-events: none;
 }
-.story-tries.is-waiting {
-  color: var(--maroon);
+/* the wait countdown (no hearts left) keeps a small dark pill so it can be read over the map */
+.map-tries.is-waiting {
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(16, 20, 32, 0.68);
+  color: #ffb4a8;
+}
+.map-tries-hearts {
+  display: inline-flex;
+  gap: 2px;
+  vertical-align: middle;
+}
+.map-tries-hearts > img {
+  inline-size: 34px;
+  block-size: 34px;
+  object-fit: contain;
+  /* a used try: the same heart, grey and faded */
+  filter: grayscale(1) brightness(0.8) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
+  opacity: 0.55;
+}
+.map-tries-hearts > img.is-on {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+  opacity: 1;
+}
+/* on a narrow map the hint strip moves up so the tries badge has the bottom corner */
+@media (max-width: 760px) {
+  .map-fs-root .map3d-hint {
+    inset-block-end: 52px;
+  }
 }
 .victory-shield {
   display: inline-flex;
