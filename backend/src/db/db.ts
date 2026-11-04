@@ -482,3 +482,9 @@ db.exec(`CREATE TABLE IF NOT EXISTS points_notices (
   read_at TEXT
 )`);
 db.exec(`CREATE INDEX IF NOT EXISTS idx_points_notices_user ON points_notices(user_id, read_at)`);
+
+// A points notice can name the rule that was broken (lib/violations.ts key): the pop-up then says "a rule was broken".
+const pointsNoticeCols = db.prepare(`PRAGMA table_info(points_notices)`).all() as { name: string }[];
+if (!pointsNoticeCols.some((c) => c.name === 'violation')) {
+  db.exec(`ALTER TABLE points_notices ADD COLUMN violation TEXT`);
+}

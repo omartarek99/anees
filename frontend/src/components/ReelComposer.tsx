@@ -61,6 +61,8 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
 
   const [optionsError, setOptionsError] = useState<string | null>(null);
+  // A lesson is written once, in Arabic or English. Lessons made earlier with a separate Arabic title / script keep those two fields while edited, so nothing is lost.
+  const [hasArabicExtra, setHasArabicExtra] = useState(false);
 
   useEffect(() => {
     api
@@ -84,6 +86,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
     setQuestions([]);
     setVideoFile(null);
     setExistingVideoUrl(null);
+    setHasArabicExtra(false);
     setFormError(null);
   }
 
@@ -123,6 +126,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
         setTitleAr(detail.titleAr || '');
         setScriptText(detail.scriptText);
         setScriptTextAr(detail.scriptTextAr || '');
+        setHasArabicExtra(!!(detail.titleAr || detail.scriptTextAr));
         setQuestions(
           detail.questions.map((q) => ({
             questionText: q.questionText,
@@ -313,16 +317,20 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
 
           <div className="field">
             <label htmlFor="reelTitle">{t('teacherReels.titleLabel')}</label>
-            <input id="reelTitle" value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={120} />
+            <input id="reelTitle" dir="auto" value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={120} placeholder={t('teacherReels.anyLanguageHint')} />
           </div>
-          <div className="field">
-            <label htmlFor="reelTitleAr">{t('teacherReels.titleArLabel')}</label>
-            <input id="reelTitleAr" dir="rtl" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} maxLength={120} />
-          </div>
+          {hasArabicExtra && (
+            <div className="field">
+              <label htmlFor="reelTitleAr">{t('teacherReels.titleArLabel')}</label>
+              <input id="reelTitleAr" dir="rtl" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} maxLength={120} />
+            </div>
+          )}
           <div className="field">
             <label htmlFor="reelScript">{t('teacherReels.scriptLabel')}</label>
             <textarea
               id="reelScript"
+              dir="auto"
+              placeholder={t('teacherReels.anyLanguageHint')}
               value={scriptText}
               onChange={(e) => setScriptText(e.target.value)}
               required
@@ -330,17 +338,19 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
               rows={4}
             />
           </div>
-          <div className="field">
-            <label htmlFor="reelScriptAr">{t('teacherReels.scriptArLabel')}</label>
-            <textarea
-              id="reelScriptAr"
-              dir="rtl"
-              value={scriptTextAr}
-              onChange={(e) => setScriptTextAr(e.target.value)}
-              maxLength={2000}
-              rows={4}
-            />
-          </div>
+          {hasArabicExtra && (
+            <div className="field">
+              <label htmlFor="reelScriptAr">{t('teacherReels.scriptArLabel')}</label>
+              <textarea
+                id="reelScriptAr"
+                dir="rtl"
+                value={scriptTextAr}
+                onChange={(e) => setScriptTextAr(e.target.value)}
+                maxLength={2000}
+                rows={4}
+              />
+            </div>
+          )}
 
           <div className="field">
             <label htmlFor="reelVideo">{t('teacherReels.videoLabel')}</label>

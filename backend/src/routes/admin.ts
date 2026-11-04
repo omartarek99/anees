@@ -291,7 +291,7 @@ adminRouter.post('/users/:id/violations', requireCsrfHeader, validateBody(adminA
  * too (negative when points are taken away), so the monthly leaderboard, which adds up that history, moves with it; for a student the tier certificates are
  * checked and a fall to a lower rank is noted, as after any other points change.
  */
-function applyPointsChange(res: Response, targetId: number, newPoints: number, adminId: number, note: string | null) {
+function applyPointsChange(res: Response, targetId: number, newPoints: number, adminId: number, note: string | null, violation: string | null = null) {
   const before = db.prepare(`SELECT role, total_xp, teacher_points FROM users WHERE id = ?`).get(targetId) as
     | { role: string; total_xp: number; teacher_points: number }
     | undefined;
@@ -310,7 +310,7 @@ function applyPointsChange(res: Response, targetId: number, newPoints: number, a
         noteRankDrop(targetId, old, newPoints);
         issueRankCertificates(targetId);
       }
-      db.prepare(`INSERT INTO points_notices (user_id, admin_id, delta, new_total, kind, note) VALUES (?,?,?,?,?,?)`).run(targetId, adminId, delta, newPoints, teacher ? 'teacher' : 'xp', note);
+      db.prepare(`INSERT INTO points_notices (user_id, admin_id, delta, new_total, kind, note, violation) VALUES (?,?,?,?,?,?,?)`).run(targetId, adminId, delta, newPoints, teacher ? 'teacher' : 'xp', note, delta < 0 ? violation : null);
     }
     return result;
   });
@@ -334,7 +334,7 @@ adminRouter.post('/users/:id/points', requireCsrfHeader, validateBody(adminAdjus
     res.status(400).json({ error: "You can't edit your own points." });
     return;
   }
-  const { action, amount, note } = req.body as { action: 'add' | 'remove'; amount: number; note?: string };
+  const { action, amount, note, violation } = req.body as { action: 'add' | 'remove'; amount: number; note?: string; violation?: string };
   const row = db.prepare(`SELECT role, total_xp, teacher_points FROM users WHERE id = ?`).get(targetId) as { role: string; total_xp: number; teacher_points: number } | undefined;
   if (!row) {
     res.status(404).json({ error: 'User not found.' });
@@ -346,7 +346,7 @@ adminRouter.post('/users/:id/points', requireCsrfHeader, validateBody(adminAdjus
     res.status(400).json({ error: action === 'add' ? 'This account already has the most points allowed.' : 'This account has no points to remove.' });
     return;
   }
-  applyPointsChange(res, targetId, next, req.userId!, note ? note : null);
+  applyPointsChange(res, targetId, next, req.userId!, note ? note : null, action === 'remove' ? violation ?? null : null);
 });
 
 // ---------------------------------------------------------------------------------------

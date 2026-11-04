@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import type { Role } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
-import { translateApiError } from '../lib/i18n';
+import { pickText, translateApiError } from '../lib/i18n';
 import { XpIcon } from './XpIcon';
 import { warningName } from '../lib/warningOrdinal';
 import { AdminViolationForm } from './AdminViolationForm';
+import { useViolations } from '../lib/violations';
 
 export type AdminUser = {
   id: number;
@@ -71,6 +72,9 @@ export function AdminUserRow({
   const [pointsAmount, setPointsAmount] = useState('');
   const [pointsNote, setPointsNote] = useState('');
   const [pointsSent, setPointsSent] = useState(false);
+  // when removing a student's points: the rule that was broken, if any (it names the rule in their pop-up)
+  const rules = useViolations();
+  const [pointsRule, setPointsRule] = useState('');
   const pointsAmountNumber = Number(pointsAmount);
   const pointsAmountValid = Number.isInteger(pointsAmountNumber) && pointsAmountNumber >= 1;
   const [warningDraft, setWarningDraft] = useState('');
@@ -123,10 +127,12 @@ export function AdminUserRow({
         action: pointsAction,
         amount: pointsAmountNumber,
         ...(pointsNote.trim() ? { note: pointsNote.trim() } : {}),
+        ...(pointsAction === 'remove' && pointsRule ? { violation: pointsRule } : {}),
       });
       onUpdated(data.user);
       setPointsAmount('');
       setPointsNote('');
+      setPointsRule('');
       setPointsSent(true);
     } catch (err) {
       reportError(err);
@@ -274,6 +280,16 @@ export function AdminUserRow({
                 style={{ width: 110 }}
                 disabled={isSelf}
               />
+              {pointsAction === 'remove' && u.role === 'student' && rules && (
+                <select value={pointsRule} onChange={(e) => setPointsRule(e.target.value)} disabled={isSelf} aria-label={t('admin.pointsRulePick')} title={t('admin.pointsRuleHint')} style={{ maxWidth: 260 }}>
+                  <option value="">{t('admin.pointsRulePick')}</option>
+                  {rules.map((r) => (
+                    <option key={r.key} value={r.key}>
+                      {pickText(lang, r.title, r.titleAr)}
+                    </option>
+                  ))}
+                </select>
+              )}
               <input
                 type="text"
                 maxLength={120}

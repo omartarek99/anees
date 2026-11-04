@@ -344,9 +344,11 @@ function insertQuestions(reelId: number, questions: any[]) {
 // the chosen subject, purely to satisfy the constraint; `grade` is what actually
 // identifies and routes these rows everywhere else.
 function resolvePlaceholderLevel(subjectId: number) {
-  return db
-    .prepare(`SELECT * FROM map_levels WHERE subject_id = ? AND kind = 'normal' ORDER BY level_number LIMIT 1`)
-    .get(subjectId) as any;
+  // Only Math and Science own map levels; a lesson in any other subject (Islamic Education, Arabic, English ...) just borrows the first normal level.
+  return (
+    (db.prepare(`SELECT * FROM map_levels WHERE subject_id = ? AND kind = 'normal' ORDER BY level_number LIMIT 1`).get(subjectId) as any) ??
+    (db.prepare(`SELECT * FROM map_levels WHERE kind = 'normal' ORDER BY level_number LIMIT 1`).get() as any)
+  );
 }
 
 type TeacherReelBody = import('zod').infer<typeof teacherReelSchema>;

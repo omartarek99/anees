@@ -5,8 +5,10 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
 import { useLocation } from 'react-router-dom';
+import { pickText } from '../lib/i18n';
+import { useViolations } from '../lib/violations';
 
-type Notice = { id: number; delta: number; newTotal: number; kind: 'xp' | 'teacher'; note: string | null; createdAt: string; adminName: string | null };
+type Notice = { id: number; delta: number; newTotal: number; kind: 'xp' | 'teacher'; note: string | null; violation: string | null; createdAt: string; adminName: string | null };
 
 /**
  * Points an admin added to or took from this account (admin panel > Users) come up in a window until the person closes it: how many, what they have now,
@@ -15,7 +17,8 @@ type Notice = { id: number; delta: number; newTotal: number; kind: 'xp' | 'teach
  */
 export function PointsNoticeModal() {
   const { user, refreshUser } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const rules = useViolations();
   const { pathname } = useLocation();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [busy, setBusy] = useState(false);
@@ -64,6 +67,9 @@ export function PointsNoticeModal() {
   useEscapeToClose(() => void close(), !!current);
 
   const added = !!current && current.delta > 0;
+  // taken away because a rule was broken (an admin named it, or recorded it with the rules form): the window says so and names the rule
+  const rule = current?.violation ? rules?.find((r) => r.key === current.violation) : null;
+  const ruleBroken = !!current?.violation && !added;
   return (
     <AnimatePresence>
       {current && (
@@ -72,7 +78,7 @@ export function PointsNoticeModal() {
             className="modal-panel text-center"
             role="alertdialog"
             aria-modal="true"
-            aria-label={t('pointsNotice.title')}
+            aria-label={t(ruleBroken ? 'pointsNotice.ruleBroken' : 'pointsNotice.title')}
             initial={{ scale: 0.9, opacity: 0, y: 12 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.92, opacity: 0 }}
@@ -80,7 +86,12 @@ export function PointsNoticeModal() {
             style={{ maxWidth: 400 }}
           >
             <div style={{ fontSize: 46 }}>{added ? '⭐' : '⚠️'}</div>
-            <h2 style={{ fontSize: 20, marginTop: 6, color: added ? 'var(--success, #2e7d4f)' : 'var(--danger)' }}>{t('pointsNotice.title')}</h2>
+            <h2 style={{ fontSize: 20, marginTop: 6, color: added ? 'var(--success, #2e7d4f)' : 'var(--danger)' }}>{t(ruleBroken ? 'pointsNotice.ruleBroken' : 'pointsNotice.title')}</h2>
+            {ruleBroken && rule && (
+              <p style={{ fontSize: 15, fontWeight: 700, margin: '6px 0 0' }} dir="auto">
+                {t('pointsNotice.rule', { title: pickText(lang, rule.title, rule.titleAr) })}
+              </p>
+            )}
             <p style={{ fontSize: 16.5, lineHeight: 1.55, margin: '10px 0 0', fontWeight: 700 }}>
               {t(added ? 'pointsNotice.added' : 'pointsNotice.removed', { n: String(Math.abs(current.delta)) })}
             </p>

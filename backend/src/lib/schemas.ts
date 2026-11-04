@@ -177,6 +177,8 @@ export const adminAdjustPointsSchema = z.object({
   amount: z.number().int().min(1).max(1_000_000),
   // why, shown to the person in the pop-up (optional)
   note: z.string().trim().max(120).optional(),
+  // when points are taken away: the rule that was broken (names it in the pop-up; the warning, suspension and so on are the rule form's job)
+  violation: z.enum(VIOLATION_KEYS).optional(),
 });
 
 export const adminSetXpSchema = z.object({
