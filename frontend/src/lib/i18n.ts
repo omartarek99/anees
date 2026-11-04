@@ -19,6 +19,8 @@ const en = {
     logout: 'Log out',
   },
   common: {
+    waking: 'Waking up the server…',
+    wakingHint: 'It was resting because nobody used it for a while. This can take up to 30 seconds, only the first time.',
     close: 'Close',
     cancel: 'Cancel',
     save: 'Save',
@@ -1071,6 +1073,8 @@ const ar: typeof en = {
     logout: 'تسجيل الخروج',
   },
   common: {
+    waking: 'جارٍ تشغيل الخادم…',
+    wakingHint: 'كان في وضع الراحة لأن لا أحد استخدمه منذ فترة. قد يستغرق ذلك حتى 30 ثانية، وفي المرة الأولى فقط.',
     close: 'إغلاق',
     cancel: 'إلغاء',
     save: 'حفظ',

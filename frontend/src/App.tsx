@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { Navigate, Route, BrowserRouter, Routes, Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth-context';
 import { LanguageProvider, useLanguage } from './lib/language-context';
@@ -113,9 +113,22 @@ function PageMeta() {
 }
 
 function FullScreenLoader() {
+  const { t } = useLanguage();
+  // The server sleeps when nobody has used the site for a while and then takes up to half a minute to wake: say so instead of showing a bare spinner.
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSlow(true), 4000);
+    return () => window.clearTimeout(timer);
+  }, []);
   return (
-    <div style={{ height: '100vh' }} className="flex-center">
+    <div style={{ height: '100vh', flexDirection: 'column', gap: 18, textAlign: 'center', padding: 24 }} className="flex-center">
       <div className="spinner" />
+      {slow && (
+        <div role="status" style={{ maxWidth: 360 }}>
+          <p style={{ fontWeight: 700, margin: 0 }}>{t('common.waking')}</p>
+          <p className="muted" style={{ margin: '4px 0 0', fontSize: 14 }}>{t('common.wakingHint')}</p>
+        </div>
+      )}
     </div>
   );
 }

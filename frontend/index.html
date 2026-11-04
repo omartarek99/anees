@@ -87,6 +87,12 @@
       .boot-splash nav { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 8px; }
       .boot-splash a { color: #f0c96a; font-size: 14px; }
     </style>
+    <!-- The server sleeps after a while without visitors and takes ~30s to wake: ask it to start the moment the page opens, in parallel with downloading the app. -->
+    <script>
+      try {
+        fetch('/api/health', { cache: 'no-store', keepalive: true }).catch(function () {});
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root">
