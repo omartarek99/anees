@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './lib/auth-context';
 import { LanguageProvider, useLanguage } from './lib/language-context';
 import { ThemeProvider } from './lib/theme-context';
 import { RankAura } from './components/RankAura';
+import { IntroSplash } from './components/IntroSplash';
 import { trackPageview } from './lib/analytics';
 import { Sidebar } from './components/Sidebar';
 import { AvatarBoundary } from './components/avatar3d/AvatarBoundary';
@@ -274,6 +275,7 @@ export default function App() {
         <LanguageProvider>
           <AuthProvider>
             <RankAura />
+            <IntroSplash />
             <PageviewTracker />
             <PageMeta />
             <ScrollToTop />

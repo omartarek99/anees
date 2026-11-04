@@ -18,6 +18,10 @@ const en = {
     adminCertificates: 'Certificates',
     logout: 'Log out',
   },
+  intro: {
+    tagline: 'Learn. Play. Shine.',
+    skip: 'Skip',
+  },
   common: {
     waking: 'Waking up the server…',
     wakingHint: 'It was resting because nobody used it for a while. This can take up to 30 seconds, only the first time.',
@@ -1115,6 +1119,10 @@ const ar: typeof en = {
     adminReports: 'التقارير',
     adminCertificates: 'الشهادات',
     logout: 'تسجيل الخروج',
+  },
+  intro: {
+    tagline: 'تعلّم. العب. تألّق.',
+    skip: 'تخطّي',
   },
   common: {
     waking: 'جارٍ تشغيل الخادم…',

@@ -1133,6 +1133,7 @@ button.list-row.selected {
   inline-size: auto;
   min-inline-size: 0;
   max-inline-size: none;
+  animation: intro-fade-in 0.7s 0.55s ease-out both; /* the fade is on the picture, not the ring: fading the ring would flatten the 3D */
   margin: 0;
 }
 .home-avatar {
@@ -1212,6 +1213,7 @@ button.list-row.selected {
   top: 50%;
   inline-size: var(--frame);
   max-inline-size: none;
+  animation: intro-fade-in 0.7s 0.55s ease-out both; /* the fade is on the picture, not the ring: fading the ring would flatten the 3D */
   block-size: auto;
   transform: translate(-50%, -50%);
   pointer-events: none;
@@ -3773,6 +3775,7 @@ label,
   inset: 0;
   margin: auto;
   max-inline-size: none;
+  animation: intro-fade-in 0.7s 0.55s ease-out both; /* the fade is on the picture, not the ring: fading the ring would flatten the 3D */
   pointer-events: none;
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
   transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -3964,4 +3967,296 @@ label,
 .pill-locked:hover::after {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+/* ---------------- Opening scene (IntroSplash.tsx): the logo and 3D pieces spin in from the top-left behind a comet trail, land with a shockwave and sparks, the pieces circle the logo, then it zooms away into the page ---------------- */
+.intro-splash {
+  --from: translate3d(-60vmax, -45vmax, 0); /* where the flight starts: far out at the top-left, on every screen size */
+  position: fixed;
+  inset: 0;
+  z-index: 400; /* above everything, the pop-up windows included */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  color: #fff;
+  background: radial-gradient(ellipse at 50% 42%, #7a1432 0%, #4a0d20 45%, #1d0710 100%);
+  animation: intro-bg-in 0.35s ease-out both;
+}
+.intro-splash.is-leaving {
+  animation: intro-leave 0.55s cubic-bezier(0.5, 0, 0.9, 0.4) forwards;
+  pointer-events: none;
+}
+.intro-rays {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  inline-size: 190vmax;
+  block-size: 190vmax;
+  margin: -95vmax 0 0 -95vmax;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 214, 120, 0.16) 0deg 7deg, transparent 7deg 24deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 34%);
+  mask-image: radial-gradient(circle, #000 0%, transparent 34%);
+  animation: intro-rays-in 0.9s 0.9s ease-out both, intro-rays-spin 26s linear infinite;
+}
+.intro-glow {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  inline-size: min(78vmin, 520px);
+  block-size: min(78vmin, 520px);
+  margin: calc(min(78vmin, 520px) / -2) 0 0 calc(min(78vmin, 520px) / -2);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 196, 92, 0.55) 0%, rgba(255, 150, 60, 0.18) 45%, transparent 70%);
+  animation: intro-glow-in 0.9s 0.95s ease-out both, intro-glow-pulse 2.6s 1.9s ease-in-out infinite;
+}
+.intro-spark {
+  position: absolute;
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: 50%;
+  background: #ffe29a;
+  box-shadow: 0 0 10px 3px rgba(255, 214, 120, 0.85);
+  opacity: 0;
+  animation: intro-twinkle 2.2s 1s ease-in-out infinite;
+}
+.intro-stage {
+  position: relative;
+  inline-size: min(88vw, 460px);
+  block-size: min(52vh, 360px);
+  perspective: 900px;
+  transform-style: preserve-3d;
+}
+/* the comet: a gold streak that flies in from the top-left with the logo and fades once it has landed */
+.intro-comet {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  inline-size: 42vmax;
+  block-size: 6px;
+  margin: -3px 0 0 -42vmax;
+  border-radius: 6px;
+  background: linear-gradient(90deg, transparent, rgba(255, 190, 80, 0.55) 55%, #fff6d8);
+  box-shadow: 0 0 18px 4px rgba(255, 190, 80, 0.45);
+  transform-origin: 100% 50%;
+  opacity: 0;
+  animation: intro-comet 1.7s 0.1s both;
+}
+/* the shockwave when the logo lands */
+.intro-wave {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  inline-size: 60px;
+  block-size: 60px;
+  margin: -30px 0 0 -30px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 220, 140, 0.9);
+  box-shadow: 0 0 24px rgba(255, 190, 80, 0.7), inset 0 0 18px rgba(255, 190, 80, 0.5);
+  opacity: 0;
+  animation: intro-wave 1.2s 1.05s ease-out both;
+}
+.intro-wave.is-second {
+  animation-delay: 1.3s;
+  border-width: 2px;
+}
+/* and the sparks it throws out */
+.intro-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  inline-size: 9px;
+  block-size: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: #ffe29a;
+  box-shadow: 0 0 10px 3px rgba(255, 200, 100, 0.9);
+  opacity: 0;
+  animation: intro-burst 1s 1.05s cubic-bezier(0.1, 0.7, 0.3, 1) both;
+}
+/* the circling pieces fly in as one ring, tumbling, from the same corner */
+.intro-fly {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: intro-fly 1.7s 0.25s both;
+}
+.intro-ring {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transform-style: preserve-3d;
+  transform: rotateX(72deg);
+}
+.intro-spin {
+  position: relative;
+  inline-size: 0;
+  block-size: 0;
+  transform-style: preserve-3d;
+  animation: intro-spin 9s linear infinite;
+}
+.intro-slot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-style: preserve-3d;
+  transform: rotateZ(var(--ang)) translateX(min(36vw, 200px)) rotateZ(calc(var(--ang) * -1)); /* round the ring, then stand upright again */
+}
+.intro-upright {
+  transform-style: preserve-3d;
+  animation: intro-unspin 9s linear infinite;
+}
+.intro-face {
+  transform-style: preserve-3d;
+  transform: translate(-50%, -50%) rotateX(-72deg);
+}
+.intro-face img {
+  inline-size: 100%;
+  block-size: 100%;
+  max-inline-size: none;
+  animation: intro-fade-in 0.4s 0.3s ease-out both; /* the fade is on the picture, not the ring: fading the ring would flatten the 3D */
+  display: block;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 14px rgba(255, 200, 100, 0.45));
+}
+.intro-logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  inline-size: min(60vw, 250px);
+  aspect-ratio: 1;
+  margin: calc(min(60vw, 250px) / -2) 0 0 calc(min(60vw, 250px) / -2);
+  transform-style: preserve-3d;
+  animation: intro-logo-in 1.7s both, intro-logo-float 3.4s 1.8s ease-in-out infinite;
+}
+.intro-logo img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 26px rgba(255, 190, 90, 0.4));
+}
+/* a band of light that sweeps across the logo, shaped by the logo itself */
+.intro-gloss {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.85) 50%, transparent 65%) no-repeat;
+  background-size: 250% 100%;
+  background-position: 150% 0;
+  -webkit-mask: url(/icons/logo-mark.png) center / contain no-repeat;
+  mask: url(/icons/logo-mark.png) center / contain no-repeat;
+  animation: intro-gloss 1.2s 1.6s ease-in-out both, intro-gloss 1.2s 3.3s ease-in-out both;
+}
+.intro-words {
+  position: relative;
+  text-align: center;
+  animation: intro-words-in 0.9s 1.6s cubic-bezier(0.2, 0.8, 0.3, 1.25) both;
+}
+.intro-name {
+  margin: 0;
+  font-size: clamp(2.6rem, 9vw, 4rem);
+  line-height: 1.1;
+  background: linear-gradient(180deg, #fff1c4 0%, #f7bf4c 55%, #d98a1f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.45));
+}
+.intro-tagline {
+  margin: 4px 0 0;
+  font-size: clamp(1rem, 3.4vw, 1.25rem);
+  letter-spacing: 0.04em;
+  color: rgba(255, 236, 200, 0.92);
+}
+.intro-skip {
+  position: absolute;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  inset-inline-end: 20px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  opacity: 0;
+  animation: intro-bg-in 0.4s 1s ease-out both;
+}
+@keyframes intro-bg-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes intro-leave {
+  to { opacity: 0; transform: scale(1.25); filter: blur(6px); }
+}
+@keyframes intro-rays-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes intro-rays-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes intro-glow-in {
+  from { opacity: 0; transform: scale(0.3); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes intro-glow-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+@keyframes intro-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.4); }
+  50% { opacity: 1; transform: scale(1); }
+}
+/* the logo: out of the top-left corner, spinning twice, over-shoots the middle a little, wobbles, settles */
+@keyframes intro-logo-in {
+  0% { opacity: 0; transform: var(--from) rotateZ(-720deg) scale(0.15); filter: blur(6px); animation-timing-function: ease-out; }
+  10% { opacity: 1; }
+  60% { opacity: 1; transform: translate3d(0, 0, 0) rotateZ(24deg) scale(1.2); filter: blur(0); animation-timing-function: ease-in-out; }
+  80% { transform: translate3d(0, 0, 0) rotateZ(-9deg) scale(0.95); animation-timing-function: ease-in-out; }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) rotateZ(0) scale(1); filter: blur(0); }
+}
+@keyframes intro-logo-float {
+  0%, 100% { transform: translateY(0) rotateY(0); }
+  50% { transform: translateY(-9px) rotateY(8deg); }
+}
+@keyframes intro-fly {
+  0% { transform: var(--from) rotateZ(-540deg) scale(0.2); animation-timing-function: ease-out; }
+  65% { transform: translate3d(0, 0, 0) rotateZ(26deg) scale(1.12); animation-timing-function: ease-in-out; }
+  100% { transform: translate3d(0, 0, 0) rotateZ(0) scale(1); }
+}
+@keyframes intro-comet {
+  0% { opacity: 0; transform: var(--from) rotate(36.9deg) scaleX(0.4); animation-timing-function: ease-out; }
+  10% { opacity: 1; }
+  60% { opacity: 1; transform: translate3d(0, 0, 0) rotate(36.9deg) scaleX(1); }
+  100% { opacity: 0; transform: translate3d(0, 0, 0) rotate(36.9deg) scaleX(0.1); }
+}
+@keyframes intro-wave {
+  0% { opacity: 0.95; transform: scale(0.3); }
+  100% { opacity: 0; transform: scale(9); }
+}
+@keyframes intro-burst {
+  0% { opacity: 1; transform: rotate(var(--a)) translateX(0) scale(1.2); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateX(calc(min(44vw, 230px) * var(--d))) scale(0.2); }
+}
+@keyframes intro-spin {
+  to { transform: rotateZ(360deg); }
+}
+@keyframes intro-unspin {
+  to { transform: rotateZ(-360deg); }
+}
+@keyframes intro-gloss {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+@keyframes intro-words-in {
+  from { opacity: 0; transform: translateY(30px) scale(0.85); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes intro-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
