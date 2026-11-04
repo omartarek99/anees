@@ -28,6 +28,7 @@ import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX } from '../lib/
 import { PLAQUE_PATH, issueRankCertificates, emailCertificate, revokeCertificate } from '../lib/rankCertificates.js';
 import { applyViolation } from '../lib/violations.js';
 import { getRankTier } from '../lib/ranks.js';
+import { noteRankDrop } from '../lib/xp.js';
 import { r2SelfTest } from '../lib/r2.js';
 import { FRONTEND_ORIGIN } from '../lib/config.js';
 
@@ -310,6 +311,7 @@ adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSch
       // adds up that history, moves with it -- and the tier certificates are checked, as after any other points award.
       const delta = totalXp - before.total_xp;
       if (delta !== 0) db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`).run(targetId, delta, 'admin_adjust');
+      noteRankDrop(targetId, before.total_xp, totalXp);
       issueRankCertificates(targetId);
     }
     return result;

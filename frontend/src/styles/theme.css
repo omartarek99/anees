@@ -1917,6 +1917,26 @@ button.list-row.selected {
 .password-rules .flaw::before {
   content: '✕';
 }
+/* A long form in two columns (signup). A field that should span both gets .field-full; under 600px it is one column again. */
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 14px;
+}
+.field-grid > .field-full {
+  grid-column: 1 / -1;
+}
+.field-grid > .password-rules {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: -6px 0 16px;
+}
+@media (max-width: 600px) {
+  .field-grid,
+  .field-grid > .password-rules {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .stack {
   display: flex;
   flex-direction: column;
@@ -3467,6 +3487,315 @@ label,
 }
 @media (prefers-reduced-motion: reduce) {
   .rank-pop img, .rank-pop-glow { animation: none; }
+}
+
+/* ---------------- Rank lowered: the full-page pop-up (RankDemotionPopup.tsx) ----------------
+   A scene played by the component flipping its classes p1..p5 on (cumulative; p6 = on the way out): the old badge settles and shakes (p1, p2),
+   drops away while the new rank's colours sweep in and its badge rises (p3), the words and the perks appear (p4), and the frame and the page colour
+   swap (p5). Everything that moves is a transform or an opacity, so it runs on the compositor: no blur, no gradient repainted per frame, no layout. */
+.rank-drop-veil,
+.rank-drop {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+}
+.rank-drop-veil {
+  background: #07040f;
+}
+.rank-drop {
+  display: grid;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px 20px;
+  color: #fff;
+  background: var(--rd-old);
+  isolation: isolate;
+  outline: none;
+  transition: opacity 0.35s ease;
+}
+.rank-drop.p6 {
+  opacity: 0;
+  pointer-events: none;
+}
+/* the new rank's colour, faded in over the old one */
+.rank-drop-bg-new {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--rd-new);
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+.rank-drop.p3 .rank-drop-bg-new {
+  opacity: 1;
+}
+.rank-drop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  inline-size: min(100%, 420px);
+  margin: auto;
+  text-align: center;
+}
+
+/* the stage: both badges on the same spot, a glow behind each and a ring that spreads out when the rank changes */
+.rank-drop-stage {
+  position: relative;
+  flex-shrink: 0;
+}
+.rank-drop-glow {
+  position: absolute;
+  inset: -45%;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.rd-glow-old {
+  background: radial-gradient(circle, color-mix(in srgb, var(--rd-old-glow) 55%, transparent), transparent 62%);
+}
+.rd-glow-new {
+  background: radial-gradient(circle, color-mix(in srgb, var(--rd-new-glow) 55%, transparent), transparent 62%);
+}
+.rank-drop.p1 .rd-glow-old {
+  opacity: 1;
+}
+.rank-drop.p3 .rd-glow-old {
+  opacity: 0;
+}
+.rank-drop.p3 .rd-glow-new {
+  opacity: 1;
+  transition-delay: 0.25s;
+}
+.rank-drop-ring {
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  border: 3px solid var(--rd-new-glow);
+  opacity: 0;
+  pointer-events: none;
+}
+.rank-drop.p3 .rank-drop-ring {
+  animation: rd-ring 0.95s ease-out 0.1s both;
+}
+.rank-drop-badge {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+}
+.rank-drop-badge img {
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.5));
+}
+.rd-new {
+  transform: translateY(70px) scale(0.6);
+}
+.rank-drop.p1 .rd-old {
+  animation: rd-settle 0.55s cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+.rank-drop.p2 .rd-old {
+  animation: rd-shake 0.55s linear both;
+}
+.rank-drop.p3 .rd-old {
+  animation: rd-fall 0.75s cubic-bezier(0.5, 0, 0.9, 0.55) both;
+}
+.rank-drop.p3 .rd-new {
+  animation: rd-rise 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.3s both;
+}
+@keyframes rd-settle {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes rd-shake {
+  0%, 100% { opacity: 1; transform: none; }
+  15% { opacity: 1; transform: translateX(-9px) rotate(-2deg); }
+  30% { opacity: 1; transform: translateX(8px) rotate(2deg); }
+  45% { opacity: 1; transform: translateX(-6px) rotate(-1.5deg); }
+  60% { opacity: 1; transform: translateX(5px) rotate(1deg); }
+  80% { opacity: 1; transform: translateX(-2px); }
+}
+@keyframes rd-fall {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(150px) rotate(14deg) scale(0.6); }
+}
+@keyframes rd-rise {
+  from { opacity: 0; transform: translateY(70px) scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes rd-ring {
+  from { opacity: 0.85; transform: scale(0.35); }
+  to { opacity: 0; transform: scale(7); }
+}
+
+/* the words, the perks, the way on */
+.rd-text h2 {
+  margin: 0;
+  font-size: clamp(24px, 6vw, 32px);
+  font-weight: 800;
+  line-height: 1.15;
+  color: #fff;
+}
+.rd-text p {
+  margin: 8px 0 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.82);
+  text-wrap: balance;
+}
+.rd-perks {
+  inline-size: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  text-align: start;
+}
+.rd-perks-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.9);
+}
+.rd-perks-same {
+  margin: 0;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.82);
+}
+.rd-perk {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.rd-perk + .rd-perk {
+  margin-top: 10px;
+}
+.rd-perk p {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+}
+.rd-perk strong {
+  font-size: 14px;
+  color: #fff;
+}
+.rd-arrow {
+  display: inline-block;
+  font-style: normal;
+}
+:root[dir='rtl'] .rd-arrow {
+  transform: scaleX(-1);
+}
+.rd-comeback {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+}
+.rd-text,
+.rd-perks,
+.rd-comeback,
+.rd-btn {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.rank-drop.p4 .rd-text,
+.rank-drop.p4 .rd-perks,
+.rank-drop.p4 .rd-comeback,
+.rank-drop.p4 .rd-btn {
+  opacity: 1;
+  transform: none;
+}
+.rank-drop.p4 .rd-perks {
+  transition-delay: 0.2s;
+}
+.rank-drop.p4 .rd-comeback {
+  transition-delay: 0.35s;
+}
+.rank-drop.p4 .rd-btn {
+  transition-delay: 0.5s;
+}
+
+/* the picture keeps its place while one frame fades into the other, and one ball of colour into the other */
+.rd-frames {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.rd-pic {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.rd-frame {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  max-inline-size: none;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+  transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rd-frame-new {
+  opacity: 0;
+  transform: scale(0.82);
+}
+.rd-frame-old.is-gone {
+  opacity: 0;
+  transform: scale(1.18);
+}
+.rd-frame-new.is-here {
+  opacity: 1;
+  transform: none;
+}
+.rd-balls {
+  position: relative;
+  inline-size: 52px;
+  block-size: 52px;
+  flex-shrink: 0;
+  margin-inline: 36px;
+}
+.rd-ball {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -3px 6px rgba(0, 0, 0, 0.18), 0 4px 10px rgba(0, 0, 0, 0.35);
+  transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rd-ball-new {
+  opacity: 0;
+  transform: scale(0.7);
+}
+.rank-drop.p5 .rd-ball-old {
+  opacity: 0;
+  transform: scale(1.2);
+}
+.rank-drop.p5 .rd-ball-new {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rank-drop *,
+  .rank-drop-bg-new {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+  .rank-drop .rd-old,
+  .rank-drop .rank-drop-ring {
+    display: none;
+  }
+  .rank-drop.p3 .rd-new {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ---------------- Teacher rank badges (RankBadge.tsx) ----------------

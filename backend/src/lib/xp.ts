@@ -36,6 +36,40 @@ export function craftPuzzleTierForXp(totalXp: number): 1 | 2 | 3 | 4 {
   return (1 + Math.min(3, Math.floor((index * 4) / DIVISION_COUNT))) as 1 | 2 | 3 | 4;
 }
 
+// A student loses this much for every question they answer wrong (one left blank costs nothing), anywhere on the site: level quizzes, lesson
+// quizzes, worksheets, boss fights, the Quarry rune puzzles and friend challenges. Small next to what a right answer pays (a quiz gives 1-3
+// flat, a worksheet 5-20 per right answer), and never takes anyone below 0.
+export const WRONG_ANSWER_XP = 1;
+
+const roleAndXp = db.prepare(`SELECT role, total_xp FROM users WHERE id = ?`);
+const takeXp = db.prepare(`UPDATE users SET total_xp = total_xp - ? WHERE id = ?`);
+const logXp = db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`);
+const markRankDrop = db.prepare(`UPDATE users SET rank_drop_from = MAX(COALESCE(rank_drop_from, -1), ?) WHERE id = ?`);
+
+/**
+ * Remembers that a student's points fell far enough to lower their rank, so the demotion pop-up shows it (routes/auth.ts, rankDrop). The column
+ * keeps the highest division they fell from since they last saw it, so several drops in a row show as one. Their frame and page colour follow
+ * their rank, so they change with it; the pop-up is what shows that off.
+ */
+export function noteRankDrop(userId: number, xpBefore: number, xpAfter: number) {
+  const before = getRankTier(xpBefore).index;
+  if (getRankTier(xpAfter).index < before) markRankDrop.run(before, userId);
+}
+
+/** Takes WRONG_ANSWER_XP per wrong answer off a student (teachers and admins lose nothing); returns the points taken. Logged in the points history.
+ *  Call it before awarding what the same submission earned: a rank and its certificate then follow the net result, not the moment in between. */
+export function penalizeWrongAnswers(userId: number, wrongCount: number): number {
+  if (wrongCount <= 0) return 0;
+  const u = roleAndXp.get(userId) as { role: string; total_xp: number } | undefined;
+  if (u?.role !== 'student') return 0;
+  const lost = Math.min(wrongCount * WRONG_ANSWER_XP, u.total_xp);
+  if (lost <= 0) return 0;
+  takeXp.run(lost, userId);
+  logXp.run(userId, -lost, 'wrong_answer');
+  noteRankDrop(userId, u.total_xp, u.total_xp - lost);
+  return lost;
+}
+
 export function awardXp(userId: number, amount: number, reason: string) {
   if (amount === 0) return;
   db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`).run(userId, amount, reason);

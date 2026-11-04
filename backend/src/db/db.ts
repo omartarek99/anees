@@ -307,6 +307,10 @@ if (!userColsForTeacherPoints.some((c) => c.name === 'avatar3d')) {
 if (!userColsForTeacherPoints.some((c) => c.name === 'aura_rank')) {
   db.exec(`ALTER TABLE users ADD COLUMN aura_rank TEXT`);
 }
+// The highest rank division a student has fallen from since they last saw the demotion pop-up (lib/xp.ts noteRankDrop); NULL = nothing to show.
+if (!userColsForTeacherPoints.some((c) => c.name === 'rank_drop_from')) {
+  db.exec(`ALTER TABLE users ADD COLUMN rank_drop_from INTEGER`);
+}
 
 // Certificate tier (bronze/gold/platinum), added after the initial certificates table.
 const certificateCols = db.prepare(`PRAGMA table_info(certificates)`).all() as { name: string }[];

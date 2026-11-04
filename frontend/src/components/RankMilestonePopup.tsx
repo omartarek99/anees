@@ -11,8 +11,8 @@ type Milestone = { id: number; tier: CertificateType; status: string };
 
 /** What a student sees when they reach a new level (Bronze, Silver or Gold), in two steps:
  *  1. the rank's logo pops out on the page by itself, bouncing and glowing -- no window yet;
- *  2. when they click it, the congratulation window opens: their shield certificate is being prepared, an admin approves it (the admin
- *     Certificates page), and the certificate itself later arrives through CertificateAwardPopup.
+ *  2. when they click it, the congratulation window opens: their shield certificate is ready and was emailed to them (it is sent by itself,
+ *     lib/rankCertificates.ts), and it also arrives through CertificateAwardPopup.
  * Fetched when the app loads, one level at a time, oldest first. It only counts as seen once the window is closed, so a logo that was
  * never clicked comes back on the next visit. */
 export function RankMilestonePopup() {

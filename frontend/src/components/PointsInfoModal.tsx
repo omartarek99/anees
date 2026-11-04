@@ -45,11 +45,17 @@ export function PointsInfoModal({ open, onClose }: { open: boolean; onClose: () 
                 </span>
                 {t('pointsInfo.video')}
               </li>
-              <li style={{ display: 'flex', gap: 10, alignItems: 'center', fontWeight: 700, fontSize: 14.5, color: 'var(--maroon-dark)' }}>
+              <li style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10, fontWeight: 700, fontSize: 14.5, color: 'var(--maroon-dark)' }}>
                 <span style={{ display: 'inline-flex', width: 20, justifyContent: 'center' }} aria-hidden>
                   <QuizIcon size={20} />
                 </span>
                 {t('pointsInfo.quiz')}
+              </li>
+              <li style={{ display: 'flex', gap: 10, alignItems: 'center', fontWeight: 700, fontSize: 14.5, color: 'var(--maroon-dark)' }}>
+                <span style={{ fontSize: 20 }} aria-hidden>
+                  ❌
+                </span>
+                {t('pointsInfo.wrong')}
               </li>
             </ul>
             <button className="btn btn-primary" onClick={onClose}>

@@ -47,6 +47,8 @@ CREATE TABLE IF NOT EXISTS users (
   avatar3d TEXT,
   -- The rank colour a student picked for their pages: a tier key (lib/ranks.ts) they have reached. NULL = follow their current rank.
   aura_rank TEXT,
+  -- The highest rank division (0-17, lib/ranks.ts) a student has fallen from since they last saw the "your rank dropped" pop-up; NULL = nothing to show.
+  rank_drop_from INTEGER,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
