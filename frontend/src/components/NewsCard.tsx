@@ -31,7 +31,7 @@ export function NewsCard({ post, onDelete }: { post: NewsPost; onDelete?: (id: n
       <div className="list-row-icon">{post.icon}</div>
       <div style={{ flex: 1 }}>
         <div className="flex-between" style={{ gap: 8 }}>
-          <h3 style={{ fontSize: 15, margin: 0 }}>{pickText(lang, post.title, post.titleAr)}</h3>
+          <h3 dir="auto" style={{ fontSize: 15, margin: 0 }}>{pickText(lang, post.title, post.titleAr)}</h3>
           <div className="flex gap-sm" style={{ alignItems: 'center' }}>
             {post.subject && (
               <span className={`badge ${post.subject === 'math' ? 'badge-maroon' : 'badge-gold'}`}>
@@ -54,7 +54,7 @@ export function NewsCard({ post, onDelete }: { post: NewsPost; onDelete?: (id: n
             )}
           </div>
         </div>
-        <p style={{ marginTop: 6, marginBottom: 6, color: 'var(--ink-soft)', fontSize: 14 }}>{pickText(lang, post.body, post.bodyAr)}</p>
+        <p dir="auto" style={{ marginTop: 6, marginBottom: 6, color: 'var(--ink-soft)', fontSize: 14 }}>{pickText(lang, post.body, post.bodyAr)}</p>
         <span className="muted" style={{ fontSize: 12 }}>
           {timeAgo(post.publishedAt, t)}
         </span>

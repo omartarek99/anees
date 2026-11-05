@@ -9,10 +9,29 @@ import { LevelQuizModal } from '../components/LevelQuizModal';
 import { StoryPanel } from '../components/StoryPanel';
 import { Map2D } from '../map3d/Map2D';
 import type { ApiLevel } from '../map3d/schema';
-import type { BattleStatus } from '../lib/battle';
+import { formatHms, useCountdown, type BattleStatus } from '../lib/battle';
 
 // The 3D scene (three.js and the map's code) loads only when the map is opened.
 const AdventureMap3D = lazy(() => import('../map3d/AdventureMap3D'));
+
+/** The battle tries left as three hearts (the words are in the tooltip), or the wait before the next battle: a badge in the bottom corner of the map. */
+function BattleTries({ battle, onOver }: { battle: BattleStatus; onOver: () => void }) {
+  const { t } = useLanguage();
+  const waitLeft = useCountdown(battle.lockedUntil ?? null, onOver);
+  return (
+    <p className={`map-tries${waitLeft !== null ? ' is-waiting' : ''}`} role="status" title={`${t('story.tries')}: ${t('story.triesLeft', { n: battle.triesLeft })}`}>
+      {waitLeft !== null ? (
+        t('story.waitShort', { time: formatHms(waitLeft) })
+      ) : (
+        <span className="map-tries-hearts" role="img" aria-label={`${t('story.tries')}: ${t('story.triesLeft', { n: battle.triesLeft })}`}>
+          {[0, 1, 2].map((i) => (
+            <img key={i} className={i < battle.triesLeft ? 'is-on' : undefined} src="/images/heart.webp" alt="" aria-hidden="true" draggable={false} />
+          ))}
+        </span>
+      )}
+    </p>
+  );
+}
 
 export function MapPage() {
   const { t } = useLanguage();
@@ -120,11 +139,12 @@ export function MapPage() {
         </div>
       )}
 
-      {levels && <StoryPanel levels={levels} battle={battle} onBattleOver={load} />}
+      {levels && <StoryPanel levels={levels} />}
 
       {levels && (
         <div ref={fsRef} className={`map-fs-root${isFullscreen ? ' is-fullscreen' : ''}`}>
           {fsButton}
+          {battle && <BattleTries battle={battle} onOver={load} />}
 
           {flat ? (
             flatMap

@@ -21,7 +21,7 @@ export const displayNameSchema = z
 
 // What a teacher teaches -- shown as a dropdown at signup. Keys are stored; the Arabic/English
 // labels live in frontend/src/lib/i18n.ts (auth.subject*).
-export const TEACHER_SUBJECT_KEYS = ['math', 'science', 'islamic', 'english', 'arabic', 'ict', 'social'] as const;
+export const TEACHER_SUBJECT_KEYS = ['math', 'science', 'islamic', 'english', 'arabic', 'ict', 'social', 'art'] as const;
 export const teacherSubjectSchema = z.enum(TEACHER_SUBJECT_KEYS);
 
 export const schoolNameSchema = z
@@ -169,6 +169,16 @@ export const adminApplyViolationSchema = z.object({
 export const adminSetBanSchema = z.object({
   // null lifts the ban immediately; otherwise an ISO datetime in the future.
   bannedUntil: z.string().datetime().nullable(),
+});
+
+// Admin panel > Users: add points to, or take points from, an account (the person gets a pop-up about it).
+export const adminAdjustPointsSchema = z.object({
+  action: z.enum(['add', 'remove']),
+  amount: z.number().int().min(1).max(1_000_000),
+  // why, shown to the person in the pop-up (optional)
+  note: z.string().trim().max(120).optional(),
+  // when points are taken away: the rule that was broken (names it in the pop-up; the warning, suspension and so on are the rule form's job)
+  violation: z.enum(VIOLATION_KEYS).optional(),
 });
 
 export const adminSetXpSchema = z.object({

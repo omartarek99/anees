@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { seed } from './db/seed.js';
+import { ensureSubjects } from './lib/ensureSubjects.js';
 import { applyMapQuestions, applyLevelPool, removeDefaultVideos } from './lib/mapQuestions.js';
 import { backfillAdminPoints } from './lib/pointsBackfill.js';
 import { issuePendingRankCertificates } from './lib/rankCertificates.js';
@@ -30,6 +31,7 @@ import { applyChallengePool } from './lib/challengePool.js';
 import { FRONTEND_ORIGIN } from './lib/config.js';
 
 seed();
+ensureSubjects();
 applyMapQuestions();
 applyLevelPool();
 removeDefaultVideos();

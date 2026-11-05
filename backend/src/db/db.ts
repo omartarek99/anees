@@ -467,3 +467,24 @@ db.exec(`CREATE TABLE IF NOT EXISTS reel_messages (
   read_at TEXT
 )`);
 db.exec(`CREATE INDEX IF NOT EXISTS idx_reel_messages_teacher ON reel_messages(teacher_id, read_at)`);
+
+// Points an admin added to or took from an account (admin panel > Users): the person is told in a pop-up window until they close it.
+// delta is the change actually made (negative when removed), new_total what they have now; kind says which currency ('xp' for a student, 'teacher' for a teacher).
+db.exec(`CREATE TABLE IF NOT EXISTS points_notices (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  admin_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  delta INTEGER NOT NULL,
+  new_total INTEGER NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'xp',
+  note TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  read_at TEXT
+)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_points_notices_user ON points_notices(user_id, read_at)`);
+
+// A points notice can name the rule that was broken (lib/violations.ts key): the pop-up then says "a rule was broken".
+const pointsNoticeCols = db.prepare(`PRAGMA table_info(points_notices)`).all() as { name: string }[];
+if (!pointsNoticeCols.some((c) => c.name === 'violation')) {
+  db.exec(`ALTER TABLE points_notices ADD COLUMN violation TEXT`);
+}

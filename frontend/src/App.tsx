@@ -1,9 +1,10 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { Navigate, Route, BrowserRouter, Routes, Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth-context';
 import { LanguageProvider, useLanguage } from './lib/language-context';
 import { ThemeProvider } from './lib/theme-context';
 import { RankAura } from './components/RankAura';
+import { IntroSplash } from './components/IntroSplash';
 import { trackPageview } from './lib/analytics';
 import { Sidebar } from './components/Sidebar';
 import { AvatarBoundary } from './components/avatar3d/AvatarBoundary';
@@ -23,6 +24,7 @@ import { GuideHost } from './components/GuideHost';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { CompleteProfilePage } from './pages/CompleteProfilePage';
 import { AdminMessageModal } from './components/AdminMessageModal';
+import { PointsNoticeModal } from './components/PointsNoticeModal';
 import { TermsPage } from './pages/TermsPage';
 import { CookiePolicyPage } from './pages/CookiePolicyPage';
 import { LoginPage } from './pages/LoginPage';
@@ -134,9 +136,22 @@ function PageMeta() {
 }
 
 function FullScreenLoader() {
+  const { t } = useLanguage();
+  // The server sleeps when nobody has used the site for a while and then takes up to half a minute to wake: say so instead of showing a bare spinner.
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSlow(true), 4000);
+    return () => window.clearTimeout(timer);
+  }, []);
   return (
-    <div style={{ height: '100vh' }} className="flex-center">
+    <div style={{ height: '100vh', flexDirection: 'column', gap: 18, textAlign: 'center', padding: 24 }} className="flex-center">
       <div className="spinner" />
+      {slow && (
+        <div role="status" style={{ maxWidth: 360 }}>
+          <p style={{ fontWeight: 700, margin: 0 }}>{t('common.waking')}</p>
+          <p className="muted" style={{ margin: '4px 0 0', fontSize: 14 }}>{t('common.wakingHint')}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -162,6 +177,7 @@ function ProtectedLayout() {
         <main className="app-main">
           <WarningModal />
           <AdminMessageModal />
+          <PointsNoticeModal />
           {/* A page's chunk can fail to download (offline, or a stale filename after a redeploy) -- show an
               error here instead of letting the rejected lazy import blank the whole app. */}
           <AvatarBoundary fallback={<div className="form-error-banner">{t('messages.loadError')}</div>}>
@@ -259,6 +275,7 @@ export default function App() {
         <LanguageProvider>
           <AuthProvider>
             <RankAura />
+            <IntroSplash />
             <PageviewTracker />
             <PageMeta />
             <ScrollToTop />

@@ -28,9 +28,9 @@ export function TeacherHomePage() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [title, setTitle] = useState('');
-  const [titleAr, setTitleAr] = useState('');
+  // the language the announcement is written in (it is shown to students exactly as typed)
+  const [msgLang, setMsgLang] = useState<'ar' | 'en'>(lang === 'ar' ? 'ar' : 'en');
   const [body, setBody] = useState('');
-  const [bodyAr, setBodyAr] = useState('');
   const [icon, setIcon] = useState('📣');
   const [subject, setSubject] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -56,16 +56,12 @@ export function TeacherHomePage() {
     try {
       await api.post('/news', {
         title,
-        titleAr,
         body,
-        bodyAr,
         icon: icon || '📣',
         subject: subject || undefined,
       });
       setTitle('');
-      setTitleAr('');
       setBody('');
-      setBodyAr('');
       setIcon('📣');
       setSubject('');
       loadPosts();
@@ -98,20 +94,28 @@ export function TeacherHomePage() {
           {formError && <div className="form-error-banner">{formError}</div>}
 
           <div className="field">
-            <label htmlFor="newsTitle">{t('teacher.titleLabel')}</label>
-            <input id="newsTitle" value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={120} />
+            <label>{t('teacher.writeIn')}</label>
+            <div className="flex gap-sm" role="group" aria-label={t('teacher.writeIn')}>
+              {(['ar', 'en'] as const).map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  className={`btn ${msgLang === l ? 'btn-primary' : 'btn-secondary'}`}
+                  aria-pressed={msgLang === l}
+                  onClick={() => setMsgLang(l)}
+                >
+                  {l === 'ar' ? t('teacher.langAr') : t('teacher.langEn')}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="field">
-            <label htmlFor="newsTitleAr">{t('teacher.titleArLabel')}</label>
-            <input id="newsTitleAr" dir="rtl" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} maxLength={120} />
+            <label htmlFor="newsTitle">{t('teacher.titleLabel')}</label>
+            <input id="newsTitle" dir={msgLang === 'ar' ? 'rtl' : 'ltr'} value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={120} />
           </div>
           <div className="field">
             <label htmlFor="newsBody">{t('teacher.bodyLabel')}</label>
-            <textarea id="newsBody" value={body} onChange={(e) => setBody(e.target.value)} required maxLength={2000} rows={4} />
-          </div>
-          <div className="field">
-            <label htmlFor="newsBodyAr">{t('teacher.bodyArLabel')}</label>
-            <textarea id="newsBodyAr" dir="rtl" value={bodyAr} onChange={(e) => setBodyAr(e.target.value)} maxLength={2000} rows={4} />
+            <textarea id="newsBody" dir={msgLang === 'ar' ? 'rtl' : 'ltr'} value={body} onChange={(e) => setBody(e.target.value)} required maxLength={2000} rows={4} />
           </div>
           <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
             <div className="field" style={{ width: 100 }}>

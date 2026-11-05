@@ -9,6 +9,7 @@ import {
   adminSetWarningSchema,
   adminSetBanSchema,
   adminSetXpSchema,
+  adminAdjustPointsSchema,
   adminIssueCertificateSchema,
   adminRevokeCertificateSchema,
   adminApplyViolationSchema,
@@ -284,6 +285,38 @@ adminRouter.post('/users/:id/violations', requireCsrfHeader, validateBody(adminA
   applyUserUpdate(res, targetId, () => ({ changes: 1 }), { applied });
 });
 
+/**
+ * Sets an account's points to `newPoints` (a teacher's are teacher_points, a separate currency -- see lib/xp.ts; everyone else's total_xp) and tells the
+ * person: a pop-up with how much was added or taken (points_notices, shown by components/PointsNoticeModal.tsx). The change goes in the points history
+ * too (negative when points are taken away), so the monthly leaderboard, which adds up that history, moves with it; for a student the tier certificates are
+ * checked and a fall to a lower rank is noted, as after any other points change.
+ */
+function applyPointsChange(res: Response, targetId: number, newPoints: number, adminId: number, note: string | null, violation: string | null = null) {
+  const before = db.prepare(`SELECT role, total_xp, teacher_points FROM users WHERE id = ?`).get(targetId) as
+    | { role: string; total_xp: number; teacher_points: number }
+    | undefined;
+  if (!before) {
+    res.status(404).json({ error: 'User not found.' });
+    return;
+  }
+  const teacher = before.role === 'teacher';
+  const old = teacher ? before.teacher_points ?? 0 : before.total_xp;
+  applyUserUpdate(res, targetId, () => {
+    const result = db.prepare(teacher ? `UPDATE users SET teacher_points = ? WHERE id = ?` : `UPDATE users SET total_xp = ? WHERE id = ?`).run(newPoints, targetId);
+    const delta = newPoints - old;
+    if (result.changes && delta !== 0) {
+      db.prepare(teacher ? `INSERT INTO teacher_point_events (user_id, amount, reason) VALUES (?,?,?)` : `INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`).run(targetId, delta, 'admin_adjust');
+      if (!teacher) {
+        noteRankDrop(targetId, old, newPoints);
+        issueRankCertificates(targetId);
+      }
+      db.prepare(`INSERT INTO points_notices (user_id, admin_id, delta, new_total, kind, note, violation) VALUES (?,?,?,?,?,?,?)`).run(targetId, adminId, delta, newPoints, teacher ? 'teacher' : 'xp', note, delta < 0 ? violation : null);
+    }
+    return result;
+  });
+}
+
+// Sets the points to a number (the older way; the admin panel now adds or removes, below).
 adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSchema), (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
@@ -291,31 +324,29 @@ adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSch
     return;
   }
   const { totalXp } = req.body as { totalXp: number };
-  const before = db.prepare(`SELECT role, total_xp, teacher_points FROM users WHERE id = ?`).get(targetId) as
-    | { role: string; total_xp: number; teacher_points: number }
-    | undefined;
-  // A teacher earns teacher_points (a separate currency, lib/xp.ts), so that is what the admin's number sets for them; everyone else's is total_xp.
-  if (before?.role === 'teacher') {
-    applyUserUpdate(res, targetId, () => {
-      const result = db.prepare(`UPDATE users SET teacher_points = ? WHERE id = ?`).run(totalXp, targetId);
-      const delta = totalXp - (before.teacher_points ?? 0);
-      if (result.changes && delta !== 0) db.prepare(`INSERT INTO teacher_point_events (user_id, amount, reason) VALUES (?,?,?)`).run(targetId, delta, 'admin_adjust');
-      return result;
-    });
+  applyPointsChange(res, targetId, totalXp, req.userId!, null);
+});
+
+// Adds points to an account, or takes some away (never below 0), and sends the person a pop-up window about it.
+adminRouter.post('/users/:id/points', requireCsrfHeader, validateBody(adminAdjustPointsSchema), (req, res) => {
+  const targetId = Number(req.params.id);
+  if (targetId === req.userId) {
+    res.status(400).json({ error: "You can't edit your own points." });
     return;
   }
-  applyUserUpdate(res, targetId, () => {
-    const result = db.prepare(`UPDATE users SET total_xp = ? WHERE id = ?`).run(totalXp, targetId);
-    if (result.changes && before) {
-      // The change goes in the points history too (a negative amount when points are taken away), so the monthly leaderboard, which
-      // adds up that history, moves with it -- and the tier certificates are checked, as after any other points award.
-      const delta = totalXp - before.total_xp;
-      if (delta !== 0) db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`).run(targetId, delta, 'admin_adjust');
-      noteRankDrop(targetId, before.total_xp, totalXp);
-      issueRankCertificates(targetId);
-    }
-    return result;
-  });
+  const { action, amount, note, violation } = req.body as { action: 'add' | 'remove'; amount: number; note?: string; violation?: string };
+  const row = db.prepare(`SELECT role, total_xp, teacher_points FROM users WHERE id = ?`).get(targetId) as { role: string; total_xp: number; teacher_points: number } | undefined;
+  if (!row) {
+    res.status(404).json({ error: 'User not found.' });
+    return;
+  }
+  const current = row.role === 'teacher' ? row.teacher_points ?? 0 : row.total_xp;
+  const next = action === 'add' ? Math.min(1_000_000, current + amount) : Math.max(0, current - amount);
+  if (next === current) {
+    res.status(400).json({ error: action === 'add' ? 'This account already has the most points allowed.' : 'This account has no points to remove.' });
+    return;
+  }
+  applyPointsChange(res, targetId, next, req.userId!, note ? note : null, action === 'remove' ? violation ?? null : null);
 });
 
 // ---------------------------------------------------------------------------------------

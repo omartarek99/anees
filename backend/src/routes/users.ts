@@ -238,6 +238,21 @@ usersRouter.post('/me/avatar', requireAuth, requireCsrfHeader, handleAvatarUploa
   res.json({ profile: ownProfile(user) });
 });
 
+// Points an admin added or took from this account that they have not closed yet: the app pops them up (components/PointsNoticeModal.tsx).
+usersRouter.get('/me/points-notices', requireAuth, (req, res) => {
+  const rows = db
+    .prepare(`SELECT n.id, n.delta, n.new_total, n.kind, n.note, n.violation, n.created_at, a.display_name AS admin_name
+       FROM points_notices n LEFT JOIN users a ON a.id = n.admin_id
+       WHERE n.user_id = ? AND n.read_at IS NULL ORDER BY n.id`)
+    .all(req.userId!) as any[];
+  res.json({ notices: rows.map((r) => ({ id: r.id, delta: r.delta, newTotal: r.new_total, kind: r.kind, note: r.note, violation: r.violation ?? null, createdAt: r.created_at, adminName: r.admin_name ?? null })) });
+});
+
+usersRouter.post('/me/points-notices/:id/read', requireAuth, requireCsrfHeader, (req, res) => {
+  const result = db.prepare(`UPDATE points_notices SET read_at = datetime('now') WHERE id = ? AND user_id = ? AND read_at IS NULL`).run(Number(req.params.id), req.userId!);
+  res.json({ ok: true, changed: Number(result.changes) });
+});
+
 usersRouter.get('/search', requireAuth, (req, res) => {
   const q = String(req.query.q ?? '').trim();
   if (q.length < 2) {

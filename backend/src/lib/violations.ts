@@ -166,6 +166,10 @@ export function applyViolation(userId: number, key: string, adminId: number, inp
       db.prepare(`UPDATE users SET total_xp = total_xp - ? WHERE id = ?`).run(pointsRemoved, userId);
       db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`).run(userId, -pointsRemoved, 'violation');
       noteRankDrop(userId, user.total_xp, user.total_xp - pointsRemoved);
+      // the same pop-up an admin's "remove points" sends, naming the rule that was broken
+      db.prepare(`INSERT INTO points_notices (user_id, admin_id, delta, new_total, kind, note, violation) VALUES (?,?,?,?,?,?,?)`).run(
+        userId, adminId, -pointsRemoved, user.total_xp - pointsRemoved, 'xp', note ?? null, key
+      );
     }
     const certificatesRevoked = measure.revoke ? revokeUserCertificates(userId, adminId, `${violation.title} (${offense})`, measure.revoke) : 0;
     if (suspendedUntil) db.prepare(`UPDATE users SET banned_until = ? WHERE id = ?`).run(suspendedUntil, userId);
