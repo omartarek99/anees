@@ -140,21 +140,24 @@ html[lang='ar'] .landing-logo {
   background:
     radial-gradient(60% 46% at 52% 30%, rgb(23 19 46 / 0.5) 0%, rgb(23 19 46 / 0.28) 55%, transparent 100%),
     linear-gradient(180deg, rgb(23 19 46 / 0.62) 0%, rgb(23 19 46 / 0.45) 12%, rgb(23 19 46 / 0.22) 28%, rgb(23 19 46 / 0.06) 42%, transparent 52%),
-    linear-gradient(180deg, transparent 50%, rgb(23 19 46 / 0.1) 56%, rgb(23 19 46 / 0.3) 64%, rgb(23 19 46 / 0.58) 73%, rgb(23 19 46 / 0.82) 82%, rgb(23 19 46 / 0.95) 91%, var(--land-bg) 100%);
+    linear-gradient(180deg, transparent 64%, rgb(23 19 46 / 0.1) 70%, rgb(23 19 46 / 0.3) 77%, rgb(23 19 46 / 0.58) 84%, rgb(23 19 46 / 0.82) 90%, rgb(23 19 46 / 0.95) 95%, var(--land-bg) 100%);
   pointer-events: none;
 }
 
 /* The hero picture is an ordinary part of the page: it scrolls away with the hero (never fixed, never tiled), drifts a
-   touch slower than the text, fades in when it loads, and its lower edge dissolves into the page ground (::after). */
+   touch slower than the text, fades in when it loads, and its lower edge dissolves into the page ground (::after).
+   It sits low in the hero so the skyline rises under the headline instead of through it, and its top edge fades
+   into the night sky (the mask) so there is no line where the picture starts. */
 .landing-bg {
   position: absolute;
   z-index: 0;
   inset-inline: 0;
-  inset-block-start: -14%;
+  inset-block-start: 8%;
   inline-size: 100%;
   block-size: 114%;
   object-fit: cover;
   object-position: 62% 100%;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 24%);
   transform: translate3d(0, calc(var(--sy, 0) * 0.1px), 0);
   animation: landing-fade 1.4s ease both;
 }
@@ -560,15 +563,14 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
 /* ---------------- Intro animation on scroll ---------------- */
 /* Hidden only while .js-reveal is on the page (added by LandingPage once its observer is running, and
    never with reduced motion). When a story scrolls into view it gets .is-in and its parts ease in one
-   after another: the tag's rule draws itself, then tag, headline, paragraph, link, picture. */
+   after another: the tag's rule draws itself, then tag, headline, paragraph, link. The pictures have their own
+   entrance (below). */
 .landing-copy > :nth-child(2) { --i: 0; }
 .landing-copy > :nth-child(3) { --i: 1; }
 .landing-copy > :nth-child(4) { --i: 2; }
 .landing-copy > :nth-child(5) { --i: 3; }
-.landing-story img { --i: 2; }
 
-.landing.js-reveal .landing-story .landing-copy > :not(.landing-num),
-.landing.js-reveal .landing-story img {
+.landing.js-reveal .landing-story .landing-copy > :not(.landing-num) {
   opacity: 0;
   transform: translateY(30px);
   transition: opacity 0.9s ease, transform 1s cubic-bezier(0.16, 1, 0.3, 1);
@@ -587,8 +589,7 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
 html[dir='rtl'] .landing.js-reveal .landing-story .landing-tag::before {
   transform-origin: right;
 }
-.landing.js-reveal .landing-story.is-in .landing-copy > :not(.landing-num),
-.landing.js-reveal .landing-story.is-in img {
+.landing.js-reveal .landing-story.is-in .landing-copy > :not(.landing-num) {
   opacity: 1;
   transform: none;
 }
@@ -602,10 +603,60 @@ html[dir='rtl'] .landing.js-reveal .landing-story .landing-tag::before {
 
 /* Reduced motion: the same reveal as a plain fade (no sliding / scaling / drawing). */
 .landing.js-calm .landing-story .landing-copy > :not(.landing-num),
-.landing.js-calm .landing-story img,
 .landing.js-calm .landing-story .landing-num,
 .landing.js-calm .landing-story .landing-tag::before {
   transform: none;
+}
+
+/* ---------------- Story pictures: each one slides in from its own side ---------------- */
+/* A picture comes in from the edge of the page it sits against (--side: 1 = the inline end, -1 = the start;
+   mirrored in Arabic, so the zig-zag of the stories mirrors with the text). Where the browser has scroll
+   timelines the slide follows the scroll itself: the picture moves only while you scroll, lands the moment
+   all of it is on screen, and slides back out if you scroll back up. Other browsers play the same slide once
+   when the story comes into view (.is-in, from the observer). Reduced motion: a plain fade, nothing slides. */
+.landing-story {
+  --side: 1;
+}
+.landing-story.is-flipped,
+html[dir='rtl'] .landing-story:not(.is-flipped) {
+  --side: -1;
+}
+html[dir='rtl'] .landing-story.is-flipped {
+  --side: 1;
+}
+@keyframes landing-pic-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--side) * 42%)) rotate(calc(var(--side) * 3deg));
+  }
+  45% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.landing.js-reveal .landing-story img {
+  opacity: 0;
+}
+.landing.js-reveal .landing-story.is-in img {
+  opacity: 1;
+  animation: landing-pic-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.landing.js-calm .landing-story.is-in img {
+  animation: landing-fade 0.6s ease both;
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .landing.js-reveal .landing-story img,
+    .landing.js-reveal .landing-story.is-in img {
+      opacity: 1;
+      animation: landing-pic-in cubic-bezier(0.5, 1, 0.89, 1) both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+  }
 }
 
 /* Keep the fixed side rail clear of the pictures and footer links. */

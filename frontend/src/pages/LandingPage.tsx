@@ -80,7 +80,8 @@ export function LandingPage() {
     };
   }, []);
 
-  // Intro animation: each story's text (and picture) eases in the first time it scrolls into view.
+  // Intro animation: each story's text eases in the first time it scrolls into view (its picture slides in from the
+  // side, tied to the scroll where the browser can; see landing.css, which also uses .is-in for the fallback).
   // The hidden starting state only exists once this has run (class js-reveal), so without JS everything
   // is simply visible. With reduced motion (class js-calm) the same reveal is a plain fade: no sliding,
   // no scaling -- the parallax stays off for those visitors.
