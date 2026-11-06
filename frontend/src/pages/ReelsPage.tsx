@@ -37,6 +37,12 @@ type FlatReelEntry = {
   progress: { status: 'locked' | 'available' | 'completed'; stars: number };
 };
 
+/** The slide in view and its neighbours (round the loop) are the only ones that get a <video>. */
+function isNearActive(i: number, active: number, total: number): boolean {
+  const d = Math.abs(i - active);
+  return Math.min(d, total - d) <= 1;
+}
+
 export function ReelsPage() {
   const { refreshUser } = useAuth();
   const { t, lang, dir } = useLanguage();
@@ -274,6 +280,7 @@ export function ReelsPage() {
               <ReelSlide
                 data={slide}
                 isActive={i === (activeIndex ?? initialIndex)}
+                loadVideo={isNearActive(i, activeIndex ?? initialIndex, slides.length)}
                 muted={muted}
                 onSoundBlocked={handleSoundBlocked}
                 onCompleted={handleCompleted}
