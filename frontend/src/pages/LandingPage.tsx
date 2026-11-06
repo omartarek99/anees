@@ -3,13 +3,16 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { AppDownloadSection } from '../components/AppDownloadSection';
+import { ParticleForm } from '../components/ParticleForm';
 import '../styles/landing.css';
 
 // The first page a visitor sees (logged-out "/", and "/welcome" for anyone). Layout and type follow the
 // "MNTN" Figma landing page; the palette is the Anees brand board (maroon / sky blue / sand): a layered
-// hero with the headline, a left rail and a right "Start / 01 / 02 / 03" progress rail, three alternating
-// story sections, a footer. The pictures are Anees's own artwork: the story pictures (teacher, adventure map,
-// student) and the hero's Doha skyline, which scrolls with the page and melts into the ground below it.
+// hero with the headline, a left rail and a right "Start / 01 / 02 / 03" progress rail; below it a GPU particle
+// form (components/ParticleForm.tsx) that the camera flies ever deeper into as the page scrolls down, and that stays
+// behind the three alternating story sections, the app section and the footer. The pictures are Anees's own
+// artwork: the story pictures (teacher, adventure map, student) and the hero's Doha skyline, which scrolls with the
+// page and melts into the ground below it.
 
 const SECTIONS = [
   { id: 'learn', n: '01', key: 's1', img: '/images/landing-learn.webp' },
@@ -180,57 +183,59 @@ export function LandingPage() {
         </div>
       </section>
 
-      <main className="landing-stories">
-        {SECTIONS.map((s, i) => (
-          <section key={s.id} id={s.id} className={`landing-story${i % 2 ? ' is-flipped' : ''}`}>
-            <div className="landing-copy">
-              <span className="landing-num" aria-hidden="true">{s.n}</span>
-              <p className="landing-tag">{t(`landing.${s.key}Tag`)}</p>
-              <h2>{t(`landing.${s.key}Title`)}</h2>
-              <p className="landing-body">{t(`landing.${s.key}Body`)}</p>
-              <Link to="/signup" className="landing-more">
-                {t(`landing.${s.key}Cta`)}
-                <Arrow />
-              </Link>
+      <ParticleForm className="landing-deep" stageClassName="landing-particles-stage" introClassName="landing-particles-intro">
+        <main className="landing-stories">
+          {SECTIONS.map((s, i) => (
+            <section key={s.id} id={s.id} className={`landing-story${i % 2 ? ' is-flipped' : ''}`}>
+              <div className="landing-copy">
+                <span className="landing-num" aria-hidden="true">{s.n}</span>
+                <p className="landing-tag">{t(`landing.${s.key}Tag`)}</p>
+                <h2>{t(`landing.${s.key}Title`)}</h2>
+                <p className="landing-body">{t(`landing.${s.key}Body`)}</p>
+                <Link to="/signup" className="landing-more">
+                  {t(`landing.${s.key}Cta`)}
+                  <Arrow />
+                </Link>
+              </div>
+              <img src={s.img} width={566} height={720} loading="lazy" decoding="async" alt={t(`landing.${s.key}Alt`)} />
+            </section>
+          ))}
+        </main>
+
+        <AppDownloadSection />
+
+        <footer className="landing-footer-wrap">
+          <div className="landing-footer">
+          <div className="landing-footer-brand">
+            <span className="landing-logo">{t('brand')}</span>
+            <p>{t('landing.footerTagline')}</p>
+            <p className="landing-footer-about">{t('landing.footerAbout')}</p>
+            <div className="landing-actions">
+              <Link to="/signup" className="landing-btn landing-btn--solid">{t('landing.signup')}</Link>
+              <Link to="/login" className="landing-btn landing-btn--ghost">{t('landing.login')}</Link>
             </div>
-            <img src={s.img} width={566} height={720} loading="lazy" decoding="async" alt={t(`landing.${s.key}Alt`)} />
-          </section>
-        ))}
-      </main>
-
-      <AppDownloadSection />
-
-      <footer className="landing-footer-wrap">
-        <div className="landing-footer">
-        <div className="landing-footer-brand">
-          <span className="landing-logo">{t('brand')}</span>
-          <p>{t('landing.footerTagline')}</p>
-          <p className="landing-footer-about">{t('landing.footerAbout')}</p>
-          <div className="landing-actions">
-            <Link to="/signup" className="landing-btn landing-btn--solid">{t('landing.signup')}</Link>
-            <Link to="/login" className="landing-btn landing-btn--ghost">{t('landing.login')}</Link>
+            <small>{t('landing.copyright')}</small>
           </div>
-          <small>{t('landing.copyright')}</small>
-        </div>
-        <div className="landing-footer-col">
-          <h3>{t('landing.colAnees')}</h3>
-          <Link to="/login">{t('landing.login')}</Link>
-          <Link to="/signup">{t('landing.signup')}</Link>
-          <Link to="/signup">{t('landing.teach')}</Link>
-        </div>
-        <div className="landing-footer-col">
-          <h3>{t('landing.colLegal')}</h3>
-          <Link to="/privacy">{t('legal.privacy')}</Link>
-          <Link to="/terms">{t('legal.terms')}</Link>
-          <Link to="/cookies">{t('legal.cookies')}</Link>
-        </div>
-        <div className="landing-footer-col">
-          <h3>{t('landing.colContact')}</h3>
-          <span>{t('landing.contactLine')}</span>
-          <a href="mailto:info@anees-qa.site" dir="ltr">info@anees-qa.site</a>
-        </div>
-        </div>
-      </footer>
+          <div className="landing-footer-col">
+            <h3>{t('landing.colAnees')}</h3>
+            <Link to="/login">{t('landing.login')}</Link>
+            <Link to="/signup">{t('landing.signup')}</Link>
+            <Link to="/signup">{t('landing.teach')}</Link>
+          </div>
+          <div className="landing-footer-col">
+            <h3>{t('landing.colLegal')}</h3>
+            <Link to="/privacy">{t('legal.privacy')}</Link>
+            <Link to="/terms">{t('legal.terms')}</Link>
+            <Link to="/cookies">{t('legal.cookies')}</Link>
+          </div>
+          <div className="landing-footer-col">
+            <h3>{t('landing.colContact')}</h3>
+            <span>{t('landing.contactLine')}</span>
+            <a href="mailto:info@anees-qa.site" dir="ltr">info@anees-qa.site</a>
+          </div>
+          </div>
+        </footer>
+      </ParticleForm>
     </div>
   );
 }

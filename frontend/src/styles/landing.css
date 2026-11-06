@@ -250,6 +250,76 @@ html[lang='ar'] .landing-tag {
   }
 }
 
+/* ---------------- Particle form (the background of everything after the hero) ---------------- */
+/* components/ParticleForm.tsx wraps the stories, the app section and the footer (.landing-deep). Its first child,
+   the stage, is a screen tall and sticky, with a negative bottom margin of its own height, so it stays on screen
+   behind them from the end of the hero to the end of the page while they scroll over it. The empty intro block
+   before the stories is the stretch where the camera dives into the form; the stories then rise over it while the
+   camera keeps flying in to the end of the page (scrolling up reverses it).
+   The engine still renders on black, as designed; the canvas is blended onto the page (screen, or plus-lighter
+   where supported): black shows the page through and the particles' light adds onto it, the way they add onto
+   each other. So the form sits on the landing's own ground with a soft dusk-violet pool and a faint sunset-peach
+   one behind it (the stories' glow recipe). No seams: both pools fade to nothing well inside the stage, so its
+   edges are exactly the page ground, and the canvas fades out toward its top and bottom (mask). On narrow screens
+   the camera starts further back (ParticleForm FIT_ASPECT) so the rings stay in frame.
+   Not a scroll container anywhere above it (.landing clips with overflow-x: clip), so sticky works. */
+.landing-deep {
+  --pf-stage: 100vh;
+  position: relative;
+}
+@supports (height: 100svh) {
+  .landing-deep {
+    --pf-stage: 100svh;
+  }
+}
+.landing-deep > :not(.landing-particles-stage) {
+  position: relative;
+  z-index: 1;
+}
+.landing-particles-stage {
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  block-size: var(--pf-stage);
+  margin-block-end: calc(-1 * var(--pf-stage));
+  overflow: hidden;
+  isolation: isolate; /* the canvas blends with this background only */
+  background:
+    radial-gradient(42% 38% at 50% 50%, rgb(138 111 209 / 0.24) 0%, rgb(138 111 209 / 0.19) 18%, rgb(138 111 209 / 0.13) 36%, rgb(138 111 209 / 0.07) 56%, rgb(138 111 209 / 0.025) 78%, transparent 100%),
+    radial-gradient(34% 20% at 47% 66%, rgb(227 156 117 / 0.1) 0%, rgb(227 156 117 / 0.07) 30%, rgb(227 156 117 / 0.03) 62%, transparent 100%),
+    var(--land-bg);
+}
+.landing-particles-stage canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  cursor: grab;
+  mix-blend-mode: screen;
+  mix-blend-mode: plus-lighter;
+  /* Softened behind the page's text so it reads clearly (ParticleForm sets --pf-blur 0..1 from the scroll), and
+     faded in with its entrance as the hero scrolls away (--pf-enter 0..1). */
+  filter: blur(calc(var(--pf-blur, 0) * 3px));
+  opacity: var(--pf-enter, 1);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgb(0 0 0 / 0.35) 6%, rgb(0 0 0 / 0.75) 11%, #000 16%, #000 84%, rgb(0 0 0 / 0.75) 89%, rgb(0 0 0 / 0.35) 94%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, rgb(0 0 0 / 0.35) 6%, rgb(0 0 0 / 0.75) 11%, #000 16%, #000 84%, rgb(0 0 0 / 0.75) 89%, rgb(0 0 0 / 0.35) 94%, transparent 100%);
+}
+.landing-particles-stage canvas:active {
+  cursor: grabbing;
+}
+/* Empty (ParticleForm renders it): the page shows only the form here while the camera flies in. It lets clicks
+   through to the canvas. */
+.landing-particles-intro {
+  block-size: 220vh;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-particles-intro {
+    block-size: var(--pf-stage); /* no fly-in: one screen of the form, then the stories */
+  }
+}
+
 /* Left rail: language (the design's "Follow us" spot). */
 .landing-rail {
   position: absolute;
@@ -611,8 +681,9 @@ html[dir='rtl'] .landing.js-reveal .landing-story .landing-tag::before {
 /* ---------------- Story pictures: each one slides in from its own side ---------------- */
 /* A picture comes in from the edge of the page it sits against (--side: 1 = the inline end, -1 = the start;
    mirrored in Arabic, so the zig-zag of the stories mirrors with the text). Where the browser has scroll
-   timelines the slide follows the scroll itself: the picture moves only while you scroll, lands the moment
-   all of it is on screen, and slides back out if you scroll back up. Other browsers play the same slide once
+   timelines the slide follows the scroll itself: the picture starts mostly off its side of the page, moves only
+   while you scroll, lands when its centre reaches the middle of the screen, and slides back out if you scroll
+   back up. Other browsers play the same slide once
    when the story comes into view (.is-in, from the observer). Reduced motion: a plain fade, nothing slides. */
 .landing-story {
   --side: 1;
@@ -627,9 +698,9 @@ html[dir='rtl'] .landing-story.is-flipped {
 @keyframes landing-pic-in {
   from {
     opacity: 0;
-    transform: translateX(calc(var(--side) * 42%)) rotate(calc(var(--side) * 3deg));
+    transform: translateX(calc(var(--side) * 70%)) rotate(calc(var(--side) * 4deg));
   }
-  45% {
+  30% {
     opacity: 1;
   }
   to {
@@ -652,9 +723,9 @@ html[dir='rtl'] .landing-story.is-flipped {
     .landing.js-reveal .landing-story img,
     .landing.js-reveal .landing-story.is-in img {
       opacity: 1;
-      animation: landing-pic-in cubic-bezier(0.5, 1, 0.89, 1) both;
+      animation: landing-pic-in cubic-bezier(0.33, 1, 0.68, 1) both;
       animation-timeline: view();
-      animation-range: entry 0% entry 100%;
+      animation-range: entry 0% cover 50%; /* lands when the picture's centre reaches the middle of the screen */
     }
   }
 }
