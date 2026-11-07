@@ -6,8 +6,7 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { pickText, translateApiError } from '../lib/i18n';
 import { Avatar } from '../components/Avatar';
-import { ProfileAvatar3D } from '../components/ProfileAvatar3D';
-import type { AvatarConfig } from '../components/avatar3d/avatarConfig';
+import { AvatarPicker } from '../components/AvatarPicker';
 import { RankBadge, type RankTier } from '../components/RankBadge';
 import { MedalLevelBar } from '../components/MedalLevelBar';
 import { AuraPicker } from '../components/AuraPicker';
@@ -41,7 +40,6 @@ type Profile = {
   avatarKey: string;
   avatarUrl: string | null;
   // The student's customised 3D character; null until they save one.
-  avatar3d: AvatarConfig | null;
   role: 'student' | 'teacher' | 'admin';
   bio: string;
   // Teachers: public. Students: only present on their own profile.
@@ -104,6 +102,7 @@ export function ProfilePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [picking, setPicking] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
@@ -139,10 +138,11 @@ export function ProfilePage() {
     }
   }
 
-  // Throws on failure -- ProfileAvatar3D shows the error and keeps the customiser open.
-  async function saveAvatar3d(avatar3d: AvatarConfig) {
-    const data = await api.patch<{ profile: Profile }>('/users/me', { avatar3d });
+  // Throws on failure -- AvatarPicker shows the error and stays open.
+  async function saveAvatarKey(avatarKey: string) {
+    const data = await api.patch<{ profile: Profile }>('/users/me', { avatarKey });
     setProfile(data.profile);
+    await refreshUser();
   }
 
   async function saveBio() {
@@ -240,17 +240,15 @@ export function ProfilePage() {
 
       <div className="card flex gap-md" style={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <div className="avatar-edit-wrap">
-          {(profile.role === 'student' || profile.role === 'teacher') && (isOwnProfile || profile.avatar3d) ? (
-            <ProfileAvatar3D
-              avatarKey={profile.avatarKey}
-              photoUrl={profile.avatarUrl}
-              config={profile.avatar3d}
-              size={72}
-              onSave={isOwnProfile ? saveAvatar3d : undefined}
-            />
+          {/* A student's own picture opens the picture choice. */}
+          {isOwnProfile && profile.role === 'student' ? (
+            <button type="button" className="avatar-pick-btn" aria-label={t('avatars.pick')} title={t('avatars.pick')} onClick={() => setPicking(true)}>
+              <Avatar avatarKey={profile.avatarKey} photoUrl={profile.avatarUrl} size={72} />
+            </button>
           ) : (
             <Avatar avatarKey={profile.avatarKey} photoUrl={profile.avatarUrl} size={72} />
           )}
+          {picking && <AvatarPicker current={profile.avatarUrl ? '' : profile.avatarKey} onPick={saveAvatarKey} onClose={() => setPicking(false)} />}
           {/* A small + on the top left of the picture: one click opens the photo picker. (The "customize character" button stays under the picture.) */}
           {isOwnProfile && (
             <div className="avatar-plus-wrap">

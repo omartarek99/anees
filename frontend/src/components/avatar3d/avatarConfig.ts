@@ -1,6 +1,7 @@
 // The student's 3D character: what can be chosen, the colour of every choice, and the two
 // browser checks that decide whether to render it at all. No three.js import here -- this file
-// is loaded eagerly (by ProfileAvatar3D) while the 3D code itself is lazy-loaded.
+// is loaded eagerly. The character's customiser is gone (students pick a picture now, components/Avatar.tsx); the saved
+// configs and the WebGL checks below (used by the map) remain.
 //
 // The ids below are what gets stored (users.avatar3d) and must match avatar3dSchema in
 // backend/src/lib/schemas.ts -- the server rejects anything that isn't one of these.

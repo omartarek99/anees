@@ -1,50 +1,35 @@
 import { translate, type Lang } from '../lib/i18n';
 import { useLanguage } from '../lib/language-context';
 
-const AVATAR_MAP: Record<string, { emoji: string; from: string; to: string }> = {
-  falcon: { emoji: '🦅', from: '#8A1538', to: '#B23A5C' },
-  astronaut: { emoji: '👨‍🚀', from: '#1565C0', to: '#5AA9E6' },
-  knight: { emoji: '🛡️', from: '#5C0D20', to: '#8A1538' },
-  athlete: { emoji: '⚽', from: '#2E7D4F', to: '#66BB86' },
-  robot: { emoji: '🤖', from: '#616161', to: '#9E9E9E' },
-  explorer: { emoji: '🧭', from: '#C9A24B', to: '#E8CD85' },
-  // Teachers' default: a plain person silhouette, no emoji (drawn below, so `emoji` is unused).
-  anonymous: { emoji: '', from: '#8F95A3', to: '#C4C8D2' },
-};
+// The pictures a student can pick (public/images/avatars/<key>.webp: round cut-outs, white inside the circle,
+// transparent outside). Order = the order in the picker. The first is everyone's default.
+export const AVATAR_OPTIONS = ['owl', 'astronaut', 'qatariBoy', 'qatariGirl', 'scientist', 'pilot', 'wizard', 'robot'] as const;
+const PICTURES = new Set<string>(AVATAR_OPTIONS);
 
-// What a student can pick -- the anonymous silhouette is a default for teachers, not a choice.
-export const AVATAR_OPTIONS = Object.keys(AVATAR_MAP).filter((k) => k !== 'anonymous') as (keyof typeof AVATAR_MAP)[];
-
-export function avatarLabel(key: string, lang: Lang = 'en'): string {
-  const validKey = (AVATAR_MAP[key] ? key : 'falcon') as keyof typeof AVATAR_MAP;
-  return translate(lang, `avatars.${validKey}`);
+// Teachers' default is 'anonymous' (a plain silhouette, drawn below). Anything else unknown (an old key) shows the default picture.
+function pictureKey(key: string): string {
+  return PICTURES.has(key) ? key : AVATAR_OPTIONS[0];
 }
 
-// `photoUrl`, when set, shows an uploaded profile photo instead of the stylized emoji
-// avatar -- same circular frame/border/shadow either way, so it drops in anywhere an
-// Avatar already renders (profile page, reel author credit, ...) without new layout.
+export function avatarLabel(key: string, lang: Lang = 'en'): string {
+  return translate(lang, `avatars.${key === 'anonymous' ? key : pictureKey(key)}`);
+}
+
+// `photoUrl`, when set, shows an uploaded profile photo instead of the picture -- same frame/border/shadow
+// either way, so it drops in anywhere an Avatar already renders.
 export function Avatar({ avatarKey, size = 48, photoUrl, square = false }: { avatarKey: string; size?: number; photoUrl?: string | null; square?: boolean }) {
   const { lang } = useLanguage();
-  const cfg = AVATAR_MAP[avatarKey] ?? AVATAR_MAP.falcon;
-  const radius = square ? Math.round(size * 0.14) : '50%';
-  const shadow = `0 ${Math.max(3, size * 0.08)}px ${Math.max(6, size * 0.16)}px rgba(20,30,60,0.3), inset 0 ${Math.max(1, size * 0.05)}px ${Math.max(2, size * 0.08)}px rgba(255,255,255,0.45), inset 0 -${Math.max(1, size * 0.05)}px ${Math.max(3, size * 0.1)}px rgba(0,0,0,0.2)`;
+  const frame = {
+    width: size,
+    height: size,
+    borderRadius: square ? Math.round(size * 0.14) : '50%',
+    border: '2px solid var(--avatar-ring, var(--gold))',
+    flexShrink: 0,
+    boxShadow: `0 ${Math.max(3, size * 0.08)}px ${Math.max(6, size * 0.16)}px rgba(20,30,60,0.3)`,
+    overflow: 'hidden',
+  } as const;
   if (photoUrl) {
-    return (
-      <img
-        src={photoUrl}
-        alt=""
-        aria-hidden
-        style={{
-          width: size,
-          height: size,
-          borderRadius: radius,
-          objectFit: 'cover',
-          border: '2px solid var(--avatar-ring, var(--gold))',
-          flexShrink: 0,
-          boxShadow: shadow,
-        }}
-      />
-    );
+    return <img src={photoUrl} alt="" aria-hidden style={{ ...frame, objectFit: 'cover' }} />;
   }
   if (avatarKey === 'anonymous') {
     return (
@@ -52,47 +37,26 @@ export function Avatar({ avatarKey, size = 48, photoUrl, square = false }: { ava
         role="img"
         aria-label={avatarLabel('anonymous', lang)}
         title={avatarLabel('anonymous', lang)}
-        style={{
-          width: size,
-          height: size,
-          borderRadius: radius,
-          background: `linear-gradient(150deg, ${cfg.from}, ${cfg.to})`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          border: '2px solid var(--avatar-ring, var(--gold))',
-          flexShrink: 0,
-          boxShadow: shadow,
-          overflow: 'hidden',
-        }}
+        style={{ ...frame, background: 'linear-gradient(150deg, #8F95A3, #C4C8D2)' }}
       >
         {/* Fills the whole circle: a large head, and shoulders that run out to the edge (the round
             frame clips them), like the standard "no photo" avatar. */}
-        <svg viewBox="0 0 24 24" width={size} height={size} fill="#ffffff" aria-hidden="true" style={{ display: 'block' }}>
+        <svg viewBox="0 0 24 24" width="100%" height="100%" fill="#ffffff" aria-hidden="true" style={{ display: 'block' }}>
           <circle cx="12" cy="9" r="5" />
           <path d="M-2 26c0-7 5.4-10.4 14-10.4S26 19 26 26z" />
         </svg>
       </div>
     );
   }
+  // White behind the picture, so a square frame's corners match the white inside the circle.
   return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: radius,
-        background: `linear-gradient(150deg, ${cfg.from}, ${cfg.to})`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: size * 0.55,
-        border: '2px solid var(--avatar-ring, var(--gold))',
-        flexShrink: 0,
-        boxShadow: shadow,
-      }}
+    <img
+      src={`/images/avatars/${pictureKey(avatarKey)}.webp`}
+      alt=""
       aria-hidden
-    >
-      {cfg.emoji}
-    </div>
+      draggable={false}
+      decoding="async"
+      style={{ ...frame, objectFit: 'cover', background: '#fff' }}
+    />
   );
 }

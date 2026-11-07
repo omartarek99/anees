@@ -40,7 +40,7 @@ export function SignupPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const avatarKey = 'falcon'; // no hero picker at signup: everyone starts as the falcon and changes it later on the profile
+  const avatarKey = 'owl'; // no picture choice at signup: everyone starts as the owl and changes it later on the profile
   const [role, setRole] = useState<Role>('student');
   const [grade, setGrade] = useState('');
   const [schoolName, setSchoolName] = useState('');

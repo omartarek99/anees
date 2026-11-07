@@ -828,7 +828,7 @@ export function seed() {
         hashForLookup(devEmail),
         devPasswordHash,
         'Dev Student',
-        'falcon',
+        'owl',
         0,
         0,
         'student',
@@ -845,12 +845,12 @@ export function seed() {
   // empty on first run. is_seed=1 flags them as non-real accounts.
   // ---------------------------------------------------------------------
   const demoStudents: { username: string; displayName: string; avatar: string; xp: number }[] = [
-    { username: 'rashid_k', displayName: 'Rashid Al-Kuwari', avatar: 'falcon', xp: 2450 },
+    { username: 'rashid_k', displayName: 'Rashid Al-Kuwari', avatar: 'qatariBoy', xp: 2450 },
     { username: 'khalid_e', displayName: 'Khalid Al-Emadi', avatar: 'astronaut', xp: 2180 },
-    { username: 'hamad_m', displayName: 'Hamad Al-Marri', avatar: 'knight', xp: 1920 },
-    { username: 'abdulaziz_k', displayName: 'Abdulaziz Al-Kubaisi', avatar: 'athlete', xp: 1640 },
+    { username: 'hamad_m', displayName: 'Hamad Al-Marri', avatar: 'pilot', xp: 1920 },
+    { username: 'abdulaziz_k', displayName: 'Abdulaziz Al-Kubaisi', avatar: 'wizard', xp: 1640 },
     { username: 'nasser_s', displayName: 'Nasser Al-Sulaiti', avatar: 'robot', xp: 1310 },
-    { username: 'jassim_d', displayName: 'Jassim Al-Dosari', avatar: 'explorer', xp: 980 },
+    { username: 'jassim_d', displayName: 'Jassim Al-Dosari', avatar: 'owl', xp: 980 },
   ];
 
   // Fake demo students (leaderboard / friends filler) are for laptops only -- never on a public server.

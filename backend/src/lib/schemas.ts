@@ -4,7 +4,8 @@ import { RANK_KEYS } from './ranks.js';
 import { passwordSchema } from './password.js';
 
 // 'anonymous' = the plain person silhouette that teachers get by default (not a student hero choice).
-export const AVATAR_KEYS = ['falcon', 'astronaut', 'knight', 'athlete', 'robot', 'explorer', 'anonymous'] as const;
+// The pictures in frontend/src/components/Avatar.tsx (AVATAR_OPTIONS), plus teachers' plain 'anonymous'.
+export const AVATAR_KEYS = ['owl', 'astronaut', 'qatariBoy', 'qatariGirl', 'scientist', 'pilot', 'wizard', 'robot', 'anonymous'] as const;
 
 export const usernameSchema = z
   .string()

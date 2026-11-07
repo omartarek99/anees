@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   email_hash TEXT,
   password_hash TEXT NOT NULL,
   display_name TEXT NOT NULL,
-  avatar_key TEXT NOT NULL DEFAULT 'falcon',
+  avatar_key TEXT NOT NULL DEFAULT 'owl',
   total_xp INTEGER NOT NULL DEFAULT 0,
   -- Separate currency from total_xp, only ever earned by teacher accounts (worksheet
   -- prints + video uploads, see lib/xp.ts) -- drives the teacher-only leaderboard

@@ -139,7 +139,7 @@ usersRouter.get('/me', requireAuth, (req, res) => {
   res.json({ profile: ownProfile(user) });
 });
 
-usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProfileSchema), (req, res) => {
+usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProfileSchema), async (req, res) => {
   const { displayName, avatarKey, bio, avatar3d, auraRank } = req.body as {
     displayName?: string;
     avatarKey?: string;
@@ -171,8 +171,11 @@ usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProf
   if (displayName !== undefined) {
     db.prepare(`UPDATE users SET display_name = ? WHERE id = ?`).run(displayName, req.userId!);
   }
+  // Picking a picture replaces an uploaded photo (the photo would otherwise keep covering it).
   if (avatarKey !== undefined) {
-    db.prepare(`UPDATE users SET avatar_key = ? WHERE id = ?`).run(avatarKey, req.userId!);
+    const existing = db.prepare(`SELECT avatar_url FROM users WHERE id = ?`).get(req.userId!) as { avatar_url: string | null };
+    await deleteAvatarPhotoIfAny(existing.avatar_url);
+    db.prepare(`UPDATE users SET avatar_key = ?, avatar_url = NULL WHERE id = ?`).run(avatarKey, req.userId!);
   }
   if (avatar3d !== undefined) {
     db.prepare(`UPDATE users SET avatar3d = ? WHERE id = ?`).run(JSON.stringify(avatar3d), req.userId!);

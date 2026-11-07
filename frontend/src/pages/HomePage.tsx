@@ -7,8 +7,7 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 import { Topbar } from '../components/Topbar';
-import { ProfileAvatar3D } from '../components/ProfileAvatar3D';
-import type { AvatarConfig } from '../components/avatar3d/avatarConfig';
+import { Avatar } from '../components/Avatar';
 import { RANK_FRAMES } from '../lib/frames';
 import type { RankKey } from '../lib/medalLevels';
 import { ChallengePickerModal } from '../components/ChallengePickerModal';
@@ -21,7 +20,6 @@ type Profile = {
   mapLevel: number;
   avatarKey: string;
   avatarUrl: string | null;
-  avatar3d: AvatarConfig | null;
 };
 
 // The picture and its frame are smaller on a phone.
@@ -174,7 +172,7 @@ export function HomePage() {
         <Link to="/profile" className="home-avatar" aria-label={t('home.myProfile')} title={t('home.myProfile')}>
           <span className="home-avatar-pic">
             {loaded ? (
-              <ProfileAvatar3D avatarKey={profile?.avatarKey ?? user?.avatarKey ?? 'falcon'} photoUrl={profile?.avatarUrl} config={profile?.avatar3d ?? null} size={pic} />
+              <Avatar avatarKey={profile?.avatarKey ?? user?.avatarKey ?? 'owl'} photoUrl={profile?.avatarUrl} size={pic} />
             ) : (
               <span className="home-avatar-wait" style={{ width: pic, height: pic }} />
             )}

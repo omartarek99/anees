@@ -126,7 +126,7 @@ export function currentChallenge(userId: number) {
     difficulty: row.difficulty,
     count: row.question_count,
     prize: CHALLENGE_POINTS[row.difficulty as ChallengeDifficulty],
-    opponent: { username: opp?.username ?? '', displayName: opp?.display_name ?? '', avatarKey: opp?.avatar_key ?? 'falcon' },
+    opponent: { username: opp?.username ?? '', displayName: opp?.display_name ?? '', avatarKey: opp?.avatar_key ?? 'owl' },
     now: Date.now(),
     endsAt: row.ends_ms,
   };

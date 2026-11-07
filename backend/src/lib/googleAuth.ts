@@ -52,7 +52,7 @@ export function createGoogleUser(identity: GoogleIdentity, role: 'student' | 'te
         `INSERT INTO users (username, email, email_hash, password_hash, display_name, avatar_key, total_xp, role, grade, firebase_uid, school_name, teacher_subject, email_verified, profile_complete)
          VALUES (?,?,?,?,?,?,0,?,NULL,?,NULL,NULL,1,0)`
       )
-      .run(username, encrypt(identity.email), hashForLookup(identity.email), '', displayName, role === 'teacher' ? 'anonymous' : 'falcon', role, identity.uid)
+      .run(username, encrypt(identity.email), hashForLookup(identity.email), '', displayName, role === 'teacher' ? 'anonymous' : 'owl', role, identity.uid)
       .lastInsertRowid
   );
   // like every new account: map level 1 is unlocked

@@ -129,7 +129,7 @@ if (!usersTableSql.includes(`'admin'`)) {
         email TEXT NOT NULL UNIQUE,
         password_hash TEXT NOT NULL,
         display_name TEXT NOT NULL,
-        avatar_key TEXT NOT NULL DEFAULT 'falcon',
+        avatar_key TEXT NOT NULL DEFAULT 'owl',
         total_xp INTEGER NOT NULL DEFAULT 0,
         is_seed INTEGER NOT NULL DEFAULT 0,
         role TEXT NOT NULL CHECK (role IN ('student','teacher','admin')) DEFAULT 'student',
@@ -255,6 +255,9 @@ if (!db.prepare(`SELECT 1 FROM one_time_jobs WHERE name = 'teacher-anonymous-ava
   db.exec(`UPDATE users SET avatar_key = 'anonymous' WHERE role = 'teacher' AND avatar_url IS NULL AND avatar_key IN ('falcon', 'explorer')`);
   db.exec(`INSERT INTO one_time_jobs (name) VALUES ('teacher-anonymous-avatar')`);
 }
+// The emoji heroes became pictures: each old key gets the nearest picture (the old default, the falcon, gets the new one, the owl).
+db.exec(`UPDATE users SET avatar_key = CASE avatar_key WHEN 'knight' THEN 'robot' WHEN 'athlete' THEN 'qatariBoy' WHEN 'explorer' THEN 'pilot' ELSE 'owl' END
+  WHERE avatar_key IN ('falcon', 'knight', 'athlete', 'explorer')`);
 const worksheetAttemptCols = db.prepare(`PRAGMA table_info(worksheet_attempts)`).all() as { name: string }[];
 if (!worksheetAttemptCols.some((c) => c.name === 'reel_id')) {
   db.exec(`ALTER TABLE worksheet_attempts ADD COLUMN reel_id INTEGER REFERENCES reels(id) ON DELETE SET NULL`);

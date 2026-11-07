@@ -1,9 +1,31 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Mousewheel } from 'swiper/modules';
 import type { Swiper as SwiperClass } from 'swiper';
 import 'swiper/css';
+
+// One wheel or trackpad gesture moves exactly one reel. Swiper's Mousewheel module started a new slide whenever the wheel delta
+// rose again, and a trackpad's momentum (or a smooth-scrolling mouse) keeps sending rising deltas for a second or more, so one
+// flick skipped two or three reels. Here a gesture is a run of wheel events with gaps under WHEEL_QUIET ms: its first real
+// movement turns one reel and the rest of the run is swallowed. The quiz and results sheets (swiper-no-mousewheel) scroll themselves.
+const WHEEL_QUIET = 200;
+function oneReelPerWheelGesture(el: HTMLElement, getSwiper: () => SwiperClass | null) {
+  let last = -Infinity;
+  let used = false;
+  const onWheel = (e: WheelEvent) => {
+    const swiper = getSwiper();
+    if (!swiper || (e.target as Element).closest?.('.swiper-no-mousewheel') || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+    e.preventDefault();
+    if (e.timeStamp - last > WHEEL_QUIET) used = false;
+    last = e.timeStamp;
+    if (used || swiper.animating || !e.deltaY || (e.deltaMode === 0 && Math.abs(e.deltaY) < 4)) return;
+    used = true;
+    if (e.deltaY > 0) swiper.slideNext();
+    else swiper.slidePrev();
+  };
+  el.addEventListener('wheel', onWheel, { passive: false });
+  return () => el.removeEventListener('wheel', onWheel);
+}
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -53,6 +75,11 @@ export function ReelsPage() {
   // null until Swiper reports a real slide-change event — see `initialIndex` fallback below.
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const swiperRef = useRef<SwiperClass | null>(null);
+  const wheelOff = useRef<(() => void) | null>(null);
+  const wheelFrame = useCallback((el: HTMLDivElement | null) => {
+    wheelOff.current?.();
+    wheelOff.current = el ? oneReelPerWheelGesture(el, () => swiperRef.current) : null;
+  }, []);
 
   // Like state lives here (outside ReelSlide) keyed by reel id, since the action rail that
   // displays/toggles it now renders once, outside the Swiper frame, rather than per-slide.
@@ -237,7 +264,7 @@ export function ReelsPage() {
           wrapper resets back to the real page direction so the reel's own caption/badge/exit-
           button logical-property layout still mirrors correctly for Arabic. */}
       <div className="reels-frame-row flex-center gap-md" style={{ direction: 'ltr' }}>
-        <div style={{ direction: dir, width: 'min(100%, 560px)', height: '100%', position: 'relative' }}>
+        <div ref={wheelFrame} style={{ direction: dir, width: 'min(100%, 560px)', height: '100%', position: 'relative' }}>
         {/* Floating overlay instead of a block above the frame -- doesn't eat into the
             frame's own height budget. */}
         <div
@@ -260,8 +287,6 @@ export function ReelsPage() {
           direction="vertical"
           loop={loopEnabled}
           initialSlide={initialIndex}
-          modules={[Mousewheel]}
-          mousewheel={{ forceToAxis: true }}
           // A reel never has to finish playing before the student can move on — swiping (or
           // scrolling) to the next lesson is always available in watch mode; only the quiz/
           // results overlays opt out via the swiper-no-swiping/-mousewheel classes above.

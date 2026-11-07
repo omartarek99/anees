@@ -3505,6 +3505,62 @@ label,
   background: rgba(40, 36, 50, 0.8);
 }
 
+/* The student's own profile picture opens the picture choice (AvatarPicker.tsx). */
+.avatar-pick-btn {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+.avatar-pick-btn:focus-visible,
+.avatar-choice:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+.avatar-picker {
+  display: grid;
+  gap: 16px;
+}
+.avatar-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.avatar-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+}
+.avatar-choice:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+}
+.avatar-choice[aria-pressed='true'] {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+}
+.avatar-choice:disabled {
+  cursor: progress;
+}
+@media (max-width: 420px) {
+  .avatar-picker-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* ---------------- Level reached: the rank logo that pops out first (RankMilestonePopup.tsx) ---------------- */
 /* the website behind the logo: shadowed and blurred */
 .rank-pop-shade {
