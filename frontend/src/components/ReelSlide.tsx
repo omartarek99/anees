@@ -104,6 +104,8 @@ export function ReelSlide({
   // true from landing on a reel until its video is actually playing (and again whenever it stalls): a spinner shows meanwhile, so a slow start
   // reads as loading and not as a frozen page
   const [buffering, setBuffering] = useState(true);
+  // the file could not be loaded at all (deleted from the storage, a broken link): say so instead of spinning for ever, and the student swipes on
+  const [videoFailed, setVideoFailed] = useState(false);
 
   // This reel's own "are you still watching?" check -- local to this slide (not shared
   // across the feed) since it's driven by how many times *this* video has looped. No
@@ -308,11 +310,15 @@ export function ReelSlide({
               });
             }}
           >
-            {data.videoUrl && loadVideo ? (
+            {data.videoUrl && loadVideo && !videoFailed ? (
               <video
                 ref={videoRef}
                 src={data.videoUrl}
                 preload={isActive || preloadNext ? "auto" : "metadata"}
+                onError={() => {
+                  setVideoFailed(true);
+                  setBuffering(false);
+                }}
                 onWaiting={() => isActive && setBuffering(true)}
                 onPlaying={() => setBuffering(false)}
                 onCanPlay={() => setBuffering(false)}
@@ -344,7 +350,7 @@ export function ReelSlide({
             )}
           </div>
 
-          {isActive && buffering && data.videoUrl && loadVideo && (
+          {isActive && buffering && data.videoUrl && loadVideo && !videoFailed && (
             <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', zIndex: 2 }} aria-hidden="true">
               <div className="spinner" />
             </div>
@@ -428,7 +434,7 @@ export function ReelSlide({
                 {captionExpanded ? t('reels.seeLess') : t('reels.seeMore')}
               </button>
             )}
-            {!data.videoUrl && (
+            {(!data.videoUrl || videoFailed) && (
               <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11.5, marginTop: 6 }}>{t('reels.videoComingSoon')}</p>
             )}
             {data.questions.length > 0 ? (
