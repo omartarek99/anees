@@ -41,11 +41,12 @@ export function AvatarPicker({ current, onPick, onClose }: { current: string; on
               type="button"
               className="avatar-choice"
               aria-pressed={key === current}
+              aria-label={avatarLabel(key, lang)}
+              aria-busy={saving === key}
               disabled={!!saving}
               onClick={() => (key === current ? onClose() : pick(key))}
             >
               <Avatar avatarKey={key} size={76} />
-              <span>{saving === key ? '…' : avatarLabel(key, lang)}</span>
             </button>
           ))}
         </div>

@@ -3530,19 +3530,11 @@ label,
 }
 .avatar-choice {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  justify-content: center;
   padding: 10px 4px;
   border: 2px solid transparent;
   border-radius: var(--radius-sm);
   background: none;
-  color: inherit;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.2;
-  text-align: center;
   cursor: pointer;
 }
 .avatar-choice:hover:not(:disabled) {
