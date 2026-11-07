@@ -60,6 +60,8 @@ export function ReelSlide({
   data,
   isActive,
   loadVideo = true,
+  preloadNext = false,
+  onVideoFailed,
   muted,
   onSoundBlocked,
   onCompleted,
@@ -72,6 +74,10 @@ export function ReelSlide({
   /** Whether this slide has a real <video> at all: only the slide in view and the ones next to it do. A feed of many lessons used to start
    * (and decode) every video at once, which is what made swiping stutter on a phone. */
   loadVideo?: boolean;
+  /** The slide just after the one in view: its video is fetched ahead (preload="auto"), so swiping to it starts at once. */
+  preloadNext?: boolean;
+  /** The video file could not be loaded (deleted, broken link): the page drops this lesson from the feed. */
+  onVideoFailed?: (reelId: number) => void;
   /** Page-level sound preference (see ReelsPage's action rail toggle). Every slide's video
    * stays muted regardless while inactive -- only the one active slide can ever have sound,
    * and even then only when the student has turned it on. */
@@ -98,6 +104,11 @@ export function ReelSlide({
   // lesson and its description).
   const [captionExpanded, setCaptionExpanded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  // true from landing on a reel until its video is actually playing (and again whenever it stalls): a spinner shows meanwhile, so a slow start
+  // reads as loading and not as a frozen page
+  const [buffering, setBuffering] = useState(true);
+  // the file could not be loaded at all (deleted from the storage, a broken link): say so instead of spinning for ever, and the student swipes on
+  const [videoFailed, setVideoFailed] = useState(false);
 
   // This reel's own "are you still watching?" check -- local to this slide (not shared
   // across the feed) since it's driven by how many times *this* video has looped. No
@@ -186,7 +197,8 @@ export function ReelSlide({
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    v.currentTime = 0;
+    if (v.currentTime > 0.05) v.currentTime = 0; // not when already there: a seek makes iOS throw away what it had buffered
+    setBuffering(isActive && v.readyState < 3);
     setWatchProgress(0);
     loopCountRef.current = 0;
     setStillWatching(false);
@@ -201,6 +213,42 @@ export function ReelSlide({
       });
     } else v.pause();
   }, [isActive, loadVideo]);
+
+  // The reel after the one in view is PRIMED: iPhone Safari ignores preload="auto" on a video nobody is playing (it fetches nothing until play() is
+  // called), so swiping to a reel cost a full network start -- the 1-2 second wait. Muted playback is allowed without a tap, so the next video is
+  // played for a moment (muted, off screen) to make the browser fetch and decode its first seconds, then paused at the start; when the student
+  // swipes to it, play() resumes from a filled buffer.
+  const isActiveRef = useRef(isActive);
+  isActiveRef.current = isActive;
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || isActive || !preloadNext || !loadVideo) return;
+    let timer = 0;
+    let cancelled = false;
+    v.muted = true;
+    const stop = () => {
+      if (cancelled || isActiveRef.current) return;
+      v.pause();
+      if (v.currentTime > 0.05) v.currentTime = 0;
+    };
+    v.play()
+      .then(() => {
+        // let it run until a few seconds are buffered (or 1.5 s at most), then stop at the start
+        const check = (n: number) => {
+          if (cancelled || isActiveRef.current) return;
+          const ahead = v.buffered.length ? v.buffered.end(v.buffered.length - 1) - v.currentTime : 0;
+          if (ahead >= 3 || n >= 15) stop();
+          else timer = window.setTimeout(() => check(n + 1), 100);
+        };
+        check(0);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preloadNext, isActive, loadVideo, data.videoUrl]);
 
   // Real top-bar timer, driven by the video's own currentTime/duration instead of a fixed
   // cosmetic estimate.
@@ -301,11 +349,19 @@ export function ReelSlide({
               });
             }}
           >
-            {data.videoUrl && loadVideo ? (
+            {data.videoUrl && loadVideo && !videoFailed ? (
               <video
                 ref={videoRef}
                 src={data.videoUrl}
-                preload={isActive ? "auto" : "metadata"}
+                preload={isActive || preloadNext ? "auto" : "metadata"}
+                onError={() => {
+                  setVideoFailed(true);
+                  setBuffering(false);
+                  onVideoFailed?.(data.reelId);
+                }}
+                onWaiting={() => isActive && setBuffering(true)}
+                onPlaying={() => setBuffering(false)}
+                onCanPlay={() => setBuffering(false)}
                 muted={muted || !isActive}
                 playsInline
                 onEnded={handleVideoEnded}
@@ -333,6 +389,12 @@ export function ReelSlide({
               </div>
             )}
           </div>
+
+          {isActive && buffering && data.videoUrl && loadVideo && !videoFailed && (
+            <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', zIndex: 2 }} aria-hidden="true">
+              <div className="spinner" />
+            </div>
+          )}
 
           {/* bottom scrim for text legibility */}
           <div

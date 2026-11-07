@@ -107,17 +107,25 @@ export function ReelsPage() {
   }, []);
   useEffect(() => {
     if (!soundBlocked) return;
+    // The sound comes on at the first touch of any kind. iPhone Safari only counts a touch END (or a click) as the permission to play with sound, not
+    // the touch start, and only lets the sound be switched on inside that same event: so the playing video is unmuted right here, synchronously,
+    // as well as through React state (which lands a moment later, outside the event).
+    let done = false;
     const unmute = (e: Event) => {
       // the speaker button handles its own tap
-      if ((e.target as Element | null)?.closest?.('[data-sound-toggle]')) return;
+      if (done || (e.target as Element | null)?.closest?.('[data-sound-toggle]')) return;
+      done = true;
+      document.querySelectorAll<HTMLVideoElement>('.swiper-slide-active video').forEach((v) => {
+        v.muted = false;
+        void v.play().catch(() => {});
+      });
       setSoundBlocked(false);
       setMuted(false);
     };
-    window.addEventListener('pointerdown', unmute, { capture: true, once: true });
-    window.addEventListener('keydown', unmute, { capture: true, once: true });
+    const events = ['pointerup', 'touchend', 'click', 'keydown'] as const;
+    for (const ev of events) window.addEventListener(ev, unmute, { capture: true });
     return () => {
-      window.removeEventListener('pointerdown', unmute, { capture: true });
-      window.removeEventListener('keydown', unmute, { capture: true });
+      for (const ev of events) window.removeEventListener(ev, unmute, { capture: true });
     };
   }, [soundBlocked]);
 
@@ -141,9 +149,14 @@ export function ReelsPage() {
     return level ? Number(level) : null;
   });
 
+  // Only lessons with a video are in the feed (no placeholder reels), and ones whose file turned out not to exist (deleted from the storage, a
+  // broken link) are left out for the rest of the visit, so a student only ever scrolls through reels that play.
+  const [brokenIds, setBrokenIds] = useState<number[]>([]);
+  const handleVideoFailed = useCallback((reelId: number) => setBrokenIds((b) => (b.includes(reelId) ? b : [...b, reelId])), []);
+
   const slides: ReelSlideData[] = useMemo(
     () =>
-      rawDetails.map((detail) => ({
+      rawDetails.filter((detail) => !!detail.reel.videoUrl && !brokenIds.includes(detail.reel.id)).map((detail) => ({
         levelNumber: detail.level.levelNumber,
         reelId: detail.reel.id,
         title: pickText(lang, detail.reel.title, detail.reel.titleAr),
@@ -163,7 +176,7 @@ export function ReelsPage() {
         completed: detail.progress.status === 'completed',
         stars: detail.progress.stars,
       })),
-    [rawDetails, lang]
+    [rawDetails, lang, brokenIds]
   );
 
   // Swiper's own `loop` mode gives us the endless-feed behavior for free (it clones slides
@@ -251,7 +264,9 @@ export function ReelsPage() {
     );
   }
 
-  const activeSlide = slides[activeIndex ?? initialIndex] as ReelSlideData | undefined;
+  // the slide in view, kept inside the list when a lesson has just been dropped from it
+  const current = Math.min(activeIndex ?? initialIndex, Math.max(0, slides.length - 1));
+  const activeSlide = slides[current] as ReelSlideData | undefined;
   const activeLike = activeSlide ? likes[activeSlide.reelId] ?? { liked: false, count: initialLikeCount() } : null;
 
   return (
@@ -284,9 +299,10 @@ export function ReelsPage() {
           {t('reels.swipeHint')}
         </div>
         <Swiper
+          key={slides.length}
           direction="vertical"
           loop={loopEnabled}
-          initialSlide={initialIndex}
+          initialSlide={current}
           // A reel never has to finish playing before the student can move on — swiping (or
           // scrolling) to the next lesson is always available in watch mode; only the quiz/
           // results overlays opt out via the swiper-no-swiping/-mousewheel classes above.
@@ -304,12 +320,14 @@ export function ReelsPage() {
             <SwiperSlide key={slide.reelId}>
               <ReelSlide
                 data={slide}
-                isActive={i === (activeIndex ?? initialIndex)}
-                loadVideo={isNearActive(i, activeIndex ?? initialIndex, slides.length)}
+                isActive={i === (current)}
+                loadVideo={isNearActive(i, current, slides.length)}
+                preloadNext={i === ((current) + 1) % slides.length}
                 muted={muted}
                 onSoundBlocked={handleSoundBlocked}
                 onCompleted={handleCompleted}
                 onNext={() => swiperRef.current?.slideNext()}
+                onVideoFailed={handleVideoFailed}
                 hasNext={loopEnabled}
                 registerActiveControls={registerActiveControls}
               />

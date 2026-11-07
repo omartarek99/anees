@@ -25,6 +25,7 @@ import { mailStatus } from '../lib/mailer.js';
 import { parseRoleFilter, parseGrade, pageViewStats, countReportUsers, queryReportRows, reportTotals, monthlyWatch, trailingMonthKeys, SINCE_30_DAYS, quizzesSolvedTotal, pageViewsLast30Days } from '../lib/reportData.js';
 import { buildReportWorkbook } from '../lib/reportExcel.js';
 import { recentIssues } from '../lib/diagnostics.js';
+import { queueAllUnoptimised } from '../lib/videoOptimize.js';
 import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX } from '../lib/certificateImage.js';
 import { PLAQUE_PATH, issueRankCertificates, emailCertificate, revokeCertificate } from '../lib/rankCertificates.js';
 import { applyViolation } from '../lib/violations.js';
@@ -41,6 +42,11 @@ adminRouter.use(requireAuth, requireRole('admin'));
 
 // Admin-only: how email is configured, and the latest failures that users only see as a generic
 // message. Never returns secrets (only key lengths/prefixes and error codes).
+// Makes the small, fast-starting copy (see lib/videoOptimize.ts) of every lesson video that is still the teacher's original. One at a time, in the background.
+adminRouter.post('/optimize-videos', requireCsrfHeader, (_req, res) => {
+  res.json({ queued: queueAllUnoptimised() });
+});
+
 adminRouter.get('/diagnostics', async (_req, res) => {
   res.json({ mail: await mailStatus(), r2: await r2SelfTest(FRONTEND_ORIGIN), recentIssues: recentIssues(), node: process.version, env: process.env.NODE_ENV ?? null });
 });
@@ -557,15 +563,21 @@ adminRouter.get('/reels', (req, res) => {
 });
 
 adminRouter.delete('/reels/:id', requireCsrfHeader, async (req, res) => {
-  const reel = db.prepare(`SELECT * FROM reels WHERE id = ? AND author_user_id IS NOT NULL`).get(
-    Number(req.params.id)
-  ) as any;
+  const id = Number(req.params.id);
+  const reel = db.prepare(`SELECT * FROM reels WHERE id = ?`).get(id) as any;
+  // already gone (deleted in another tab, or by someone else a moment ago): the goal is reached, so no error -- the panel just drops the row
   if (!reel) {
+    res.json({ ok: true });
+    return;
+  }
+  // the app's own lessons (no author) are part of the map, not uploads to moderate
+  if (reel.author_user_id === null) {
     res.status(404).json({ error: 'Not found.' });
     return;
   }
+  // The file goes first (it never throws, whatever state the storage is in), then the lesson. Every table that points at reels cascades or clears its
+  // link (reel_questions, reel_watch_progress, reel_messages, worksheet_questions cascade; worksheet_attempts.reel_id is set to NULL) -- see schema.sql.
   await deleteReelVideoIfAny(reel.video_url);
-  // reel_questions and reel_watch_progress both cascade on reels(id) -- see schema.sql.
   db.prepare(`DELETE FROM reels WHERE id = ?`).run(reel.id);
   res.json({ ok: true });
 });

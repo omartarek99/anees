@@ -13,6 +13,7 @@ import { teacherReelSchema, teacherReelQuestionSchema, generateQuestionsSchema }
 import { compressVideoFile } from '../lib/videoCompression.js';
 import { probeVideoFromUrl } from '../lib/videoProbe.js';
 import { r2Delete, r2Enabled, r2PublicUrl, r2UploadUrl } from '../lib/r2.js';
+import { queueVideoOptimise } from '../lib/videoOptimize.js';
 import { awardTeacherPoints, teacherVideoUploadPoints } from '../lib/xp.js';
 import { VIDEO_BUCKET, VIDEO_PATH_PREFIX, deleteReelVideoIfAny } from '../lib/reelVideo.js';
 import { generateQuizQuestions } from '../lib/gemini.js';
@@ -563,6 +564,8 @@ teacherReelsRouter.post('/:id/video/complete', requireAuth, requireRole('teacher
   const points = teacherVideoUploadPoints(probe.durationSeconds);
   if (points > 0 && req.userRole === 'teacher') awardTeacherPoints(req.userId!, points, 'video_upload');
   res.json({ videoUrl: publicUrl });
+  // students get a small, fast-starting copy (720p, index first) as soon as the server has made it; the original plays until then
+  if (r2Enabled) queueVideoOptimise(reel.id);
 });
 
 // BIG videos (over DIRECT_VIDEO_BYTES): received here, answered at once, then compressed and stored in the background (reels.video_status).

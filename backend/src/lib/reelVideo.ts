@@ -18,5 +18,12 @@ export async function deleteReelVideoIfAny(videoUrl: string | null) {
   const idx = videoUrl.indexOf(marker);
   if (idx === -1) return;
   const path = videoUrl.slice(idx + `/${VIDEO_BUCKET}/`.length);
-  await supabaseAdmin.storage.from(VIDEO_BUCKET).remove([path]);
+  // Never throws: a file that is already gone, a storage outage or a missing bucket must not stop the lesson itself being deleted (callers delete
+  // the lesson from the database right after this; a leftover file is only wasted space).
+  try {
+    const { error } = await supabaseAdmin.storage.from(VIDEO_BUCKET).remove([path]);
+    if (error) console.error('Supabase video delete failed:', error.message);
+  } catch (err) {
+    console.error('Supabase video delete failed:', err instanceof Error ? err.message : err);
+  }
 }

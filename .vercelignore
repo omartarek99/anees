@@ -1,0 +1,13 @@
+# The site is built from frontend/ only (see vercel.json). Everything else stays out of the upload.
+marketing-video
+android
+backend
+fastapi-backend
+loadtest
+solid-glass-demo
+Subject
+design
+test-reports
+.claude
+.git
+**/node_modules
