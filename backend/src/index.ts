@@ -18,7 +18,6 @@ import { mapRouter } from './routes/map.js';
 import { worksheetsRouter } from './routes/worksheets.js';
 import { leaderboardRouter } from './routes/leaderboard.js';
 import { friendsRouter } from './routes/friends.js';
-import { newsRouter } from './routes/news.js';
 import { craftRouter } from './routes/craft.js';
 import { teacherReelsRouter } from './routes/teacherReels.js';
 import { adminRouter } from './routes/admin.js';
@@ -95,10 +94,8 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
 // Teacher and student accounts share the entire gameplay surface (reels, map,
 // worksheets, leaderboard, friends, craft) — a teacher account is a student account
-// plus extras (ID-verified signup, the reel composer below, and the news composer on
-// their home page), not a separate walled-off experience. News stays open to both
-// roles for reading; only its own POST/DELETE routes are teacher-gated internally.
-// `/api/teacher-reels` is the one truly teacher-only surface, gated per-route inside
+// plus extras (ID-verified signup and the reel composer below), not a separate walled-off
+// experience. `/api/teacher-reels` is the one truly teacher-only surface, gated per-route inside
 // its own router.
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
@@ -107,7 +104,6 @@ app.use('/api/map', requireAuth, mapRouter);
 app.use('/api/worksheets', requireAuth, worksheetsRouter);
 app.use('/api/leaderboard', requireAuth, leaderboardRouter);
 app.use('/api/friends', requireAuth, friendsRouter);
-app.use('/api/news', newsRouter);
 app.use('/api/craft', requireAuth, craftRouter);
 app.use('/api/teacher-reels', teacherReelsRouter);
 app.use('/api/admin', adminRouter);

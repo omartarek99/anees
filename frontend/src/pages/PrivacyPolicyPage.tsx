@@ -16,7 +16,7 @@ const CONTENT = {
       heading: '2. Information We Collect',
       body: [
         'Account information you provide at signup: username, email address, password (never stored in plain text — it is handled by our sign-in provider, Google Firebase Authentication, or kept only as a one-way hash), display name (which starts as your username), chosen avatar, role (student/teacher), your school name, grade level (students), and the subject you teach (teachers). Teachers also upload a photo of their Qatar ID so we can verify their age and occupation; it is stored privately and is not shown to other users.',
-        'Activity you generate while using the app: lesson and quiz progress, XP and level, worksheet attempts, friend connections, your customised 3D character, and — for teachers — news posts and lesson videos you author. This is the data the core features (progress tracking, leaderboard, friends) exist to use.',
+        'Activity you generate while using the app: lesson and quiz progress, XP and level, worksheet attempts, friend connections, your customised 3D character, and — for teachers — lesson videos you author. This is the data the core features (progress tracking, leaderboard, friends) exist to use.',
         'When you build a worksheet from a lesson or video name, that name (or the video\'s description), together with the subject and grade, is sent to Google\'s Gemini AI service, which writes the practice questions. Nothing that identifies you is sent with it.',
         'We do not collect payment information, precise location, or contacts, and nothing beyond what is listed above.',
       ],
@@ -24,7 +24,7 @@ const CONTENT = {
     {
       heading: '3. How We Use Information',
       body: [
-        'Solely to run the app: authenticate you, save your progress, show your XP/level, power the leaderboard and friends list, and let teachers post class announcements.',
+        'Solely to run the app: authenticate you, save your progress, show your XP/level, and power the leaderboard and friends list.',
         'We do not use your information for advertising, do not build behavioral profiles, and do not sell or rent any information to anyone.',
       ],
     },
@@ -52,7 +52,7 @@ const CONTENT = {
     {
       heading: '7. Security',
       body: [
-        'Passwords are hashed (never stored or shown in plain text), sessions use httpOnly cookies, all inputs are validated server-side, and every username/display name/news post is filtered for profanity and attempts to share outside contact info before being saved.',
+        'Passwords are hashed (never stored or shown in plain text), sessions use httpOnly cookies, all inputs are validated server-side, and every username/display name is filtered for profanity and attempts to share outside contact info before being saved.',
       ],
     },
     {
@@ -75,7 +75,7 @@ const CONTENT = {
       heading: '٢. المعلومات التي نجمعها',
       body: [
         'معلومات الحساب التي تُدخلها عند التسجيل: اسم المستخدم، البريد الإلكتروني، كلمة المرور (لا تُخزَّن أبدًا كنص صريح — تتولاها جهة تسجيل الدخول لدينا، وهي Google Firebase Authentication، أو تُحفظ كبصمة تشفير أحادية الاتجاه فقط)، الاسم الظاهر (ويبدأ باسم المستخدم)، الصورة الرمزية المختارة، الدور (طالب/معلم)، اسم مدرستك، الصف الدراسي (للطلاب)، والمادة التي تدرّسها (للمعلمين). كما يرفع المعلمون صورة هويتهم القطرية للتحقق من العمر والمهنة؛ وتُحفظ بشكل خاص ولا تُعرض لأي مستخدم آخر.',
-        'النشاط الذي تولّده أثناء استخدام التطبيق: تقدّم الدروس والاختبارات، نقاط الخبرة والمستوى، محاولات أوراق العمل، روابط الصداقة، شخصيتك ثلاثية الأبعاد المخصّصة، ومنشورات الأخبار ومقاطع الدروس التي ينشئها المعلمون. هذه هي البيانات التي توجد الميزات الأساسية (تتبع التقدّم، لوحة المتصدرين، الأصدقاء) لاستخدامها.',
+        'النشاط الذي تولّده أثناء استخدام التطبيق: تقدّم الدروس والاختبارات، نقاط الخبرة والمستوى، محاولات أوراق العمل، روابط الصداقة، شخصيتك ثلاثية الأبعاد المخصّصة، ومقاطع الدروس التي ينشئها المعلمون. هذه هي البيانات التي توجد الميزات الأساسية (تتبع التقدّم، لوحة المتصدرين، الأصدقاء) لاستخدامها.',
         'عند إنشاء ورقة عمل من اسم درس أو فيديو، يُرسل ذلك الاسم (أو وصف الفيديو) مع المادة والصف إلى خدمة الذكاء الاصطناعي Gemini من Google لكتابة الأسئلة التدريبية. ولا يُرسل معه أي شيء يحدّد هويتك.',
         'نحن لا نجمع معلومات الدفع أو الموقع الدقيق أو جهات الاتصال، ولا أي بيانات غير المذكورة أعلاه.',
       ],
@@ -83,7 +83,7 @@ const CONTENT = {
     {
       heading: '٣. كيف نستخدم المعلومات',
       body: [
-        'فقط لتشغيل التطبيق: التحقق من هويتك، حفظ تقدّمك، عرض نقاط خبرتك ومستواك، تشغيل لوحة المتصدرين وقائمة الأصدقاء، والسماح للمعلمين بنشر إعلانات الصف.',
+        'فقط لتشغيل التطبيق: التحقق من هويتك، حفظ تقدّمك، عرض نقاط خبرتك ومستواك، وتشغيل لوحة المتصدرين وقائمة الأصدقاء.',
         'نحن لا نستخدم معلوماتك لأغراض إعلانية، ولا ننشئ ملفات سلوكية عنك، ولا نبيع أو نؤجّر أي معلومات لأي جهة.',
       ],
     },
@@ -111,7 +111,7 @@ const CONTENT = {
     {
       heading: '٧. الأمان',
       body: [
-        'كلمات المرور مشفّرة (لا تُخزَّن أو تُعرض كنص صريح أبدًا)، وتستخدم الجلسات ملفات تعريف ارتباط httpOnly، ويتم التحقق من جميع المدخلات على الخادم، ويمر كل اسم مستخدم واسم ظاهر ومنشور إخباري عبر فلتر لمنع الألفاظ غير اللائقة ومحاولات مشاركة معلومات تواصل خارجية قبل حفظه.',
+        'كلمات المرور مشفّرة (لا تُخزَّن أو تُعرض كنص صريح أبدًا)، وتستخدم الجلسات ملفات تعريف ارتباط httpOnly، ويتم التحقق من جميع المدخلات على الخادم، ويمر كل اسم مستخدم واسم ظاهر عبر فلتر لمنع الألفاظ غير اللائقة ومحاولات مشاركة معلومات تواصل خارجية قبل حفظه.',
       ],
     },
     {

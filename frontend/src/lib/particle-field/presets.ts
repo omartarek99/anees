@@ -21,19 +21,19 @@ export interface ParticleFieldSettings {
   autorotate: boolean;
 }
 
-/** "Gyroscope": orbiting rings around a living core. generate(kind, seed, count) is deterministic in all three. */
-export const GYROSCOPE = {
-  form: { kind: 'armillary', seed: 3389896822 },
+/** "Vortex": infalling spiral arms, a rotating funnel and a throat jet. generate(kind, seed, count) is deterministic in all three. */
+export const VORTEX = {
+  form: { kind: 'vortex', seed: 4051408693 },
   settings: {
-    count: 260000,
-    size: 2.4,
-    speed: 1.5,
+    count: 250000,
+    size: 1.95,
+    speed: 0.45,
     opacity: 0.7,
-    bloomStrength: 1.1,
+    bloomStrength: 1.3,
     bloomRadius: 0.08,
     bloomThreshold: 0.21,
-    colorA: '#6c4dff',
-    colorB: '#ff3b30',
+    colorA: '#7c25ff',
+    colorB: '#330728',
     autorotate: false,
   } satisfies ParticleFieldSettings,
 };

@@ -445,47 +445,56 @@ export function normalize(F, target = 1.25) {
   for (let i = 0; i < aO.length; i++) if (!Number.isFinite(aO[i])) aO[i] = 0;
 }
 
-// ── src/lib/particle-field/forms-b.ts
+// ── src/lib/particle-field/forms-a.ts
 
-// ── Armillary: orbiting rings, undulating bands, a living core ─────────────
-export function armillary(L) {
+// ── Vortex: infalling spiral arms, rotating funnel, throat jet ─────────────
+export function vortex(L) {
   const { rng, nz } = L;
-  const n = int(rng, 6, 16);
-  for (let k = 0; k < n; k++) {
-    const m = randRot(rng);
-    const Rr = R(rng, 0.55, 1.4), e = R(rng, 0.75, 1), und = rng() < 0.5 ? int(rng, 2, 12) : 0, ua = R(rng, 0.03, 0.12);
-    const sp = R(rng, 0.2, 0.6) * sgn(rng), mixv = k / n;
-    const ringAt = (u, off, o) => {
-      const a = u * TAU, rr = Rr * (1 + (und ? ua * Math.sin(a * und) : 0)) + off;
-      o[0] = Math.cos(a) * rr; o[1] = und ? Math.cos(a * und) * ua * 0.6 : 0; o[2] = Math.sin(a) * rr * e;
-      applyRot(m, o);
-      o[3] = mixv;
-    };
-    if (rng() < 0.4) {
-      const bw = R(rng, 0.04, 0.16);
-      const g = L.grid((u, v, o) => { ringAt(u, (v - 0.5) * bw, o); return 0.3 + 0.7 * Math.pow(Math.abs(v * 2 - 1), 6); }, 8, true);
-      L.addGrid(g, { weight: 0.08, useDens: true, speed: sp, thick: 0.003 });
-    } else {
-      const S = int(rng, 1, 6), bundle = [];
-      for (let s = 0; s < S; s++) bundle.push(L.curve((u, o) => ringAt(u, (s - S / 2) * 0.015, o), true));
-      L.addCurves(bundle, { weight: 0.06, speed: sp, thick: 0.004 });
-    }
+  const Rr = 1.4, rMin = R(rng, 0.06, 0.16), depth = R(rng, 0.5, 1.6), pw = R(rng, 1.8, 4);
+  const tw = R(rng, 1.5, 5) * sgn(rng);
+  const hourglass = rng() < 0.3;
+  const S = int(rng, 24, 90), tail = R(rng, 0.4, 1.3), wob = R(rng, 0.02, 0.1);
+  const funnelY = (r) => -depth * Math.pow(clamp01(1 - (r - rMin) / (Rr - rMin)), pw);
+  const arms = [];
+  for (let s = 0; s < S; s++) {
+    const th0 = (s / S) * TAU + rng() * 0.15, side = hourglass && s % 2 ? -1 : 1, rJ = R(rng, 0.85, 1.15);
+    arms.push(L.curve((u, o) => {
+      let r, y, th;
+      if (u < 0.82) {
+        const k = u / 0.82;
+        r = rMin + (Rr * rJ - rMin) * Math.pow(1 - k, 1.6);
+        th = th0 + tw * Math.log((Rr * rJ) / r); y = funnelY(Math.min(r, Rr)); o[3] = k * 0.85;
+      } else {
+        const k = (u - 0.82) / 0.18;
+        r = rMin * (1 - 0.6 * k);
+        th = th0 + tw * Math.log((Rr * rJ) / rMin) + k * tw * 3; y = funnelY(rMin) - k * tail; o[3] = 0.85 + 0.15 * k;
+      }
+      const x = Math.cos(th) * r, z = Math.sin(th) * r;
+      const w = nz.field(x * 1.5 + s * 0.13, y * 1.5, z * 1.5);
+      o[0] = x + w[0] * wob; o[1] = (y + w[1] * wob) * side; o[2] = z + w[2] * wob;
+    }));
   }
-  const rc = R(rng, 0.18, 0.35), f = R(rng, 2, 5);
-  const core = L.grid((u, v, o) => {
-    const th = u * TAU, ph = (v - 0.5) * Math.PI, cp = Math.cos(ph);
-    const cx = cp * Math.cos(th), cy = Math.sin(ph), cz = cp * Math.sin(th);
-    const nv = nz.n3(cx * f, cy * f, cz * f) / 0.08, ridge = Math.exp(-nv * nv);
-    const r = rc * (1 + 0.15 * ridge);
-    o[0] = cx * r; o[1] = cy * r; o[2] = cz * r; o[3] = 1;
-    return (0.1 + ridge) * cp;
-  }, 64, true);
-  L.addGrid(core, { weight: 0.14, useDens: true, speed: 0, thick: 0.004, vAmp: 0.004 });
+  L.addCurves(arms, { weight: 0.5, speed: R(rng, 0.25, 0.5), thick: R(rng, 0.004, 0.014) });
+  const rAt = (v) => rMin + (Rr - rMin) * v;
+  const surf = (side) => L.grid((u, v, o) => {
+    const r = rAt(v), th = u * TAU;
+    const x = Math.cos(th) * r, z = Math.sin(th) * r, y = funnelY(r);
+    const n = nz.fbm(x * 2 + side, y * 2, z * 2, 2) * 0.05;
+    o[0] = x; o[1] = (y + n) * side; o[2] = z; o[3] = 1 - v;
+    return 1 - v * 0.6;
+  }, 48, true);
+  const duFn = (u, v, sp) => (sp * Math.sign(tw) * rAt(0.5)) / rAt(v);
+  const surfs = hourglass ? [surf(1), surf(-1)] : [surf(1)];
+  L.addGrid(surfs, { weight: 0.28, useDens: true, speed: R(rng, 0.2, 0.4), duFn, thick: 0.02, size: 0.8, vAmp: 0.02 });
   L.addFree((r, o) => {
-    const v = unitVec(r), g = Math.abs(gauss(r)) * rc * 0.5;
-    o[0] = v[0] * g; o[1] = v[1] * g; o[2] = v[2] * g; o[3] = 1;
-  }, { weight: 0.05, driftAmp: 0.01, size: 1.2 });
-  L.motion = { spin: R(rng, 0.03, 0.08), wobble: R(rng, 0.005, 0.015), tilt: [R(rng, -0.5, 0.5), 0, R(rng, -0.5, 0.5)] };
+    const th = r() * TAU, rr = Rr * (1 + Math.abs(gauss(r)) * 0.18);
+    o[0] = Math.cos(th) * rr; o[1] = funnelY(Rr) + gauss(r) * 0.07; o[2] = Math.sin(th) * rr; o[3] = 0;
+  }, { weight: 0.1, driftAmp: 0.04, size: 0.85 });
+  L.addFree((r, o) => {
+    o[0] = gauss(r) * 0.05; o[1] = funnelY(rMin) - tail * 0.5 + gauss(r) * tail * 0.3; o[2] = gauss(r) * 0.05; o[3] = 1;
+    if (hourglass && r() < 0.5) o[1] = -o[1];
+  }, { weight: 0.05, driftAmp: 0.02, size: 1.2 });
+  L.motion = { spin: -Math.sign(tw) * R(rng, 0.1, 0.25), wobble: R(rng, 0.01, 0.03), tilt: [R(rng, 0.45, 1.05), 0, R(rng, -0.3, 0.3)] };
 }
 
 // ── src/lib/particle-field/forms-c.ts
@@ -529,7 +538,7 @@ export function addAccent(L) {
 
 // ARCHETYPES narrowed to the current archetype (entry verbatim).
 export const ARCHETYPES = {
-  armillary: { fn: armillary, label: 'Gyroscope' },
+  vortex:    { fn: vortex,    label: 'Vortex' },
 };
 
 export function generate(kind, seed, N) {

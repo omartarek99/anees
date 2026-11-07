@@ -77,19 +77,6 @@ CREATE TABLE IF NOT EXISTS subjects (
   icon TEXT NOT NULL DEFAULT '📘'
 );
 
-CREATE TABLE IF NOT EXISTS news_posts (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  subject_id INTEGER REFERENCES subjects(id),
-  title TEXT NOT NULL,
-  title_ar TEXT NOT NULL DEFAULT '',
-  body TEXT NOT NULL,
-  body_ar TEXT NOT NULL DEFAULT '',
-  icon TEXT NOT NULL DEFAULT '📣',
-  -- NULL for seeded/system announcements; set to the authoring teacher's user id for
-  -- posts created through the teacher news composer.
-  author_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-  published_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
 
 CREATE TABLE IF NOT EXISTS map_levels (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

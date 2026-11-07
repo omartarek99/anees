@@ -29,7 +29,7 @@ async function deleteFirebaseUser(email: string): Promise<string> {
 }
 
 /** Fully deletes a user: their Supabase-stored files (ID document, profile photo, certificate images, lesson
- * videos), the lessons and announcements they authored, the local DB row, and their Firebase Auth account. Used by both the admin panel's delete action and the
+ * videos), the lessons they authored, the local DB row, and their Firebase Auth account. Used by both the admin panel's delete action and the
  * `admin:delete-user` CLI script. */
 async function deleteUserRow(user: any): Promise<DeleteUserResult> {
   let storage: string | undefined;
@@ -42,7 +42,7 @@ async function deleteUserRow(user: any): Promise<DeleteUserResult> {
     }
   }
 
-  // The photo, certificate images and lesson videos sit in a public bucket, and an authored reel or post would
+  // The photo, certificate images and lesson videos sit in a public bucket, and an authored reel would
   // otherwise stay live with nobody left to take it down (the admin tools only reach reels with an author).
   await deleteAvatarPhotoIfAny(user.avatar_url);
   for (const c of db.prepare(`SELECT image_url FROM certificates WHERE user_id = ?`).all(user.id) as { image_url: string | null }[]) {
@@ -53,7 +53,11 @@ async function deleteUserRow(user: any): Promise<DeleteUserResult> {
   }
   // reel_questions and reel_watch_progress cascade on reels(id) -- see schema.sql.
   db.prepare(`DELETE FROM reels WHERE author_user_id = ?`).run(user.id);
-  db.prepare(`DELETE FROM news_posts WHERE author_user_id = ?`).run(user.id);
+  // Teacher announcements were removed, but a database made before that still has their table (news_posts), whose
+  // author column points at users; with foreign keys on, its rows would block deleting their author.
+  if (db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'news_posts'`).get()) {
+    db.prepare(`DELETE FROM news_posts WHERE author_user_id = ?`).run(user.id);
+  }
 
   db.prepare(`DELETE FROM users WHERE id = ?`).run(user.id);
   const firebase = await deleteFirebaseUser(decrypt(user.email));

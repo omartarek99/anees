@@ -29,7 +29,7 @@ const CONTENT = {
       heading: '4. Acceptable Use',
       body: [
         'Do not attempt to bypass the content filter, impersonate another person, share personal contact information through the app, or attempt to access another student\'s account or a teacher-only feature.',
-        'Teachers posting news/announcements are responsible for content being appropriate for the intended student audience; posts are still checked by the same automatic filter before publishing.',
+        'Teachers who upload lesson videos are responsible for the content being appropriate for the intended student audience.',
       ],
     },
     {
@@ -80,7 +80,7 @@ const CONTENT = {
       heading: '٤. الاستخدام المقبول',
       body: [
         'لا تحاول تجاوز فلتر المحتوى، أو انتحال شخصية شخص آخر، أو مشاركة معلومات تواصل شخصية عبر التطبيق، أو محاولة الوصول لحساب طالب آخر أو ميزة مخصصة للمعلمين فقط.',
-        'المعلمون الذين ينشرون أخبارًا/إعلانات مسؤولون عن ملاءمة المحتوى للطلاب المستهدفين؛ وتخضع المنشورات أيضًا لنفس الفلتر التلقائي قبل النشر.',
+        'المعلمون الذين يرفعون مقاطع دروس مسؤولون عن ملاءمة المحتوى للطلاب المستهدفين.',
       ],
     },
     {

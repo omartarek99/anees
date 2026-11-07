@@ -1,20 +1,18 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import Textify from 'textify.js';
+import { gsap } from 'gsap';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 import { Topbar } from '../components/Topbar';
-import { AnimatedText } from '../components/AnimatedText';
 import { ProfileAvatar3D } from '../components/ProfileAvatar3D';
 import type { AvatarConfig } from '../components/avatar3d/avatarConfig';
 import { RANK_FRAMES } from '../lib/frames';
 import type { RankKey } from '../lib/medalLevels';
 import { ChallengePickerModal } from '../components/ChallengePickerModal';
 import { ChallengeSetupModal } from '../components/ChallengeSetupModal';
-import { NewsCard } from '../components/NewsCard';
-
-type NewsPost = { id: number; title: string; titleAr?: string | null; body: string; bodyAr?: string | null; icon: string; subject: string | null; publishedAt: string };
 
 type Profile = {
   levelsCompleted: number;
@@ -45,11 +43,82 @@ export function HomePage() {
   // The frame waits for the profile (or its failure) so a student with a customised character never sees the default one flash first.
   const [loaded, setLoaded] = useState(false);
   const narrow = useNarrow();
-  // announcements from teachers, shown at the bottom (the newest few)
-  const [news, setNews] = useState<NewsPost[]>([]);
   // "تحدى صديقك": pick a friend, then set the challenge up
   const [picking, setPicking] = useState(false);
   const [challengeFor, setChallengeFor] = useState<{ username: string; displayName: string } | null>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const greeting = t('home.greeting', { name: user?.displayName ?? '' });
+  const tagline = t('home.tagline');
+  const swooshRef = useRef<SVGSVGElement>(null);
+
+  // The level line, the greeting and the line under it grow in line by line, once (Textify on GSAP; it does not
+  // repeat), and the gold swoosh under the greeting grows in the same way just after (it is a drawing, so GSAP animates
+  // it directly; in Arabic it ends mirrored, as the CSS draws it, and hands its transform back to the CSS). Lines are
+  // whole runs of text, so Arabic keeps its joined letters. The split waits for the web fonts, so the lines are measured
+  // in the real font (hidden until then); Textify rewrites the elements' HTML, so each is keyed by its text and the
+  // clean-up puts the plain text back. Textify's own stylesheet is not imported (it sets transform on every element).
+  // Reduced motion: the text simply shows.
+  useLayoutEffect(() => {
+    const root = heroRef.current;
+    if (!root || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const els = [...root.querySelectorAll<HTMLElement>('.large-animation-0')];
+    const texts = els.map((el) => el.textContent);
+    const swoosh = swooshRef.current;
+    let cancelled = false;
+    els.forEach((el) => (el.style.visibility = 'hidden'));
+    if (swoosh) swoosh.style.visibility = 'hidden';
+    void document.fonts.ready.then(() => {
+      if (cancelled) return;
+      els.forEach((el) => (el.style.visibility = ''));
+      if (swoosh) {
+        swoosh.style.visibility = '';
+        const mirrored = getComputedStyle(swoosh).direction === 'rtl';
+        gsap.fromTo(
+          swoosh,
+          { scaleX: 0, scaleY: 0, opacity: 0 },
+          { scaleX: mirrored ? -1 : 1, scaleY: 1, opacity: 1, duration: 0.7, delay: 0.15, ease: 'power2', transformOrigin: 'center center', clearProps: 'transform,opacity' }
+        );
+      }
+      try {
+        new Textify(
+          {
+            el: '.large-animation-0',
+            splitType: 'lines',
+            largeText: true,
+            animation: {
+              by: 'lines',
+              stagger: 0.075,
+              duration: 0.7,
+              ease: 'power2',
+              transformOrigin: 'center center',
+              animateProps: { scale: 0, opacity: 0 },
+            },
+          },
+          gsap
+        );
+      } catch {
+        // never leave a heading half-split: show the plain text instead
+        els.forEach((el, i) => {
+          el.classList.remove('textify', 'is-animated');
+          el.textContent = texts[i];
+        });
+      }
+    });
+    return () => {
+      cancelled = true;
+      if (swoosh) {
+        gsap.killTweensOf(swoosh);
+        gsap.set(swoosh, { clearProps: 'transform,opacity' });
+        swoosh.style.visibility = '';
+      }
+      els.forEach((el, i) => {
+        gsap.killTweensOf(el.querySelectorAll('*'));
+        el.classList.remove('textify', 'is-animated');
+        el.style.visibility = '';
+        el.textContent = texts[i];
+      });
+    };
+  }, [greeting, tagline, lang, profile?.playerLevel, user?.playerLevel, user?.rankTier.key]); // the level line is keyed by these too
 
   useEffect(() => {
     api
@@ -57,16 +126,15 @@ export function HomePage() {
       .then((d) => setProfile(d.profile))
       .catch(() => {})
       .finally(() => setLoaded(true));
-    api
-      .get<{ posts: NewsPost[] }>('/news')
-      .then((d) => setNews(d.posts.slice(0, 5)))
-      .catch(() => {});
   }, []);
 
   const level = profile?.playerLevel ?? user?.playerLevel ?? 1;
+  // one string (one text node), so Textify splits it cleanly
+  const eyebrow = user ? `${t('common.level')} ${level} · ${pickText(lang, user.rankTier.name, user.rankTier.nameAr)}` : '';
   const rank = ((user?.auraRank && user.auraRank !== 'normal' ? user.auraRank : null) ?? user?.rankTier.key) as RankKey | undefined;
   const fr = rank ? RANK_FRAMES[rank] : undefined;
-  const hole = Math.round((fr?.hole ?? 132) * (narrow ? 0.62 : 1)); // the picture's round window, css px
+  // the picture's round window, css px: a quarter smaller than the frames' design size (lib/frames.ts), smaller still on phones
+  const hole = Math.round((fr?.hole ?? 132) * 0.75 * (narrow ? 0.62 : 1));
   const pic = Math.round(hole * 1.06);
   const top = { '--hole': `${hole}px`, '--frame': `${Math.round(fr ? hole / fr.ratio : hole * 1.45)}px` } as CSSProperties;
   const completed = profile?.levelsCompleted ?? 0;
@@ -115,20 +183,22 @@ export function HomePage() {
         </Link>
       </div>
 
-      <section className="home-hero">
+      <section className="home-hero" ref={heroRef}>
         <div className="home-hero-copy">
           {user && (
-            <p className="home-eyebrow">
-              {t('common.level')} {level} · {pickText(lang, user.rankTier.name, user.rankTier.nameAr)}
+            <p key={eyebrow} className="home-eyebrow large-animation-0">
+              {eyebrow}
             </p>
           )}
-          <h1 className="home-hero-title title-ease">
-            <AnimatedText>{t('home.greeting', { name: user?.displayName ?? '' })}</AnimatedText>
+          <h1 key={greeting} className="home-hero-title large-animation-0">
+            {greeting}
           </h1>
-          <svg className="home-swoosh" viewBox="0 0 168 14" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" aria-hidden="true">
+          <svg ref={swooshRef} className="home-swoosh" viewBox="0 0 168 14" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" aria-hidden="true">
             <path d="M3 9C34 3 62 11 92 6s52-2 73 3" />
           </svg>
-          <p className="home-hero-lede">{t('home.tagline')}</p>
+          <p key={tagline} className="home-hero-lede large-animation-0">
+            {tagline}
+          </p>
         </div>
         <div className="home-hero-art">
           <img className="home-hero-image" src="/images/home-hero.webp" width={1240} height={837} decoding="async" alt="" />
@@ -169,20 +239,6 @@ export function HomePage() {
         </div>
       </section>
 
-      {news.length > 0 && (
-        <section className="home-news" aria-labelledby="home-news-title">
-          <h2 id="home-news-title" className="home-section-title">
-            {t('home.announcements')}
-          </h2>
-          <div className="stack" style={{ gap: 10, maxWidth: 760, margin: '16px auto 0' }}>
-            {news.map((p) => (
-              <div key={p.id} className="card">
-                <NewsCard post={p} />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
       <ChallengePickerModal
         open={picking}
         onClose={() => setPicking(false)}

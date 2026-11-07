@@ -20,12 +20,7 @@ export function AppDownloadSection() {
     setOpen('android'); // the short "open the file" guide appears under the buttons
   }
 
-  const steps =
-    open === 'ios'
-      ? { title: t('pwa.iosTitle'), text: t('pwa.iosSteps') }
-      : open === 'android'
-        ? { title: t('pwa.androidTitle'), text: t('pwa.androidSteps') }
-        : null;
+  const steps = open && { title: t(`pwa.${open}Title`), text: t(`pwa.${open}Steps`) };
 
   return (
     <section className="landing-app" id="app" aria-label={t('landing.appTag')}>

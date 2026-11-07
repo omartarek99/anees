@@ -231,12 +231,6 @@ if (unmigrated.length > 0) {
 }
 db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_hash ON users(email_hash)`);
 
-// Teacher-authored announcements, added after the initial news_posts table.
-const newsCols = db.prepare(`PRAGMA table_info(news_posts)`).all() as { name: string }[];
-if (!newsCols.some((c) => c.name === 'author_user_id')) {
-  db.exec(`ALTER TABLE news_posts ADD COLUMN author_user_id INTEGER REFERENCES users(id)`);
-}
-
 // Teacher-authored reel lessons, added after the initial reels table.
 const reelCols = db.prepare(`PRAGMA table_info(reels)`).all() as { name: string }[];
 if (!reelCols.some((c) => c.name === 'author_user_id')) {
@@ -260,14 +254,6 @@ if (!worksheetQuestionCols.some((c) => c.name === 'topic')) {
 if (!db.prepare(`SELECT 1 FROM one_time_jobs WHERE name = 'teacher-anonymous-avatar'`).get()) {
   db.exec(`UPDATE users SET avatar_key = 'anonymous' WHERE role = 'teacher' AND avatar_url IS NULL AND avatar_key IN ('falcon', 'explorer')`);
   db.exec(`INSERT INTO one_time_jobs (name) VALUES ('teacher-anonymous-avatar')`);
-}
-// One time: the seeded welcome post no longer says the site is only for Math and Science. Only touches
-// the post if it still has the original seeded wording.
-if (!db.prepare(`SELECT 1 FROM one_time_jobs WHERE name = 'welcome-news-all-subjects'`).get()) {
-  db.prepare(`UPDATE news_posts SET body = replace(body, ?, ?), body_ar = replace(body_ar, ?, ?) WHERE title = 'Welcome to Anees! 🦅'`).run(
-    "Get ready for an epic journey through Math and Science! Watch", "Get ready for an epic learning journey across every subject! Watch", "استعدوا لرحلة ملحمية عبر الرياضيات والعلوم! شاهدوا", "استعدوا لرحلة تعليمية ملحمية في جميع المواد! شاهدوا"
-  );
-  db.exec(`INSERT INTO one_time_jobs (name) VALUES ('welcome-news-all-subjects')`);
 }
 const worksheetAttemptCols = db.prepare(`PRAGMA table_info(worksheet_attempts)`).all() as { name: string }[];
 if (!worksheetAttemptCols.some((c) => c.name === 'reel_id')) {

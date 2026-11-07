@@ -4,7 +4,7 @@
   <p><strong>A Qatari-themed learning platform for students, covering every subject</strong></p>
 </div>
 
-Students watch short lesson "reels" in a TikTok-style, full-screen vertical swipe feed, answer quizzes to earn XP, climb a 50-level 2D adventure map, defeat Guardian bosses every 5 levels, generate difficulty-tiered practice worksheets, add friends, and dig/build/craft in a Minecraft-style survival mini-game (the Quarry). Teachers get the same account as a student, plus the ability to author their own video lessons and post announcements. Admins get a dedicated dashboard to manage every account on the platform. Fully bilingual (Arabic/English, RTL-aware) with a light and dark theme.
+Students watch short lesson "reels" in a TikTok-style, full-screen vertical swipe feed, answer quizzes to earn XP, climb a 50-level 2D adventure map, defeat Guardian bosses every 5 levels, generate difficulty-tiered practice worksheets, add friends, and dig/build/craft in a Minecraft-style survival mini-game (the Quarry). Teachers get the same account as a student, plus the ability to author their own video lessons. Admins get a dedicated dashboard to manage every account on the platform. Fully bilingual (Arabic/English, RTL-aware) with a light and dark theme.
 
 ## Table of Contents
 
@@ -231,7 +231,7 @@ Every account is one of three roles, enforced both server-side (every route chec
 | Role | Can do |
 |---|---|
 | **Student** | Everything in [Feature Map](#feature-map) below: reels, map, worksheets, the Quarry, leaderboard, friends. |
-| **Teacher** | Everything a student can do, **plus**: ID-verified signup, authoring their own video lessons (`/teacher/reels`), and posting news/announcements. A teacher account is a student account with extras, not a separate walled-off experience — it shares the same XP, level, leaderboard rank, and friends list. |
+| **Teacher** | Everything a student can do, **plus**: ID-verified signup, and authoring their own video lessons (`/teacher/reels`). A teacher account is a student account with extras, not a separate walled-off experience — it shares the same XP, level, leaderboard rank, and friends list. |
 | **Admin** | No gameplay surface at all — a dedicated dashboard (`/admin`) to manage every other account: activate/deactivate, change role, issue a warning, apply a timed suspension, edit XP, and moderate every teacher-uploaded video platform-wide. See [Admin Dashboard](#admin-dashboard). |
 
 Deactivating or suspending an account takes effect **immediately** — every authenticated request re-checks account status, so an admin action ends an already-open session on its very next request, not just at a future login.
@@ -241,7 +241,7 @@ Deactivating or suspending an account takes effect **immediately** — every aut
 | Page | Route | Who |
 |---|---|---|
 | Login / Signup | `/login`, `/signup` | Public — signup picks student or teacher; students also enter their grade, teachers upload a Qatar ID |
-| Home / News feed | `/` | Student & teacher (filterable news feed; teachers get a composer here to post announcements) |
+| Home | `/` | Student & teacher (progress, challenges and shortcuts) |
 | Reels | `/reels` | Student & teacher — full-screen, TikTok-style vertical swipe feed; watch, quiz inline, feed grows as levels unlock |
 | Adventure Map | `/map` | Student & teacher — 50-level 2D map, 5 themed zones, boss fights every 5 levels |
 | The Quarry | `/craft` | Student & teacher — Minecraft-style survival mini-game: dig, gather ores, manage food/HP, build, craft |
@@ -295,7 +295,7 @@ The primary palette is a true Qatari maroon (`#8A1538`, matching the app icon an
 
 ## Language / Arabic Support
 
-- The whole app — every page, button, form, error, and every quiz/lesson/news content item — is available in both **Arabic (default, RTL)** and **English (LTR)**. Toggle any time with the 🌐 button in the nav bar (or top-right on the login/signup screens); the choice is remembered in `localStorage` and switches instantly with no page reload or refetch, since the API returns both language variants of every content field and the frontend picks the right one live.
+- The whole app — every page, button, form, error, and every quiz/lesson content item — is available in both **Arabic (default, RTL)** and **English (LTR)**. Toggle any time with the 🌐 button in the nav bar (or top-right on the login/signup screens); the choice is remembered in `localStorage` and switches instantly with no page reload or refetch, since the API returns both language variants of every content field and the frontend picks the right one live.
 - `frontend/src/lib/i18n.ts` holds the full UI-string dictionary (`en`/`ar`, with TypeScript enforcing exact key parity between them) plus a lookup table that translates the backend's (English) error messages for display.
 - Educational content is bilingual at the database level: every translatable column has a `_ar` counterpart (e.g. `reels.script_text` / `reels.script_text_ar`) populated in `backend/src/db/seed.ts`, and teacher-authored content follows the same pattern. New curriculum content (levels 11–50) should be added with both languages from the start to keep this consistent.
 - RTL layout is applied via `dir="rtl"` on `<html>`, which flips flexbox/text-alignment automatically; spots that needed explicit fixes use CSS logical properties (`inset-inline-start`, `text-align: start`, etc.) so they mirror correctly in both directions.
@@ -306,7 +306,7 @@ The primary palette is a true Qatari maroon (`#8A1538`, matching the app icon an
 - A custom-header check (`X-Requested-With`) is required on every mutating request as CSRF protection.
 - Every API input is validated server-side with `zod`; all SQL is parameterized (no string-built queries).
 - Rate limiting on login/signup.
-- **Every username, display name, and teacher news/reel content field is run through a server-side moderation filter** (`backend/src/lib/moderation.ts`) before it's stored — never trust the client:
+- **Every username, display name, and teacher reel content field is run through a server-side moderation filter** (`backend/src/lib/moderation.ts`) before it's stored — never trust the client:
   - Normalizes leetspeak (`4→a`, `3→e`, `1→i`, `0→o`, `$→s`, …) and repeated letters, then checks against an English + Arabic profanity block list using whole-word matching (so words like "class" are never falsely flagged).
   - Also blocks text that looks like an attempt to share emails, phone numbers, or other-app handles ("add me on…", "my whatsapp is…") — split into a profanity-only variant for teacher lesson content, so legitimate math (e.g. "100 - 37") never false-positives on the phone-number pattern.
   - Blocked content is rejected outright and never written to the database.
@@ -334,14 +334,14 @@ backend/src/
                accountStatus.ts (ban/active checks), deleteUser.ts (shared delete logic)
   middleware/  auth.ts (requireAuth incl. active/ban check, requireRole), validate.ts,
                rateLimit.ts
-  routes/      auth, users, reels, map, worksheets, leaderboard, friends, craft, news,
+  routes/      auth, users, reels, map, worksheets, leaderboard, friends, craft,
                teacherReels, admin
   index.ts     Express app entry, route mounting
 
 frontend/src/
   pages/       one file per route (incl. TeacherHomePage, TeacherReelsPage, AdminPage)
   components/  Sidebar, Topbar, Avatar, ReelSlide, ReelActionRail, QuizCard, QuizResults,
-               BossArena, LevelUpToast, NewsCard, CraftMenu, AuthShell, LanguageToggle,
+               BossArena, LevelUpToast, CraftMenu, AuthShell, LanguageToggle,
                ThemeToggle, WarningModal, AdminUserRow, AdminVideosPanel
   lib/         api.ts (fetch wrapper), auth-context.tsx, language-context.tsx,
                theme-context.tsx (light/dark), i18n.ts (dictionary + error translation),

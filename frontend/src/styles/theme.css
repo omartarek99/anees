@@ -1083,8 +1083,44 @@ button.list-row.selected {
 }
 :root[data-rank] .home-eyebrow { color: var(--maroon); }
 :root[data-rank] .home-swoosh { color: var(--maroon-light); }
+/* A rank's page background: an animated, softly blurred sky in that rank's colours behind the whole app (components/RankSky.tsx draws it;
+   it sits under everything, so the glass refracts it). It fades in and out with the rank's colour change. A light veil over it keeps
+   the muted text that sits straight on the background readable (AA on the sky's darkest patches, like the pale bloom of the usual
+   background). In the dark theme the light sky is laid faintly over the dark ground instead, so the site stays dark. */
+.rank-sky {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden; /* the blurred field is scaled up a touch past the edges */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+.rank-sky.is-on {
+  opacity: 1;
+}
+:root[data-theme='dark'] .rank-sky.is-on {
+  opacity: 0.16;
+}
+.rank-sky::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(255 255 255 / 0.35);
+}
+:root[data-theme='dark'] .rank-sky::after {
+  content: none;
+}
+.rank-sky-field,
+.rank-sky-field canvas {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
 @media (prefers-reduced-motion: reduce) {
   :root { transition: none; }
+  .rank-sky { transition: none; }
 }
 
 /* ---------------- Student home hero ----------------

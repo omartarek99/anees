@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './lib/auth-context';
 import { LanguageProvider, useLanguage } from './lib/language-context';
 import { ThemeProvider } from './lib/theme-context';
 import { RankAura } from './components/RankAura';
+import { RankSky } from './components/RankSky';
 import { IntroSplash } from './components/IntroSplash';
 import { trackPageview } from './lib/analytics';
 import { Sidebar } from './components/Sidebar';
@@ -35,7 +36,6 @@ import { LandingPage } from './pages/LandingPage';
 // Every signed-in page loads on demand, so a visitor on the landing, login or signup pages doesn't
 // download them (the Quarry alone pulls in three.js, ~1 MB).
 const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
-const TeacherHomePage = lazy(() => import('./pages/TeacherHomePage').then((m) => ({ default: m.TeacherHomePage })));
 const ReelsPage = lazy(() => import('./pages/ReelsPage').then((m) => ({ default: m.ReelsPage })));
 const MapPage = lazy(() => import('./pages/MapPage').then((m) => ({ default: m.MapPage })));
 const LevelQuizPage = lazy(() => import('./pages/LevelQuizPage').then((m) => ({ default: m.LevelQuizPage })));
@@ -172,6 +172,7 @@ function ProtectedLayout() {
   const hideFooter = pathname === '/reels';
   return (
     <div className="app-shell">
+      <RankSky />
       <Sidebar />
       <div className="app-content-col">
         <main className="app-main">
@@ -210,7 +211,7 @@ function ProtectedLayout() {
 function RoleHome() {
   const { user } = useAuth();
   if (user?.role === 'admin') return <Navigate to="/admin" replace />;
-  return user?.role === 'teacher' ? <TeacherHomePage /> : <HomePage />;
+  return <HomePage />; // teachers share the student home (and every gameplay page)
 }
 
 /** Gates the wrapped routes to teacher accounts only — a signed-in student who

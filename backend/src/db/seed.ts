@@ -17,10 +17,6 @@ type Q = {
   explainAr: string;
 };
 
-function toSqlite(d: Date): string {
-  return d.toISOString().slice(0, 19).replace('T', ' ');
-}
-
 /** Worksheet questions were authored with the correct answer always first; rotate it to a
  * varied position so students can't just learn "always pick A". No-op if already varied. */
 function rotateCorrect(q: Q, targetIndex: number): Q {
@@ -812,87 +808,6 @@ export function seed() {
   ]);
 
   // ---------------------------------------------------------------------
-  // News posts
-  // ---------------------------------------------------------------------
-  const insertNews = db.prepare(
-    `INSERT INTO news_posts (subject_id, title, title_ar, body, body_ar, icon, published_at) VALUES (?,?,?,?,?,?,?)`
-  );
-  const now = new Date();
-  function daysAgo(n: number) {
-    return toSqlite(new Date(now.getTime() - n * 24 * 60 * 60 * 1000));
-  }
-
-  insertNews.run(
-    null,
-    'Welcome to Anees! 🦅',
-    'مرحبًا بكم في أنيس! 🦅',
-    "Get ready for an epic learning journey across every subject! Watch bite-sized lesson reels, answer quizzes to earn XP, and battle a boss every 5 levels on the 50-level adventure map. Let's begin!",
-    'استعدوا لرحلة تعليمية ملحمية في جميع المواد! شاهدوا دروسًا قصيرة، وأجيبوا عن الاختبارات لكسب نقاط الخبرة، وواجهوا وحشًا كل 5 مستويات على خريطة المغامرة المكونة من 50 مستوى. لنبدأ!',
-    '🦅',
-    daysAgo(14)
-  );
-
-  insertNews.run(
-    null,
-    'New Boss Unlocked: The Sandworm Sentinel! 🐛',
-    'وحش جديد فُتح: حارس دودة الرمال! 🐛',
-    'A fearsome guardian now blocks the path at Level 5 in the Desert Oasis. Answer questions correctly to strike it down and reveal the rest of the desert!',
-    'حارس مخيف يسد الطريق الآن عند المستوى 5 في واحة الصحراء. أجب عن الأسئلة بشكل صحيح لإسقاطه وكشف بقية الصحراء!',
-    '🐛',
-    daysAgo(10)
-  );
-
-  insertNews.run(
-    null,
-    'The Full 50-Level Map Is Now Open! 🗺️',
-    'خريطة الخمسين مستوى مفتوحة بالكامل الآن! 🗺️',
-    'From the Desert Oasis all the way to the peak of Falcon\'s Peak, every single level is now playable — with a boss fight waiting every 5 levels. How far can you climb?',
-    'من واحة الصحراء وحتى قمة الصقر، أصبحت كل المستويات قابلة للعب الآن — مع مواجهة وحش تنتظرك كل 5 مستويات. إلى أي مدى يمكنك التقدم؟',
-    '🗺️',
-    daysAgo(7)
-  );
-
-  insertNews.run(
-    mathId,
-    'Math Tip: Master Your Times Tables',
-    'نصيحة رياضيات: أتقن جدول الضرب',
-    'Knowing your times tables by heart makes division, fractions, and word problems so much faster. Try practicing 5 minutes a day!',
-    'إتقان جدول الضرب عن ظهر قلب يجعل القسمة والكسور والمسائل اللفظية أسرع بكثير. جرّب التدرب 5 دقائق يوميًا!',
-    '🧮',
-    daysAgo(5)
-  );
-
-  insertNews.run(
-    scienceId,
-    'Science Tip: Think Like a Scientist',
-    'نصيحة علوم: فكّر كعالِم',
-    'Next time you wonder why something happens, try the scientific method: ask a question, make a hypothesis, and test it out!',
-    'في المرة القادمة التي تتساءل فيها عن سبب حدوث شيء ما، جرّب الطريقة العلمية: اطرح سؤالًا، وضع فرضية، واختبرها!',
-    '🔬',
-    daysAgo(4)
-  );
-
-  insertNews.run(
-    null,
-    'Sports Day Is Coming Up! ⚽',
-    'يوم رياضي قادم قريبًا! ⚽',
-    "Don't forget — school Sports Day is this month. Keep earning XP so you're ready to celebrate on the leaderboard too!",
-    'لا تنسوا — اليوم الرياضي المدرسي هذا الشهر. استمروا في كسب نقاط الخبرة لتكونوا جاهزين للاحتفال في لوحة المتصدرين أيضًا!',
-    '⚽',
-    daysAgo(2)
-  );
-
-  insertNews.run(
-    null,
-    'Shoutout to This Month\'s Top Students! 🏆',
-    'تحية لأبرز طلاب هذا الشهر! 🏆',
-    'Keep an eye on the Leaderboard page to see who is topping the charts this month. Could it be you next?',
-    'راقب صفحة لوحة المتصدرين لمعرفة من يتصدر القائمة هذا الشهر. ربما تكون أنت التالي؟',
-    '🏆',
-    daysAgo(1)
-  );
-
-  // ---------------------------------------------------------------------
   // Dev bypass account (real seeded account backing frontend dev-config.ts)
   // ---------------------------------------------------------------------
   const insertUser = db.prepare(
@@ -958,7 +873,7 @@ export function seed() {
         1
       ).lastInsertRowid
     );
-    insertXpEvent.run(userId, s.xp, 'seed_bootstrap', toSqlite(now));
+    insertXpEvent.run(userId, s.xp, 'seed_bootstrap', new Date().toISOString().slice(0, 19).replace('T', ' '));
   }
 
   // Level 1 didn't exist yet when ensureDevTeacherProgress() ran at the top of this
@@ -968,5 +883,5 @@ export function seed() {
   // First boot of a production database: content now exists, so the production data can go in.
   if (!ALLOW_DEV_ACCOUNTS) importProductionData();
 
-  console.log('[seed] Database seeded: subjects, 50 map levels, 10 boss fights, reels, worksheets, news, dev + demo accounts.');
+  console.log('[seed] Database seeded: subjects, 50 map levels, 10 boss fights, reels, worksheets, dev + demo accounts.');
 }

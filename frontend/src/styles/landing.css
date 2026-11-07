@@ -5,18 +5,20 @@
    the whole page mirrors in Arabic. */
 
 .landing {
-  --land-ink: #3a2a78; /* the label on the cream button */
-  --land-gold: #f7be72;
   --land-sand: #fbf2e4;
   --land-bg: #17132e;
-  --land-accent: var(--land-gold); /* tags, links, rails -- readable on the dark ground (~10:1) */
-  --land-serif: var(--font-heading);
-  --land-edge: clamp(20px, 4.2vw, 80px);
+  --land-accent: #f7be72; /* gold: tags, links, rails -- readable on the dark ground (~10:1) */
+  /* Side margin; never less than the notch or rounded corner on that side of a phone held sideways. */
+  --land-edge: max(clamp(20px, 4.2vw, 80px), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
   min-height: 100vh;
   background: var(--land-bg);
   color: var(--land-sand);
   font-family: var(--font-body);
   overflow-x: clip;
+}
+/* What shows past the page's edges (iOS overscroll, below a short page) is the same indigo, not the app's light ground. */
+html:has(.landing) {
+  background-color: #17132e;
 }
 
 .landing a,
@@ -33,6 +35,7 @@
 .landing :focus-visible {
   outline: 2px solid var(--land-accent);
   outline-offset: 3px;
+  box-shadow: none; /* theme.css gives links a ring of their own; one ring here */
 }
 
 /* ---------------- Header ---------------- */
@@ -47,7 +50,7 @@
   gap: 24px;
 }
 .landing-logo {
-  font-family: var(--land-serif);
+  font-family: var(--font-heading);
   font-weight: 700;
   font-size: clamp(1.5rem, 1.1vw + 1rem, 2rem);
   letter-spacing: 0.04em;
@@ -66,8 +69,7 @@ html[lang='ar'] .landing-logo {
   font-size: 0.95rem;
 }
 .landing-nav button:hover,
-.landing-scroll:hover,
-.landing-steps button:hover {
+.landing-scroll:hover {
   color: var(--land-accent);
 }
 .landing-actions {
@@ -88,12 +90,12 @@ html[lang='ar'] .landing-logo {
   font-size: 0.9rem;
   text-decoration: none;
   white-space: nowrap;
-  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
 }
 .landing .landing-btn--solid {
   background: var(--land-sand);
   border-color: var(--land-sand);
-  color: var(--land-ink);
+  color: #3a2a78;
 }
 .landing .landing-btn--solid:hover {
   background: var(--land-accent);
@@ -112,7 +114,7 @@ html[lang='ar'] .landing-logo {
 .landing-hero {
   position: relative;
   isolation: isolate;
-  min-height: max(88svh, 640px);
+  min-height: max(88svh, 560px);
   overflow: hidden;
   /* Sky: the warm dark ground rises into maroon, with a soft glow where the sun went down. Many eased
      stops (not two) so the blend has no visible bands; the grain layer below hides what is left. */
@@ -145,7 +147,7 @@ html[lang='ar'] .landing-logo {
 }
 
 /* The hero picture is an ordinary part of the page: it scrolls away with the hero (never fixed, never tiled), drifts a
-   touch slower than the text, fades in when it loads, and its lower edge dissolves into the page ground (::after).
+   touch slower than the text, fades in, and its lower edge dissolves into the page ground (::after).
    It sits low in the hero so the skyline rises under the headline instead of through it, and its top edge fades
    into the night sky (the mask) so there is no line where the picture starts. */
 .landing-bg {
@@ -176,18 +178,23 @@ html[lang='ar'] .landing-logo {
 .landing-hero-copy h1 {
   margin: 0;
   max-inline-size: 950px;
-  font-family: var(--land-serif);
   font-weight: 600;
   font-size: clamp(2.4rem, 4.6vw, 5.5rem);
   line-height: 1.14;
-  text-transform: capitalize;
-  text-wrap: balance;
   color: var(--land-sand);
   text-shadow: 0 2px 28px rgb(23 19 46 / 0.55);
 }
 html[lang='ar'] .landing-hero-copy h1 {
-  text-transform: none;
   line-height: 1.35;
+}
+/* Textify (LandingPage) splits the headline into words and letters and grows each one in; they need to be boxes to scale.
+   The headline runs its own entrance, so it skips the hero copy's rise below (reduced motion keeps that fade). */
+.landing-hero-copy h1.textify .word,
+.landing-hero-copy h1.textify .char {
+  display: inline-block;
+}
+.landing-hero-copy > h1.textify {
+  animation: none;
 }
 
 .landing-tag {
@@ -261,17 +268,8 @@ html[lang='ar'] .landing-tag {
    each other. So the form sits on the landing's own ground with a soft dusk-violet pool and a faint sunset-peach
    one behind it (the stories' glow recipe). No seams: both pools fade to nothing well inside the stage, so its
    edges are exactly the page ground, and the canvas fades out toward its top and bottom (mask). On narrow screens
-   the camera starts further back (ParticleForm FIT_ASPECT) so the rings stay in frame.
+   the camera starts further back (ParticleForm FIT_ASPECT) so the vortex stays in frame.
    Not a scroll container anywhere above it (.landing clips with overflow-x: clip), so sticky works. */
-.landing-deep {
-  --pf-stage: 100vh;
-  position: relative;
-}
-@supports (height: 100svh) {
-  .landing-deep {
-    --pf-stage: 100svh;
-  }
-}
 .landing-deep > :not(.landing-particles-stage) {
   position: relative;
   z-index: 1;
@@ -279,9 +277,8 @@ html[lang='ar'] .landing-tag {
 .landing-particles-stage {
   position: sticky;
   top: 0;
-  z-index: 0;
-  block-size: var(--pf-stage);
-  margin-block-end: calc(-1 * var(--pf-stage));
+  block-size: 100svh;
+  margin-block-end: -100svh;
   overflow: hidden;
   isolation: isolate; /* the canvas blends with this background only */
   background:
@@ -292,7 +289,6 @@ html[lang='ar'] .landing-tag {
 .landing-particles-stage canvas {
   position: absolute;
   inset: 0;
-  display: block;
   inline-size: 100%;
   block-size: 100%;
   cursor: grab;
@@ -302,7 +298,6 @@ html[lang='ar'] .landing-tag {
      faded in with its entrance as the hero scrolls away (--pf-enter 0..1). */
   filter: blur(calc(var(--pf-blur, 0) * 3px));
   opacity: var(--pf-enter, 1);
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgb(0 0 0 / 0.35) 6%, rgb(0 0 0 / 0.75) 11%, #000 16%, #000 84%, rgb(0 0 0 / 0.75) 89%, rgb(0 0 0 / 0.35) 94%, transparent 100%);
   mask-image: linear-gradient(180deg, transparent 0%, rgb(0 0 0 / 0.35) 6%, rgb(0 0 0 / 0.75) 11%, #000 16%, #000 84%, rgb(0 0 0 / 0.75) 89%, rgb(0 0 0 / 0.35) 94%, transparent 100%);
 }
 .landing-particles-stage canvas:active {
@@ -316,7 +311,7 @@ html[lang='ar'] .landing-tag {
 }
 @media (prefers-reduced-motion: reduce) {
   .landing-particles-intro {
-    block-size: var(--pf-stage); /* no fly-in: one screen of the form, then the stories */
+    block-size: 100svh; /* no fly-in: one screen of the form, then the stories */
   }
 }
 
@@ -335,9 +330,8 @@ html[lang='ar'] .landing-tag {
 .landing-rail span {
   writing-mode: vertical-rl;
 }
-/* Both rails float over the bright hero picture with no panel of their own; a soft shadow on the type keeps them legible. */
-.landing-rail,
-.landing-steps {
+/* The rail floats over the bright hero picture with no panel of its own; a soft shadow on the type keeps it legible. */
+.landing-rail {
   text-shadow: 0 1px 10px rgb(23 19 46 / 0.75);
 }
 .landing-rail button {
@@ -356,186 +350,82 @@ html[lang='ar'] .landing-tag {
   border-color: var(--land-accent);
 }
 
-/* Side rail: Start / 01 / 02 / 03. Fixed to the vertical middle of the screen so it stays with you; --f
-   (0..3, set from the scroll handler) is the continuous position between the headings, so the marker
-   slides and the filled line grows as you scroll. */
-.landing-steps {
-  --f: 0;
-  position: fixed;
-  z-index: 20;
-  inset-inline-end: clamp(10px, 0.9vw, 18px);
-  top: 50%;
-  translate: 0 -50%;
-  display: flex;
-  flex-direction: row-reverse;
-  gap: 14px;
-  font-weight: 600;
-  font-size: 0.8rem;
-  animation: landing-rail-in 0.9s 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.landing-steps ol {
-  display: flex;
-  flex-direction: column;
-  gap: 38px;
-  margin: 0;
-  padding: 16px 0 0;
-  list-style: none;
-  text-align: end;
-}
-.landing-steps li {
-  block-size: 22px;
-  line-height: 22px;
-}
-.landing-steps button {
-  opacity: 0.5;
-  transition: color 0.3s ease, opacity 0.3s ease, letter-spacing 0.3s ease;
-}
-.landing-steps .is-past button {
-  opacity: 0.85;
-}
-.landing-steps button[aria-current='step'] {
-  opacity: 1;
-  color: var(--land-accent);
-  font-weight: 800;
-}
-.landing-steps-track {
+/* ---------------- Stories: a helix of their pictures that the scroll turns (components/HelixShowcase.tsx) ---------------- */
+/* A tall stretch (--step of scrolling per story) with a screen pinned in it: the paragraphs at the start, the helix at the end (mirrored
+   in Arabic). The helix runs past the top and bottom of its box, so both edges fade out and the cards drift in and out of view; its
+   canvas is transparent, so they wind over the particle form. The anchors sit where each story's picture rests in the middle. */
+.landing-showcase {
+  --step: 80svh;
   position: relative;
-  inline-size: 3px;
-  block-size: 240px;
-  background: rgb(251 242 228 / 0.28);
-  border-radius: 2px;
-  overflow: hidden;
+  block-size: calc(100svh + var(--n) * var(--step));
 }
-/* The filled part: from the top down to the end of the marker. */
-.landing-steps-track::before {
-  content: '';
+.landing-showcase-anchor {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgb(247 190 114 / 0.15), rgb(247 190 114 / 0.65));
-  transform-origin: top;
-  transform: scaleY(calc((var(--f) * 60 + 60) / 240));
+  inset-inline-start: 0;
+  top: calc((var(--i) + 0.5) * var(--step));
 }
-.landing-steps-track span {
-  position: absolute;
-  inset-inline: 0;
+.landing-showcase-stage {
+  position: sticky;
   top: 0;
-  block-size: 60px;
-  border-radius: 2px;
-  background: var(--land-accent);
-  box-shadow: 0 0 14px rgb(247 190 114 / 0.6);
-  transform: translateY(calc(var(--f) * 60px));
-}
-@keyframes landing-rail-in {
-  from {
-    opacity: 0;
-    transform: translateX(var(--enter, 16px));
-  }
-}
-html[dir='rtl'] .landing-steps {
-  --enter: -16px;
-}
-
-/* ---------------- Story sections ---------------- */
-.landing-stories {
-  display: block;
-}
-.landing-story {
-  --glow: 138 111 209; /* dusk violet; the 2nd story glows peach and the 3rd sea blue */
-  --glow-a: 0.34;
-  position: relative;
-  isolation: isolate;
   display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   align-items: center;
-  gap: clamp(32px, 6vw, 112px);
+  gap: clamp(24px, 4vw, 80px);
+  block-size: 100svh;
   max-inline-size: 1462px;
   margin-inline: auto;
-  padding: clamp(48px, 7vw, 100px) var(--land-edge);
+  padding-inline: var(--land-edge);
 }
-.landing-story.is-flipped {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+.helix-showcase {
+  block-size: 100%;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent);
 }
-.landing-stories > :nth-child(2) {
-  --glow: 240 140 98;
-  --glow-a: 0.26;
-}
-.landing-stories > :nth-child(3) {
-  --glow: 64 118 196;
-  --glow-a: 0.34;
-}
-/* A wide, soft pool of colour behind each picture: a many-stop radial so it fades out with no visible edge. */
-.landing-story::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset-block: -12%;
-  inset-inline-end: -10%;
-  inline-size: min(72%, 960px);
-  pointer-events: none;
-  background: radial-gradient(
-    closest-side,
-    rgb(var(--glow) / var(--glow-a)) 0%,
-    rgb(var(--glow) / calc(var(--glow-a) * 0.8)) 18%,
-    rgb(var(--glow) / calc(var(--glow-a) * 0.55)) 36%,
-    rgb(var(--glow) / calc(var(--glow-a) * 0.3)) 54%,
-    rgb(var(--glow) / calc(var(--glow-a) * 0.12)) 72%,
-    rgb(var(--glow) / calc(var(--glow-a) * 0.03)) 88%,
-    transparent 100%
-  );
-}
-.landing-story.is-flipped::before {
-  inset-inline-end: auto;
-  inset-inline-start: -10%;
-}
-.landing-story.is-flipped img {
-  order: -1;
-}
-.landing-story img {
+.helix-showcase canvas {
+  display: block;
   inline-size: 100%;
-  max-inline-size: 566px;
-  block-size: auto; /* the height attribute would otherwise pin the box taller than the artwork and crop its sides */
-  aspect-ratio: 566 / 720;
-  object-fit: cover;
-  justify-self: end;
-  border-radius: 2px;
-  box-shadow: 0 60px 120px -50px rgb(var(--glow) / 0.6);
-}
-.landing-story.is-flipped img {
-  justify-self: start;
+  block-size: 100%;
 }
 
+/* The three paragraphs share one spot (so nothing moves when they change); the one whose picture is in the middle shows (.is-on):
+   it rises in, and its tag's rule draws itself. */
+.landing-showcase-copy {
+  display: grid;
+}
 .landing-copy {
-  position: relative;
+  grid-area: 1 / 1;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 27px;
   max-inline-size: 632px;
-}
-.landing-num {
-  position: absolute;
-  inset-inline-start: calc(-0.7 * var(--land-edge));
-  top: -0.3em;
-  z-index: 0;
-  font-weight: 700;
-  font-size: clamp(7rem, 12.5vw, 15rem);
-  line-height: 1;
-  opacity: 0.1;
+  opacity: 0;
+  transform: translateY(24px);
   pointer-events: none;
-  user-select: none;
+  transition: opacity 0.45s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.landing-copy > :not(.landing-num) {
-  position: relative;
-  z-index: 1;
+.landing-copy.is-on {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.landing-copy .landing-tag::before {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+}
+html[dir='rtl'] .landing-copy .landing-tag::before {
+  transform-origin: right;
+}
+.landing-copy.is-on .landing-tag::before {
+  transform: scaleX(1);
 }
 .landing-copy h2 {
   margin: 0;
   max-inline-size: 555px;
-  font-family: var(--land-serif);
   font-weight: 600;
   font-size: clamp(2rem, 3.35vw, 4rem);
   line-height: 1.15;
-  text-wrap: balance;
   color: var(--land-sand);
 }
 html[lang='ar'] .landing-copy h2 {
@@ -575,6 +465,7 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
     radial-gradient(60% 130% at 12% 100%, rgb(138 111 209 / 0.42) 0%, rgb(138 111 209 / 0.3) 22%, rgb(138 111 209 / 0.16) 45%, rgb(138 111 209 / 0.05) 70%, transparent 100%),
     radial-gradient(45% 110% at 92% 100%, rgb(240 140 98 / 0.18) 0%, rgb(240 140 98 / 0.09) 40%, rgb(240 140 98 / 0.03) 70%, transparent 100%);
 }
+.landing-app::before,
 .landing-footer-wrap::before {
   content: '';
   position: absolute;
@@ -617,7 +508,6 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
 .landing-footer-col h3 {
   margin: 0 0 8px;
   font-family: var(--font-body);
-  font-weight: 700;
   font-size: clamp(1.1rem, 0.5vw + 0.95rem, 1.5rem);
   color: var(--land-accent);
 }
@@ -630,128 +520,11 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
   color: var(--land-accent);
 }
 
-/* ---------------- Intro animation on scroll ---------------- */
-/* Hidden only while .js-reveal is on the page (added by LandingPage once its observer is running, and
-   never with reduced motion). When a story scrolls into view it gets .is-in and its parts ease in one
-   after another: the tag's rule draws itself, then tag, headline, paragraph, link. The pictures have their own
-   entrance (below). */
-.landing-copy > :nth-child(2) { --i: 0; }
-.landing-copy > :nth-child(3) { --i: 1; }
-.landing-copy > :nth-child(4) { --i: 2; }
-.landing-copy > :nth-child(5) { --i: 3; }
-
-.landing.js-reveal .landing-story .landing-copy > :not(.landing-num) {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.9s ease, transform 1s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: calc(var(--i, 0) * 120ms);
-}
-.landing.js-reveal .landing-story .landing-num {
-  opacity: 0;
-  transform: translateY(20px) scale(0.94);
-  transition: opacity 1.3s ease, transform 1.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.landing.js-reveal .landing-story .landing-tag::before {
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
-}
-html[dir='rtl'] .landing.js-reveal .landing-story .landing-tag::before {
-  transform-origin: right;
-}
-.landing.js-reveal .landing-story.is-in .landing-copy > :not(.landing-num) {
-  opacity: 1;
-  transform: none;
-}
-.landing.js-reveal .landing-story.is-in .landing-num {
-  opacity: 0.1;
-  transform: none;
-}
-.landing.js-reveal .landing-story.is-in .landing-tag::before {
-  transform: scaleX(1);
-}
-
-/* Reduced motion: the same reveal as a plain fade (no sliding / scaling / drawing). */
-.landing.js-calm .landing-story .landing-copy > :not(.landing-num),
-.landing.js-calm .landing-story .landing-num,
-.landing.js-calm .landing-story .landing-tag::before {
-  transform: none;
-}
-
-/* ---------------- Story pictures: each one slides in from its own side ---------------- */
-/* A picture comes in from the edge of the page it sits against (--side: 1 = the inline end, -1 = the start;
-   mirrored in Arabic, so the zig-zag of the stories mirrors with the text). Where the browser has scroll
-   timelines the slide follows the scroll itself: the picture starts mostly off its side of the page, moves only
-   while you scroll, lands when its centre reaches the middle of the screen, and slides back out if you scroll
-   back up. Other browsers play the same slide once
-   when the story comes into view (.is-in, from the observer). Reduced motion: a plain fade, nothing slides. */
-.landing-story {
-  --side: 1;
-}
-.landing-story.is-flipped,
-html[dir='rtl'] .landing-story:not(.is-flipped) {
-  --side: -1;
-}
-html[dir='rtl'] .landing-story.is-flipped {
-  --side: 1;
-}
-@keyframes landing-pic-in {
-  from {
-    opacity: 0;
-    transform: translateX(calc(var(--side) * 70%)) rotate(calc(var(--side) * 4deg));
-  }
-  30% {
-    opacity: 1;
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.landing.js-reveal .landing-story img {
-  opacity: 0;
-}
-.landing.js-reveal .landing-story.is-in img {
-  opacity: 1;
-  animation: landing-pic-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.landing.js-calm .landing-story.is-in img {
-  animation: landing-fade 0.6s ease both;
-}
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .landing.js-reveal .landing-story img,
-    .landing.js-reveal .landing-story.is-in img {
-      opacity: 1;
-      animation: landing-pic-in cubic-bezier(0.33, 1, 0.68, 1) both;
-      animation-timeline: view();
-      animation-range: entry 0% cover 50%; /* lands when the picture's centre reaches the middle of the screen */
-    }
-  }
-}
-
-/* Keep the fixed side rail clear of the pictures and footer links. */
-@media (min-width: 1201px) {
-  .landing-story,
-  .landing-app,
-  .landing-footer {
-    padding-inline-end: max(var(--land-edge), 76px);
-  }
-}
-
 /* ---------------- Get the app (install to the home screen) ---------------- */
 .landing-app {
   position: relative;
   padding: clamp(56px, 7vw, 110px) var(--land-edge);
   background: radial-gradient(70% 120% at 50% 0%, rgb(247 190 114 / 0.1) 0%, transparent 70%);
-}
-.landing-app::before {
-  content: '';
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  block-size: 1px;
-  background: linear-gradient(90deg, transparent, rgb(251 242 228 / 0.18) 30%, rgb(251 242 228 / 0.18) 70%, transparent);
 }
 .landing-app-inner {
   display: grid;
@@ -775,16 +548,6 @@ html[dir='rtl'] .landing-story.is-flipped {
   align-items: flex-start;
   gap: 18px;
 }
-.landing-app-copy h2 {
-  margin: 0;
-  font-family: var(--land-serif);
-  font-weight: 700;
-  font-size: clamp(1.7rem, 2.4vw + 0.8rem, 3rem);
-  line-height: 1.15;
-}
-html[lang='ar'] .landing-app-copy h2 {
-  line-height: 1.4;
-}
 .landing-store-row {
   display: flex;
   flex-wrap: wrap;
@@ -804,10 +567,16 @@ html[lang='ar'] .landing-app-copy h2 {
   text-align: start;
   transition: border-color 0.18s ease, transform 0.18s ease, background-color 0.18s ease;
 }
-.landing .landing-store-btn:hover,
 .landing .landing-store-btn[aria-expanded='true'] {
   border-color: var(--land-accent);
   background: #14101f;
+}
+/* Only for a real pointer: a touch screen keeps :hover on the last tapped button, so a closed one would look open. */
+@media (hover: hover) {
+  .landing .landing-store-btn:hover {
+    border-color: var(--land-accent);
+    background: #14101f;
+  }
 }
 .landing .landing-store-btn:active {
   transform: scale(0.98);
@@ -821,7 +590,7 @@ html[lang='ar'] .landing-app-copy h2 {
   line-height: 1.15;
 }
 .landing-store-btn small {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   opacity: 0.85;
 }
@@ -851,35 +620,19 @@ html[lang='ar'] .landing-app-copy h2 {
 }
 
 /* ---------------- Responsive ---------------- */
-@media (max-width: 1200px) {
-  .landing-steps {
-    display: none;
-  }
-}
 @media (max-width: 900px) {
+  /* The language switch is the landing's only one, and the site starts in Arabic: on phones and portrait tablets it
+     sits under the header as two pills (the group keeps its "Language" label for screen readers). */
   .landing-rail {
+    flex-direction: row;
+    gap: 10px;
+    top: calc(clamp(18px, 3.3vh, 64px) + 50px);
+  }
+  .landing-rail span {
     display: none;
   }
   .landing-hero-copy {
     inset-inline-start: var(--land-edge);
-  }
-  .landing-story,
-  .landing-story.is-flipped {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .landing-story img,
-  .landing-story.is-flipped img {
-    order: -1;
-    justify-self: center;
-    max-inline-size: 420px;
-  }
-  .landing-copy {
-    max-inline-size: none;
-  }
-  .landing-num {
-    inset-inline-start: 0;
-    top: -0.38em;
-    font-size: 5rem;
   }
   .landing-app-inner {
     grid-template-columns: minmax(0, 1fr);
@@ -888,14 +641,38 @@ html[lang='ar'] .landing-app-copy h2 {
   .landing-footer {
     grid-template-columns: 1fr 1fr;
   }
-  .landing-footer-brand {
-    grid-column: 1 / -1;
+  .landing-footer-brand,
+  .landing-footer-col:last-child {
+    grid-column: 1 / -1; /* the contact column too, so the e-mail address stays on one line */
+  }
+}
+/* Phones upright: the helix above, the paragraph below it. */
+@media (max-width: 900px) and (orientation: portrait) {
+  .landing-showcase-stage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: 8px;
+    padding-block-end: max(28px, env(safe-area-inset-bottom, 0px));
+  }
+  .helix-showcase {
+    order: -1;
+  }
+}
+/* Small screens (phones upright, and any screen this short): tighter type for the paragraphs. */
+@media (max-width: 900px) and (orientation: portrait), (max-height: 520px) {
+  .landing-copy {
+    gap: 14px;
+  }
+  .landing-copy h2 {
+    font-size: clamp(1.5rem, 5.5vw, 2rem);
+  }
+  .landing-body {
+    font-size: 0.92rem;
+    line-height: 1.6;
   }
 }
 @media (max-width: 720px) {
-  .landing-hero {
-    min-height: 560px;
-  }
   .landing-header {
     grid-template-columns: 1fr auto;
   }
@@ -917,29 +694,67 @@ html[lang='ar'] .landing-app-copy h2 {
     display: none;
   }
 }
+@media (max-width: 400px) {
+  .landing-header {
+    gap: 12px;
+  }
+  .landing-actions {
+    gap: 8px;
+  }
+  .landing-tag {
+    gap: 14px;
+    letter-spacing: 0.2em;
+  }
+  .landing-tag::before {
+    inline-size: 40px;
+  }
+}
+/* Touch screens: every control at least 44px to tap. Text links get the extra height as padding with a matching
+   negative margin, so the layout does not move. */
+@media (pointer: coarse) {
+  .landing-btn,
+  .landing-scroll,
+  .landing-nav button {
+    min-block-size: 44px;
+  }
+  .landing-rail button {
+    inline-size: 44px;
+    block-size: 44px;
+  }
+  .landing-logo,
+  .landing .landing-more,
+  .landing-footer-col a {
+    padding-block: 10px;
+    margin-block: -10px;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .landing-down {
     animation: none;
   }
-  .landing-hero-copy > *,
-  .landing-steps {
+  .landing-hero-copy > * {
     animation-name: landing-fade;
   }
   .landing-bg {
-    transform: none;
     animation: none;
   }
-  .landing-steps-track span,
   .landing-arrow {
     transition: none;
   }
+  .landing-copy,
+  .landing-copy .landing-tag::before {
+    transform: none;
+  }
 }
 
-.landing-footer-about {
+.landing-footer-brand .landing-footer-about {
   margin-top: 8px;
   font-size: 13px;
   line-height: 1.6;
   opacity: 0.8;
-  max-width: 340px;
+  max-inline-size: 340px;
+}
+.landing-footer-brand .landing-actions {
+  flex-wrap: wrap; /* the Arabic footer columns are wide: never let the two buttons spill out of the brand column */
 }
