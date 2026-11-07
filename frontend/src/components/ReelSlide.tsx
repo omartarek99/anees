@@ -59,6 +59,7 @@ const WATCH_FLUSH_INTERVAL_SECONDS = 10;
 export function ReelSlide({
   data,
   isActive,
+  loadVideo = true,
   muted,
   onSoundBlocked,
   onCompleted,
@@ -68,6 +69,9 @@ export function ReelSlide({
 }: {
   data: ReelSlideData;
   isActive: boolean;
+  /** Whether this slide has a real <video> at all: only the slide in view and the ones next to it do. A feed of many lessons used to start
+   * (and decode) every video at once, which is what made swiping stutter on a phone. */
+  loadVideo?: boolean;
   /** Page-level sound preference (see ReelsPage's action rail toggle). Every slide's video
    * stays muted regardless while inactive -- only the one active slide can ever have sound,
    * and even then only when the student has turned it on. */
@@ -196,14 +200,16 @@ export function ReelSlide({
         }
       });
     } else v.pause();
-  }, [isActive]);
+  }, [isActive, loadVideo]);
 
   // Real top-bar timer, driven by the video's own currentTime/duration instead of a fixed
   // cosmetic estimate.
   function handleTimeUpdate(e: React.SyntheticEvent<HTMLVideoElement>) {
     const v = e.currentTarget;
+    if (!isActive) return; // a slide nobody is looking at has no bar to move
     if (v.duration && !Number.isNaN(v.duration)) {
-      setWatchProgress(v.currentTime / v.duration);
+      const next = Math.round((v.currentTime / v.duration) * 200) / 200; // steps of half a percent: no re-render for a change nobody can see
+      setWatchProgress((cur) => (cur === next ? cur : next));
     }
   }
 
@@ -295,11 +301,11 @@ export function ReelSlide({
               });
             }}
           >
-            {data.videoUrl ? (
+            {data.videoUrl && loadVideo ? (
               <video
                 ref={videoRef}
                 src={data.videoUrl}
-                autoPlay
+                preload={isActive ? "auto" : "metadata"}
                 muted={muted || !isActive}
                 playsInline
                 onEnded={handleVideoEnded}
