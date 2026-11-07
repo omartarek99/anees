@@ -4315,3 +4315,31 @@ label,
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ---------------- Phones: lighter glass, a still aura ----------------
+   Every .card, tile and the bottom tab bar re-blur what is behind them whenever it changes, and on a phone that is most of the screen while scrolling:
+   a smaller blur with no extra saturation looks the same on these dark glass surfaces and is a fraction of the work. The home avatar's rotating,
+   blurred aura is kept as a still ring. */
+@media (max-width: 900px), (pointer: coarse) {
+  :root {
+    --glass-blur: blur(10px);
+    --glass-blur-sm: blur(8px);
+    --glass-blur-lg: blur(12px);
+  }
+  .sidebar,
+  .stat-card,
+  .modal-panel,
+  .boss-arena-panel,
+  .cookie-consent-banner {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  .modal-overlay {
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+  .home-avatar-pic::before,
+  .home-avatar-pic::after {
+    animation: none;
+  }
+}

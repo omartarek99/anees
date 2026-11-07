@@ -80,17 +80,25 @@ export function ReelsPage() {
   }, []);
   useEffect(() => {
     if (!soundBlocked) return;
+    // The sound comes on at the first touch of any kind. iPhone Safari only counts a touch END (or a click) as the permission to play with sound, not
+    // the touch start, and only lets the sound be switched on inside that same event: so the playing video is unmuted right here, synchronously,
+    // as well as through React state (which lands a moment later, outside the event).
+    let done = false;
     const unmute = (e: Event) => {
       // the speaker button handles its own tap
-      if ((e.target as Element | null)?.closest?.('[data-sound-toggle]')) return;
+      if (done || (e.target as Element | null)?.closest?.('[data-sound-toggle]')) return;
+      done = true;
+      document.querySelectorAll<HTMLVideoElement>('.swiper-slide-active video').forEach((v) => {
+        v.muted = false;
+        void v.play().catch(() => {});
+      });
       setSoundBlocked(false);
       setMuted(false);
     };
-    window.addEventListener('pointerdown', unmute, { capture: true, once: true });
-    window.addEventListener('keydown', unmute, { capture: true, once: true });
+    const events = ['pointerup', 'touchend', 'click', 'keydown'] as const;
+    for (const ev of events) window.addEventListener(ev, unmute, { capture: true });
     return () => {
-      window.removeEventListener('pointerdown', unmute, { capture: true });
-      window.removeEventListener('keydown', unmute, { capture: true });
+      for (const ev of events) window.removeEventListener(ev, unmute, { capture: true });
     };
   }, [soundBlocked]);
 

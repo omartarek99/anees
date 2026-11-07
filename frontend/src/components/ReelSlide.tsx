@@ -197,7 +197,7 @@ export function ReelSlide({
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    v.currentTime = 0;
+    if (v.currentTime > 0.05) v.currentTime = 0; // not when already there: a seek makes iOS throw away what it had buffered
     setBuffering(isActive && v.readyState < 3);
     setWatchProgress(0);
     loopCountRef.current = 0;
@@ -213,6 +213,42 @@ export function ReelSlide({
       });
     } else v.pause();
   }, [isActive, loadVideo]);
+
+  // The reel after the one in view is PRIMED: iPhone Safari ignores preload="auto" on a video nobody is playing (it fetches nothing until play() is
+  // called), so swiping to a reel cost a full network start -- the 1-2 second wait. Muted playback is allowed without a tap, so the next video is
+  // played for a moment (muted, off screen) to make the browser fetch and decode its first seconds, then paused at the start; when the student
+  // swipes to it, play() resumes from a filled buffer.
+  const isActiveRef = useRef(isActive);
+  isActiveRef.current = isActive;
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || isActive || !preloadNext || !loadVideo) return;
+    let timer = 0;
+    let cancelled = false;
+    v.muted = true;
+    const stop = () => {
+      if (cancelled || isActiveRef.current) return;
+      v.pause();
+      if (v.currentTime > 0.05) v.currentTime = 0;
+    };
+    v.play()
+      .then(() => {
+        // let it run until a few seconds are buffered (or 1.5 s at most), then stop at the start
+        const check = (n: number) => {
+          if (cancelled || isActiveRef.current) return;
+          const ahead = v.buffered.length ? v.buffered.end(v.buffered.length - 1) - v.currentTime : 0;
+          if (ahead >= 3 || n >= 15) stop();
+          else timer = window.setTimeout(() => check(n + 1), 100);
+        };
+        check(0);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preloadNext, isActive, loadVideo, data.videoUrl]);
 
   // Real top-bar timer, driven by the video's own currentTime/duration instead of a fixed
   // cosmetic estimate.
