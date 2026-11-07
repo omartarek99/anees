@@ -45,7 +45,7 @@ function useStoryText(): Tr {
 
 const spring = { type: 'spring', stiffness: 260, damping: 20 } as const;
 
-function Window({ art, title, body, button, onClose }: { art: ReactNode; title: string; body: string; button: string; onClose: () => void }) {
+function Window({ art, title, body, button, onClose }: { art?: ReactNode; title: string; body: string; button: string; onClose: () => void }) {
   return createPortal(
     <m.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <m.div
@@ -57,7 +57,7 @@ function Window({ art, title, body, button, onClose }: { art: ReactNode; title: 
         animate={{ scale: 1, y: 0, opacity: 1 }}
         transition={spring}
       >
-        <div className="story-window-art">{art}</div>
+        {art && <div className="story-window-art">{art}</div>}
         <h2>{title}</h2>
         <p>{body}</p>
         <button type="button" className="btn btn-primary" onClick={onClose} autoFocus>
@@ -127,7 +127,7 @@ export function StoryPanel({ levels }: { levels: readonly ApiLevel[] }) {
         <p className="story-next">{next ? s('nextItem', { more: more(next.keysLeft), item: itemName(next.milestone) }) : s('allDone')}</p>
       </section>
 
-      {!seen.intro && <Window art={<span className="story-window-emoji">🦅</span>} title={s('introTitle')} body={s('introBody')} button={s('start')} onClose={() => save({ ...seen, intro: true })} />}
+      {!seen.intro && <Window title={s('introTitle')} body={s('introBody')} button={s('start')} onClose={() => save({ ...seen, intro: true })} />}
       {riddleDue && <MapRiddle onSolved={() => save({ ...seen, riddle: true })} onLater={() => setRiddleLater(true)} />}
       {gift !== null && (
         <Window

@@ -17,7 +17,6 @@ export type BossConfig = {
   mechanic: MechanicType;
   artKey: BossArtKey;
   colorPrimary: string;
-  colorSecondary: string;
   glow: string;
   mechanicNameEn: string;
   mechanicNameAr: string;
@@ -34,7 +33,6 @@ export const BOSS_ROSTER: BossConfig[] = [
     mechanic: 'standard',
     artKey: 'sandworm',
     colorPrimary: '#c17a3a',
-    colorSecondary: '#7a4a1e',
     glow: '#e0a860',
     mechanicNameEn: 'Steady Strikes',
     mechanicNameAr: 'ضربات ثابتة',
@@ -46,7 +44,6 @@ export const BOSS_ROSTER: BossConfig[] = [
     mechanic: 'shield',
     artKey: 'zubarahGuardian',
     colorPrimary: '#8a1538',
-    colorSecondary: '#5c0d20',
     glow: '#c9a24b',
     mechanicNameEn: 'Stone Shield',
     mechanicNameAr: 'الدرع الحجري',
@@ -59,7 +56,6 @@ export const BOSS_ROSTER: BossConfig[] = [
     mechanic: 'combo',
     artKey: 'marketDjinn',
     colorPrimary: '#b8563f',
-    colorSecondary: '#7a3a26',
     glow: '#e08a6a',
     mechanicNameEn: 'Rising Combo',
     mechanicNameAr: 'سلسلة متصاعدة',
@@ -71,7 +67,6 @@ export const BOSS_ROSTER: BossConfig[] = [
     mechanic: 'regen',
     artKey: 'souqGuardian',
     colorPrimary: '#a3543a',
-    colorSecondary: '#5c2e1a',
     glow: '#e0937a',
     mechanicNameEn: 'Slow Regeneration',
     mechanicNameAr: 'تجدد بطيء',
@@ -84,7 +79,6 @@ export const BOSS_ROSTER: BossConfig[] = [
     mechanic: 'enrage',
     artKey: 'reefSerpent',
     colorPrimary: '#2e6a96',
-    colorSecondary: '#1f4a6b',
     glow: '#7fb3e8',
     mechanicNameEn: 'Rising Fury',
     mechanicNameAr: 'غضب متصاعد',
@@ -96,7 +90,6 @@ export const BOSS_ROSTER: BossConfig[] = [
     mechanic: 'shield',
     artKey: 'cornicheGuardian',
     colorPrimary: '#1f4a6b',
-    colorSecondary: '#123047',
     glow: '#7ab8e0',
     mechanicNameEn: 'Double Shield',
     mechanicNameAr: 'درع مزدوج',
@@ -109,7 +102,6 @@ export const BOSS_ROSTER: BossConfig[] = [
     mechanic: 'combo',
     artKey: 'cometGolem',
     colorPrimary: '#5c3a96',
-    colorSecondary: '#3f2a6b',
     glow: '#b8aaf0',
     mechanicNameEn: 'Meteor Combo',
     mechanicNameAr: 'سلسلة الشهاب',
@@ -121,7 +113,6 @@ export const BOSS_ROSTER: BossConfig[] = [
     mechanic: 'regen',
     artKey: 'observatoryGuardian',
     colorPrimary: '#4a3f8a',
-    colorSecondary: '#2c2560',
     glow: '#a68be0',
     mechanicNameEn: 'Rapid Regeneration',
     mechanicNameAr: 'تجدد سريع',
@@ -134,7 +125,6 @@ export const BOSS_ROSTER: BossConfig[] = [
     mechanic: 'enrage',
     artKey: 'stoneColossus',
     colorPrimary: '#5c6b4f',
-    colorSecondary: '#3d4736',
     glow: '#a3ad9a',
     mechanicNameEn: 'Colossal Fury',
     mechanicNameAr: 'غضب العملاق',
@@ -146,7 +136,6 @@ export const BOSS_ROSTER: BossConfig[] = [
     mechanic: 'combo',
     artKey: 'falconGuardian',
     colorPrimary: '#8a1538',
-    colorSecondary: '#c9a24b',
     glow: '#f0c96a',
     mechanicNameEn: 'Falcon Fury Combo',
     mechanicNameAr: 'سلسلة غضب الصقر',
@@ -162,7 +151,6 @@ export function getBossConfig(levelNumber: number): BossConfig {
       mechanic: 'standard',
       artKey: 'sandworm',
       colorPrimary: '#8a1538',
-      colorSecondary: '#5c0d20',
       glow: '#c9a24b',
       mechanicNameEn: 'Steady Strikes',
       mechanicNameAr: 'ضربات ثابتة',

@@ -90,6 +90,24 @@ export function LandingPage() {
     };
   }, [lang]);
 
+  // The mascots slide in from their sides with the scroll (landing.css, a scroll-driven animation). Browsers without
+  // scroll timelines play the same slide once instead, when each comes into view (.is-in).
+  useEffect(() => {
+    if (CSS.supports('animation-timeline: view()')) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          e.target.classList.add('is-in');
+          io.unobserve(e.target);
+        }
+      },
+      { rootMargin: '0px 0px -15% 0px' }
+    );
+    document.querySelectorAll('.landing-mascot').forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
   // The hero picture drifts a touch slower than the page (--sy), off for reduced motion and on phones.
   useEffect(() => {
     const hero = heroRef.current;
@@ -175,7 +193,32 @@ export function LandingPage() {
         </div>
       </section>
 
-      <ParticleForm>
+      <ParticleForm
+        intro={
+          // Over the vortex as it flies in: the falcon on the right as it arrives, then the fox on the left (the pictures
+          // carry their speech bubbles, so each language has its own)
+          <>
+            <img
+              className="landing-mascot landing-mascot--eagle"
+              src={`/images/mascots/eagle-${lang}.webp`}
+              width={1385}
+              height={1033}
+              loading="lazy"
+              decoding="async"
+              alt={t('landing.eagleAlt')}
+            />
+            <img
+              className="landing-mascot landing-mascot--fox"
+              src={`/images/mascots/fox-${lang}.webp`}
+              width={1048}
+              height={1440}
+              loading="lazy"
+              decoding="async"
+              alt={t('landing.foxAlt')}
+            />
+          </>
+        }
+      >
         <HelixShowcase stories={stories} label={t('landing.showcaseLabel')} />
 
         <AppDownloadSection />
@@ -184,7 +227,6 @@ export function LandingPage() {
           <div className="landing-footer">
           <div className="landing-footer-brand">
             <span className="landing-logo">{t('brand')}</span>
-            <p>{t('landing.footerTagline')}</p>
             <p className="landing-footer-about">{t('landing.footerAbout')}</p>
             <div className="landing-actions">
               <Link to="/signup" className="landing-btn landing-btn--solid">{t('landing.signup')}</Link>

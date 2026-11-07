@@ -278,15 +278,15 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
                 <div
                   className="boss-art-transition"
                   style={{
-                    width: 160,
-                    height: 160,
+                    width: 200,
+                    height: 200,
                     opacity: entered ? 1 : 0,
                     transform: entered ? 'scale(1) translateY(0)' : 'scale(0.5) translateY(-24px)',
                   }}
                 >
                   <div className="boss-art-transition" style={{ width: '100%', height: '100%', transform: outerTransform }}>
                     <div className="boss-punch-transition" style={{ width: '100%', height: '100%', transform: pulseTransform }}>
-                      <BossArt artKey={config.artKey} primary={config.colorPrimary} secondary={config.colorSecondary} glow={config.glow} enraged={enraged} />
+                      <BossArt artKey={config.artKey} glow={config.glow} enraged={enraged} />
                     </div>
                   </div>
                 </div>
@@ -400,15 +400,15 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
               <div
                 className="boss-defeated-pose"
                 style={{
-                  width: 130,
-                  height: 130,
+                  width: 150,
+                  height: 150,
                   margin: '0 auto',
                   opacity: posed ? (result.passed ? 0.5 : 1) : 0,
                   transform: posed && result.passed ? 'rotate(78deg) scale(0.9) translateY(10px)' : 'rotate(0deg) scale(1) translateY(0)',
                   filter: result.passed ? 'grayscale(0.6)' : 'none',
                 }}
               >
-                <BossArt artKey={config.artKey} primary={config.colorPrimary} secondary={config.colorSecondary} glow={config.glow} enraged={!result.passed} />
+                <BossArt artKey={config.artKey} glow={config.glow} enraged={!result.passed} />
               </div>
               <div style={{ fontSize: 50 }}>{result.passed ? '🏆' : '💥'}</div>
               <h2>{result.passed ? t('boss.victory') : t('boss.survives')}</h2>
