@@ -378,6 +378,7 @@ html[lang='ar'] .landing-tag {
 }
 .helix-showcase {
   block-size: 100%;
+  min-block-size: 0; /* the canvas's own height (its bitmap, set from the last box size) must never size the stage's row */
   -webkit-mask-image: linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent);
   mask-image: linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent);
 }
@@ -670,6 +671,27 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
   .landing-body {
     font-size: 0.92rem;
     line-height: 1.6;
+  }
+}
+/* Short screens (a phone held sideways): the paragraph sits in a narrow column of a screen about 320-400px tall, so its
+   type follows the height, and the tag's spacing tightens so it stays on one line. */
+@media (max-height: 520px) {
+  .landing-copy {
+    gap: 10px;
+  }
+  .landing-copy h2 {
+    font-size: clamp(1.2rem, 7svh, 2rem);
+  }
+  .landing-body {
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .landing-copy .landing-tag {
+    gap: 12px;
+    letter-spacing: 0.18em;
+  }
+  .landing-copy .landing-tag::before {
+    inline-size: 32px;
   }
 }
 @media (max-width: 720px) {

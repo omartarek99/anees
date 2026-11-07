@@ -142,6 +142,7 @@ export function LandingPage() {
         </div>
       </header>
 
+      <main>
       <section className="landing-hero" id="top" ref={heroRef}>
         <img
           className="landing-bg"
@@ -211,6 +212,7 @@ export function LandingPage() {
           </div>
         </footer>
       </ParticleForm>
+      </main>
     </div>
   );
 }

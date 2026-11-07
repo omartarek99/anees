@@ -6,6 +6,8 @@ type ParticleStudio = import('../lib/particle-field/engine').ParticleStudio;
 
 /** The vortex's tilt about x, in place of the seed's own: a quarter turn puts the funnel face-on (see mount). */
 const FRONT_TILT = Math.PI / 2;
+/** engine.ts MORPH_TIME: how long a form takes to gather or morph (s). */
+const MORPH_TIME = 2.6;
 /** The engine's camera distance at rest (engine.ts HOME_DISTANCE). */
 const HOME = 4.8;
 /** engine.ts MIN_DISTANCE / MAX_DISTANCE: zoomBy never goes past them. */
@@ -77,17 +79,18 @@ export function ParticleForm({ children }: { children: ReactNode }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const introRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     const wrap = wrapRef.current;
     const container = boxRef.current;
-    const canvas = canvasRef.current;
-    if (!wrap || !container || !canvas) return;
+    if (!wrap || !container) return;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let cancelled = false;
     let studio: ParticleStudio | null = null;
+    // A canvas of its own for each mount: the clean-up releases its WebGL context (renderer.dispose() does not), and a
+    // lost context cannot be used again (React re-runs this effect on the same elements in development).
+    let canvas: HTMLCanvasElement | null = null;
     let raf = 0;
     let scrollRaf = 0;
     let ro: ResizeObserver | null = null;
@@ -147,6 +150,7 @@ export function ParticleForm({ children }: { children: ReactNode }) {
     const mount = async () => {
       const { ParticleStudio } = await import('../lib/particle-field/engine');
       if (cancelled) return;
+      canvas = container.appendChild(document.createElement('canvas'));
       // Reduced motion: the export's setSpeed(min(speed, 0.12)), given up front.
       const s = new ParticleStudio(canvas, { ...VORTEX.settings, speed: reduced ? Math.min(VORTEX.settings.speed, 0.12) : VORTEX.settings.speed });
       studio = s;
@@ -171,9 +175,11 @@ export function ParticleForm({ children }: { children: ReactNode }) {
       // over; instead the morph turns it to face the camera (FRONT_TILT about x: the funnel's axis, its local +y, points
       // at the viewer), so the arms spiral round the middle of the screen and the scroll dive goes straight down the
       // throat. showForm sets the engine's target tilt (private qTo) just before it resolves; this runs before any frame
-      // draws towards the old one.
+      // draws towards the old one. Reduced motion: no gather and no turn either -- one step of the whole morph time lands
+      // the form in place, facing the camera, before the first frame.
       void s.showForm(VORTEX.form.kind, VORTEX.form.seed, 'gather').then(() => {
         qTo.setFromAxisAngle(axis.set(1, 0, 0), FRONT_TILT);
+        if (reduced) s.renderFrame(MORPH_TIME);
       });
       const tanHalfFov = Math.tan((cam.fov * Math.PI) / 360);
       // Reduced motion: no scroll zoom (progress stays 0), but narrow screens still get the further-back camera and
@@ -192,7 +198,7 @@ export function ParticleForm({ children }: { children: ReactNode }) {
       let playing = true, last = performance.now(), slowFor = 0;
       // Drawing pauses until the stage shows past its faded top edge (the canvas mask fades its top 16%), so the
       // sliver that peeks under the hero on tall screens does not cost a full 250k-particle render every frame.
-      io = new IntersectionObserver(([e]) => { playing = e.isIntersecting; last = performance.now(); }, { threshold: 0.01, rootMargin: '0px 0px -16% 0px' });
+      io = new IntersectionObserver((entries) => { playing = entries[entries.length - 1].isIntersecting; last = performance.now(); }, { threshold: 0.01, rootMargin: '0px 0px -16% 0px' });
       io.observe(container);
       const tick = (now: number) => {
         const frame = (now - last) / 1000;
@@ -260,7 +266,11 @@ export function ParticleForm({ children }: { children: ReactNode }) {
       cancelAnimationFrame(scrollRaf);
       ro?.disconnect();
       io?.disconnect();
-      studio?.dispose();
+      if (studio) {
+        studio.dispose();
+        (studio as unknown as { renderer: { forceContextLoss(): void } }).renderer.forceContextLoss();
+      }
+      canvas?.remove();
     };
   }, []);
 
@@ -268,9 +278,7 @@ export function ParticleForm({ children }: { children: ReactNode }) {
     <div className="landing-deep" ref={wrapRef}>
       {!failed && (
         <>
-          <div className="landing-particles-stage" ref={boxRef} aria-hidden="true">
-            <canvas ref={canvasRef} />
-          </div>
+          <div className="landing-particles-stage" ref={boxRef} aria-hidden="true" />
           <div className="landing-particles-intro" ref={introRef} aria-hidden="true" />
         </>
       )}

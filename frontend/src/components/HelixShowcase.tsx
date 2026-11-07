@@ -58,80 +58,86 @@ export function HelixShowcase({ stories, label }: { stories: HelixStory[]; label
 
   useEffect(() => {
     const section = sectionRef.current, box = boxRef.current, canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!section || !box || !canvas || !ctx) return;
+    if (!section || !box || !canvas) return;
+    const ctx = canvas.getContext('2d');
     let cancelled = false, raf = 0;
-    let ro: ResizeObserver | null = null, io: IntersectionObserver | null = null;
-
-    const mount = async () => {
-      const [{ default: TEMPLATE }, pics] = await Promise.all([
-        import('../lib/helix/template') as Promise<{ default: HelixTemplate }>,
-        Promise.all(imgs.split('\n').map(loadImage)),
-      ]);
-      if (cancelled) return;
-      // card k goes through the middle at step -k (mod CARDS): story i goes on card -i (mod CARDS), every other card stays empty
-      const empty = document.createElement('canvas');
-      empty.width = empty.height = 2;
-      const cards = Array.from({ length: CARDS }, (_, k) => {
-        const i = (CARDS - k) % CARDS;
-        return i < n ? pics[i] : empty;
-      });
-      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      let dirty = true;
-      const resize = () => {
-        const dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
-        canvas.width = Math.round(box.clientWidth * dpr);
-        canvas.height = Math.round(box.clientHeight * dpr);
-        dirty = true;
-      };
-      resize();
-      const target = () => {
-        // the pinned stretch: the section's height less the pinned screen's (100svh, not innerHeight, which grows when a phone's
-        // toolbar slides away)
-        const rect = section.getBoundingClientRect();
-        const travel = Math.max(1, rect.height - (box.parentElement?.clientHeight ?? window.innerHeight));
-        const e = stepAt((-rect.top / travel) * n, n);
-        return still ? Math.min(n - 1, Math.max(0, Math.round(e))) : e;
-      };
-      let step = target(), drawn = NaN, last = performance.now(), shown: number | null = null;
-      const frame = (now: number) => {
-        raf = requestAnimationFrame(frame);
-        const dt = Math.min(0.05, (now - last) / 1000);
-        last = now;
-        const goal = target();
-        step = still ? goal : goal + (step - goal) * Math.exp(-EASE * dt);
-        if (Math.abs(goal - step) < 1e-4) step = goal;
-        if (dirty || Math.abs(step - drawn) > 1e-5) {
-          dirty = false;
-          drawn = step;
-          ctx.setTransform(1, 0, 0, 1, 0, 0);
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          const t = (((0.5 + step / CARDS) % 1) + 1) % 1;
-          TEMPLATE.render({ ctx, t, width: canvas.width, height: canvas.height, params: PARAMS, images: cards, background: null });
-        }
-        const i = Math.round(step);
-        const now2 = i >= 0 && i < n && Math.abs(step - i) < SHOW_WITHIN ? i : null;
-        if (now2 !== shown) setActive((shown = now2));
-      };
-      ro = new ResizeObserver(resize);
-      ro.observe(box);
-      // run only while the section is on screen
-      io = new IntersectionObserver(([e]) => {
-        cancelAnimationFrame(raf);
-        raf = 0;
-        if (e.isIntersecting) {
-          last = performance.now();
-          raf = requestAnimationFrame(frame);
-        }
-      });
-      io.observe(section);
+    // The scroll loop (and so the paragraphs) runs on its own; the drawing joins it once the template and the pictures have
+    // loaded. If they never do, the stories still read, with no helix.
+    let TEMPLATE: HelixTemplate | null = null, cards: (HTMLImageElement | HTMLCanvasElement | undefined)[] | null = null;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let dirty = true;
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+      canvas.width = Math.round(box.clientWidth * dpr);
+      canvas.height = Math.round(box.clientHeight * dpr);
+      dirty = true;
     };
+    resize();
+    const target = () => {
+      // the pinned stretch: the section's height less the pinned screen's (100svh, not innerHeight, which grows when a phone's
+      // toolbar slides away)
+      const rect = section.getBoundingClientRect();
+      const travel = Math.max(1, rect.height - (box.parentElement?.clientHeight ?? window.innerHeight));
+      const e = stepAt((-rect.top / travel) * n, n);
+      return still ? Math.min(n - 1, Math.max(0, Math.round(e))) : e;
+    };
+    let step = 0, drawn = NaN, last = 0, shown: number | null = null;
+    const frame = (now: number) => {
+      raf = requestAnimationFrame(frame);
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const goal = target();
+      // nothing on the canvas yet: start where the scroll is, rather than easing in from wherever the step was left
+      step = still || Number.isNaN(drawn) ? goal : goal + (step - goal) * Math.exp(-EASE * dt);
+      if (Math.abs(goal - step) < 1e-4) step = goal;
+      if (TEMPLATE && cards && ctx && (dirty || Math.abs(step - drawn) > 1e-5)) {
+        dirty = false;
+        drawn = step;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const t = (((0.5 + step / CARDS) % 1) + 1) % 1;
+        TEMPLATE.render({ ctx, t, width: canvas.width, height: canvas.height, params: PARAMS, images: cards, background: null });
+      }
+      const i = Math.round(step);
+      const now2 = i >= 0 && i < n && Math.abs(step - i) < SHOW_WITHIN ? i : null;
+      if (now2 !== shown) setActive((shown = now2));
+    };
+    const ro = new ResizeObserver(resize);
+    ro.observe(box);
+    // run only while the section is on screen (the latest entry: a quick out-and-back can deliver two at once)
+    const io = new IntersectionObserver((entries) => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      if (entries[entries.length - 1].isIntersecting) {
+        last = performance.now();
+        raf = requestAnimationFrame(frame);
+      }
+    });
+    io.observe(section);
 
+    // the template and the pictures load once the section is near
     const near = new IntersectionObserver(
       (entries) => {
         if (!entries.some((e) => e.isIntersecting)) return;
         near.disconnect();
-        void mount();
+        Promise.all([
+          import('../lib/helix/template') as Promise<{ default: HelixTemplate }>,
+          Promise.all(imgs.split('\n').map(loadImage)),
+        ]).then(
+          ([{ default: template }, pics]) => {
+            if (cancelled) return;
+            // card k goes through the middle at step -k (mod CARDS): story i goes on card -i (mod CARDS), every other card stays empty
+            const empty = document.createElement('canvas');
+            empty.width = empty.height = 2;
+            cards = Array.from({ length: CARDS }, (_, k) => {
+              const i = (CARDS - k) % CARDS;
+              return i < n ? pics[i] : empty;
+            });
+            TEMPLATE = template;
+            dirty = true;
+          },
+          () => {} // no helix (e.g. a stale chunk after a deploy): the paragraphs carry on without it
+        );
       },
       { rootMargin: '100% 0px' }
     );
@@ -141,13 +147,13 @@ export function HelixShowcase({ stories, label }: { stories: HelixStory[]; label
       cancelled = true;
       near.disconnect();
       cancelAnimationFrame(raf);
-      ro?.disconnect();
-      io?.disconnect();
+      ro.disconnect();
+      io.disconnect();
     };
   }, [imgs, n]);
 
   return (
-    <main className="landing-showcase" ref={sectionRef} style={{ '--n': n } as CSSProperties}>
+    <section className="landing-showcase" ref={sectionRef} style={{ '--n': n } as CSSProperties}>
       {stories.map((s, i) => (
         <span key={s.id} id={s.id} className="landing-showcase-anchor" style={{ '--i': i } as CSSProperties} />
       ))}
@@ -168,6 +174,6 @@ export function HelixShowcase({ stories, label }: { stories: HelixStory[]; label
           <canvas ref={canvasRef} />
         </div>
       </div>
-    </main>
+    </section>
   );
 }
