@@ -54,6 +54,12 @@ export function r2KeyFromUrl(url: string | null): string | null {
   return decodeURIComponent(url.slice(publicBase!.length + 1).split('?')[0]);
 }
 
+/** Stores a file (the optimised copy of a lesson video, made on the server) with a year-long cache, since a key is never reused. */
+export async function r2Put(key: string, body: Buffer, contentType: string): Promise<void> {
+  if (!client) throw new Error('R2 is not configured');
+  await client.send(new PutObjectCommand({ Bucket: bucket!, Key: key, Body: body, ContentType: contentType, CacheControl: 'public, max-age=31536000, immutable' }));
+}
+
 export async function r2Delete(key: string): Promise<void> {
   if (!client) return;
   await client.send(new DeleteObjectCommand({ Bucket: bucket!, Key: key }));

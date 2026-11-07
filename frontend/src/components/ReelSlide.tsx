@@ -60,6 +60,7 @@ export function ReelSlide({
   data,
   isActive,
   loadVideo = true,
+  preloadNext = false,
   muted,
   onSoundBlocked,
   onCompleted,
@@ -72,6 +73,8 @@ export function ReelSlide({
   /** Whether this slide has a real <video> at all: only the slide in view and the ones next to it do. A feed of many lessons used to start
    * (and decode) every video at once, which is what made swiping stutter on a phone. */
   loadVideo?: boolean;
+  /** The slide just after the one in view: its video is fetched ahead (preload="auto"), so swiping to it starts at once. */
+  preloadNext?: boolean;
   /** Page-level sound preference (see ReelsPage's action rail toggle). Every slide's video
    * stays muted regardless while inactive -- only the one active slide can ever have sound,
    * and even then only when the student has turned it on. */
@@ -98,6 +101,9 @@ export function ReelSlide({
   // lesson and its description).
   const [captionExpanded, setCaptionExpanded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  // true from landing on a reel until its video is actually playing (and again whenever it stalls): a spinner shows meanwhile, so a slow start
+  // reads as loading and not as a frozen page
+  const [buffering, setBuffering] = useState(true);
 
   // This reel's own "are you still watching?" check -- local to this slide (not shared
   // across the feed) since it's driven by how many times *this* video has looped. No
@@ -187,6 +193,7 @@ export function ReelSlide({
     const v = videoRef.current;
     if (!v) return;
     v.currentTime = 0;
+    setBuffering(isActive && v.readyState < 3);
     setWatchProgress(0);
     loopCountRef.current = 0;
     setStillWatching(false);
@@ -305,7 +312,10 @@ export function ReelSlide({
               <video
                 ref={videoRef}
                 src={data.videoUrl}
-                preload={isActive ? "auto" : "metadata"}
+                preload={isActive || preloadNext ? "auto" : "metadata"}
+                onWaiting={() => isActive && setBuffering(true)}
+                onPlaying={() => setBuffering(false)}
+                onCanPlay={() => setBuffering(false)}
                 muted={muted || !isActive}
                 playsInline
                 onEnded={handleVideoEnded}
@@ -333,6 +343,12 @@ export function ReelSlide({
               </div>
             )}
           </div>
+
+          {isActive && buffering && data.videoUrl && loadVideo && (
+            <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', zIndex: 2 }} aria-hidden="true">
+              <div className="spinner" />
+            </div>
+          )}
 
           {/* bottom scrim for text legibility */}
           <div

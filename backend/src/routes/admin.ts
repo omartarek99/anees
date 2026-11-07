@@ -25,6 +25,7 @@ import { mailStatus } from '../lib/mailer.js';
 import { parseRoleFilter, parseGrade, pageViewStats, countReportUsers, queryReportRows, reportTotals, monthlyWatch, trailingMonthKeys, SINCE_30_DAYS, quizzesSolvedTotal, pageViewsLast30Days } from '../lib/reportData.js';
 import { buildReportWorkbook } from '../lib/reportExcel.js';
 import { recentIssues } from '../lib/diagnostics.js';
+import { queueAllUnoptimised } from '../lib/videoOptimize.js';
 import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX } from '../lib/certificateImage.js';
 import { PLAQUE_PATH, issueRankCertificates, emailCertificate, revokeCertificate } from '../lib/rankCertificates.js';
 import { applyViolation } from '../lib/violations.js';
@@ -41,6 +42,11 @@ adminRouter.use(requireAuth, requireRole('admin'));
 
 // Admin-only: how email is configured, and the latest failures that users only see as a generic
 // message. Never returns secrets (only key lengths/prefixes and error codes).
+// Makes the small, fast-starting copy (see lib/videoOptimize.ts) of every lesson video that is still the teacher's original. One at a time, in the background.
+adminRouter.post('/optimize-videos', requireCsrfHeader, (_req, res) => {
+  res.json({ queued: queueAllUnoptimised() });
+});
+
 adminRouter.get('/diagnostics', async (_req, res) => {
   res.json({ mail: await mailStatus(), r2: await r2SelfTest(FRONTEND_ORIGIN), recentIssues: recentIssues(), node: process.version, env: process.env.NODE_ENV ?? null });
 });

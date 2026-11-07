@@ -281,6 +281,7 @@ export function ReelsPage() {
                 data={slide}
                 isActive={i === (activeIndex ?? initialIndex)}
                 loadVideo={isNearActive(i, activeIndex ?? initialIndex, slides.length)}
+                preloadNext={i === ((activeIndex ?? initialIndex) + 1) % slides.length}
                 muted={muted}
                 onSoundBlocked={handleSoundBlocked}
                 onCompleted={handleCompleted}
