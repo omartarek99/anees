@@ -96,7 +96,10 @@ function Sky({ stops, on, paused }: { stops: readonly string[]; on: boolean; pau
         if (canvas.height !== h) canvas.height = h;
         render(canvas, recipeRef.current, t, animating);
       };
-      const motionOk = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // Phones get the sky as a still picture: an animated, blurred layer under the glass panels (each of which re-blurs what is behind it
+      // every time it changes) is more than an iPhone's browser can keep up with, and it made every page of the app stutter there.
+      const phone = window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
+      const motionOk = !phone && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       let last = 0;
       const frame = (now: number) => {
         raf = requestAnimationFrame(frame);

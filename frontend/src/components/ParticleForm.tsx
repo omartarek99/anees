@@ -164,12 +164,17 @@ export function ParticleForm({ children, intro }: { children: ReactNode; intro?:
       if (cancelled) return;
       canvas = container.appendChild(document.createElement('canvas'));
       // Reduced motion: the export's setSpeed(min(speed, 0.12)), given up front.
-      const s = new ParticleStudio(canvas, { ...VORTEX.settings, speed: reduced ? Math.min(VORTEX.settings.speed, 0.12) : VORTEX.settings.speed });
+      // Phones (a narrow screen or a touch screen) get a lighter form: a quarter of the particles, drawn larger so the funnel looks the same, with
+      // a gentler bloom and a pixel ratio of at most 1.5. 250,000 particles with bloom at a pixel ratio of 2 is more than an iPhone's browser can
+      // draw at a steady frame rate, and it was what made the landing page stutter there.
+      const phone = window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
+      const base = phone ? { ...VORTEX.settings, count: 60000, size: VORTEX.settings.size * 1.7, bloomStrength: VORTEX.settings.bloomStrength * 0.8 } : VORTEX.settings;
+      const s = new ParticleStudio(canvas, { ...base, speed: reduced ? Math.min(base.speed, 0.12) : base.speed });
       studio = s;
       // OrbitControls sets touch-action: none, which would stop the page scrolling under a finger on the canvas:
       // vertical swipes scroll the page and pinches zoom it, sideways drags still turn the form.
       canvas.style.touchAction = 'pan-y pinch-zoom';
-      let dpr = Math.min(window.devicePixelRatio, 2); // the export's cap; lowered only on a slow device (SLOW_FRAME)
+      let dpr = Math.min(window.devicePixelRatio, phone ? 1.5 : 2); // the export's cap (1.5 on a phone); lowered further on a slow device (SLOW_FRAME)
       const resize = () => {
         const w = container.clientWidth, h = container.clientHeight;
         if (!w || !h) return;
@@ -250,7 +255,7 @@ export function ParticleForm({ children, intro }: { children: ReactNode; intro?:
               cam.updateProjectionMatrix();
               // the points grow as the view magnifies (by LENS_GROW of it), as they would coming closer: magnified
               // alone, the spiral thins out to a haze of specks
-              s.setSize(VORTEX.settings.size * lens ** LENS_GROW);
+              s.setSize(base.size * lens ** LENS_GROW);
             }
           }
           s.renderFrame(dt);
