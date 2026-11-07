@@ -563,15 +563,21 @@ adminRouter.get('/reels', (req, res) => {
 });
 
 adminRouter.delete('/reels/:id', requireCsrfHeader, async (req, res) => {
-  const reel = db.prepare(`SELECT * FROM reels WHERE id = ? AND author_user_id IS NOT NULL`).get(
-    Number(req.params.id)
-  ) as any;
+  const id = Number(req.params.id);
+  const reel = db.prepare(`SELECT * FROM reels WHERE id = ?`).get(id) as any;
+  // already gone (deleted in another tab, or by someone else a moment ago): the goal is reached, so no error -- the panel just drops the row
   if (!reel) {
+    res.json({ ok: true });
+    return;
+  }
+  // the app's own lessons (no author) are part of the map, not uploads to moderate
+  if (reel.author_user_id === null) {
     res.status(404).json({ error: 'Not found.' });
     return;
   }
+  // The file goes first (it never throws, whatever state the storage is in), then the lesson. Every table that points at reels cascades or clears its
+  // link (reel_questions, reel_watch_progress, reel_messages, worksheet_questions cascade; worksheet_attempts.reel_id is set to NULL) -- see schema.sql.
   await deleteReelVideoIfAny(reel.video_url);
-  // reel_questions and reel_watch_progress both cascade on reels(id) -- see schema.sql.
   db.prepare(`DELETE FROM reels WHERE id = ?`).run(reel.id);
   res.json({ ok: true });
 });

@@ -61,6 +61,7 @@ export function ReelSlide({
   isActive,
   loadVideo = true,
   preloadNext = false,
+  onVideoFailed,
   muted,
   onSoundBlocked,
   onCompleted,
@@ -75,6 +76,8 @@ export function ReelSlide({
   loadVideo?: boolean;
   /** The slide just after the one in view: its video is fetched ahead (preload="auto"), so swiping to it starts at once. */
   preloadNext?: boolean;
+  /** The video file could not be loaded (deleted, broken link): the page drops this lesson from the feed. */
+  onVideoFailed?: (reelId: number) => void;
   /** Page-level sound preference (see ReelsPage's action rail toggle). Every slide's video
    * stays muted regardless while inactive -- only the one active slide can ever have sound,
    * and even then only when the student has turned it on. */
@@ -318,6 +321,7 @@ export function ReelSlide({
                 onError={() => {
                   setVideoFailed(true);
                   setBuffering(false);
+                  onVideoFailed?.(data.reelId);
                 }}
                 onWaiting={() => isActive && setBuffering(true)}
                 onPlaying={() => setBuffering(false)}
@@ -434,7 +438,7 @@ export function ReelSlide({
                 {captionExpanded ? t('reels.seeLess') : t('reels.seeMore')}
               </button>
             )}
-            {(!data.videoUrl || videoFailed) && (
+            {!data.videoUrl && (
               <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11.5, marginTop: 6 }}>{t('reels.videoComingSoon')}</p>
             )}
             {data.questions.length > 0 ? (
