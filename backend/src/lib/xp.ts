@@ -41,6 +41,9 @@ export function craftPuzzleTierForXp(totalXp: number): 1 | 2 | 3 | 4 {
 // flat, a worksheet 5-20 per right answer), and never takes anyone below 0.
 export const WRONG_ANSWER_XP = 1;
 
+// Failing a map level's quiz (fewer than half right: under 2 of 4) is not worth +1 any more: it costs this much, on top of the wrong answers.
+export const LEVEL_QUIZ_FAIL_LOSS = 1;
+
 const roleAndXp = db.prepare(`SELECT role, total_xp FROM users WHERE id = ?`);
 const takeXp = db.prepare(`UPDATE users SET total_xp = total_xp - ? WHERE id = ?`);
 const logXp = db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`);
@@ -66,6 +69,19 @@ export function penalizeWrongAnswers(userId: number, wrongCount: number): number
   if (lost <= 0) return 0;
   takeXp.run(lost, userId);
   logXp.run(userId, -lost, 'wrong_answer');
+  noteRankDrop(userId, u.total_xp, u.total_xp - lost);
+  return lost;
+}
+
+/** Takes `amount` points off a student for a stated reason (teachers and admins lose nothing; never below 0); returns the points taken. */
+export function penalizePoints(userId: number, amount: number, reason: string): number {
+  if (amount <= 0) return 0;
+  const u = roleAndXp.get(userId) as { role: string; total_xp: number } | undefined;
+  if (u?.role !== 'student') return 0;
+  const lost = Math.min(amount, u.total_xp);
+  if (lost <= 0) return 0;
+  takeXp.run(lost, userId);
+  logXp.run(userId, -lost, reason);
   noteRankDrop(userId, u.total_xp, u.total_xp - lost);
   return lost;
 }

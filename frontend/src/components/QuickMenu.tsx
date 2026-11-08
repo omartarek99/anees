@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { RiUserFill, RiLogoutBoxRLine, RiLogoutBoxLine, RiLockPasswordLine } from '@remixicon/react';
+import { RiUserFill, RiLogoutBoxRLine, RiLogoutBoxLine, RiLockPasswordLine, RiUserSharedLine } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useTheme } from '../lib/theme-context';
 import { LanguageSwitch, ThemeSwitch } from './Switch';
 import { InstallAppButton } from './InstallAppButton';
+import { AccountSwitcher } from './AccountSwitcher';
 
 /** Floating settings menu, anchored on the same side as the sidebar ("icon bar") --
  * left in English, right in Arabic (see `inset-inline-start` in theme.css). The button
@@ -17,6 +18,7 @@ export function QuickMenu() {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -92,6 +94,20 @@ export function QuickMenu() {
             role="menuitem"
             onClick={() => {
               setOpen(false);
+              setSwitcherOpen(true);
+            }}
+          >
+            <span className="quick-menu-icon" aria-hidden>
+              <RiUserSharedLine size={17} />
+            </span>
+            {t('accounts.menu')}
+          </button>
+          <button
+            type="button"
+            className="quick-menu-item"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
               logout();
             }}
           >
@@ -102,6 +118,7 @@ export function QuickMenu() {
           </button>
         </div>
       )}
+      {switcherOpen && <AccountSwitcher onClose={() => setSwitcherOpen(false)} />}
     </div>
   );
 }

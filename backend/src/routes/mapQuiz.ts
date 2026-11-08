@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { Router } from 'express';
 import { db } from '../db/db.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
-import { awardXp, penalizeWrongAnswers, getPlayerLevel, QUIZ_PASS_POINTS, QUIZ_FAIL_POINTS } from '../lib/xp.js';
+import { awardXp, penalizeWrongAnswers, penalizePoints, getPlayerLevel, QUIZ_PASS_POINTS, LEVEL_QUIZ_FAIL_LOSS } from '../lib/xp.js';
 import { difficultyTierFor } from '../lib/ranks.js';
 import { getDoublePointsStatus, DOUBLE_POINTS_MULTIPLIER } from '../lib/doublePoints.js';
 import { gradeAnswers } from '../lib/grading.js';
@@ -121,13 +121,14 @@ export function registerLevelQuiz(router: Router) {
     const stars = scoreRatio === 1 ? 3 : scoreRatio >= 0.75 ? 2 : scoreRatio >= 0.5 ? 1 : 0;
     const passed = scoreRatio >= 0.5;
 
-    // Same points as a video quiz: flat per submission, a pass is worth more.
+    // A pass pays a flat amount; a fail (fewer than half right: under 2 of 4) pays nothing and costs LEVEL_QUIZ_FAIL_LOSS (-1) on top of the
+    // wrong answers.
     const doublePoints = getDoublePointsStatus();
-    const basePoints = passed ? QUIZ_PASS_POINTS : QUIZ_FAIL_POINTS;
+    const basePoints = passed ? QUIZ_PASS_POINTS : 0;
     const xpEarned = doublePoints.active ? basePoints * DOUBLE_POINTS_MULTIPLIER : basePoints;
     const levelBeforeXp = getPlayerLevel(req.userId!);
-    // wrong answers are charged first, so only the net of this submission can move a rank (see lib/xp.ts)
-    const xpLost = penalizeWrongAnswers(req.userId!, wrongCount);
+    // what is lost is charged first, so only the net of this submission can move a rank (see lib/xp.ts)
+    const xpLost = penalizeWrongAnswers(req.userId!, wrongCount) + (passed ? 0 : penalizePoints(req.userId!, LEVEL_QUIZ_FAIL_LOSS, 'level_quiz_fail'));
     awardXp(req.userId!, xpEarned, 'level_quiz');
 
     // Passing (at least half right) completes the level -- sticky, a later poor retry never undoes it -- and opens the next one.

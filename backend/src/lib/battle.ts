@@ -1,7 +1,8 @@
 import { db } from '../db/db.js';
 
-// Boss battles are limited: three lost fights, then a 24-hour wait counted from the moment of the last loss. The tries
-// also come back by themselves a day after the first loss of a streak. A cleared boss can be replayed freely (see map.ts).
+// Boss battles are limited: every lost fight takes one of three hearts, and the hearts all come back 24 hours after the FIRST one was lost (the
+// clock starts with the first loss, not the last). Losing all three before then locks the guardians until that same moment. A cleared boss can be
+// replayed freely (see map.ts).
 
 export const BATTLE_TRIES = 3;
 export const BATTLE_WAIT_MS = 24 * 60 * 60 * 1000;
@@ -25,7 +26,7 @@ export function getBattleStatus(userId: number, now = Date.now()): BattleStatus 
   return { triesLeft: BATTLE_TRIES - (windowOpen ? row!.fails : 0), maxTries: BATTLE_TRIES, lockedUntil: null };
 }
 
-/** Counts a lost fight; the third loss starts the 24-hour wait. */
+/** Takes a heart for a lost fight. The 24 hours run from the first loss of the streak; the third loss locks the fights until they are over. */
 export function recordBattleLoss(userId: number, now = Date.now()): BattleStatus {
   const row = readRow(userId);
   const windowOpen = row?.window_start && now - Date.parse(row.window_start) < BATTLE_WAIT_MS;
@@ -35,7 +36,7 @@ export function recordBattleLoss(userId: number, now = Date.now()): BattleStatus
   db.prepare(
     `INSERT INTO battle_status (user_id, fails, window_start, locked_until) VALUES (?,?,?,?)
      ON CONFLICT(user_id) DO UPDATE SET fails = excluded.fails, window_start = excluded.window_start, locked_until = excluded.locked_until`
-  ).run(userId, locked ? 0 : fails, locked ? null : windowStart, locked ? new Date(now + BATTLE_WAIT_MS).toISOString() : null);
+  ).run(userId, locked ? 0 : fails, locked ? null : windowStart, locked ? new Date(Date.parse(windowStart!) + BATTLE_WAIT_MS).toISOString() : null);
   return getBattleStatus(userId, now);
 }
 

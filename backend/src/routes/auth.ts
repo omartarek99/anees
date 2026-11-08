@@ -1,5 +1,6 @@
 import { asyncRouter } from '../lib/asyncRouter.js';
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
 import multer from 'multer';
 import { db } from '../db/db.js';
 import { createSession, destroySession, SESSION_COOKIE } from '../lib/session.js';
@@ -274,8 +275,15 @@ authRouter.post(
   }
 );
 
-authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSchema), async (req, res) => {
-  const { username, password } = req.body;
+type AuthFailure = { ok: false; status: number; body: Record<string, unknown> };
+
+/**
+ * Checks a username and password the way sign-in does, and returns the account when they are right and the account may be used (not deactivated,
+ * not suspended, email verified) -- or the answer to send back instead. Shared by /login and by linking another account (below), so both ask for
+ * exactly the same proof.
+ */
+async function authenticate(username: string, password: string): Promise<{ ok: true; user: any } | AuthFailure> {
+  const wrong: AuthFailure = { ok: false, status: 401, body: { error: 'Incorrect username or password.' } };
   const user = db.prepare(`SELECT * FROM users WHERE lower(username) = lower(?)`).get(username) as any;
 
   if (!user || user.is_seed) {
@@ -287,64 +295,138 @@ authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSche
     // at module load (bcrypt.compare itself does the expensive part) purely to burn
     // roughly the same time as the real compare on the path below.
     await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
-    res.status(401).json({ error: 'Incorrect username or password.' });
-    return;
+    return wrong;
   }
 
   if (!user.is_active) {
-    res.status(403).json({ error: 'This account has been deactivated. Contact an administrator.' });
-    return;
+    return { ok: false, status: 403, body: { error: 'This account has been deactivated. Contact an administrator.' } };
   }
 
   if (isCurrentlyBanned(user.banned_until)) {
-    res.status(403).json({ error: 'This account is temporarily suspended.', bannedUntil: user.banned_until });
-    return;
+    return { ok: false, status: 403, body: { error: 'This account is temporarily suspended.', bannedUntil: user.banned_until } };
   }
 
   if (!user.firebase_uid) {
     // Seed/legacy account — untouched bcrypt check, keeps the zero-config demo working.
     const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok) {
-      res.status(401).json({ error: 'Incorrect username or password.' });
-      return;
-    }
+    if (!ok) return wrong;
     if (!user.email_verified) {
-      res.status(403).json({ error: 'Please verify your email before logging in.' });
-      return;
+      return { ok: false, status: 403, body: { error: 'Please verify your email before logging in.' } };
     }
-    const { token } = createSession(user.id);
-    res.cookie(SESSION_COOKIE, token, cookieOptions);
-    res.json({ user: publicUser(user) });
-    return;
+    return { ok: true, user };
   }
 
   const signInResult = await firebaseSignIn(decrypt(user.email), password);
   if (!signInResult.ok) {
     if (!WRONG_CREDENTIALS_ERRORS.has(signInResult.error)) console.error('Firebase signIn failed:', signInResult.error);
-    res.status(401).json({ error: 'Incorrect username or password.' });
-    return;
+    return wrong;
   }
   const { idToken } = signInResult.data;
 
   const lookupResult = await firebaseLookup(idToken);
   const emailVerified = lookupResult.ok && lookupResult.data.users[0]?.emailVerified;
   if (!emailVerified) {
-    res.status(403).json({
-      error: 'Please verify your email before logging in.',
-      idToken,
-      method: (await otpDeliveryAvailable()) ? 'otp' : 'link',
-    });
-    return;
+    return {
+      ok: false,
+      status: 403,
+      body: {
+        error: 'Please verify your email before logging in.',
+        idToken,
+        method: (await otpDeliveryAvailable()) ? 'otp' : 'link',
+      },
+    };
   }
 
   if (!user.email_verified) {
     db.prepare(`UPDATE users SET email_verified = 1 WHERE id = ?`).run(user.id);
   }
+  return { ok: true, user: db.prepare(`SELECT * FROM users WHERE id = ?`).get(user.id) };
+}
 
-  const { token } = createSession(user.id);
+authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSchema), async (req, res) => {
+  const { username, password } = req.body;
+  const result = await authenticate(username, password);
+  if (!result.ok) {
+    res.status(result.status).json(result.body);
+    return;
+  }
+  const { token } = createSession(result.user.id);
   res.cookie(SESSION_COOKIE, token, cookieOptions);
-  const updated = db.prepare(`SELECT * FROM users WHERE id = ?`).get(user.id);
-  res.json({ user: publicUser(updated) });
+  res.json({ user: publicUser(result.user) });
+});
+
+// ---------------------------------------------------------------------------------------
+// Switching between a person's own accounts (a student and a teacher account, say). An account is LINKED once, by signing in to it with its
+// password while already signed in to another; the link goes both ways. After that the person switches with one tap -- no password -- until they
+// unlink, or either account's password changes (the links to it are dropped then, since the proof they were made with is gone).
+// ---------------------------------------------------------------------------------------
+
+const linkAccountSchema = z.object({ username: z.string().min(1).max(60), password: z.string().min(1).max(200) });
+const switchAccountSchema = z.object({ userId: z.number().int().positive() });
+
+function linkedAccountsOf(userId: number) {
+  const rows = db
+    .prepare(
+      `SELECT u.* FROM linked_accounts l JOIN users u ON u.id = l.linked_user_id
+       WHERE l.user_id = ? AND u.is_active = 1 ORDER BY l.created_at, u.id`
+    )
+    .all(userId) as any[];
+  return rows.map((u) => ({ id: u.id, username: u.username, displayName: u.display_name, avatarKey: u.avatar_key, role: u.role }));
+}
+
+const isLinked = (a: number, b: number) => !!db.prepare(`SELECT 1 FROM linked_accounts WHERE user_id = ? AND linked_user_id = ?`).get(a, b);
+
+authRouter.get('/linked-accounts', requireAuth, (req, res) => {
+  res.json({ accounts: linkedAccountsOf(req.userId!) });
+});
+
+authRouter.post('/linked-accounts', authLimiter, requireCsrfHeader, requireAuth, validateBody(linkAccountSchema), async (req, res) => {
+  const { username, password } = req.body as { username: string; password: string };
+  const result = await authenticate(username, password);
+  if (!result.ok) {
+    res.status(result.status).json(result.body);
+    return;
+  }
+  if (result.user.id === req.userId) {
+    res.status(400).json({ error: 'That is the account you are signed in to.' });
+    return;
+  }
+  const link = db.prepare(`INSERT OR IGNORE INTO linked_accounts (user_id, linked_user_id) VALUES (?, ?)`);
+  link.run(req.userId!, result.user.id);
+  link.run(result.user.id, req.userId!);
+  res.status(201).json({ accounts: linkedAccountsOf(req.userId!) });
+});
+
+authRouter.delete('/linked-accounts/:id', requireCsrfHeader, requireAuth, (req, res) => {
+  const other = Number(req.params.id);
+  if (!Number.isInteger(other)) {
+    res.status(400).json({ error: 'Invalid account.' });
+    return;
+  }
+  db.prepare(`DELETE FROM linked_accounts WHERE (user_id = ? AND linked_user_id = ?) OR (user_id = ? AND linked_user_id = ?)`).run(req.userId!, other, other, req.userId!);
+  res.json({ accounts: linkedAccountsOf(req.userId!) });
+});
+
+authRouter.post('/switch-account', authLimiter, requireCsrfHeader, requireAuth, validateBody(switchAccountSchema), (req, res) => {
+  const { userId } = req.body as { userId: number };
+  if (userId === req.userId || !isLinked(req.userId!, userId)) {
+    res.status(403).json({ error: 'That account is not linked to this one.' });
+    return;
+  }
+  const target = db.prepare(`SELECT * FROM users WHERE id = ?`).get(userId) as any;
+  if (!target || !target.is_active) {
+    res.status(403).json({ error: 'This account has been deactivated. Contact an administrator.' });
+    return;
+  }
+  if (isCurrentlyBanned(target.banned_until)) {
+    res.status(403).json({ error: 'This account is temporarily suspended.', bannedUntil: target.banned_until });
+    return;
+  }
+  // the account being left is signed out on this device, the other one signed in
+  destroySession(req.cookies?.[SESSION_COOKIE]);
+  const { token } = createSession(target.id);
+  res.cookie(SESSION_COOKIE, token, cookieOptions);
+  res.json({ user: publicUser(target) });
 });
 
 // Sign up or sign in with Google. A person who already has an account is signed in; a new one needs `role` (student / teacher) -- without it we answer
@@ -665,6 +747,7 @@ authRouter.post('/reset-password', authLimiter, requireCsrfHeader, validateBody(
   }
   clearOtp(user.id, 'reset');
   db.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(user.id);
+  db.prepare(`DELETE FROM linked_accounts WHERE user_id = ? OR linked_user_id = ?`).run(user.id, user.id); // the proof the links were made with is gone
   res.json({ ok: true });
 });
 
@@ -710,6 +793,7 @@ authRouter.post('/change-password', authLimiter, requireCsrfHeader, requireAuth,
 
   // Sign every other device out, keep this one logged in with a fresh session.
   db.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(user.id);
+  db.prepare(`DELETE FROM linked_accounts WHERE user_id = ? OR linked_user_id = ?`).run(user.id, user.id); // the proof the links were made with is gone
   const { token } = createSession(user.id);
   res.cookie(SESSION_COOKIE, token, cookieOptions);
   res.json({ ok: true });

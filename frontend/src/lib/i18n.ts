@@ -73,6 +73,16 @@ const en = {
     quiz: 'Pass the quiz: +3 points',
     wrong: 'Every wrong answer: you lose 1 point',
   },
+  accounts: {
+    menu: 'Switch account',
+    title: 'Your accounts',
+    current: 'Now',
+    none: 'No other account linked yet. Add one to switch between them with one tap.',
+    add: 'Add an account',
+    addHint: 'Sign in to your other account once. It is then linked: you can switch to it from here without a password.',
+    link: 'Link account',
+    unlink: 'Remove this account from the list',
+  },
   auth: {
     heroTitle: 'Anees',
     loginTitle: 'Welcome to Anees',
@@ -1152,6 +1162,16 @@ const ar: typeof en = {
     video: 'أنهِ مشاهدة الفيديو: +2 نقطة',
     quiz: 'انجح في الاختبار: +3 نقاط',
     wrong: 'كل إجابة خاطئة: تخسر نقطة واحدة',
+  },
+  accounts: {
+    menu: 'تبديل الحساب',
+    title: 'حساباتك',
+    current: 'الآن',
+    none: 'لا يوجد حساب آخر مربوط بعد. أضف حسابًا لتنتقل بينهما بضغطة واحدة.',
+    add: 'إضافة حساب',
+    addHint: 'سجّل الدخول إلى حسابك الآخر مرة واحدة، فيصير مربوطًا، ثم تنتقل إليه من هنا دون كلمة مرور.',
+    link: 'ربط الحساب',
+    unlink: 'إزالة هذا الحساب من القائمة',
   },
   auth: {
     heroTitle: 'أنيس',

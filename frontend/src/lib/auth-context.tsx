@@ -62,6 +62,8 @@ type AuthContextValue = {
   /** The step after a Google sign-up: name, school and grade (student) or subject + ID photo (teacher). */
   completeProfile: (input: { displayName: string; schoolName: string; grade?: number; teacherSubject?: string; idDocument?: File }) => Promise<void>;
   logout: () => Promise<void>;
+  /** Switches to another of the person's linked accounts (components/AccountSwitcher.tsx) and reloads the app as that account. */
+  switchAccount: (userId: number) => Promise<void>;
   refreshUser: () => Promise<void>;
   verifyEmail: (oobCode: string) => Promise<void>;
   /** Resolves with how the server verifies: a typed 6-digit code ('otp') or an emailed link. */
@@ -170,6 +172,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const switchAccount = async (userId: number) => {
+    await api.post('/auth/switch-account', { userId });
+    // the session cookie is now the other account's: a fresh load starts the whole app from it (no page keeps the last account's data)
+    window.location.assign('/');
+  };
+
   const verifyEmail: AuthContextValue['verifyEmail'] = async (oobCode) => {
     const data = await api.post<{ user: User }>('/auth/verify-email', { oobCode });
     setUser(data.user);
@@ -202,7 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, signup, login, loginWithGoogle, completeProfile, logout, refreshUser, verifyEmail, resendVerification, verifyOtp, dismissWarning, dismissRankDrop }}
+      value={{ user, loading, signup, login, loginWithGoogle, completeProfile, logout, switchAccount, refreshUser, verifyEmail, resendVerification, verifyOtp, dismissWarning, dismissRankDrop }}
     >
       {children}
     </AuthContext.Provider>
