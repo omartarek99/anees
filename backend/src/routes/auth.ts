@@ -357,8 +357,9 @@ authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSche
 
 // ---------------------------------------------------------------------------------------
 // Switching between a person's own accounts (a student and a teacher account, say). An account is LINKED once, by signing in to it with its
-// password while already signed in to another; the link goes both ways. After that the person switches with one tap -- no password -- until they
-// unlink, or either account's password changes (the links to it are dropped then, since the proof they were made with is gone).
+// password while already signed in to another. Linked accounts form one GROUP: every account in it sees all the others (link the student and the
+// teacher to the admin, and the student sees the teacher too). After that the person switches with one tap -- no password -- until they remove an
+// account from the group, or its password changes (its links are dropped then, since the proof they were made with is gone).
 // ---------------------------------------------------------------------------------------
 
 const linkAccountSchema = z.object({ username: z.string().min(1).max(60), password: z.string().min(1).max(200) });
@@ -373,6 +374,18 @@ function linkedAccountsOf(userId: number) {
     .all(userId) as any[];
   return rows.map((u) => ({ id: u.id, username: u.username, displayName: u.display_name, avatarKey: u.avatar_key, role: u.role }));
 }
+
+/** Makes every group complete: whoever is linked to someone is linked to everyone that person is linked to. Repeats until nothing is added. */
+function closeLinkedGroups() {
+  const add = db.prepare(
+    `INSERT OR IGNORE INTO linked_accounts (user_id, linked_user_id)
+     SELECT a.user_id, b.linked_user_id FROM linked_accounts a JOIN linked_accounts b ON a.linked_user_id = b.user_id WHERE a.user_id <> b.linked_user_id`
+  );
+  while (add.run().changes > 0) {
+    /* one more step of the chain */
+  }
+}
+closeLinkedGroups(); // links made before groups existed (each new account linked only to the first one) are completed at start-up
 
 const isLinked = (a: number, b: number) => !!db.prepare(`SELECT 1 FROM linked_accounts WHERE user_id = ? AND linked_user_id = ?`).get(a, b);
 
@@ -394,6 +407,7 @@ authRouter.post('/linked-accounts', authLimiter, requireCsrfHeader, requireAuth,
   const link = db.prepare(`INSERT OR IGNORE INTO linked_accounts (user_id, linked_user_id) VALUES (?, ?)`);
   link.run(req.userId!, result.user.id);
   link.run(result.user.id, req.userId!);
+  closeLinkedGroups();
   res.status(201).json({ accounts: linkedAccountsOf(req.userId!) });
 });
 
@@ -403,7 +417,9 @@ authRouter.delete('/linked-accounts/:id', requireCsrfHeader, requireAuth, (req, 
     res.status(400).json({ error: 'Invalid account.' });
     return;
   }
-  db.prepare(`DELETE FROM linked_accounts WHERE (user_id = ? AND linked_user_id = ?) OR (user_id = ? AND linked_user_id = ?)`).run(req.userId!, other, other, req.userId!);
+  // Only a member of the group can take an account out of it, and it leaves the whole group (its links to every account go), so the list is the
+  // same from every account in it.
+  if (isLinked(req.userId!, other)) db.prepare(`DELETE FROM linked_accounts WHERE user_id = ? OR linked_user_id = ?`).run(other, other);
   res.json({ accounts: linkedAccountsOf(req.userId!) });
 });
 
