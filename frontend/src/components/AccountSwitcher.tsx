@@ -4,6 +4,7 @@ import { useAuth, type Role } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
 import { translateApiError } from '../lib/i18n';
+import { RiDeleteBinLine } from '@remixicon/react';
 import { Avatar } from './Avatar';
 
 type Linked = { id: number; username: string; displayName: string; avatarKey: string; role: Role };
@@ -36,7 +37,7 @@ export function AccountSwitcher({ onClose }: { onClose: () => void }) {
   }, []);
 
   const fail = (err: unknown) => setError(translateApiError(lang, err instanceof ApiError ? err.message : 'Something went wrong. Please try again.'));
-  const roleLabel = (r: Role) => t(r === 'teacher' ? 'auth.roleTeacher' : r === 'admin' ? 'auth.roleAdminOption' : 'auth.roleStudent');
+  const roleLabel = (r: Role) => t(r === 'teacher' ? 'admin.roleTeacherOption' : r === 'admin' ? 'admin.roleAdminOption' : 'admin.roleStudentOption');
 
   async function link(e: FormEvent) {
     e.preventDefault();
@@ -99,18 +100,33 @@ export function AccountSwitcher({ onClose }: { onClose: () => void }) {
         {accounts === null && <div className="spinner" />}
         {accounts?.length === 0 && !adding && <p className="muted" style={{ margin: 0 }}>{t('accounts.none')}</p>}
         {accounts?.map((a) => (
-          <div key={a.id} className="flex gap-sm" style={{ alignItems: 'center' }}>
-            <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => go(a.id)} style={{ flex: 1, display: 'flex', gap: 10, alignItems: 'center', textAlign: 'start' }}>
-              <Avatar avatarKey={a.avatarKey} size={36} />
+          // one box across the whole width: tapping the account switches to it, the bin at the end of the box removes it from the list
+          <div
+            key={a.id}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--glass-border)', background: 'var(--glass-bg-strong)' }}
+          >
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => go(a.id)}
+              style={{ flex: 1, minWidth: 0, display: 'flex', gap: 10, alignItems: 'center', textAlign: 'start', background: 'none', border: 0, padding: 0, color: 'inherit', font: 'inherit', cursor: 'pointer' }}
+            >
+              <Avatar avatarKey={a.avatarKey} size={40} />
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: 'block', fontWeight: 700 }}>{a.displayName}</span>
-                <span className="muted" style={{ fontSize: 12.5 }}>
+                <span className="muted" style={{ display: 'block', fontSize: 12.5 }}>
                   @{a.username} · {roleLabel(a.role)}
                 </span>
               </span>
             </button>
-            <button type="button" className="btn btn-ghost" aria-label={t('accounts.unlink')} title={t('accounts.unlink')} onClick={() => unlink(a.id)}>
-              ✕
+            <button
+              type="button"
+              aria-label={t('accounts.unlink')}
+              title={t('accounts.unlink')}
+              onClick={() => unlink(a.id)}
+              style={{ flex: 'none', display: 'grid', placeItems: 'center', width: 36, height: 36, borderRadius: 10, background: 'none', border: 0, color: 'inherit', cursor: 'pointer' }}
+            >
+              <RiDeleteBinLine size={19} aria-hidden />
             </button>
           </div>
         ))}

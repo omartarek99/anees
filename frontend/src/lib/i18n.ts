@@ -80,7 +80,7 @@ const en = {
     none: 'No other account linked yet. Add one to switch between them with one tap.',
     add: 'Add an account',
     addHint: 'Sign in to your other account once. It is then linked: you can switch to it from here without a password.',
-    link: 'Link account',
+    link: 'Add account',
     unlink: 'Remove this account from the list',
   },
   auth: {
@@ -1170,7 +1170,7 @@ const ar: typeof en = {
     none: 'لا يوجد حساب آخر مربوط بعد. أضف حسابًا لتنتقل بينهما بضغطة واحدة.',
     add: 'إضافة حساب',
     addHint: 'سجّل الدخول إلى حسابك الآخر مرة واحدة، فيصير مربوطًا، ثم تنتقل إليه من هنا دون كلمة مرور.',
-    link: 'ربط الحساب',
+    link: 'إضافة الحساب',
     unlink: 'إزالة هذا الحساب من القائمة',
   },
   auth: {
