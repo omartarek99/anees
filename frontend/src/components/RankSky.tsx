@@ -75,7 +75,11 @@ function Sky({ stops, on, paused }: { stops: readonly string[]; on: boolean; pau
     let cancelled = false, raf = 0;
     let ro: ResizeObserver | null = null;
 
-    void import('../lib/sky/skyEngine').then((engine) => {
+    // The engine's first draw (compiling its shader and painting the first frame) is a heavy 0.5-1.5 s block of the main thread; started with the page it
+    // delays everything else on screen (the home page's data, pictures and first paint). It waits until the browser is idle after the page has loaded.
+    let idleId = 0;
+    let timerId = 0;
+    const start = () => void import('../lib/sky/skyEngine').then((engine) => {
       if (cancelled) return;
       const { render, backgroundCss, backingSize, CLOCK_RATE, START_T } = engine;
       engineRef.current = engine;
@@ -87,11 +91,14 @@ function Sky({ stops, on, paused }: { stops: readonly string[]; on: boolean; pau
       }
       let t = recipeRef.current.startT ?? START_T;
       const speed = Math.max(0, Math.min(100, recipeRef.current.speed));
+      // On a phone the sky is one still picture under a 10 px blur: a third of the pixels look the same and take a tenth of the time to draw.
+      const phoneSky = window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
       const draw = (animating: boolean) => {
         const box = host.getBoundingClientRect();
         if (box.width < 1 || box.height < 1) return;
         const [bw, bh] = backingSize(box.width, box.height, animating);
-        const w = Math.max(1, Math.round(bw * RESOLUTION)), h = Math.max(1, Math.round(bh * RESOLUTION));
+        const res = phoneSky ? 0.22 : RESOLUTION;
+        const w = Math.max(1, Math.round(bw * res)), h = Math.max(1, Math.round(bh * res));
         if (canvas.width !== w) canvas.width = w;
         if (canvas.height !== h) canvas.height = h;
         render(canvas, recipeRef.current, t, animating);
@@ -121,9 +128,14 @@ function Sky({ stops, on, paused }: { stops: readonly string[]; on: boolean; pau
       else draw(false);
       setDrawn(true);
     });
+    const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+    if (ric) idleId = ric(start, { timeout: 2500 });
+    else timerId = window.setTimeout(start, 1200);
 
     return () => {
       cancelled = true;
+      if (idleId) (window as unknown as { cancelIdleCallback?: (n: number) => void }).cancelIdleCallback?.(idleId);
+      window.clearTimeout(timerId);
       cancelAnimationFrame(raf);
       ro?.disconnect();
       redrawRef.current = null;
