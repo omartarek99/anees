@@ -16,6 +16,10 @@ export type AdminUser = {
   role: Role;
   grade: number | null;
   totalXp: number;
+  /** The school the account gave when it signed up (null for older accounts). */
+  schoolName: string | null;
+  /** Teachers only: views of all their lessons together (a view = a student who watched a lesson). */
+  totalViews: number | null;
   // Separate currency from totalXp, only ever nonzero for teachers -- see backend
   // lib/xp.ts. rank is this account's standing among every other real account of the
   // same role (by totalXp for students, teacherPoints for teachers); null for admins.
@@ -204,8 +208,18 @@ export function AdminUserRow({
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>
             <bdi dir="ltr">@{u.username} · {u.email}</bdi>
           </p>
+          {u.schoolName && (
+            <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+              🏫 {u.schoolName}
+            </p>
+          )}
         </div>
         <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+          {u.role === 'teacher' && u.totalViews !== null && (
+            <span className="badge" title={t('admin.teacherViewsLabel')}>
+              👁 {t('admin.viewsCount', { n: String(u.totalViews) })}
+            </span>
+          )}
           {u.rank !== null && (
             <span className="badge badge-gold" title={u.role === 'teacher' ? t('admin.teacherPointsLabel') : t('admin.pointsLabel')}>
               #{u.rank} ·{' '}

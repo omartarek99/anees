@@ -21,10 +21,11 @@ import { decrypt } from '../lib/encryption.js';
 import { getDoublePointsStatus, startDoublePointsNow } from '../lib/doublePoints.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { looksLikeImage } from '../lib/imageValidation.js';
-import { mailStatus } from '../lib/mailer.js';
+import { mailStatus, sendResetOtpEmail, otpDeliveryAvailable } from '../lib/mailer.js';
+import { createOtp } from '../lib/otp.js';
 import { parseRoleFilter, parseGrade, pageViewStats, countReportUsers, queryReportRows, reportTotals, monthlyWatch, trailingMonthKeys, SINCE_30_DAYS, quizzesSolvedTotal, pageViewsLast30Days } from '../lib/reportData.js';
 import { buildReportWorkbook } from '../lib/reportExcel.js';
-import { recentIssues } from '../lib/diagnostics.js';
+import { recentIssues, recordIssue } from '../lib/diagnostics.js';
 import { queueAllUnoptimised } from '../lib/videoOptimize.js';
 import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX } from '../lib/certificateImage.js';
 import { PLAQUE_PATH, issueRankCertificates, emailCertificate, revokeCertificate } from '../lib/rankCertificates.js';
@@ -93,6 +94,14 @@ function adminUser(row: any, rank: number | null = null) {
     displayName: row.display_name,
     role: row.role,
     grade: row.grade,
+    schoolName: row.school_name ?? null,
+    // teachers only: how many views all of their lessons have together (a view = a student who watched a lesson)
+    totalViews:
+      row.role === 'teacher'
+        ? ((db
+            .prepare(`SELECT COUNT(*) AS c FROM reel_watch_progress w JOIN reels r ON r.id = w.reel_id WHERE r.author_user_id = ? AND w.watched_seconds > 0 AND w.user_id != r.author_user_id`)
+            .get(row.id) as { c: number }).c)
+        : null,
     totalXp: row.total_xp,
     teacherPoints: row.teacher_points ?? 0,
     // Ranking among every other real (non-seed) account of the same role, by whichever
@@ -204,6 +213,112 @@ adminRouter.get('/users', (req, res) => {
   const pageUsers = users.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE);
 
   res.json({ users: pageUsers, total, page: page_, totalPages, pageSize: PAGE_SIZE });
+});
+
+// ---------------------------------------------------------------- Account tools (the "Account tools" icon of the admin bar)
+// "Last active" = the latest of: signing in, earning points, watching a lesson, or (if none) the day the account was made.
+const LAST_ACTIVE_SQL = `MAX(
+  COALESCE((SELECT MAX(created_at) FROM sessions WHERE user_id = u.id), ''),
+  COALESCE((SELECT MAX(created_at) FROM xp_events WHERE user_id = u.id), ''),
+  COALESCE((SELECT MAX(updated_at) FROM reel_watch_progress WHERE user_id = u.id), ''),
+  u.created_at
+)`;
+
+function accountToolRow(row: any, selfId: number | undefined) {
+  return {
+    id: row.id,
+    username: row.username,
+    displayName: row.display_name,
+    email: decrypt(row.email),
+    role: row.role,
+    grade: row.grade,
+    schoolName: row.school_name ?? null,
+    isActive: !!row.is_active,
+    lastActiveAt: row.last_active_at as string,
+    // only accounts that signed up with a real mailbox can be emailed a reset code (test accounts have made-up addresses)
+    canEmailReset: !!row.firebase_uid,
+    isSelf: row.id === selfId,
+  };
+}
+
+// Find an account by name, username or email (the email is stored encrypted, so it is matched here, not in SQL).
+adminRouter.get('/accounts/search', (req, res) => {
+  const q = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase() : '';
+  if (q.length < 2) {
+    res.json({ accounts: [] });
+    return;
+  }
+  const rows = db.prepare(`SELECT u.*, ${LAST_ACTIVE_SQL} AS last_active_at FROM users u WHERE u.is_seed = 0 ORDER BY u.created_at DESC`).all() as any[];
+  const accounts = rows
+    .map((r) => accountToolRow(r, req.userId))
+    .filter((a) => a.username.toLowerCase().includes(q) || a.displayName.toLowerCase().includes(q) || a.email.toLowerCase().includes(q))
+    .slice(0, 20);
+  res.json({ accounts });
+});
+
+// Accounts nobody has used for a while (students and teachers that are still switched on), the longest-quiet first.
+adminRouter.get('/accounts/inactive', (req, res) => {
+  const days = Math.min(365, Math.max(7, Number(req.query.days) || 60));
+  const rows = db
+    .prepare(
+      `SELECT * FROM (
+         SELECT u.*, ${LAST_ACTIVE_SQL} AS last_active_at FROM users u
+         WHERE u.is_seed = 0 AND u.is_active = 1 AND u.role != 'admin'
+       ) WHERE julianday('now') - julianday(last_active_at) >= ? ORDER BY last_active_at ASC`
+    )
+    .all(days) as any[];
+  res.json({ days, total: rows.length, accounts: rows.slice(0, 100).map((r) => accountToolRow(r, req.userId)) });
+});
+
+// Email the person a 6-digit code for a new password (they enter it on the "Forgot password" page). Same code and email as that page sends.
+adminRouter.post('/users/:id/send-password-reset', requireCsrfHeader, async (req, res) => {
+  const target = db.prepare(`SELECT * FROM users WHERE id = ?`).get(Number(req.params.id)) as any;
+  if (!target) {
+    res.status(404).json({ error: "We couldn't find this account." });
+    return;
+  }
+  if (!target.firebase_uid) {
+    res.status(400).json({ error: 'We can only email a reset code to accounts with a real email. This account does not have one.' });
+    return;
+  }
+  if (!target.is_active) {
+    res.status(400).json({ error: 'This account is stopped. Turn it on first.' });
+    return;
+  }
+  if (!(await otpDeliveryAvailable())) {
+    res.status(503).json({ error: 'Email sending is not working right now. Try again later.' });
+    return;
+  }
+  const otp = createOtp(target.id, 'reset');
+  if (!otp.ok) {
+    res.status(429).json({ error: otp.reason === 'cooldown' ? 'Wait one minute before asking for another code.' : 'You asked for too many codes. Try again later.' });
+    return;
+  }
+  const lang = req.body?.lang === 'en' ? 'en' : 'ar';
+  const sent = await sendResetOtpEmail(decrypt(target.email), otp.code, lang);
+  if (!sent.ok) {
+    console.error('Sending the password-reset code (from the admin) failed:', sent.error);
+    recordIssue('password-reset-email', sent.error);
+    res.status(502).json({ error: "We couldn't send the reset email. Please try again." });
+    return;
+  }
+  res.json({ ok: true });
+});
+
+// Sign an account out of every device (its sessions are deleted; the next click on the site asks for a login).
+adminRouter.post('/users/:id/sign-out', requireCsrfHeader, (req, res) => {
+  const targetId = Number(req.params.id);
+  if (targetId === req.userId) {
+    res.status(400).json({ error: 'You cannot sign yourself out from here. Use the logout button.' });
+    return;
+  }
+  const exists = db.prepare(`SELECT id FROM users WHERE id = ?`).get(targetId);
+  if (!exists) {
+    res.status(404).json({ error: "We couldn't find this account." });
+    return;
+  }
+  const result = db.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(targetId);
+  res.json({ ok: true, devices: Number(result.changes) });
 });
 
 adminRouter.patch('/users/:id/active', requireCsrfHeader, validateBody(adminSetActiveSchema), (req, res) => {
@@ -501,6 +616,7 @@ function adminReel(row: any) {
     authorDisplayName: row.author_display_name,
     // a message can only go to a teacher: not to a lesson an admin made
     authorRole: row.author_role ?? null,
+    viewCount: row.view_count ?? 0,
     createdAt: row.created_at,
   };
 }
@@ -551,7 +667,8 @@ adminRouter.get('/reels', (req, res) => {
   const rows = db
     .prepare(
       `SELECT r.*, s.name as subject_name, s.name_ar as subject_name_ar,
-              u.username as author_username, u.display_name as author_display_name, u.role as author_role
+              u.username as author_username, u.display_name as author_display_name, u.role as author_role,
+              (SELECT COUNT(*) FROM reel_watch_progress w WHERE w.reel_id = r.id AND w.watched_seconds > 0 AND w.user_id IS NOT r.author_user_id) as view_count
        FROM reels r
        JOIN subjects s ON s.id = r.subject_id
        LEFT JOIN users u ON u.id = r.author_user_id

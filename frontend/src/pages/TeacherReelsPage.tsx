@@ -66,6 +66,8 @@ type ReelSummary = {
   subjectName: string;
   subjectNameAr?: string | null;
   questionCount: number;
+  /** How many students watched this lesson. */
+  viewCount: number;
 };
 
 export function TeacherReelsPage() {
@@ -139,6 +141,11 @@ export function TeacherReelsPage() {
           </div>
         )}
         {reels && reels.length === 0 && !loadError && <p className="muted">{t('teacherReels.noReels')}</p>}
+        {reels && reels.length > 0 && (
+          <p style={{ margin: '0 0 12px', fontWeight: 700 }}>
+            👁 {t('teacherReels.totalViews', { n: String(reels.reduce((sum, r) => sum + (r.viewCount ?? 0), 0)) })}
+          </p>
+        )}
         <div className="stack" style={{ gap: 10 }}>
           {reels?.map((reel) => (
             <div key={reel.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
@@ -150,6 +157,8 @@ export function TeacherReelsPage() {
                     subject: pickText(lang, reel.subjectName, reel.subjectNameAr),
                     questions: String(reel.questionCount),
                   })}
+                  {' · '}
+                  <span title={t('teacherReels.viewsHint')}>👁 {t('teacherReels.reelViews', { n: String(reel.viewCount ?? 0) })}</span>
                 </p>
                 {reel.videoStatus === 'processing' && (
                   <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--gold-dark, #b07a10)' }}>⏳ {t('teacherReels.videoProcessing')}</p>

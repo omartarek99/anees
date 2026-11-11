@@ -201,7 +201,8 @@ teacherReelsRouter.get('/', requireAuth, requireRole('teacher', 'admin'), (req, 
   const rows = db
     .prepare(
       `SELECT r.*, s.name as subject_name, s.name_ar as subject_name_ar,
-              (SELECT COUNT(*) FROM reel_questions WHERE reel_id = r.id) as question_count
+              (SELECT COUNT(*) FROM reel_questions WHERE reel_id = r.id) as question_count,
+              (SELECT COUNT(*) FROM reel_watch_progress w WHERE w.reel_id = r.id AND w.watched_seconds > 0 AND w.user_id IS NOT r.author_user_id) as view_count
        FROM reels r
        JOIN subjects s ON r.subject_id = s.id
        WHERE r.author_user_id = ?
@@ -221,6 +222,7 @@ teacherReelsRouter.get('/', requireAuth, requireRole('teacher', 'admin'), (req, 
       subjectName: r.subject_name,
       subjectNameAr: r.subject_name_ar,
       questionCount: r.question_count,
+      viewCount: r.view_count ?? 0,
     })),
   });
 });

@@ -18,6 +18,8 @@ type AdminReel = {
   authorDisplayName: string | null;
   authorRole: string | null;
   createdAt: string;
+  /** How many students watched this lesson. */
+  viewCount: number;
 };
 
 type SentMessage = { id: number; message: string; createdAt: string; readAt: string | null; adminName: string | null };
@@ -209,6 +211,8 @@ export function AdminVideosPanel() {
                       subject: pickText(lang, reel.subjectName, reel.subjectNameAr),
                       author: reel.authorDisplayName ?? reel.authorUsername ?? '—',
                     })}
+                {' · '}
+                <span title={t('admin.viewsHint')}>👁 {t('admin.viewsCount', { n: String(reel.viewCount ?? 0) })}</span>
               </p>
               <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setEditing(reel.id)}>
