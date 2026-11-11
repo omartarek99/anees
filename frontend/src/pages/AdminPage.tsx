@@ -9,7 +9,6 @@ import { AdminVideosPanel } from '../components/AdminVideosPanel';
 import { AdminReportsPanel, ExportButton } from '../components/AdminReportsPanel';
 import { AdminCertificatesPanel } from '../components/AdminCertificatesPanel';
 import { AdminAccountsPanel } from '../components/AdminAccountsPanel';
-import { AdminLivePanel } from '../components/AdminLivePanel';
 import { AdminDashboardPanel, DashboardPeriodSelect, type DashboardPeriod } from '../components/AdminDashboardPanel';
 import { Pagination } from '../components/Pagination';
 import { GradeFilterSelect, type GradeFilter } from '../components/GradeFilterSelect';
@@ -140,7 +139,6 @@ export function AdminPage() {
     <div className="stack">
       <Topbar title={t(TITLES[tab].title)} subtitle={t(TITLES[tab].subtitle)} actions={actions} />
 
-      {tab === 'dashboard' && <AdminLivePanel />}
       {tab === 'dashboard' && <AdminDashboardPanel days={period} />}
       {tab === 'users' && <AdminUsersPanel />}
       {tab === 'accounts' && <AdminAccountsPanel />}

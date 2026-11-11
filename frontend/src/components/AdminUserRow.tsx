@@ -216,7 +216,7 @@ export function AdminUserRow({
           )}
         </div>
         <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
-          {u.role === 'teacher' && u.totalViews !== null && (
+          {u.role === 'teacher' && typeof u.totalViews === 'number' && (
             <span className="badge" title={t('admin.teacherViewsLabel')}>
               👁 {t('admin.viewsCount', { n: String(u.totalViews) })}
             </span>
