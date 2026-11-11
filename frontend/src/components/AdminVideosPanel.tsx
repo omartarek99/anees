@@ -212,10 +212,11 @@ export function AdminVideosPanel() {
                       subject: pickText(lang, reel.subjectName, reel.subjectNameAr),
                       author: reel.authorDisplayName ?? reel.authorUsername ?? '—',
                     })}
-                {' · '}
-                <span title={t('admin.viewsHint')}>👁 {t('admin.viewsCount', { n: String(reel.viewCount ?? 0) })}</span>
               </p>
-              <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
+              <div className="flex gap-sm" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
+                <span className="badge" title={t('admin.viewsHint')}>
+                  👁 {t('admin.viewsCount', { n: String(reel.viewCount ?? 0) })}
+                </span>
                 <button type="button" className="btn btn-secondary" onClick={() => setEditing(reel.id)}>
                   ✏️ {t('admin.editVideoButton')}
                 </button>
