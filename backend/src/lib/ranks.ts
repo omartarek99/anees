@@ -48,7 +48,8 @@ const DIVISIONS = expandDivisions(RANK_TIERS);
 export const DIVISION_COUNT = DIVISIONS.length;
 const TEACHER_DIVISIONS = expandDivisions(TEACHER_RANK_TIERS);
 
-/** Points one division is wide, for students (total XP) and for teachers (teacher points, a smaller scale: they earn 10-30 at a time). */
+/** Points one division is wide, for students (total XP) and for teachers (teacher points, a smaller scale: a lesson posted is 20, a like 2 and a
+ *  worksheet a student solved 5 -- lib/xp.ts). */
 export const POINTS_PER_DIVISION = 250;
 export const TEACHER_POINTS_PER_DIVISION = 100;
 

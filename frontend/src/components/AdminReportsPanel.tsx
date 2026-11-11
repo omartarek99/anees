@@ -10,8 +10,8 @@ import { BarChart, DonutChart, HBarList } from './Charts';
 
 type RoleFilter = 'all' | 'student' | 'teacher';
 
-// Students AND teachers: watch time and worksheets for both, plus uploaded videos / printed
-// worksheets for teachers (see backend lib/reportData.ts).
+// Students AND teachers: watch time and worksheets for both, plus for teachers the videos they posted, the likes from others on them and
+// the worksheets they sent that students solved (see backend lib/reportData.ts).
 type WatchTimeUser = {
   userId: number;
   username: string;
@@ -23,7 +23,8 @@ type WatchTimeUser = {
   reelsWatched: number;
   watchPoints: number;
   worksheetsDone: number;
-  worksheetsPrinted: number;
+  likesReceived: number;
+  worksheetsSolved: number;
   videosUploaded: number;
   points: number;
   daysSinceJoined: number;
@@ -34,7 +35,8 @@ type ReportTotals = {
   teachers: number;
   watchedSeconds: number;
   worksheetsDone: number;
-  worksheetsPrinted: number;
+  likesReceived: number;
+  worksheetsSolved: number;
   videosUploaded: number;
 };
 
@@ -84,7 +86,8 @@ function TotalsStrip({ totals, role }: { totals: ReportTotals; role: 'student' |
           [t('admin.reportTotalTeachers'), totals.teachers],
           [t('admin.reportTotalWatch'), formatWatchTime(totals.watchedSeconds)],
           [t('admin.reportTotalWsDone'), totals.worksheetsDone],
-          [t('admin.reportTotalWsPrinted'), totals.worksheetsPrinted],
+          [t('admin.reportTotalLikes'), totals.likesReceived],
+          [t('admin.reportTotalWsSolved'), totals.worksheetsSolved],
           [t('admin.reportTotalVideos'), totals.videosUploaded],
         ]
       : [
@@ -159,7 +162,8 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: 'student' | '
                 <th style={th}>{t('admin.watchTimeColAvgMonth')}</th>
                 <th style={th}>{t('admin.watchTimeColReels')}</th>
                 <th style={th}>{t('admin.watchTimeColWsDone')}</th>
-                {isTeacher && <th style={th}>{t('admin.watchTimeColWsPrinted')}</th>}
+                {isTeacher && <th style={th}>{t('admin.watchTimeColLikes')}</th>}
+                {isTeacher && <th style={th}>{t('admin.watchTimeColWsSolved')}</th>}
                 {isTeacher && <th style={th}>{t('admin.watchTimeColVideos')}</th>}
                 <th style={th}>{t('admin.watchTimeColPoints')}</th>
               </tr>
@@ -182,7 +186,8 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: 'student' | '
                   <td style={td}>{formatWatchTime(u.watchedSeconds / Math.max(1, u.daysSinceJoined / 30.4375))}</td>
                   <td style={td}>{u.reelsWatched}</td>
                   <td style={td}>{u.worksheetsDone}</td>
-                  {isTeacher && <td style={td}>{u.worksheetsPrinted}</td>}
+                  {isTeacher && <td style={td}>{u.likesReceived}</td>}
+                  {isTeacher && <td style={td}>{u.worksheetsSolved}</td>}
                   {isTeacher && <td style={td}>{u.videosUploaded}</td>}
                   <td style={td}>{u.points}</td>
                 </tr>

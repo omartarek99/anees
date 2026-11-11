@@ -19,14 +19,15 @@ function areFriends(a: number, b: number): boolean {
 friendsRouter.get('/', (req, res) => {
   const rows = db
     .prepare(
-      `SELECT u.username, u.display_name, u.avatar_key, u.total_xp, ${shieldSql('u.id')} as has_shield FROM friendships f
+      `SELECT u.username, u.display_name, u.avatar_key, u.role, u.total_xp, ${shieldSql('u.id')} as has_shield FROM friendships f
        JOIN users u ON u.id = CASE WHEN f.user_a_id = ? THEN f.user_b_id ELSE f.user_a_id END
        WHERE f.user_a_id = ? OR f.user_b_id = ?
        ORDER BY u.display_name`
     )
     .all(req.userId!, req.userId!, req.userId!) as any[];
   res.json({
-    friends: rows.map((r) => ({ username: r.username, displayName: r.display_name, avatarKey: r.avatar_key, totalXp: r.total_xp, hasShield: !!r.has_shield })),
+    // role: a teacher friend cannot be challenged (routes/challenges.ts), so the page hides that button for them
+    friends: rows.map((r) => ({ username: r.username, displayName: r.display_name, avatarKey: r.avatar_key, role: r.role, totalXp: r.total_xp, hasShield: !!r.has_shield })),
   });
 });
 

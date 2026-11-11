@@ -39,24 +39,24 @@ type Profile = {
   hasShield?: boolean;
   avatarKey: string;
   avatarUrl: string | null;
-  // The student's customised 3D character; null until they save one.
   role: 'student' | 'teacher' | 'admin';
   bio: string;
   // Teachers: public. Students: only present on their own profile.
   schoolName?: string | null;
   teacherSubject?: string | null;
   totalXp: number;
-  // Separate currency from totalXp, only ever nonzero for teachers -- see backend
-  // lib/xp.ts. Drives the teacher-only leaderboard and this profile's stats for teachers.
+  // Separate currency from totalXp, only ever nonzero for teachers: worked out from their
+  // creatorStats below (backend lib/xp.ts). Drives the teacher rank, level and leaderboard.
   teacherPoints: number;
   playerLevel: number;
   // 0..1 toward the next level (every 100 points for a student)
   levelProgress: number;
   rankTier: RankTier;
-  bossesDefeated: number;
-  worksheetsCompleted: number;
-  videosCount: number;
-  worksheetsPrintedCount: number;
+  // Students only: a teacher makes the lessons instead of playing the map or solving worksheets.
+  bossesDefeated?: number;
+  worksheetsCompleted?: number;
+  // Teachers only: what their points come from -- likes from others on their reels, reels posted, and worksheets they sent that students solved.
+  creatorStats?: { likes: number; reels: number; worksheetsSolved: number };
   joinedAt: string;
   // Only present (and only ever populated) for teacher profiles -- their authored,
   // published reels, shown as a portfolio any signed-in viewer can browse.
@@ -70,7 +70,7 @@ type Profile = {
 const LRI = '\u2066';
 const PDI = '\u2069';
 
-const STAT_COLORS = ['stat-card-yellow', 'stat-card-green'];
+const STAT_COLORS = ['stat-card-yellow', 'stat-card-green', 'stat-card-pink'];
 
 // Rank progress ring (replaces the old linear xp-bar) -- radius/circumference are shared
 // between the track and fill circles so the fill's dash math stays in one place.
@@ -359,13 +359,14 @@ export function ProfilePage() {
       <div className="grid-cards">
         {profile.role === 'teacher' ? (
           <>
-            <StatCard icon="🎬" label={t('profile.totalVideos')} value={profile.videosCount} color={STAT_COLORS[0]} />
-            <StatCard icon="🖨️" label={t('profile.worksheetsPrinted')} value={profile.worksheetsPrintedCount} color={STAT_COLORS[1]} />
+            <StatCard icon="❤️" label={t('profile.likes')} value={profile.creatorStats?.likes ?? 0} color={STAT_COLORS[2]} />
+            <StatCard icon="🎬" label={t('profile.reelsPosted')} value={profile.creatorStats?.reels ?? 0} color={STAT_COLORS[0]} />
+            <StatCard icon="📝" label={t('profile.worksheetsSolved')} value={profile.creatorStats?.worksheetsSolved ?? 0} color={STAT_COLORS[1]} />
           </>
         ) : (
           <>
-            <StatCard icon="🐉" label={t('profile.bossesDefeated')} value={profile.bossesDefeated} color={STAT_COLORS[0]} />
-            <StatCard icon="📝" label={t('profile.worksheetsDone')} value={profile.worksheetsCompleted} color={STAT_COLORS[1]} />
+            <StatCard icon="🐉" label={t('profile.bossesDefeated')} value={profile.bossesDefeated ?? 0} color={STAT_COLORS[0]} />
+            <StatCard icon="📝" label={t('profile.worksheetsDone')} value={profile.worksheetsCompleted ?? 0} color={STAT_COLORS[1]} />
           </>
         )}
       </div>

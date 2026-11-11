@@ -7,7 +7,7 @@ import { useEscapeToClose } from '../lib/useEscapeToClose';
 import { Avatar } from './Avatar';
 import '../styles/challenge.css';
 
-type Friend = { username: string; displayName: string; avatarKey: string };
+type Friend = { username: string; displayName: string; avatarKey: string; role: 'student' | 'teacher' };
 
 /** "تحدى صديقك" from the home page: pick which friend to challenge, then the setup window (ChallengeSetupModal) takes over. */
 export function ChallengePickerModal({ open, onClose, onPick }: { open: boolean; onClose: () => void; onPick: (friend: Friend) => void }) {
@@ -21,7 +21,8 @@ export function ChallengePickerModal({ open, onClose, onPick }: { open: boolean;
     setFriends(null);
     api
       .get<{ friends: Friend[] }>('/friends')
-      .then((d) => setFriends(d.friends))
+      // a teacher friend can't be challenged (the server refuses it): only student friends are offered
+      .then((d) => setFriends(d.friends.filter((f) => f.role !== 'teacher')))
       .catch(() => setFriends([]));
   }, [open]);
 

@@ -14,10 +14,11 @@ import { ChallengePickerModal } from '../components/ChallengePickerModal';
 import { ChallengeSetupModal } from '../components/ChallengeSetupModal';
 
 type Profile = {
-  levelsCompleted: number;
+  // students only: a teacher's profile has no map progress (backend routes/users.ts)
+  levelsCompleted?: number;
   totalXp: number;
   playerLevel: number;
-  mapLevel: number;
+  mapLevel?: number;
   avatarKey: string;
   avatarUrl: string | null;
 };
@@ -34,19 +35,102 @@ function useNarrow() {
   return narrow;
 }
 
+/** A student's progress cards (map, levels, XP, a friend challenge) and the challenge windows. A teacher plays none of these -- they make the
+ * lessons instead (App.tsx) -- so the home page shows them no progress section at all. */
+function StudentProgress({ profile }: { profile: Profile | null }) {
+  const { user } = useAuth();
+  const { t, lang } = useLanguage();
+  // "تحدى صديقك": pick a friend, then set the challenge up
+  const [picking, setPicking] = useState(false);
+  const [challengeFor, setChallengeFor] = useState<{ username: string; displayName: string } | null>(null);
+  const completed = profile?.levelsCompleted ?? 0;
+  // the adventure-map level they are on (the user level above comes from points)
+  const mapLevel = profile?.mapLevel ?? 1;
+  const pct = (n: number) => `${Math.round((n / 50) * 100)}%`;
+  // One market card per stat: its picture, a corner chip, the value, and where to go with it.
+  const cards = [
+    { tone: 'blue', src: '/icons/map-icon.webp', title: t('home.mapProgress'), value: `${mapLevel}/50`, chip: pct(mapLevel), to: '/map', cta: t('home.openMap') },
+    { tone: 'yellow', src: '/icons/levels-icon.webp', title: t('profile.levelsCompleted'), value: `${completed}/50`, chip: pct(completed), to: '/reels', cta: t('home.watchReel') },
+    {
+      tone: 'pink',
+      src: '/icons/xp-icon.webp',
+      title: t('profile.totalXp'),
+      value: String(profile?.totalXp ?? user?.totalXp ?? 0),
+      chip: user ? pickText(lang, user.rankTier.name, user.rankTier.nameAr) : '',
+      to: '/leaderboard',
+      cta: t('nav.leaderboard'),
+    },
+    {
+      tone: 'green',
+      src: '/icons/challenge-icon.webp',
+      title: t('challenge.homeTitle'),
+      value: '⚔️',
+      chip: 'VS',
+      to: null as string | null,
+      cta: t('challenge.homeCta'),
+    },
+  ];
+
+  return (
+    <>
+      <section className="home-progress" aria-labelledby="home-progress-title">
+        <h2 id="home-progress-title" className="home-section-title">
+          {t('home.yourProgress')}
+        </h2>
+        <div className="grid-cards home-cards">
+          {cards.map((c) => (
+            <article key={c.tone} className={`market-card stat-card-${c.tone}`}>
+              <div className="market-pic">
+                <img src={c.src} alt="" />
+                <span className="market-chip">{c.chip}</span>
+              </div>
+              <div className="market-owner">
+                <div>
+                  <h3 className="market-title">{c.title}</h3>
+                  <div className="market-by">
+                    <bdi>@{user?.username}</bdi>
+                  </div>
+                </div>
+                <strong className="market-value">{c.value}</strong>
+              </div>
+              {c.to ? (
+                <Link to={c.to} className="btn btn-primary market-cta">
+                  {c.cta}
+                </Link>
+              ) : (
+                <button type="button" className="btn btn-primary market-cta" onClick={() => setPicking(true)}>
+                  {c.cta}
+                </button>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <ChallengePickerModal
+        open={picking}
+        onClose={() => setPicking(false)}
+        onPick={(f) => {
+          setPicking(false);
+          setChallengeFor(f);
+        }}
+      />
+      <ChallengeSetupModal friend={challengeFor} onClose={() => setChallengeFor(null)} />
+    </>
+  );
+}
+
 export function HomePage() {
   const { user } = useAuth();
   const { t, lang } = useLanguage();
   const [profile, setProfile] = useState<Profile | null>(null);
-  // The frame waits for the profile (or its failure) so a student with a customised character never sees the default one flash first.
+  // The frame waits for the profile (or its failure) so someone with their own picture never sees the default one flash first.
   const [loaded, setLoaded] = useState(false);
   const narrow = useNarrow();
-  // "تحدى صديقك": pick a friend, then set the challenge up
-  const [picking, setPicking] = useState(false);
-  const [challengeFor, setChallengeFor] = useState<{ username: string; displayName: string } | null>(null);
+  const isStudent = user?.role === 'student';
   const heroRef = useRef<HTMLElement>(null);
   const greeting = t('home.greeting', { name: user?.displayName ?? '' });
-  const tagline = t('home.tagline');
+  const tagline = t(isStudent ? 'home.tagline' : 'home.taglineTeacher');
   const swooshRef = useRef<SVGSVGElement>(null);
 
   // The level line, the greeting and the line under it grow in line by line, once (Textify on GSAP; it does not
@@ -135,33 +219,6 @@ export function HomePage() {
   const hole = Math.round((fr?.hole ?? 132) * 0.75 * (narrow ? 0.62 : 1));
   const pic = Math.round(hole * 1.06);
   const top = { '--hole': `${hole}px`, '--frame': `${Math.round(fr ? hole / fr.ratio : hole * 1.45)}px` } as CSSProperties;
-  const completed = profile?.levelsCompleted ?? 0;
-  // the adventure-map level they are on (the user level above comes from points)
-  const mapLevel = profile?.mapLevel ?? 1;
-  const pct = (n: number) => `${Math.round((n / 50) * 100)}%`;
-  // One market card per stat: its picture, a corner chip, the value, and where to go with it.
-  const cards = [
-    { tone: 'blue', src: '/icons/map-icon.webp', title: t('home.mapProgress'), value: `${mapLevel}/50`, chip: pct(mapLevel), to: '/map', cta: t('home.openMap') },
-    { tone: 'yellow', src: '/icons/levels-icon.webp', title: t('profile.levelsCompleted'), value: `${completed}/50`, chip: pct(completed), to: '/reels', cta: t('home.watchReel') },
-    {
-      tone: 'pink',
-      src: '/icons/xp-icon.webp',
-      title: t('profile.totalXp'),
-      value: String(profile?.totalXp ?? user?.totalXp ?? 0),
-      chip: user ? pickText(lang, user.rankTier.name, user.rankTier.nameAr) : '',
-      to: '/leaderboard',
-      cta: t('nav.leaderboard'),
-    },
-    {
-      tone: 'green',
-      src: '/icons/challenge-icon.webp',
-      title: t('challenge.homeTitle'),
-      value: '⚔️',
-      chip: 'VS',
-      to: null as string | null,
-      cta: t('challenge.homeCta'),
-    },
-  ];
 
   return (
     <div className="stack">
@@ -203,49 +260,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="home-progress" aria-labelledby="home-progress-title">
-        <h2 id="home-progress-title" className="home-section-title">
-          {t('home.yourProgress')}
-        </h2>
-        <div className="grid-cards home-cards">
-          {cards.map((c) => (
-            <article key={c.tone} className={`market-card stat-card-${c.tone}`}>
-              <div className="market-pic">
-                <img src={c.src} alt="" />
-                <span className="market-chip">{c.chip}</span>
-              </div>
-              <div className="market-owner">
-                <div>
-                  <h3 className="market-title">{c.title}</h3>
-                  <div className="market-by">
-                    <bdi>@{user?.username}</bdi>
-                  </div>
-                </div>
-                <strong className="market-value">{c.value}</strong>
-              </div>
-              {c.to ? (
-                <Link to={c.to} className="btn btn-primary market-cta">
-                  {c.cta}
-                </Link>
-              ) : (
-                <button type="button" className="btn btn-primary market-cta" onClick={() => setPicking(true)}>
-                  {c.cta}
-                </button>
-              )}
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <ChallengePickerModal
-        open={picking}
-        onClose={() => setPicking(false)}
-        onPick={(f) => {
-          setPicking(false);
-          setChallengeFor(f);
-        }}
-      />
-      <ChallengeSetupModal friend={challengeFor} onClose={() => setChallengeFor(null)} />
+      {isStudent && <StudentProgress profile={profile} />}
     </div>
   );
 }

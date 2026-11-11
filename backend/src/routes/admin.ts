@@ -30,7 +30,7 @@ import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX } from '../lib/
 import { PLAQUE_PATH, issueRankCertificates, emailCertificate, revokeCertificate } from '../lib/rankCertificates.js';
 import { applyViolation } from '../lib/violations.js';
 import { getRankTier } from '../lib/ranks.js';
-import { noteRankDrop } from '../lib/xp.js';
+import { noteRankDrop, syncTeacherPoints } from '../lib/xp.js';
 import { r2SelfTest } from '../lib/r2.js';
 import { FRONTEND_ORIGIN } from '../lib/config.js';
 
@@ -576,9 +576,11 @@ adminRouter.delete('/reels/:id', requireCsrfHeader, async (req, res) => {
     return;
   }
   // The file goes first (it never throws, whatever state the storage is in), then the lesson. Every table that points at reels cascades or clears its
-  // link (reel_questions, reel_watch_progress, reel_messages, worksheet_questions cascade; worksheet_attempts.reel_id is set to NULL) -- see schema.sql.
+  // link (reel_questions, reel_watch_progress, reel_messages, reel_likes, worksheet_questions, sent_worksheets cascade; worksheet_attempts.reel_id is
+  // set to NULL) -- see schema.sql. The lesson, its likes and the worksheets sent from it no longer count for its teacher's points (lib/xp.ts).
   await deleteReelVideoIfAny(reel.video_url);
   db.prepare(`DELETE FROM reels WHERE id = ?`).run(reel.id);
+  syncTeacherPoints(reel.author_user_id, 'reel_removed');
   res.json({ ok: true });
 });
 

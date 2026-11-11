@@ -27,8 +27,10 @@ export function ReelActionRail({
   likeCount: number;
   onToggleLike: () => void;
   questionCount: number;
-  onOpenQuiz: () => void;
-  onOpenPointsInfo: () => void;
+  // students only: a teacher creates lessons and does not take their quizzes
+  onOpenQuiz?: () => void;
+  // students only: the explainer of how they earn XP (a teacher earns none from reels)
+  onOpenPointsInfo?: () => void;
   muted: boolean;
   onToggleMute: () => void;
 }) {
@@ -73,19 +75,23 @@ export function ReelActionRail({
         </span>
       </button>
 
-      <button type="button" className="reel-rail-btn" onClick={onOpenQuiz} aria-label={t('reels.takeQuiz')}>
-        <span className="notif-bell" style={{ fontSize: 19 }}>
-          <QuizIcon size={19} />
-        </span>
-        <span className="reel-rail-count">{questionCount}</span>
-      </button>
+      {onOpenQuiz && (
+        <button type="button" className="reel-rail-btn" onClick={onOpenQuiz} aria-label={t('reels.takeQuiz')}>
+          <span className="notif-bell" style={{ fontSize: 19 }}>
+            <QuizIcon size={19} />
+          </span>
+          <span className="reel-rail-count">{questionCount}</span>
+        </button>
+      )}
 
-      <button type="button" className="reel-rail-btn" onClick={onOpenPointsInfo} aria-label={t('pointsInfo.title')}>
-        <span className="notif-bell" style={{ fontSize: 19 }}>
-          <XpIcon size={26} />
-        </span>
-        <span className="reel-rail-count">{t('reels.xpTag')}</span>
-      </button>
+      {onOpenPointsInfo && (
+        <button type="button" className="reel-rail-btn" onClick={onOpenPointsInfo} aria-label={t('pointsInfo.title')}>
+          <span className="notif-bell" style={{ fontSize: 19 }}>
+            <XpIcon size={26} />
+          </span>
+          <span className="reel-rail-count">{t('reels.xpTag')}</span>
+        </button>
+      )}
 
     </div>
   );

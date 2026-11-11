@@ -55,7 +55,9 @@ export function createGoogleUser(identity: GoogleIdentity, role: 'student' | 'te
       .run(username, encrypt(identity.email), hashForLookup(identity.email), '', displayName, role === 'teacher' ? 'anonymous' : 'owl', role, identity.uid)
       .lastInsertRowid
   );
-  // like every new account: map level 1 is unlocked
-  db.prepare(`INSERT INTO user_level_progress (user_id, map_level_id, status) SELECT ?, id, 'available' FROM map_levels WHERE level_number = 1`).run(userId);
+  // like every new student: map level 1 is unlocked (the map is for students only)
+  if (role === 'student') {
+    db.prepare(`INSERT INTO user_level_progress (user_id, map_level_id, status) SELECT ?, id, 'available' FROM map_levels WHERE level_number = 1`).run(userId);
+  }
   return userId;
 }

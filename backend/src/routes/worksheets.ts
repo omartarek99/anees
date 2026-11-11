@@ -5,7 +5,7 @@ import { db } from '../db/db.js';
 import { forbidRole, requireRole } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { worksheetAiLimiter } from '../middleware/rateLimit.js';
-import { awardXp, penalizeWrongAnswers, awardTeacherPoints, TEACHER_PRINT_POINTS, WORKSHEET_XP_PER_CORRECT } from '../lib/xp.js';
+import { awardXp, penalizeWrongAnswers, syncTeacherPoints, WORKSHEET_XP_PER_CORRECT } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
 import { generateQuizQuestions } from '../lib/gemini.js';
 import { verifyArithmetic } from '../lib/arithmeticCheck.js';
@@ -89,17 +89,28 @@ worksheetsRouter.get('/videos', (req, res) => {
   });
 });
 
-function createAttempt(userId: number, subjectId: number, difficulty: Difficulty, reelId: number | null, questionIds: number[]) {
+// Only the newest few unsubmitted worksheets are kept per user. A student's go at a worksheet a teacher sent is left out of that clean-up: there is
+// only ever one per sent worksheet, and it is where their answers belong until they submit.
+function createAttempt(
+  userId: number,
+  subjectId: number,
+  difficulty: Difficulty,
+  reelId: number | null,
+  questionIds: number[],
+  topic: string | null = null,
+  sentWorksheetId: number | null = null
+) {
   db.prepare(
-    `DELETE FROM worksheet_attempts WHERE user_id = ? AND status = 'generated'
-       AND id NOT IN (SELECT id FROM worksheet_attempts WHERE user_id = ? AND status = 'generated' ORDER BY id DESC LIMIT 9)`
+    `DELETE FROM worksheet_attempts WHERE user_id = ? AND status = 'generated' AND sent_worksheet_id IS NULL
+       AND id NOT IN (SELECT id FROM worksheet_attempts WHERE user_id = ? AND status = 'generated' AND sent_worksheet_id IS NULL ORDER BY id DESC LIMIT 9)`
   ).run(userId, userId);
   return Number(
     db
       .prepare(
-        `INSERT INTO worksheet_attempts (user_id, subject_id, difficulty, question_ids_json, total, status, reel_id) VALUES (?,?,?,?,?, 'generated', ?)`
+        `INSERT INTO worksheet_attempts (user_id, subject_id, difficulty, question_ids_json, total, status, reel_id, topic, sent_worksheet_id)
+         VALUES (?,?,?,?,?, 'generated', ?,?,?)`
       )
-      .run(userId, subjectId, difficulty, JSON.stringify(questionIds), questionIds.length, reelId).lastInsertRowid
+      .run(userId, subjectId, difficulty, JSON.stringify(questionIds), questionIds.length, reelId, topic, sentWorksheetId).lastInsertRowid
   );
 }
 
@@ -271,7 +282,8 @@ async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise
 
 // Every click adds a fresh set, so keep the saved pool bounded: only the newest few are
 // ever needed as "already used" hints / top-ups. Questions still referenced by an unsubmitted
-// worksheet are kept so that worksheet can still be graded.
+// worksheet, or by a worksheet a teacher sent (students start it any time later), are kept so
+// it can still be graded.
 const AI_POOL_KEEP = 100;
 function trimPool(scope: AiScope, difficulty: Difficulty) {
   const filter = scopeFilter(scope, difficulty);
@@ -282,10 +294,18 @@ function trimPool(scope: AiScope, difficulty: Difficulty) {
   const inUse = new Set<number>();
   const attempts = (
     scope.reelId
-      ? db.prepare(`SELECT question_ids_json FROM worksheet_attempts WHERE reel_id = ? AND status = 'generated'`).all(scope.reelId)
+      ? db
+          .prepare(
+            `SELECT question_ids_json FROM worksheet_attempts WHERE reel_id = ? AND status = 'generated'
+             UNION ALL SELECT question_ids_json FROM sent_worksheets WHERE reel_id = ?`
+          )
+          .all(scope.reelId, scope.reelId)
       : db
-          .prepare(`SELECT question_ids_json FROM worksheet_attempts WHERE reel_id IS NULL AND subject_id = ? AND status = 'generated'`)
-          .all(scope.subjectId)
+          .prepare(
+            `SELECT question_ids_json FROM worksheet_attempts WHERE reel_id IS NULL AND subject_id = ? AND status = 'generated'
+             UNION ALL SELECT question_ids_json FROM sent_worksheets WHERE reel_id IS NULL AND subject_id = ?`
+          )
+          .all(scope.subjectId, scope.subjectId)
   ) as { question_ids_json: string }[];
   for (const a of attempts) for (const id of JSON.parse(a.question_ids_json) as number[]) inUse.add(id);
   const del = db.prepare(`DELETE FROM worksheet_questions WHERE id = ?`);
@@ -391,7 +411,7 @@ worksheetsRouter.post(
           difficulty
         );
         if (picked.length > 0) {
-          const attemptId = createAttempt(req.userId!, subjectRow.id, difficulty, null, picked.map((q) => q.id));
+          const attemptId = createAttempt(req.userId!, subjectRow.id, difficulty, null, picked.map((q) => q.id), topic);
           res.status(201).json({
             worksheetId: attemptId,
             subject,
@@ -439,7 +459,8 @@ const submitSchema = z.object({
   answers: z.array(z.object({ questionId: z.number(), choiceIndex: z.number().min(0).max(3) })),
 });
 
-worksheetsRouter.post('/:id/submit', forbidRole('admin'), requireCsrfHeader, validateBody(submitSchema), (req, res) => {
+// Students only: a teacher builds a worksheet to preview, print and send to the students (below), not to solve it.
+worksheetsRouter.post('/:id/submit', requireRole('student'), requireCsrfHeader, validateBody(submitSchema), (req, res) => {
   const attempt = db.prepare(`SELECT * FROM worksheet_attempts WHERE id = ?`).get(Number(req.params.id)) as any;
   if (!attempt || attempt.user_id !== req.userId!) {
     res.status(404).json({ error: 'Worksheet not found.' });
@@ -471,17 +492,147 @@ worksheetsRouter.post('/:id/submit', forbidRole('admin'), requireCsrfHeader, val
   db.prepare(
     `UPDATE worksheet_attempts SET score = ?, xp_earned = ?, answers_json = ?, status = 'submitted' WHERE id = ?`
   ).run(correctCount, xpEarned, JSON.stringify(answers), attempt.id);
+  // a student who solves a worksheet a teacher sent is worth points to that teacher (lib/xp.ts)
+  if (attempt.sent_worksheet_id) {
+    const sent = db.prepare(`SELECT teacher_id FROM sent_worksheets WHERE id = ?`).get(attempt.sent_worksheet_id) as { teacher_id: number } | undefined;
+    syncTeacherPoints(sent?.teacher_id, 'worksheet_solved');
+  }
 
   res.json({ results, correctCount, total: questions.length, xpEarned, xpLost });
 });
 
-// Called right before window.print() on the teacher's printable worksheet (frontend
-// WorksheetsPage.tsx) -- printing itself is a browser-native action a page can't observe
-// completing or being cancelled, so this just tracks "the teacher clicked print", which is
-// what "each print he make" means in practice. Teacher-only: students never see the print
-// button in the first place, but the role check here is the real gate.
-worksheetsRouter.post('/print', requireRole('teacher'), requireCsrfHeader, (req, res) => {
-  db.prepare(`INSERT INTO worksheet_prints (user_id) VALUES (?)`).run(req.userId!);
-  awardTeacherPoints(req.userId!, TEACHER_PRINT_POINTS, 'worksheet_print');
-  res.json({ ok: true });
+// ---------------------------------------------------------------------------------------
+// Worksheets a teacher sends to every student. The teacher builds one with POST /generate as usual -- previews it and may print it (in the
+// browser), but does not solve it -- then sends it: a copy goes into sent_worksheets, every student sees it under "From your teachers"
+// (GET /received) and can solve it once: POST /received/:sentId/start gives them their own attempt, graded by POST /:id/submit like any other.
+// ---------------------------------------------------------------------------------------
+
+const sentVideo = (r: any) => (r.reel_id ? { id: r.reel_id, title: r.reel_title, titleAr: r.reel_title_ar } : null);
+
+worksheetsRouter.post('/:id/send', requireRole('teacher'), requireCsrfHeader, (req, res) => {
+  const attempt = db.prepare(`SELECT * FROM worksheet_attempts WHERE id = ? AND user_id = ?`).get(Number(req.params.id), req.userId!) as any;
+  if (!attempt) {
+    res.status(404).json({ error: 'Worksheet not found.' });
+    return;
+  }
+  // sending the same worksheet again keeps the first copy (source_attempt_id is UNIQUE)
+  const inserted =
+    Number(
+      db
+        .prepare(
+          `INSERT INTO sent_worksheets (teacher_id, source_attempt_id, subject_id, difficulty, question_ids_json, total, topic, reel_id)
+           VALUES (?,?,?,?,?,?,?,?) ON CONFLICT (source_attempt_id) DO NOTHING`
+        )
+        .run(req.userId!, attempt.id, attempt.subject_id, attempt.difficulty, attempt.question_ids_json, attempt.total, attempt.topic, attempt.reel_id)
+        .changes
+    ) > 0;
+  const sent = db.prepare(`SELECT id, created_at FROM sent_worksheets WHERE source_attempt_id = ?`).get(attempt.id) as { id: number; created_at: string };
+  res.status(inserted ? 201 : 200).json({ sentWorksheetId: sent.id, createdAt: sent.created_at, alreadySent: !inserted });
+});
+
+// The teacher's own sent worksheets, newest first, with how many students have solved each.
+worksheetsRouter.get('/sent', requireRole('teacher'), (req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT sw.*, s.key AS subject_key, r.title AS reel_title, r.title_ar AS reel_title_ar,
+              (SELECT COUNT(*) FROM worksheet_attempts a WHERE a.sent_worksheet_id = sw.id AND a.status = 'submitted') AS solved_count
+       FROM sent_worksheets sw
+       JOIN subjects s ON s.id = sw.subject_id
+       LEFT JOIN reels r ON r.id = sw.reel_id
+       WHERE sw.teacher_id = ?
+       ORDER BY sw.id DESC LIMIT 50`
+    )
+    .all(req.userId!) as any[];
+  res.json({
+    worksheets: rows.map((r) => ({
+      id: r.id,
+      subject: r.subject_key,
+      difficulty: r.difficulty,
+      total: r.total,
+      topic: r.topic,
+      video: sentVideo(r),
+      createdAt: r.created_at,
+      solvedCount: r.solved_count,
+    })),
+  });
+});
+
+// "From your teachers": every sent worksheet (they go to all students, whatever their grade), newest first, with where this student is on each.
+worksheetsRouter.get('/received', requireRole('student'), (req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT sw.*, s.key AS subject_key, t.display_name AS teacher_name, r.title AS reel_title, r.title_ar AS reel_title_ar,
+              a.status AS my_status, a.score AS my_score
+       FROM sent_worksheets sw
+       JOIN subjects s ON s.id = sw.subject_id
+       JOIN users t ON t.id = sw.teacher_id
+       LEFT JOIN reels r ON r.id = sw.reel_id
+       LEFT JOIN worksheet_attempts a ON a.sent_worksheet_id = sw.id AND a.user_id = ?
+       ORDER BY sw.id DESC LIMIT 50`
+    )
+    .all(req.userId!) as any[];
+  res.json({
+    worksheets: rows.map((r) => ({
+      id: r.id,
+      teacherName: r.teacher_name,
+      subject: r.subject_key,
+      difficulty: r.difficulty,
+      total: r.total,
+      topic: r.topic,
+      video: sentVideo(r),
+      createdAt: r.created_at,
+      status: r.my_status === 'submitted' ? 'solved' : r.my_status ? 'started' : 'new',
+      score: r.my_status === 'submitted' ? r.my_score : null,
+    })),
+  });
+});
+
+// Opens a sent worksheet for this student, in the same shape as POST /generate: their attempt from before if they started it already, a new one
+// otherwise. Once solved it cannot be solved again.
+worksheetsRouter.post('/received/:sentId/start', requireRole('student'), requireCsrfHeader, (req, res) => {
+  const sent = db
+    .prepare(
+      `SELECT sw.*, s.key AS subject_key, t.display_name AS teacher_name, r.title AS reel_title, r.title_ar AS reel_title_ar, ra.display_name AS reel_author
+       FROM sent_worksheets sw
+       JOIN subjects s ON s.id = sw.subject_id
+       JOIN users t ON t.id = sw.teacher_id
+       LEFT JOIN reels r ON r.id = sw.reel_id
+       LEFT JOIN users ra ON ra.id = r.author_user_id
+       WHERE sw.id = ?`
+    )
+    .get(Number(req.params.sentId)) as any;
+  if (!sent) {
+    res.status(404).json({ error: 'Worksheet not found.' });
+    return;
+  }
+  const mine = db.prepare(`SELECT id, status FROM worksheet_attempts WHERE user_id = ? AND sent_worksheet_id = ?`).get(req.userId!, sent.id) as
+    | { id: number; status: string }
+    | undefined;
+  if (mine?.status === 'submitted') {
+    res.status(409).json({ error: 'You already solved this worksheet.' });
+    return;
+  }
+  const ids: number[] = JSON.parse(sent.question_ids_json);
+  const rows = ids.length
+    ? (db.prepare(`SELECT * FROM worksheet_questions WHERE id IN (${ids.map(() => '?').join(',')})`).all(...ids) as any[])
+    : [];
+  const byId = new Map(rows.map((q) => [q.id, q]));
+  const questions = ids.map((id) => byId.get(id)).filter((q): q is NonNullable<typeof q> => q !== undefined);
+  if (questions.length === 0) {
+    res.status(404).json({ error: 'This worksheet is no longer available.' });
+    return;
+  }
+  const worksheetId =
+    mine?.id ?? createAttempt(req.userId!, sent.subject_id, sent.difficulty, sent.reel_id, questions.map((q) => q.id), sent.topic, sent.id);
+  res.status(mine ? 200 : 201).json({
+    worksheetId,
+    subject: sent.subject_key,
+    difficulty: sent.difficulty,
+    xpPerCorrect: WORKSHEET_XP_PER_CORRECT[sent.difficulty as Difficulty],
+    ...(sent.topic ? { topic: sent.topic } : {}),
+    ...(sent.reel_id ? { video: { id: sent.reel_id, title: sent.reel_title, titleAr: sent.reel_title_ar, authorName: sent.reel_author ?? '' } } : {}),
+    questions: questions.map(questionPayload),
+    sentWorksheetId: sent.id,
+    teacherName: sent.teacher_name,
+  });
 });

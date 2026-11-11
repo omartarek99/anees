@@ -19,8 +19,8 @@ type LeaderboardResponse = {
   inTop20: boolean;
   // People who earned anything in the month -- the "out of N" under the podium.
   participants: number;
-  // True when the requesting user is a teacher -- backend then ranks by teacher_points
-  // (video uploads + worksheet prints) among teachers only, instead of student XP.
+  // True when the requesting user is a teacher -- backend then ranks by teacher points
+  // (reels posted, likes from others, worksheets students solved) among teachers only, instead of student XP.
   isTeacherBoard: boolean;
 };
 
@@ -213,7 +213,7 @@ export function LeaderboardPage() {
                 </b>
               </>
             ) : (
-              <span>{t('leaderboard.noteNone', { month: monthLabel })}</span>
+              <span>{t(isTeacherBoard ? 'leaderboard.noteNoneTeacher' : 'leaderboard.noteNone', { month: monthLabel })}</span>
             )}
           </div>
         )}

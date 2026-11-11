@@ -66,6 +66,8 @@ type ReelSummary = {
   subjectName: string;
   subjectNameAr?: string | null;
   questionCount: number;
+  // every like on the lesson, the teacher's own included (only likes from others earn points, backend lib/xp.ts)
+  likeCount: number;
 };
 
 export function TeacherReelsPage() {
@@ -150,6 +152,8 @@ export function TeacherReelsPage() {
                     subject: pickText(lang, reel.subjectName, reel.subjectNameAr),
                     questions: String(reel.questionCount),
                   })}
+                  {' · '}
+                  {t('teacherReels.likeCount', { n: reel.likeCount })}
                 </p>
                 {reel.videoStatus === 'processing' && (
                   <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--gold-dark, #b07a10)' }}>⏳ {t('teacherReels.videoProcessing')}</p>

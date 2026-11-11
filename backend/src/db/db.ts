@@ -240,6 +240,8 @@ if (!reelCols.some((c) => c.name === 'author_user_id')) {
 if (!reelCols.some((c) => c.name === 'grade')) {
   db.exec(`ALTER TABLE reels ADD COLUMN grade INTEGER`);
 }
+// A teacher's lessons are counted for their profile and points (lib/xp.ts teacherCreatorStats).
+db.exec(`CREATE INDEX IF NOT EXISTS idx_reels_author ON reels(author_user_id)`);
 
 // Worksheets generated from a teacher video's topic: questions + attempts remember the reel.
 const worksheetQuestionCols = db.prepare(`PRAGMA table_info(worksheet_questions)`).all() as { name: string }[];
@@ -262,6 +264,18 @@ const worksheetAttemptCols = db.prepare(`PRAGMA table_info(worksheet_attempts)`)
 if (!worksheetAttemptCols.some((c) => c.name === 'reel_id')) {
   db.exec(`ALTER TABLE worksheet_attempts ADD COLUMN reel_id INTEGER REFERENCES reels(id) ON DELETE SET NULL`);
 }
+// Worksheets a teacher sends to every student (sent_worksheets, schema.sql): the typed lesson name goes along with it, and a student's go at one points
+// back to it -- once per student and sent worksheet (the unique index), counted for the teacher's points (lib/xp.ts) by the second index.
+if (!worksheetAttemptCols.some((c) => c.name === 'topic')) {
+  db.exec(`ALTER TABLE worksheet_attempts ADD COLUMN topic TEXT`);
+}
+if (!worksheetAttemptCols.some((c) => c.name === 'sent_worksheet_id')) {
+  db.exec(`ALTER TABLE worksheet_attempts ADD COLUMN sent_worksheet_id INTEGER REFERENCES sent_worksheets(id) ON DELETE SET NULL`);
+}
+db.exec(
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_worksheet_attempts_sent_user ON worksheet_attempts(user_id, sent_worksheet_id) WHERE sent_worksheet_id IS NOT NULL`
+);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_worksheet_attempts_sent ON worksheet_attempts(sent_worksheet_id, status)`);
 
 // Quiz-completion marker for grade-based reels, added after the initial
 // reel_watch_progress table.
@@ -288,7 +302,7 @@ const userColsForTeacherPoints = db.prepare(`PRAGMA table_info(users)`).all() as
 if (!userColsForTeacherPoints.some((c) => c.name === 'teacher_points')) {
   db.exec(`ALTER TABLE users ADD COLUMN teacher_points INTEGER NOT NULL DEFAULT 0`);
 }
-// The student's 3D character config (JSON of option ids), added after the initial users table.
+// Retired 3D character config column (nothing reads or writes it); kept so older databases match schema.sql.
 if (!userColsForTeacherPoints.some((c) => c.name === 'avatar3d')) {
   db.exec(`ALTER TABLE users ADD COLUMN avatar3d TEXT`);
 }

@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { RiVideoLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { pickText, translateApiError } from '../lib/i18n';
+import { textDir } from '../lib/bidi';
 import { QuizCard, type QuizAnswer, type QuizQuestion } from '../components/QuizCard';
 import { QuizResults, type ResultItem } from '../components/QuizResults';
 import { Topbar } from '../components/Topbar';
@@ -16,7 +17,7 @@ type Subject = 'math' | 'science';
 const LOCKED_SUBJECTS = ['islamic', 'arabic', 'english', 'ict', 'social', 'art'] as const;
 type Difficulty = 'easy' | 'medium' | 'hard';
 
-// The artwork for the two subjects and three difficulty levels (public/images/worksheets/<name>.webp).
+// The artwork for the subjects and three difficulty levels (public/images/worksheets/<name>.webp).
 const art = (name: string) => `/images/worksheets/${name}.webp`;
 
 type GenerateResponse = {
@@ -30,7 +31,24 @@ type GenerateResponse = {
   // The AI couldn't write questions for the typed lesson, so this is a general bank worksheet.
   aiUnavailable?: boolean;
   questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null }[];
+  // Set when a student opened a worksheet a teacher sent (POST /worksheets/received/:id/start): who sent it.
+  sentWorksheetId?: number;
+  teacherName?: string;
 };
+
+// A worksheet a teacher sent to every student, as both lists show it: the teacher's own (GET /worksheets/sent, with how many students solved
+// it) and a student's "From your teachers" (GET /worksheets/received, with where this student is on it).
+type SentWorksheet = {
+  id: number;
+  subject: string;
+  difficulty: Difficulty;
+  total: number;
+  topic: string | null;
+  video: { id: number; title: string; titleAr: string | null } | null;
+  createdAt: string;
+};
+type TeacherSentWorksheet = SentWorksheet & { solvedCount: number };
+type ReceivedWorksheet = SentWorksheet & { teacherName: string; status: 'new' | 'started' | 'solved'; score: number | null };
 
 type WorksheetVideo = {
   id: number;
@@ -49,9 +67,35 @@ type SubmitResponse = {
   xpLost: number;
 };
 
+/** A teacher's look at a worksheet before printing or sending it: the questions and their choices, with nothing to answer. */
+function WorksheetPreview({ questions }: { questions: QuizQuestion[] }) {
+  return (
+    <ol className="ws-preview">
+      {questions.map((q, qi) => (
+        <li key={q.id} className="card">
+          {/* textDir: a pure-math question ("36 ÷ 6 = ؟") reads left-to-right even in the Arabic UI. */}
+          <p dir={textDir(q.text)} className="ws-preview-question">
+            {qi + 1}. {q.text}
+          </p>
+          <ul className="ws-preview-choices">
+            {q.choices.map((choice, ci) => (
+              <li key={ci}>
+                <span aria-hidden>{String.fromCharCode(65 + ci)}</span>
+                {choice}
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export function WorksheetsPage() {
   const { user, refreshUser } = useAuth();
   const { t, lang } = useLanguage();
+  // A teacher builds a worksheet to look over, print and send to every student -- not to solve it (the server takes answers from students only).
+  const isTeacher = user?.role === 'teacher';
   const [subject, setSubject] = useState<Subject>('math');
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
   const [worksheet, setWorksheet] = useState<GenerateResponse | null>(null);
@@ -59,6 +103,13 @@ export function WorksheetsPage() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Teacher: whether the worksheet on screen has been sent (alreadySent: it had been sent before), and the ones sent so far.
+  const [sent, setSent] = useState<{ alreadySent: boolean } | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sentList, setSentList] = useState<TeacherSentWorksheet[] | null>(null);
+  // Student: the worksheets teachers sent, and the one being opened.
+  const [received, setReceived] = useState<ReceivedWorksheet[] | null>(null);
+  const [opening, setOpening] = useState<number | null>(null);
   // Videos this user can build a worksheet from (students: their grade's teacher videos;
   // teachers: their own uploads) -- offered as suggestions in the lesson-name box below.
   const [videos, setVideos] = useState<WorksheetVideo[]>([]);
@@ -83,7 +134,24 @@ export function WorksheetsPage() {
       .get<{ videos: WorksheetVideo[] }>('/worksheets/videos')
       .then((data) => setVideos(data.videos))
       .catch(() => setVideos([]));
+    loadSentWorksheets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // The teacher's sent worksheets, or the student's "From your teachers".
+  function loadSentWorksheets() {
+    if (isTeacher) {
+      api
+        .get<{ worksheets: TeacherSentWorksheet[] }>('/worksheets/sent')
+        .then((d) => setSentList(d.worksheets))
+        .catch(() => setSentList([]));
+    } else {
+      api
+        .get<{ worksheets: ReceivedWorksheet[] }>('/worksheets/received')
+        .then((d) => setReceived(d.worksheets))
+        .catch(() => setReceived([]));
+    }
+  }
 
   // If the typed name is exactly one of the video titles, the worksheet is built from that
   // video's description (and subject); otherwise from the typed lesson name alone.
@@ -99,6 +167,10 @@ export function WorksheetsPage() {
     { key: 'hard', label: t('worksheets.hard'), xp: t('worksheets.xpPerQuestion', { xp: 20 }), icon: art('hard') },
   ];
 
+  // A video worksheet can be about any subject the video is in.
+  const subjectName = (key: string) => t(key === 'math' || key === 'science' ? `worksheets.${key}` : `worksheets.subject_${key}`);
+  const dateOf = (sqlite: string) => new Date(sqlite.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US');
+
   const questions: QuizQuestion[] =
     worksheet?.questions.map((q) => ({
       id: q.id,
@@ -110,6 +182,7 @@ export function WorksheetsPage() {
     setError(null);
     setLoading(true);
     setResult(null);
+    setSent(null);
     try {
       const body = selectedVideo ? { reelId: selectedVideo.id, difficulty, count } : { subject, difficulty, topic: typedName, grade, count };
       const data = await api.post<GenerateResponse>('/worksheets/generate', body);
@@ -123,12 +196,44 @@ export function WorksheetsPage() {
     }
   }
 
+  // A student opens a worksheet a teacher sent: their own attempt at it, solved like any other.
+  async function openReceived(sentId: number) {
+    setError(null);
+    setOpening(sentId);
+    try {
+      const data = await api.post<GenerateResponse>(`/worksheets/received/${sentId}/start`);
+      setResult(null);
+      setWorksheet(data);
+    } catch (err) {
+      setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('common.genericError'));
+      loadSentWorksheets(); // e.g. already solved in another tab: show it as solved
+    } finally {
+      setOpening(null);
+    }
+  }
+
+  async function send() {
+    if (!worksheet) return;
+    setError(null);
+    setSending(true);
+    try {
+      const data = await api.post<{ alreadySent: boolean }>(`/worksheets/${worksheet.worksheetId}/send`);
+      setSent({ alreadySent: data.alreadySent });
+      loadSentWorksheets();
+    } catch (err) {
+      setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('common.genericError'));
+    } finally {
+      setSending(false);
+    }
+  }
+
   async function submit(answers: QuizAnswer[]) {
     if (!worksheet) return;
     setSubmitting(true);
     try {
       const data = await api.post<SubmitResponse>(`/worksheets/${worksheet.worksheetId}/submit`, { answers });
       setResult(data);
+      if (worksheet.sentWorksheetId) loadSentWorksheets();
       await refreshUser();
     } catch (err) {
       setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('worksheets.genError'));
@@ -140,6 +245,7 @@ export function WorksheetsPage() {
   function reset() {
     setWorksheet(null);
     setResult(null);
+    setSent(null);
   }
 
   // Browsers print their own header/footer (page title + URL) on every printed page --
@@ -147,9 +253,9 @@ export function WorksheetsPage() {
   // footers" checkbox, entirely up to whoever is printing. What a page *can* do is
   // control what that header actually says, since it reads the live document.title --
   // blanking it just for the print and restoring it on `afterprint` (fires whether the
-  // student/teacher actually printed or cancelled) keeps the tab's real title everywhere
+  // teacher actually printed or cancelled) keeps the tab's real title everywhere
   // else without a blank title ever being visible on screen.
-  async function handlePrint() {
+  function handlePrint() {
     const original = document.title;
     document.title = ' ';
     const restore = () => {
@@ -157,22 +263,41 @@ export function WorksheetsPage() {
       window.removeEventListener('afterprint', restore);
     };
     window.addEventListener('afterprint', restore);
-
-    // A page can't observe window.print() actually completing (vs. being cancelled in
-    // the dialog), so "printed" here just means "clicked print" -- tracked/awarded
-    // best-effort, never blocking the print itself if the request is slow or fails.
-    try {
-      await api.post('/worksheets/print', {});
-      await refreshUser();
-    } catch {
-      // ignore -- points tracking is best-effort
-    }
     window.print();
   }
 
+  // One row of either sent list: the subject's picture, what the sheet is about, its details, and `end` (its status or what to do with it).
+  const sheetRow = (w: SentWorksheet, from: string | null, end: ReactNode) => {
+    const about = w.video ? pickText(lang, w.video.title, w.video.titleAr) : w.topic;
+    return (
+      <li key={w.id} className="list-row" style={{ flexWrap: 'wrap' }}>
+        <span className="list-row-icon">
+          <img src={art(w.subject)} alt="" width={28} height={28} />
+        </span>
+        <div style={{ flex: '1 1 180px', minWidth: 0 }}>
+          <strong>
+            {subjectName(w.subject)}
+            {about && (
+              <>
+                {' · '}
+                <bdi>{about}</bdi>
+              </>
+            )}
+          </strong>
+          <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>
+            {[from, t(`worksheets.${w.difficulty}`), `${t('worksheets.countLabel')}: ${w.total}`, dateOf(w.createdAt)].filter(Boolean).join(' · ')}
+          </p>
+        </div>
+        <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+          {end}
+        </div>
+      </li>
+    );
+  };
+
   return (
     <div className="stack">
-      <Topbar title={t('worksheets.title')} subtitle={t('worksheets.subtitle')} />
+      <Topbar title={t('worksheets.title')} subtitle={t(isTeacher ? 'worksheets.subtitleTeacher' : 'worksheets.subtitle')} />
 
       {error && (
         <div ref={errorRef} className="form-error-banner" role="alert">
@@ -180,6 +305,37 @@ export function WorksheetsPage() {
         </div>
       )}
       {worksheet?.aiUnavailable && !result && <div className="form-error-banner">{t('worksheets.aiFallbackNote')}</div>}
+      {sent && (
+        <div className="form-success-banner" role="status">
+          {t(sent.alreadySent ? 'worksheets.alreadySent' : 'worksheets.sentDone')}
+        </div>
+      )}
+
+      {!isTeacher && !worksheet && received && received.length > 0 && (
+        <div className="card stack">
+          <h3 style={{ fontSize: 16, margin: 0 }}>{t('worksheets.receivedTitle')}</h3>
+          <ul className="stack" style={{ gap: 10, listStyle: 'none', margin: 0, padding: 0 }}>
+            {received.map((w) =>
+              sheetRow(
+                w,
+                t('worksheets.fromTeacher', { name: w.teacherName }),
+                w.status === 'solved' ? (
+                  <span className="badge badge-success">{t('worksheets.statusSolved', { score: w.score ?? 0, total: w.total })}</span>
+                ) : (
+                  <>
+                    <span className={`badge ${w.status === 'new' ? 'badge-gold' : 'badge-maroon'}`}>
+                      {t(w.status === 'new' ? 'worksheets.statusNew' : 'worksheets.statusStarted')}
+                    </span>
+                    <button type="button" className="btn btn-primary btn-sm" disabled={opening !== null} onClick={() => openReceived(w.id)}>
+                      {t(w.status === 'new' ? 'worksheets.start' : 'worksheets.continue')}
+                    </button>
+                  </>
+                )
+              )
+            )}
+          </ul>
+        </div>
+      )}
 
       {!worksheet && (
         <div className="card stack">
@@ -302,11 +458,11 @@ export function WorksheetsPage() {
 
       {worksheet && !result && (
         <div className="stack">
-          <div className="flex-between">
+          <div className="flex-between" style={{ flexWrap: 'wrap', gap: 12 }}>
             <h2 style={{ fontSize: 18 }}>
-              <img src={art(subject)} alt="" width={26} height={26} style={{ verticalAlign: -7, marginInlineEnd: 6, display: 'inline-block' }} />
-              {subject === 'math' ? t('worksheets.math') : t('worksheets.science')} —{' '}
-              {t(`worksheets.${difficulty}`)}
+              <img src={art(worksheet.subject)} alt="" width={26} height={26} style={{ verticalAlign: -7, marginInlineEnd: 6, display: 'inline-block' }} />
+              {subjectName(worksheet.subject)} —{' '}
+              {t(`worksheets.${worksheet.difficulty}`)}
               {worksheet.topic && (
                 <span className="muted" style={{ fontSize: 14, display: 'block', fontWeight: 600 }}>
                   {t('worksheets.videoTopic', { title: worksheet.topic })}
@@ -319,44 +475,50 @@ export function WorksheetsPage() {
                   {worksheet.video.authorName ? ` — ${t('worksheets.videoBy', { name: worksheet.video.authorName })}` : ''}
                 </span>
               )}
+              {worksheet.teacherName && (
+                <span className="muted" style={{ fontSize: 14, display: 'block', fontWeight: 600 }}>
+                  {t('worksheets.fromTeacher', { name: worksheet.teacherName })}
+                </span>
+              )}
             </h2>
             <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
-              {/* Printing a worksheet for a class is a teacher task -- students solve it
-                  interactively in-app instead, so this stays out of their view. The +10
-                  badge mirrors TEACHER_PRINT_POINTS in backend lib/xp.ts -- purely a
-                  heads-up before they click, the actual award happens server-side. */}
-              {user?.role === 'teacher' && (
-                <span className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+              {/* Printing a worksheet for a class and sending it to the students are the teacher's side of a worksheet -- students solve it
+                  in the app instead, so these stay out of their view. */}
+              {isTeacher && (
+                <>
                   <button className="btn btn-secondary btn-sm" onClick={handlePrint} style={{ whiteSpace: 'nowrap' }}>
                     {t('worksheets.print')}
                   </button>
-                  <span
-                    className="badge badge-gold"
-                    style={{ fontSize: 11, whiteSpace: 'nowrap' }}
-                    title={t('worksheets.printPoints', { points: 10 })}
-                  >
-                    🏆 {t('worksheets.printPoints', { points: 10 })}
-                  </span>
-                </span>
+                  {!sent && (
+                    <button className="btn btn-primary btn-sm" onClick={send} disabled={sending} style={{ whiteSpace: 'nowrap' }}>
+                      {sending ? t('worksheets.sending') : t('worksheets.sendAll')}
+                    </button>
+                  )}
+                </>
               )}
               <button className="btn btn-ghost btn-sm" onClick={reset}>
-                {t('common.cancel')}
+                {sent ? t('worksheets.generateAnother') : t('common.cancel')}
               </button>
             </div>
           </div>
-          <QuizCard questions={questions} onSubmit={submit} submitting={submitting} />
-          {user?.role === 'teacher' && (
-            <PrintableWorksheet
-              subjectLabel={
-                (subject === 'math' ? t('worksheets.math') : t('worksheets.science')) +
-                (worksheet.video ? ` · ${pickText(lang, worksheet.video.title, worksheet.video.titleAr)}` : '') +
-                (worksheet.topic ? ` · ${worksheet.topic} · ${t('worksheets.gradeOption', { n: grade })}` : '')
-              }
-              subjectIcon={art(subject)}
-              difficultyLabel={t(`worksheets.${difficulty}`)}
-              difficultyIcon={art(difficulty)}
-              questions={questions}
-            />
+          {isTeacher ? (
+            <>
+              <p className="muted" style={{ margin: 0 }}>{t('worksheets.previewNote')}</p>
+              <WorksheetPreview questions={questions} />
+              <PrintableWorksheet
+                subjectLabel={
+                  subjectName(worksheet.subject) +
+                  (worksheet.video ? ` · ${pickText(lang, worksheet.video.title, worksheet.video.titleAr)}` : '') +
+                  (worksheet.topic ? ` · ${worksheet.topic} · ${t('worksheets.gradeOption', { n: grade })}` : '')
+                }
+                subjectIcon={art(worksheet.subject)}
+                difficultyLabel={t(`worksheets.${worksheet.difficulty}`)}
+                difficultyIcon={art(worksheet.difficulty)}
+                questions={questions}
+              />
+            </>
+          ) : (
+            <QuizCard questions={questions} onSubmit={submit} submitting={submitting} />
           )}
         </div>
       )}
@@ -372,8 +534,21 @@ export function WorksheetsPage() {
           </div>
           <QuizResults questions={questions} results={result.results} />
           <button className="btn btn-primary btn-block" onClick={reset}>
-            {t('worksheets.generateAnother')}
+            {t(worksheet.sentWorksheetId ? 'worksheets.backToWorksheets' : 'worksheets.generateAnother')}
           </button>
+        </div>
+      )}
+
+      {isTeacher && sentList && (
+        <div className="card stack">
+          <h3 style={{ fontSize: 16, margin: 0 }}>{t('worksheets.sentTitle')}</h3>
+          {sentList.length === 0 ? (
+            <p className="muted" style={{ margin: 0 }}>{t('worksheets.sentEmpty')}</p>
+          ) : (
+            <ul className="stack" style={{ gap: 10, listStyle: 'none', margin: 0, padding: 0 }}>
+              {sentList.map((w) => sheetRow(w, null, <span className="badge badge-success">{t('worksheets.solvedBy', { n: w.solvedCount })}</span>))}
+            </ul>
+          )}
         </div>
       )}
     </div>

@@ -2,7 +2,10 @@ import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
-import { awardXp, penalizeWrongAnswers, getPlayerLevel, VIDEO_HALF_WATCH_POINTS, VIDEO_FULL_WATCH_POINTS, QUIZ_PASS_POINTS, QUIZ_FAIL_POINTS } from '../lib/xp.js';
+import { forbidRole } from '../middleware/auth.js';
+import {
+  awardXp, penalizeWrongAnswers, getPlayerLevel, syncTeacherPoints, VIDEO_HALF_WATCH_POINTS, VIDEO_FULL_WATCH_POINTS, QUIZ_PASS_POINTS, QUIZ_FAIL_POINTS,
+} from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { getDoublePointsStatus, DOUBLE_POINTS_MULTIPLIER } from '../lib/doublePoints.js';
@@ -25,71 +28,57 @@ function visibleReel(userId: number, reelId: number): any | null {
   return user && (user.role === 'teacher' || user.grade === reel.grade) ? reel : null;
 }
 
-// `rankKey` is the rank the uploader's picture is framed with (the frame files are named after it)
-function loadAuthor(
-  userId: number | null
-): { username: string; displayName: string; avatarKey: string; avatarUrl: string | null; rankKey: string } | null {
-  if (!userId) return null;
-  const row = db.prepare(`SELECT username, display_name, avatar_key, avatar_url, role, total_xp, teacher_points FROM users WHERE id = ?`).get(userId) as
-    | { username: string; display_name: string; avatar_key: string; avatar_url: string | null; role: string; total_xp: number; teacher_points: number }
-    | undefined;
-  if (!row) return null;
-  const rankKey = row.role === 'teacher' ? getTeacherRankTier(row.teacher_points ?? 0).key : getRankTier(row.total_xp ?? 0).key;
-  return { username: row.username, displayName: row.display_name, avatarKey: row.avatar_key, avatarUrl: row.avatar_url, rankKey };
-}
-
-function loadQuestions(reelId: number) {
-  const questions = db
-    .prepare(
-      `SELECT id, question_text, question_text_ar, choices_json, choices_json_ar, order_in_reel FROM reel_questions WHERE reel_id = ? ORDER BY order_in_reel`
-    )
-    .all(reelId) as any[];
-  return questions.map((q) => ({
-    id: q.id,
-    text: q.question_text,
-    textAr: q.question_text_ar,
-    choices: JSON.parse(q.choices_json),
-    choicesAr: JSON.parse(q.choices_json_ar),
-    order: q.order_in_reel,
-  }));
-}
-
-// Returns every currently-playable reel (unlocked normal levels, plus any grade-based
-// teacher reels matching the caller's own grade, or all of them for a teacher) in one response — the frontend used to
-// fetch /map, then fire one /reels/level/:n request per unlocked level in parallel (N+1
-// round trips just to render the feed, and again every time a level completed). This does
-// the same join+filter /map already does, then gathers each level's reels/questions
-// in-process (still N small synchronous SQLite calls, but zero extra HTTP round trips).
+// Every lesson the caller can watch, in one response: each reel with its subject, its author (`rankKey` is the rank the uploader's picture is
+// framed with -- the frame files are named after it), its quiz and its likes. Three queries in all, however many lessons there are -- the reels
+// (subject, author and like counts joined in), then every one of their questions, grouped here.
 reelsRouter.get('/feed', (req, res) => {
   // Only teachers' grade-based videos live in Reels. The adventure-map levels are plain question rounds (routes/mapQuiz.ts), with no
   // video behind them. The lessons are always available (nothing to unlock, no lock state). A student gets every lesson tagged with their own grade.
   // Teachers don't set a grade at signup, so they see every grade-based lesson from every grade and
   // every teacher -- the same full library a student is shown, not just the ones they uploaded.
   const user = db.prepare(`SELECT grade, role FROM users WHERE id = ?`).get(req.userId!) as { grade: number | null; role: string };
-  const gradeReelsById = new Map<number, any>();
-  if (user?.role === 'teacher') {
-    for (const reel of db.prepare(`SELECT * FROM reels WHERE grade IS NOT NULL ORDER BY id`).all() as any[]) {
-      gradeReelsById.set(reel.id, reel);
-    }
-  } else if (user?.grade) {
-    for (const reel of db.prepare(`SELECT * FROM reels WHERE grade = ? ORDER BY id`).all(user.grade) as any[]) {
-      gradeReelsById.set(reel.id, reel);
-    }
+  const scope =
+    user?.role === 'teacher' ? { where: `r.grade IS NOT NULL`, params: [] as number[] } : user?.grade ? { where: `r.grade = ?`, params: [user.grade] } : null;
+  if (!scope) {
+    res.json([]);
+    return;
+  }
+  const reels = db
+    .prepare(
+      `SELECT r.*, s.key AS subject_key, s.name AS subject_name, s.name_ar AS subject_name_ar, s.icon AS subject_icon,
+              u.username AS author_username, u.display_name AS author_display_name, u.avatar_key AS author_avatar_key, u.avatar_url AS author_avatar_url,
+              u.role AS author_role, u.total_xp AS author_total_xp, u.teacher_points AS author_teacher_points,
+              (SELECT COUNT(*) FROM reel_likes l WHERE l.reel_id = r.id) AS like_count,
+              EXISTS (SELECT 1 FROM reel_likes l WHERE l.reel_id = r.id AND l.user_id = ?) AS liked_by_me
+       FROM reels r
+       JOIN subjects s ON s.id = r.subject_id
+       LEFT JOIN users u ON u.id = r.author_user_id
+       WHERE ${scope.where}`
+    )
+    .all(req.userId!, ...scope.params) as any[];
+  const questionsByReel = new Map<number, any[]>();
+  for (const q of db
+    .prepare(
+      `SELECT q.id, q.reel_id, q.question_text, q.question_text_ar, q.choices_json, q.choices_json_ar, q.order_in_reel
+       FROM reel_questions q JOIN reels r ON r.id = q.reel_id
+       WHERE ${scope.where} ORDER BY q.reel_id, q.order_in_reel`
+    )
+    .all(...scope.params) as any[]) {
+    const list = questionsByReel.get(q.reel_id) ?? [];
+    list.push({ id: q.id, text: q.question_text, textAr: q.question_text_ar, choices: JSON.parse(q.choices_json), choicesAr: JSON.parse(q.choices_json_ar), order: q.order_in_reel });
+    questionsByReel.set(q.reel_id, list);
   }
   // Random order, new every time Reels is opened (not newest or oldest first): the lessons are shuffled here, and the page keeps that order for the
   // whole visit (ReelsPage's handleCompleted refreshes the lessons in place without moving any).
-  const shuffled = [...gradeReelsById.values()];
-  for (let i = shuffled.length - 1; i > 0; i--) {
+  for (let i = reels.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    [reels[i], reels[j]] = [reels[j], reels[i]];
   }
-  const gradeFeed: any[] = [];
-  for (const reel of shuffled) {
-    const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(reel.subject_id) as any;
-    gradeFeed.push({
+  res.json(
+    reels.map((reel) => ({
       comingSoon: false,
       level: { levelNumber: -reel.id, title: 'Grade Lesson', titleAr: null, kind: 'normal' },
-      subject: { key: subject.key, name: subject.name, nameAr: subject.name_ar, icon: subject.icon },
+      subject: { key: reel.subject_key, name: reel.subject_name, nameAr: reel.subject_name_ar, icon: reel.subject_icon },
       reel: {
         id: reel.id,
         title: reel.title,
@@ -98,14 +87,42 @@ reelsRouter.get('/feed', (req, res) => {
         scriptTextAr: reel.script_text_ar,
         videoUrl: reel.video_url,
         durationSec: reel.duration_sec,
-        author: loadAuthor(reel.author_user_id),
-        questions: loadQuestions(reel.id),
+        author: reel.author_username
+          ? {
+              username: reel.author_username,
+              displayName: reel.author_display_name,
+              avatarKey: reel.author_avatar_key,
+              avatarUrl: reel.author_avatar_url,
+              rankKey:
+                reel.author_role === 'teacher' ? getTeacherRankTier(reel.author_teacher_points ?? 0).key : getRankTier(reel.author_total_xp ?? 0).key,
+            }
+          : null,
+        questions: questionsByReel.get(reel.id) ?? [],
+        likeCount: reel.like_count,
+        likedByMe: !!reel.liked_by_me,
       },
       progress: { status: 'available', stars: 0, bestScore: 0 },
-    });
-  }
+    }))
+  );
+});
 
-  res.json(gradeFeed);
+const likeSchema = z.object({ liked: z.boolean() });
+
+// Liking a lesson: anyone who can watch it (admins do not use reels). It sets the like rather than toggling it, so a double tap or a retried request
+// cannot flip it back. A like from anyone but the lesson's own teacher is worth points to that teacher, so their points are recounted (lib/xp.ts).
+reelsRouter.post('/:reelId/like', forbidRole('admin'), requireCsrfHeader, validateBody(likeSchema), (req, res) => {
+  const reel = visibleReel(req.userId!, Number(req.params.reelId));
+  if (!reel || !reel.video_url) {
+    res.status(404).json({ error: 'Lesson not found.' });
+    return;
+  }
+  const { liked } = req.body as { liked: boolean };
+  const changed = liked
+    ? db.prepare(`INSERT OR IGNORE INTO reel_likes (user_id, reel_id) VALUES (?, ?)`).run(req.userId!, reel.id).changes
+    : db.prepare(`DELETE FROM reel_likes WHERE user_id = ? AND reel_id = ?`).run(req.userId!, reel.id).changes;
+  if (changed) syncTeacherPoints(reel.author_user_id, 'reel_like');
+  const { n } = db.prepare(`SELECT COUNT(*) AS n FROM reel_likes WHERE reel_id = ?`).get(reel.id) as { n: number };
+  res.json({ likeCount: n, likedByMe: liked });
 });
 
 // Matches ReelSlide.tsx's flush cadence (a heartbeat roughly every WATCH_HEARTBEAT_SECONDS
@@ -177,6 +194,8 @@ reelsRouter.post('/:reelId/watch', requireCsrfHeader, validateBody(watchSchema),
   }
 
   const newTotalWatched = priorTotalWatched + seconds;
+  // what was actually paid: nothing for a teacher, who watches without earning (lib/xp.ts awardXp)
+  pointsDelta = awardXp(req.userId!, pointsDelta, 'reel_watch');
   if (existing) {
     db.prepare(
       `UPDATE reel_watch_progress
@@ -196,8 +215,6 @@ reelsRouter.post('/:reelId/watch', requireCsrfHeader, validateBody(watchSchema),
   if (seconds > 0) {
     db.prepare(`INSERT INTO reel_watch_seconds_events (user_id, seconds) VALUES (?,?)`).run(req.userId!, seconds);
   }
-
-  if (pointsDelta > 0) awardXp(req.userId!, pointsDelta, 'reel_watch');
 
   res.json({ watchedSeconds: newTotalWatched, xpEarned: pointsDelta, totalWatchXp: priorPoints + pointsDelta });
 });
@@ -229,14 +246,14 @@ reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema
   // counts as a pass.
   const doublePoints = getDoublePointsStatus();
   const basePoints = scoreRatio >= 0.5 ? QUIZ_PASS_POINTS : QUIZ_FAIL_POINTS;
-  const xpEarned = doublePoints.active ? basePoints * DOUBLE_POINTS_MULTIPLIER : basePoints;
 
   const watchRow = db.prepare(`SELECT * FROM reel_watch_progress WHERE user_id = ? AND reel_id = ?`).get(req.userId!, reelId) as any;
 
   const levelBeforeXp = getPlayerLevel(req.userId!);
   // wrong answers are charged first, so only the net of this submission can move a rank (see lib/xp.ts)
   const xpLost = penalizeWrongAnswers(req.userId!, wrongCount);
-  awardXp(req.userId!, xpEarned, 'reel_quiz');
+  // what was actually paid: nothing for a teacher (lib/xp.ts awardXp)
+  const xpEarned = awardXp(req.userId!, doublePoints.active ? basePoints * DOUBLE_POINTS_MULTIPLIER : basePoints, 'reel_quiz');
 
   // passed_quiz is sticky -- once a reel has been passed at >=50%, a later poor retry
   // (e.g. reviewing the lesson again) never revokes that.

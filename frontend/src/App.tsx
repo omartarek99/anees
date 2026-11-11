@@ -38,7 +38,6 @@ import { LandingPage } from './pages/LandingPage';
 const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
 const ReelsPage = lazy(() => import('./pages/ReelsPage').then((m) => ({ default: m.ReelsPage })));
 const MapPage = lazy(() => import('./pages/MapPage').then((m) => ({ default: m.MapPage })));
-const LevelQuizPage = lazy(() => import('./pages/LevelQuizPage').then((m) => ({ default: m.LevelQuizPage })));
 const WorksheetsPage = lazy(() => import('./pages/WorksheetsPage').then((m) => ({ default: m.WorksheetsPage })));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage').then((m) => ({ default: m.LeaderboardPage })));
 const FriendsPage = lazy(() => import('./pages/FriendsPage').then((m) => ({ default: m.FriendsPage })));
@@ -191,12 +190,13 @@ function ProtectedLayout() {
       </div>
       <QuickMenu />
       <GuideHost />
-      {/* Admin has no quiz/gameplay surface of its own -- nothing for this to announce there. */}
-      {user.role !== 'admin' && <DoublePointsNotification />}
+      {/* Double points, friend challenges and the level pop-outs are all about student XP: a teacher earns none (backend lib/xp.ts) and the
+          server refuses them the challenges, so these would only poll for nothing. */}
+      {user.role === 'student' && <DoublePointsNotification />}
+      {user.role === 'student' && <ChallengeHost />}
+      {user.role === 'student' && <RankMilestonePopup />}
       {/* Certificates are only ever issued to students/teachers (routes/admin.ts rejects
           admin recipients), so there's nothing for an admin account to ever be announced. */}
-      {user.role !== 'admin' && <ChallengeHost />}
-      {user.role !== 'admin' && <RankMilestonePopup />}
       {user.role !== 'admin' && <CertificateAwardPopup />}
       <RankDemotion />
     </div>
@@ -211,23 +211,30 @@ function ProtectedLayout() {
 function RoleHome() {
   const { user } = useAuth();
   if (user?.role === 'admin') return <Navigate to="/admin" replace />;
-  return <HomePage />; // teachers share the student home (and every gameplay page)
+  return <HomePage />; // students and teachers share the home page; it shows a teacher no student progress
 }
 
 /** Gates the wrapped routes to teacher accounts only — a signed-in student who
- * navigates here is bounced back to Home. Reels/Map/Craft/Worksheets/Leaderboard/
- * Friends have no equivalent guard: teachers share the full gameplay surface with
- * students (matching the backend, which no longer role-gates those routes either) —
- * a teacher account is a student account plus a few extras, not a separate walled-off
- * experience. */
+ * navigates here is bounced back to Home. Reels/Worksheets/Leaderboard/Friends are
+ * shared by both account types, each page showing a teacher their own side of it (a
+ * teacher makes the lessons and worksheets that students watch and solve); the two
+ * games are students only (StudentOnly below). */
 function TeacherOnly() {
   const { user } = useAuth();
   if (user?.role !== 'teacher') return <Navigate to="/" replace />;
   return <Outlet />;
 }
 
-/** Gates the admin panel to admin accounts only. Unlike teacher, admin has no gameplay
- * surface at all -- there's nothing else on the site for it to fall back to besides "/",
+/** The Adventure Map and the Quarry are games students play for XP: a teacher is a content creator, not a player (the backend refuses
+ * them /api/map and /api/craft too), so a typed-in URL goes back to Home. */
+function StudentOnly() {
+  const { user } = useAuth();
+  if (user?.role !== 'student') return <Navigate to="/" replace />;
+  return <Outlet />;
+}
+
+/** Gates the admin panel to admin accounts only. Unlike a teacher, admin has none of the
+ * shared pages at all -- there's nothing else on the site for it to fall back to besides "/",
  * which itself just forwards an admin back here (see RoleHome above). */
 function AdminOnly() {
   const { user } = useAuth();
@@ -318,9 +325,10 @@ export default function App() {
                 <Route path="/" element={<RoleHome />} />
                 <Route element={<NoAdmin />}>
                   <Route path="/reels" element={<ReelsPage />} />
-                  <Route path="/map" element={<MapPage />} />
-                  <Route path="/map/level/:levelNumber" element={<LevelQuizPage />} />
-                  <Route path="/craft" element={<CraftPage />} />
+                  <Route element={<StudentOnly />}>
+                    <Route path="/map" element={<MapPage />} />
+                    <Route path="/craft" element={<CraftPage />} />
+                  </Route>
                   <Route path="/worksheets" element={<WorksheetsPage />} />
                   <Route path="/leaderboard" element={<LeaderboardPage />} />
                   <Route path="/friends" element={<FriendsPage />} />

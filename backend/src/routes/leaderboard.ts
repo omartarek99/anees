@@ -7,10 +7,9 @@ export const leaderboardRouter = asyncRouter();
 
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
-// Teachers get a separate, video-upload/print-driven ranking (teacher_points,
-// teacher_point_events -- see lib/xp.ts) instead of the student XP board -- they don't
-// earn XP the same way students do, and mixing the two currencies on one board wouldn't
-// mean anything. Which board a caller sees is entirely determined by their own role.
+// Teachers get a separate ranking driven by what they made -- lessons posted, likes on them, worksheets students solved (teacher_points,
+// teacher_point_events -- see lib/xp.ts) -- instead of the student XP board: they don't earn XP at all, and mixing the two currencies on one
+// board wouldn't mean anything. Which board a caller sees is entirely determined by their own role.
 leaderboardRouter.get('/', (req, res) => {
   const isTeacher = req.userRole === 'teacher';
 

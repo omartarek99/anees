@@ -22,7 +22,7 @@ function tierOfLevel(levelNumber: number, userId: number): number {
   return Math.min(10, Math.max(1, Math.round((byLevel + byDivision) / 2)));
 }
 
-// Grade 6 students get the grade-6 questions; everyone else (grade 5, teachers, no grade) the grade-5 ones.
+// Grade 6 students get the grade-6 questions; everyone else (grade 5, or no grade) the grade-5 ones.
 function gradeOf(userId: number): number {
   const u = db.prepare(`SELECT grade FROM users WHERE id = ?`).get(userId) as { grade: number | null } | undefined;
   return u?.grade === 6 ? 6 : 5;

@@ -5,12 +5,12 @@ import cookieParser from 'cookie-parser';
 import { seed } from './db/seed.js';
 import { ensureSubjects } from './lib/ensureSubjects.js';
 import { applyMapQuestions, applyLevelPool, removeDefaultVideos } from './lib/mapQuestions.js';
-import { backfillAdminPoints } from './lib/pointsBackfill.js';
+import { backfillAdminPoints, recountTeacherPoints } from './lib/pointsBackfill.js';
 import { issuePendingRankCertificates } from './lib/rankCertificates.js';
 import { db } from './db/db.js';
 import { startDatabaseBackups } from './lib/dbBackup.js';
 import { apiLimiter } from './middleware/rateLimit.js';
-import { requireAuth } from './middleware/auth.js';
+import { requireAuth, requireRole } from './middleware/auth.js';
 import { authRouter } from './routes/auth.js';
 import { usersRouter } from './routes/users.js';
 import { reelsRouter } from './routes/reels.js';
@@ -35,6 +35,7 @@ applyMapQuestions();
 applyLevelPool();
 removeDefaultVideos();
 backfillAdminPoints();
+recountTeacherPoints();
 issuePendingRankCertificates();
 applyChallengePool();
 startDatabaseBackups(db);
@@ -92,25 +93,24 @@ app.use('/api', apiLimiter);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
-// Teacher and student accounts share the entire gameplay surface (reels, map,
-// worksheets, leaderboard, friends, craft) — a teacher account is a student account
-// plus extras (ID-verified signup and the reel composer below), not a separate walled-off
-// experience. `/api/teacher-reels` is the one truly teacher-only surface, gated per-route inside
-// its own router.
+// Students play; teachers make the content. The adventure map, the Builder's Quarry (craft) and friend challenges are for students only. A teacher
+// posts reel lessons (the composer, `/api/teacher-reels`, gated per-route inside its own router) and sends worksheets to every student
+// (routes/worksheets.ts), and climbs their own ladder of teacher points counted from that (lib/xp.ts). They still watch the reels and use the
+// leaderboard, friends and worksheets, but never earn student XP (lib/xp.ts awardXp).
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/reels', requireAuth, reelsRouter);
-app.use('/api/map', requireAuth, mapRouter);
+app.use('/api/map', requireAuth, requireRole('student'), mapRouter);
 app.use('/api/worksheets', requireAuth, worksheetsRouter);
 app.use('/api/leaderboard', requireAuth, leaderboardRouter);
 app.use('/api/friends', requireAuth, friendsRouter);
-app.use('/api/craft', requireAuth, craftRouter);
+app.use('/api/craft', requireAuth, requireRole('student'), craftRouter);
 app.use('/api/teacher-reels', teacherReelsRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/certificates', requireAuth, certificatesRouter);
 app.use('/api/guide', requireAuth, guideRouter);
-app.use('/api/challenges', requireAuth, challengesRouter);
+app.use('/api/challenges', requireAuth, requireRole('student'), challengesRouter);
 app.use('/api/violations', violationsRouter);
 
 app.use((_req, res) => {

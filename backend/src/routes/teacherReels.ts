@@ -14,7 +14,7 @@ import { compressVideoFile } from '../lib/videoCompression.js';
 import { probeVideoFromUrl } from '../lib/videoProbe.js';
 import { r2Delete, r2Enabled, r2PublicUrl, r2UploadUrl } from '../lib/r2.js';
 import { queueVideoOptimise } from '../lib/videoOptimize.js';
-import { awardTeacherPoints, teacherVideoUploadPoints } from '../lib/xp.js';
+import { syncTeacherPoints } from '../lib/xp.js';
 import { VIDEO_BUCKET, VIDEO_PATH_PREFIX, deleteReelVideoIfAny } from '../lib/reelVideo.js';
 import { generateQuizQuestions } from '../lib/gemini.js';
 import { findBankMatch } from '../lib/questionBank.js';
@@ -201,7 +201,8 @@ teacherReelsRouter.get('/', requireAuth, requireRole('teacher', 'admin'), (req, 
   const rows = db
     .prepare(
       `SELECT r.*, s.name as subject_name, s.name_ar as subject_name_ar,
-              (SELECT COUNT(*) FROM reel_questions WHERE reel_id = r.id) as question_count
+              (SELECT COUNT(*) FROM reel_questions WHERE reel_id = r.id) as question_count,
+              (SELECT COUNT(*) FROM reel_likes WHERE reel_id = r.id) as like_count
        FROM reels r
        JOIN subjects s ON r.subject_id = s.id
        WHERE r.author_user_id = ?
@@ -221,6 +222,7 @@ teacherReelsRouter.get('/', requireAuth, requireRole('teacher', 'admin'), (req, 
       subjectName: r.subject_name,
       subjectNameAr: r.subject_name_ar,
       questionCount: r.question_count,
+      likeCount: r.like_count,
     })),
   });
 });
@@ -559,10 +561,9 @@ teacherReelsRouter.post('/:id/video/complete', requireAuth, requireRole('teacher
   // The real, measured video duration replaces whatever placeholder duration the teacher's composer form had -- it drives the reel's progress bar
   // and the watch-points thresholds (routes/reels.ts POST /:reelId/watch), so it has to match the actual file, not a guess.
   db.prepare(`UPDATE reels SET video_url = ?, duration_sec = ?, video_status = 'ready' WHERE id = ?`).run(publicUrl, Math.round(probe.durationSeconds), reel.id);
-  // 10 teacher points per 30s of real video duration, capped at 90s counted (see lib/xp.ts) -- awarded on every successful upload, including
-  // replacing an existing video, same as every other point source in this app pays out per action.
-  const points = teacherVideoUploadPoints(probe.durationSeconds);
-  if (points > 0 && req.userRole === 'teacher') awardTeacherPoints(req.userId!, points, 'video_upload');
+  // A lesson with a video counts as posted for its teacher's points (lib/xp.ts) -- the author's, also when an admin added the video; replacing a
+  // video changes nothing.
+  syncTeacherPoints(reel.author_user_id, 'reel_posted');
   res.json({ videoUrl: publicUrl });
   // students get a small, fast-starting copy (720p, index first) as soon as the server has made it; the original plays until then
   if (r2Enabled) queueVideoOptimise(reel.id);
@@ -602,12 +603,12 @@ teacherReelsRouter.post(
     db.prepare(`UPDATE reels SET video_status = 'processing', video_error = NULL WHERE id = ?`).run(reel.id);
     processingVideos.add(req.userId!);
     res.status(202).json({ status: 'processing' });
-    void processVideoUpload(reel.id, req.userId!, video.path, req.userRole === 'teacher');
+    void processVideoUpload(reel.id, req.userId!, video.path);
   }
 );
 
-/** The background half of a video upload: compress it, store it, then point the lesson at it (and pay the teacher for it). */
-async function processVideoUpload(reelId: number, userId: number, originalPath: string, payTeacher: boolean) {
+/** The background half of a video upload: compress it, store it, then point the lesson at it (and recount its teacher's points). */
+async function processVideoUpload(reelId: number, userId: number, originalPath: string) {
   try {
     if (!supabaseAdmin) throw new Error('storage not configured');
     const { buffer: compressed, durationSeconds } = await compressVideoFile(originalPath);
@@ -619,7 +620,9 @@ async function processVideoUpload(reelId: number, userId: number, originalPath: 
     if (uploadError) throw new Error(`storage upload: ${uploadError.message}`);
     const { data: publicUrlData } = supabaseAdmin.storage.from(VIDEO_BUCKET).getPublicUrl(path);
 
-    const current = db.prepare(`SELECT video_url FROM reels WHERE id = ?`).get(reelId) as { video_url: string | null } | undefined;
+    const current = db.prepare(`SELECT video_url, author_user_id FROM reels WHERE id = ?`).get(reelId) as
+      | { video_url: string | null; author_user_id: number | null }
+      | undefined;
     if (!current) {
       // the lesson was deleted while its video was being processed: nothing to attach it to
       await supabaseAdmin.storage.from(VIDEO_BUCKET).remove([path]);
@@ -631,14 +634,11 @@ async function processVideoUpload(reelId: number, userId: number, originalPath: 
     // (routes/reels.ts POST /:reelId/watch), so it has to match the actual file, not a guess.
     if (durationSeconds !== null && durationSeconds > 0) {
       db.prepare(`UPDATE reels SET video_url = ?, duration_sec = ?, video_status = 'ready', video_error = NULL WHERE id = ?`).run(publicUrlData.publicUrl, Math.round(durationSeconds), reelId);
-      // 10 teacher points per 30s of real video duration, capped at 90s counted (see
-      // lib/xp.ts) -- awarded on every successful upload, including replacing an
-      // existing video, same as every other point source in this app pays out per action.
-      const points = teacherVideoUploadPoints(durationSeconds);
-      if (points > 0 && payTeacher) awardTeacherPoints(userId, points, 'video_upload');
     } else {
       db.prepare(`UPDATE reels SET video_url = ?, video_status = 'ready', video_error = NULL WHERE id = ?`).run(publicUrlData.publicUrl, reelId);
     }
+    // a lesson with a video counts as posted (see /video/complete above)
+    syncTeacherPoints(current.author_user_id, 'reel_posted');
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('Video processing failed:', message.slice(0, 600));
@@ -659,5 +659,7 @@ teacherReelsRouter.delete('/:id', requireAuth, requireRole('teacher', 'admin'), 
   }
   await deleteReelVideoIfAny(reel.video_url);
   db.prepare(`DELETE FROM reels WHERE id = ?`).run(reel.id);
+  // its likes and the worksheets sent from it go with it (schema.sql), and so do the points they were worth
+  syncTeacherPoints(reel.author_user_id, 'reel_removed');
   res.json({ ok: true });
 });

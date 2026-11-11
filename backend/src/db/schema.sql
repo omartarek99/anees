@@ -11,10 +11,11 @@ CREATE TABLE IF NOT EXISTS users (
   display_name TEXT NOT NULL,
   avatar_key TEXT NOT NULL DEFAULT 'owl',
   total_xp INTEGER NOT NULL DEFAULT 0,
-  -- Separate currency from total_xp, only ever earned by teacher accounts (worksheet
-  -- prints + video uploads, see lib/xp.ts) -- drives the teacher-only leaderboard
-  -- (routes/leaderboard.ts), kept apart from student XP since it rewards a completely
-  -- different kind of activity and isn't meant to be comparable to it.
+  -- Separate currency from total_xp, only ever held by teacher accounts and counted from what
+  -- they made (lessons posted, likes on them, worksheets students solved, see lib/xp.ts
+  -- syncTeacherPoints) -- drives the teacher-only leaderboard (routes/leaderboard.ts), kept
+  -- apart from student XP since it rewards a completely different kind of activity and isn't
+  -- meant to be comparable to it.
   teacher_points INTEGER NOT NULL DEFAULT 0,
   is_seed INTEGER NOT NULL DEFAULT 0,
   role TEXT NOT NULL CHECK (role IN ('student','teacher','admin')) DEFAULT 'student',
@@ -41,9 +42,7 @@ CREATE TABLE IF NOT EXISTS users (
   -- Uploaded profile photo (Supabase Storage public URL), overriding the stylized
   -- avatar_key icon wherever an avatar is shown. NULL until the user uploads one.
   avatar_url TEXT,
-  -- The student's customised 3D character (frontend/src/components/avatar3d), stored as a small
-  -- JSON object of option ids only (validated by avatar3dSchema in lib/schemas.ts). NULL until
-  -- they save one; readers fall back to the default character / the static avatar.
+  -- Retired: the old 3D character config (JSON of option ids). Nothing reads or writes it any more; kept so existing rows keep their data.
   avatar3d TEXT,
   -- The rank colour a student picked for their pages: a tier key (lib/ranks.ts) they have reached. NULL = follow their current rank.
   aura_rank TEXT,
@@ -167,6 +166,24 @@ CREATE TABLE IF NOT EXISTS worksheet_questions (
   topic TEXT
 );
 
+-- A worksheet a teacher sent to every student (routes/worksheets.ts POST /:id/send): a copy of the
+-- teacher's own generated worksheet (source_attempt_id, which may later be pruned -- hence no
+-- foreign key; UNIQUE so sending it twice returns the same row). Each student solves it once, as
+-- their own worksheet_attempts row pointing back here.
+CREATE TABLE IF NOT EXISTS sent_worksheets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  teacher_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  source_attempt_id INTEGER UNIQUE,
+  subject_id INTEGER NOT NULL REFERENCES subjects(id),
+  difficulty TEXT NOT NULL,
+  question_ids_json TEXT NOT NULL,
+  total INTEGER NOT NULL,
+  topic TEXT,
+  reel_id INTEGER REFERENCES reels(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_sent_worksheets_teacher ON sent_worksheets(teacher_id);
+
 CREATE TABLE IF NOT EXISTS worksheet_attempts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -179,7 +196,11 @@ CREATE TABLE IF NOT EXISTS worksheet_attempts (
   xp_earned INTEGER NOT NULL DEFAULT 0,
   status TEXT NOT NULL CHECK (status IN ('generated','submitted')) DEFAULT 'generated',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  reel_id INTEGER REFERENCES reels(id) ON DELETE SET NULL
+  reel_id INTEGER REFERENCES reels(id) ON DELETE SET NULL,
+  -- The lesson name of a typed-lesson worksheet (NULL otherwise), so a teacher's worksheet can be sent with it.
+  topic TEXT,
+  -- Set when this is a student's go at a worksheet a teacher sent (one per student and sent worksheet, see db.ts).
+  sent_worksheet_id INTEGER REFERENCES sent_worksheets(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS reel_watch_progress (
@@ -231,8 +252,9 @@ CREATE TABLE IF NOT EXISTS xp_events (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Audit log for teacher_points awards (worksheet_print / video_upload), mirroring
--- xp_events -- also what the teacher leaderboard sums per month (routes/leaderboard.ts).
+-- Audit log of every change to teacher_points (reel_posted, reel_removed, reel_like, worksheet_solved,
+-- admin_adjust ... see lib/xp.ts syncTeacherPoints), mirroring xp_events -- also what the teacher
+-- leaderboard sums per month (routes/leaderboard.ts).
 CREATE TABLE IF NOT EXISTS teacher_point_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -241,13 +263,15 @@ CREATE TABLE IF NOT EXISTS teacher_point_events (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- One row per worksheet-print action a teacher takes (routes/worksheets.ts POST /print) --
--- both the "worksheets printed" profile stat and the print-points award read off this.
-CREATE TABLE IF NOT EXISTS worksheet_prints (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+-- A like on a reel lesson (routes/reels.ts POST /:reelId/like): one per person and lesson. Likes
+-- from anyone but the lesson's author count toward that teacher's points (lib/xp.ts).
+CREATE TABLE IF NOT EXISTS reel_likes (
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  reel_id INTEGER NOT NULL REFERENCES reels(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, reel_id)
 );
+CREATE INDEX IF NOT EXISTS idx_reel_likes_reel_user ON reel_likes(reel_id, user_id);
 
 -- Certificates an admin hand-issues to a student or teacher (routes/admin.ts POST
 -- /certificates) -- shown on the recipient's own profile (routes/users.ts
@@ -384,8 +408,10 @@ CREATE INDEX IF NOT EXISTS idx_friendships_b ON friendships(user_b_id);
 CREATE INDEX IF NOT EXISTS idx_friend_requests_to ON friend_requests(to_user_id);
 CREATE INDEX IF NOT EXISTS idx_certificates_user ON certificates(user_id);
 CREATE INDEX IF NOT EXISTS idx_worksheet_attempts_user ON worksheet_attempts(user_id, status);
-CREATE INDEX IF NOT EXISTS idx_worksheet_prints_user ON worksheet_prints(user_id);
+-- reels(author_user_id) and worksheet_attempts(sent_worksheet_id) are indexed in db.ts, after the
+-- migrations that add those columns to older databases (this file runs before them).
 CREATE INDEX IF NOT EXISTS idx_teacher_point_events_user_time ON teacher_point_events(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_teacher_point_events_admin ON teacher_point_events(user_id, amount) WHERE reason = 'admin_adjust';
 CREATE INDEX IF NOT EXISTS idx_watch_progress_reel ON reel_watch_progress(reel_id);
 
 -- Marker rows for data fixes that must run once per database (see runOnce() in seed.ts).

@@ -16,9 +16,9 @@ import {
   RiCertificateFill,
   RiMenu2Line,
 } from '@remixicon/react';
-import { useAuth } from '../lib/auth-context';
+import { useAuth, type Role } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
-import { GUIDE_EVENT, PAGE_IDS, finishTour, guideEnabled, markPageSeen, pageSeen, syncGuide, tourDone, tourStops, type TourStop } from '../lib/guide';
+import { PAGE_IDS, finishTour, guideEnabled, guideTextId, markPageSeen, pageSeen, syncGuide, tourDone, tourStops, type TourStop } from '../lib/guide';
 
 // First-run guide for new accounts (rules in lib/guide.ts): a welcome window, then each icon in the menu bar is lit
 // up (pulsing ring) while a big frosted-glass window zooms out of it, with a trail of floating bubbles like a cloud,
@@ -98,7 +98,7 @@ type Layout = {
   dots: { x: number; y: number; size: number }[];
 };
 
-function Steps({ stops, index, setIndex, onEnd }: { stops: TourStop[]; index: number; setIndex: (i: number) => void; onEnd: (celebrate?: boolean) => void }) {
+function Steps({ stops, role, index, setIndex, onEnd }: { stops: TourStop[]; role: Role; index: number; setIndex: (i: number) => void; onEnd: (celebrate?: boolean) => void }) {
   const { t } = useLanguage();
   const g = useGuideText();
   const stop = stops[index];
@@ -217,7 +217,7 @@ function Steps({ stops, index, setIndex, onEnd }: { stops: TourStop[]; index: nu
             <h2>{title}</h2>
           </div>
         </div>
-        <p {...rise(1)}>{g(`step_${stop.id}`)}</p>
+        <p {...rise(1)}>{g(`step_${guideTextId(stop.id, role)}`)}</p>
         <div className="guide-progress guide-rise" style={rise(2).style} role="tablist" aria-label={g('tourLabel')}>
           {stops.map((s, i) => (
             <button
@@ -287,7 +287,7 @@ function Confetti({ onDone }: { onDone: () => void }) {
   );
 }
 
-function PageIntro({ id, onClose }: { id: string; onClose: () => void }) {
+function PageIntro({ id, role, onClose }: { id: string; role: Role; onClose: () => void }) {
   const g = useGuideText();
   const { t } = useLanguage();
   useEffect(() => {
@@ -318,7 +318,7 @@ function PageIntro({ id, onClose }: { id: string; onClose: () => void }) {
           {title}
         </h2>
         <p className="guide-rise" style={{ fontSize: 15.5, lineHeight: 1.65, margin: '8px 0 0', ...rise(1).style }}>
-          {g(`page_${id}`)}
+          {g(`page_${guideTextId(id, role)}`)}
         </p>
         <button type="button" className="btn btn-primary btn-block guide-rise" style={{ marginTop: 22, ...rise(2).style }} onClick={onClose} autoFocus>
           {g('gotIt')}
@@ -340,7 +340,7 @@ export function GuideHost() {
   // What the account has already seen comes from the server first, so nothing shows twice (another browser, cleared site data).
   const [synced, setSynced] = useState(false);
 
-  // Start the tour for a new account, or again when "Show the guide" is chosen in the menu.
+  // Start the tour for a new account.
   useEffect(() => {
     if (!user) return;
     const start = () => {
@@ -357,10 +357,8 @@ export function GuideHost() {
       setSynced(true);
       start();
     });
-    window.addEventListener(GUIDE_EVENT, start);
     return () => {
       cancelled = true;
-      window.removeEventListener(GUIDE_EVENT, start);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -394,10 +392,11 @@ export function GuideHost() {
     <>
       {celebrate && <Confetti onDone={() => setCelebrate(false)} />}
       {phase === 'welcome' && <Welcome onStart={() => setPhase('steps')} onSkip={() => end()} />}
-      {phase === 'steps' && <Steps stops={tourStops(user.role)} index={index} setIndex={setIndex} onEnd={end} />}
+      {phase === 'steps' && <Steps stops={tourStops(user.role)} role={user.role} index={index} setIndex={setIndex} onEnd={end} />}
       {phase === 'idle' && intro && (
         <PageIntro
           id={intro}
+          role={user.role}
           onClose={() => {
             markPageSeen(user.id, intro);
             setIntro(null);

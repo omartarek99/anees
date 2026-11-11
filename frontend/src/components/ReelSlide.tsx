@@ -92,7 +92,7 @@ export function ReelSlide({
   registerActiveControls: (controls: ReelSlideControls | null) => void;
 }) {
   const { t, lang } = useLanguage();
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [mode, setMode] = useState<'watch' | 'quiz' | 'results'>('watch');
   const [playing, setPlaying] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -477,7 +477,7 @@ export function ReelSlide({
             {!data.videoUrl && (
               <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11.5, marginTop: 6 }}>{t('reels.videoComingSoon')}</p>
             )}
-            {data.questions.length > 0 ? (
+            {data.questions.length > 0 && user?.role === 'student' ? (
               <button className="btn btn-primary" style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 8 }} onClick={() => setMode('quiz')}>
                 <QuizIcon size={16} />
                 {t('reels.takeQuiz')}

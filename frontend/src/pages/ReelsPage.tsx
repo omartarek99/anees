@@ -34,10 +34,6 @@ import { ReelSlide, type ReelSlideData, type ReelSlideControls } from '../compon
 import { ReelActionRail } from '../components/ReelActionRail';
 import { PointsInfoModal } from '../components/PointsInfoModal';
 
-/** No backend "like" concept exists -- likes are cosmetic, session-local gamification
- * only, so every reel (new upload or existing) always starts at 0. */
-const initialLikeCount = () => 0;
-
 // One flattened entry per reel, exactly as GET /reels/feed returns it — a level can have
 // several reels (the seeded lesson plus any teacher ones), and grade-based teacher reels
 // (no map level at all) arrive with a synthetic negative `level.levelNumber` (see
@@ -55,6 +51,9 @@ type FlatReelEntry = {
     videoUrl: string | null;
     author: { username: string; displayName: string; avatarKey: string; avatarUrl: string | null; rankKey?: string } | null;
     questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null; order: number }[];
+    // every like on the lesson (its teacher's own included), and whether this viewer is one of them
+    likeCount: number;
+    likedByMe: boolean;
   };
   progress: { status: 'locked' | 'available' | 'completed'; stars: number };
 };
@@ -65,8 +64,12 @@ function isNearActive(i: number, active: number, total: number): boolean {
   return Math.min(d, total - d) <= 1;
 }
 
+type Like = { likeCount: number; likedByMe: boolean };
+
 export function ReelsPage() {
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
+  // Only a student earns XP (and so has the points explainer); a teacher's empty feed points to their own lessons, not the map.
+  const isStudent = user?.role === 'student';
   const { t, lang, dir } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const [rawDetails, setRawDetails] = useState<FlatReelEntry[]>([]);
@@ -81,15 +84,31 @@ export function ReelsPage() {
     wheelOff.current = el ? oneReelPerWheelGesture(el, () => swiperRef.current) : null;
   }, []);
 
-  // Like state lives here (outside ReelSlide) keyed by reel id, since the action rail that
-  // displays/toggles it now renders once, outside the Swiper frame, rather than per-slide.
-  const [likes, setLikes] = useState<Record<number, { liked: boolean; count: number }>>({});
-  const toggleLike = useCallback((reelId: number) => {
-    setLikes((prev) => {
-      const cur = prev[reelId] ?? { liked: false, count: initialLikeCount() };
-      return { ...prev, [reelId]: { liked: !cur.liked, count: cur.count + (cur.liked ? -1 : 1) } };
-    });
-  }, []);
+  // Likes are kept on the feed entries themselves (the action rail that shows them renders once, outside the Swiper frame). A tap flips the
+  // heart at once, the server's answer then sets the real count, and a failed request puts the heart back. One request per lesson at a time,
+  // so a quick double tap can't have its answers land out of order.
+  const likeInFlight = useRef(new Set<number>());
+  const setLike = useCallback(
+    (reelId: number, like: Like) => setRawDetails((prev) => prev.map((d) => (d.reel.id === reelId ? { ...d, reel: { ...d.reel, ...like } } : d))),
+    []
+  );
+  const toggleLike = useCallback(
+    async (reelId: number, was: Like) => {
+      if (likeInFlight.current.has(reelId)) return;
+      likeInFlight.current.add(reelId);
+      const liked = !was.likedByMe;
+      setLike(reelId, { likedByMe: liked, likeCount: Math.max(0, was.likeCount + (liked ? 1 : -1)) });
+      try {
+        const res = await api.post<Like>(`/reels/${reelId}/like`, { liked });
+        setLike(reelId, { likeCount: res.likeCount, likedByMe: res.likedByMe });
+      } catch {
+        setLike(reelId, was);
+      } finally {
+        likeInFlight.current.delete(reelId);
+      }
+    },
+    [setLike]
+  );
 
   // Sound preference persists across swipes (TikTok-style) rather than resetting per slide.
   // Starts with the sound ON. A browser only lets a video start with sound after the person has touched the page (so on a fresh load of
@@ -251,11 +270,17 @@ export function ReelsPage() {
     return (
       <div className="empty-state card stack" style={{ maxWidth: 520, margin: '40px auto' }}>
         <h2>{t('reels.emptyTitle')}</h2>
-        <p>{t('reels.emptyBody')}</p>
+        <p>{t(isStudent ? 'reels.emptyBody' : 'reels.emptyBodyTeacher')}</p>
         <div className="flex-center gap-md" style={{ flexWrap: 'wrap' }}>
-          <Link to="/map" className="btn btn-primary">
-            {t('home.openMap')}
-          </Link>
+          {isStudent ? (
+            <Link to="/map" className="btn btn-primary">
+              {t('home.openMap')}
+            </Link>
+          ) : (
+            <Link to="/teacher/reels" className="btn btn-primary">
+              {t('nav.myReels')}
+            </Link>
+          )}
           <Link to="/worksheets" className="btn btn-secondary">
             {t('nav.worksheets')}
           </Link>
@@ -267,7 +292,7 @@ export function ReelsPage() {
   // the slide in view, kept inside the list when a lesson has just been dropped from it
   const current = Math.min(activeIndex ?? initialIndex, Math.max(0, slides.length - 1));
   const activeSlide = slides[current] as ReelSlideData | undefined;
-  const activeLike = activeSlide ? likes[activeSlide.reelId] ?? { liked: false, count: initialLikeCount() } : null;
+  const activeReel = activeSlide && rawDetails.find((d) => d.reel.id === activeSlide.reelId)?.reel;
 
   return (
     // Cancels .app-main's own padding (20px/24px/96px) so this page -- and only this page --
@@ -338,20 +363,20 @@ export function ReelsPage() {
 
         {/* Action rail lives outside the reel frame (TikTok-desktop style), always reflecting
             whichever slide is currently active. */}
-        {activeSlide && activeLike && (
+        {activeSlide && activeReel && (
           <ReelActionRail
             author={activeSlide.author}
-            liked={activeLike.liked}
-            likeCount={activeLike.count}
-            onToggleLike={() => toggleLike(activeSlide.reelId)}
+            liked={activeReel.likedByMe}
+            likeCount={activeReel.likeCount}
+            onToggleLike={() => toggleLike(activeReel.id, { likeCount: activeReel.likeCount, likedByMe: activeReel.likedByMe })}
             questionCount={activeSlide.questions.length}
-            onOpenQuiz={() => activeControlsRef.current?.openQuiz()}
-            onOpenPointsInfo={() => setPointsInfoOpen(true)}
+            onOpenQuiz={isStudent ? () => activeControlsRef.current?.openQuiz() : undefined}
+            onOpenPointsInfo={isStudent ? () => setPointsInfoOpen(true) : undefined}
             muted={muted}
             onToggleMute={toggleMute}
           />
         )}
-        <PointsInfoModal open={pointsInfoOpen} onClose={() => setPointsInfoOpen(false)} />
+        {isStudent && <PointsInfoModal open={pointsInfoOpen} onClose={() => setPointsInfoOpen(false)} />}
       </div>
     </div>
   );

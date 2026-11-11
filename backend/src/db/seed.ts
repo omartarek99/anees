@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { db } from './db.js';
 import { encrypt, hashForLookup } from '../lib/encryption.js';
 import { BCRYPT_COST, passwordSchema } from '../lib/password.js';
+import { syncTeacherPoints } from '../lib/xp.js';
 
 type Q = {
   text: string;
@@ -57,7 +58,7 @@ function ensureDevTeacher() {
  * Admin accounts are never created through public signup (see roleSchema vs
  * adminRoleSchema in lib/schemas.ts); this is the only way one exists until an admin
  * promotes a real account through the admin panel. Admin is a pure account-management
- * role, not a gameplay one, so unlike dev_teacher it gets no map-level progress seeded. */
+ * role, not a gameplay one (only students play the map). */
 function ensureDevAdmin() {
   const exists = db.prepare(`SELECT id FROM users WHERE username = 'dev_admin'`).get();
   if (exists) return;
@@ -84,18 +85,6 @@ function ensureSeedAccountsVerified() {
   db.prepare(`UPDATE users SET email_verified = 1 WHERE username IN ('dev_student', 'dev_teacher', 'dev_admin')`).run();
 }
 
-/** Teachers play through the map exactly like students now, so dev_teacher needs the
- * same level-1-unlocked starting state dev_student gets. Idempotent and safe to call
- * before level 1 necessarily exists yet (no-ops until it does), so it can run both on
- * the already-seeded fast path below and again after a fresh seed populates levels. */
-function ensureDevTeacherProgress() {
-  const teacher = db.prepare(`SELECT id FROM users WHERE username = 'dev_teacher'`).get() as { id: number } | undefined;
-  const level1 = db.prepare(`SELECT id FROM map_levels WHERE level_number = 1`).get() as { id: number } | undefined;
-  if (!teacher || !level1) return;
-  db.prepare(
-    `INSERT OR IGNORE INTO user_level_progress (user_id, map_level_id, status) VALUES (?,?,'available')`
-  ).run(teacher.id, level1.id);
-}
 
 // The dev_student / dev_teacher / dev_admin accounts have passwords that are printed in the
 // README -- fine on a laptop, a backdoor on a public server (dev_admin is an admin). They are
@@ -199,7 +188,8 @@ function ensureTestAccounts(): void {
         .run(a.username, encrypt(email), hashForLookup(email), a.passwordHash, a.displayName, a.avatarKey, a.role, a.grade, a.schoolName, a.teacherSubject)
         .lastInsertRowid
     );
-    if (level1) {
+    // only students play the map
+    if (level1 && a.role === 'student') {
       db.prepare(`INSERT OR IGNORE INTO user_level_progress (user_id, map_level_id, status) VALUES (?,?,'available')`).run(userId, level1.id);
     }
     console.log(`[seed] Created test account "${a.username}" (${a.role}).`);
@@ -266,7 +256,11 @@ function importLessons(): void {
     });
     imported++;
   }
-  if (imported > 0) console.log(`[seed] Imported ${imported} lesson(s) for dev_teacher.`);
+  if (imported > 0) {
+    // the lessons with a video count toward dev_teacher's points, like any lesson a teacher posts (lib/xp.ts)
+    syncTeacherPoints(teacher.id, 'reel_posted');
+    console.log(`[seed] Imported ${imported} lesson(s) for dev_teacher.`);
+  }
 }
 
 /** Runs `fn` once per database, ever -- the marker row in one_time_jobs stops it repeating. */
@@ -296,7 +290,6 @@ export function seed() {
     ensureDevAdmin();
     ensureAdminDisplayName();
     ensureSeedAccountsVerified();
-    ensureDevTeacherProgress();
   } else {
     setUpProductionAccounts();
   }
@@ -876,9 +869,6 @@ export function seed() {
     insertXpEvent.run(userId, s.xp, 'seed_bootstrap', new Date().toISOString().slice(0, 19).replace('T', ' '));
   }
 
-  // Level 1 didn't exist yet when ensureDevTeacherProgress() ran at the top of this
-  // function on a brand-new database -- now that it's been created above, try again.
-  ensureDevTeacherProgress();
 
   // First boot of a production database: content now exists, so the production data can go in.
   if (!ALLOW_DEV_ACCOUNTS) importProductionData();

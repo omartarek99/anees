@@ -6,7 +6,6 @@ import { api } from './api';
 // automatically (older accounts do not suddenly get a tour). What a person
 // has already seen is kept on the account (the server), with a copy in this browser, so it shows once per new user.
 
-export const GUIDE_EVENT = 'anees:guide';
 const FRESH_DAYS = 7;
 
 const key = (userId: number, name: string) => `anees_guide_${userId}_${name}`;
@@ -68,7 +67,7 @@ export const finishTour = (userId: number) => remember(userId, 'tour');
 export const pageSeen = (userId: number, pageId: string) => read(key(userId, `page_${pageId}`)) === '1';
 export const markPageSeen = (userId: number, pageId: string) => remember(userId, `page_${pageId}`);
 
-/** Route -> the id used for that page's texts (guide.page_<id>_b) and its "seen" flag. */
+/** Route -> the id used for that page's texts (guide.page_<id>, or guide.page_<id>_teacher via guideTextId) and its "seen" flag. */
 export const PAGE_IDS: Record<string, string> = {
   '/': 'home',
   '/reels': 'reels',
@@ -85,6 +84,11 @@ export const PAGE_IDS: Record<string, string> = {
   '/admin/videos': 'adminVideos',
   '/admin/certificates': 'adminCertificates',
 };
+
+/** The stops and pages a teacher reads in their own words (guide.step_<id>_teacher / guide.page_<id>_teacher): a teacher earns points from
+ * what they make, not XP from playing. */
+const TEACHER_TEXTS = new Set(['home', 'reels', 'worksheets', 'leaderboard']);
+export const guideTextId = (id: string, role: Role) => (role === 'teacher' && TEACHER_TEXTS.has(id) ? `${id}_teacher` : id);
 
 /** The tour, in order: `target` matches the data-tour attribute on the icon (see Sidebar.tsx / QuickMenu.tsx). */
 export type TourStop = { target: string; id: string };
@@ -103,9 +107,13 @@ export function tourStops(role: Role): TourStop[] {
   const stops: TourStop[] = [
     { target: '/', id: 'home' },
     { target: '/reels', id: 'reels' },
-    ...(role === 'teacher' ? [{ target: '/teacher/reels', id: 'myReels' }] : []),
-    { target: '/map', id: 'map' },
-    { target: '/craft', id: 'craft' },
+    // a teacher has their own lessons where a student has the two games (Sidebar.tsx)
+    ...(role === 'teacher'
+      ? [{ target: '/teacher/reels', id: 'myReels' }]
+      : [
+          { target: '/map', id: 'map' },
+          { target: '/craft', id: 'craft' },
+        ]),
     { target: '/worksheets', id: 'worksheets' },
     { target: '/leaderboard', id: 'leaderboard' },
     { target: '/friends', id: 'friends' },

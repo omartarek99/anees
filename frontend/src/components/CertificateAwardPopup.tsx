@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
 import { CertificatePlaque } from './CertificatePlaque';
@@ -42,6 +43,7 @@ function useConfettiPieces(count: number) {
  * reveals the next, if any. */
 export function CertificateAwardPopup() {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [queue, setQueue] = useState<Certificate[] | null>(null);
   const confetti = useConfettiPieces(28);
   // The shield of a tier certificate pops out first; this turns true once it has been clicked and the window opens.
@@ -63,8 +65,9 @@ export function CertificateAwardPopup() {
     };
   }, []);
 
-  // The level pop-outs go first; a shield waits until none are left.
-  const waiting = useMilestonesPending();
+  // The level pop-outs go first; a shield waits until none are left. Only students have them (App.tsx mounts RankMilestonePopup for them alone),
+  // so a teacher's shield never waits.
+  const waiting = useMilestonesPending() && user?.role === 'student';
   const current = !waiting && queue && queue.length > 0 ? queue[0] : null;
   useEffect(() => setRevealed(false), [current?.id]);
 

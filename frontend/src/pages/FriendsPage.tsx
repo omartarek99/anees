@@ -12,7 +12,7 @@ import { XpIcon } from '../components/XpIcon';
 import { ChallengeSetupModal } from '../components/ChallengeSetupModal';
 import '../styles/friends.css';
 
-type Friend = { username: string; displayName: string; avatarKey: string; totalXp: number; hasShield?: boolean };
+type Friend = { username: string; displayName: string; avatarKey: string; totalXp: number; hasShield?: boolean; role: 'student' | 'teacher' };
 type FriendRequest = { requestId: number; username: string; displayName: string; avatarKey: string; createdAt: string };
 type Person = { username: string; displayName: string; avatarKey: string; hasShield?: boolean };
 
@@ -207,14 +207,19 @@ export function FriendsPage() {
                     item(
                       f.username,
                       f,
-                      <span className="fr-chip">
-                        <XpIcon size={22} />
-                        {f.totalXp} {t('common.xpUnit')}
-                      </span>,
+                      f.role === 'teacher' ? null : (
+                        <span className="fr-chip">
+                          <XpIcon size={22} />
+                          {f.totalXp} {t('common.xpUnit')}
+                        </span>
+                      ),
                       <>
-                        <button type="button" className="btn btn-gold btn-sm" onClick={() => setChallengeFor(f)}>
-                          ⚔️ {t('challenge.button')}
-                        </button>
+                        {/* Challenges are between students: a teacher earns no XP, so neither sends nor receives one (the server refuses both). */}
+                        {user?.role === 'student' && f.role !== 'teacher' && (
+                          <button type="button" className="btn btn-gold btn-sm" onClick={() => setChallengeFor(f)}>
+                            ⚔️ {t('challenge.button')}
+                          </button>
+                        )}
                         <Link to={`/profile/${f.username}`} className="btn btn-secondary btn-sm">
                           {t('friends.viewProfile')}
                         </Link>

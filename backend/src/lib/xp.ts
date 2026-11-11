@@ -42,6 +42,7 @@ export function craftPuzzleTierForXp(totalXp: number): 1 | 2 | 3 | 4 {
 export const WRONG_ANSWER_XP = 1;
 
 const roleAndXp = db.prepare(`SELECT role, total_xp FROM users WHERE id = ?`);
+const addXp = db.prepare(`UPDATE users SET total_xp = total_xp + ? WHERE id = ?`);
 const takeXp = db.prepare(`UPDATE users SET total_xp = total_xp - ? WHERE id = ?`);
 const logXp = db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`);
 const markRankDrop = db.prepare(`UPDATE users SET rank_drop_from = MAX(COALESCE(rank_drop_from, -1), ?) WHERE id = ?`);
@@ -70,42 +71,61 @@ export function penalizeWrongAnswers(userId: number, wrongCount: number): number
   return lost;
 }
 
-export function awardXp(userId: number, amount: number, reason: string) {
-  if (amount === 0) return;
-  db.prepare(`INSERT INTO xp_events (user_id, amount, reason) VALUES (?,?,?)`).run(userId, amount, reason);
-  db.prepare(`UPDATE users SET total_xp = total_xp + ? WHERE id = ?`).run(amount, userId);
+/** Pays a student `amount` points and returns what was paid. Only students earn XP: a teacher makes the content and climbs their own ladder (teacher
+ *  points, below) and an admin does not play, so a teacher watching a reel or taking its quiz simply earns nothing -- every point source routes through here. */
+export function awardXp(userId: number, amount: number, reason: string): number {
+  if (amount === 0) return 0;
+  if ((roleAndXp.get(userId) as { role: string } | undefined)?.role !== 'student') return 0;
+  logXp.run(userId, amount, reason);
+  addXp.run(amount, userId);
   issueRankCertificates(userId);
+  return amount;
 }
 
-// Teacher points are a separate currency from total_xp above, only ever earned by
-// teacher accounts -- printing a worksheet (routes/worksheets.ts POST /print) and
-// uploading a lesson video (routes/teacherReels.ts POST /:id/video) are the only two
-// sources, driving the teacher-only leaderboard (routes/leaderboard.ts).
-export const TEACHER_PRINT_POINTS = 10;
-export const TEACHER_VIDEO_POINTS_PER_30S = 10;
-// A video only ever earns points for its first 90 seconds -- a 10-minute lesson video
-// earns exactly as much as a 90-second one (30 points), not proportionally more.
-export const TEACHER_VIDEO_MAX_COUNTED_SECONDS = 90;
+// Teacher points are a separate currency from total_xp above, only ever held by teacher accounts, and counted from what the teacher has made rather
+// than paid per action: TEACHER_POINTS_PER_REEL for every lesson of theirs with a video, TEACHER_POINTS_PER_LIKE for every like other people gave
+// those lessons (their own like on their own lesson earns nothing), TEACHER_POINTS_PER_SOLVE for every student who solved a worksheet they sent --
+// plus whatever an admin added or took away (the 'admin_adjust' rows, routes/admin.ts). syncTeacherPoints recounts after anything that moves one of
+// those numbers and logs the difference in teacher_point_events, which is what the monthly teacher leaderboard adds up (routes/leaderboard.ts) -- so a
+// like taken back or a lesson deleted takes its points back with it.
+export const TEACHER_POINTS_PER_REEL = 20;
+export const TEACHER_POINTS_PER_LIKE = 2;
+export const TEACHER_POINTS_PER_SOLVE = 5;
 
-// Printing is unobservable (POST /worksheets/print only records a click), so without a ceiling a script could
-// mint leaderboard points by looping it. 300 is thirty prints, or ten full-length video uploads, a day.
-export const TEACHER_DAILY_POINT_CAP = 300;
-const teacherPointsToday = db.prepare(
-  `SELECT COALESCE(SUM(amount), 0) AS s FROM teacher_point_events WHERE user_id = ? AND created_at >= date('now') AND reason != 'admin_adjust'`
+const countTeacherReels = db.prepare(`SELECT COUNT(*) AS n FROM reels WHERE author_user_id = ? AND video_url IS NOT NULL`);
+const countTeacherLikes = db.prepare(
+  `SELECT COUNT(*) AS n FROM reels r JOIN reel_likes l ON l.reel_id = r.id WHERE r.author_user_id = ? AND l.user_id != r.author_user_id`
 );
+const countTeacherSolves = db.prepare(
+  `SELECT COUNT(*) AS n FROM sent_worksheets s JOIN worksheet_attempts a ON a.sent_worksheet_id = s.id AND a.status = 'submitted' WHERE s.teacher_id = ?`
+);
+const teacherRow = db.prepare(`SELECT role, teacher_points FROM users WHERE id = ?`);
+const adminAdjustedTeacherPoints = db.prepare(`SELECT COALESCE(SUM(amount), 0) AS n FROM teacher_point_events WHERE user_id = ? AND reason = 'admin_adjust'`);
+const logTeacherPoints = db.prepare(`INSERT INTO teacher_point_events (user_id, amount, reason) VALUES (?,?,?)`);
+const setTeacherPoints = db.prepare(`UPDATE users SET teacher_points = ? WHERE id = ?`);
 
-export function awardTeacherPoints(userId: number, amount: number, reason: string) {
-  amount = Math.min(amount, TEACHER_DAILY_POINT_CAP - (teacherPointsToday.get(userId) as { s: number }).s);
-  if (amount <= 0) return;
-  db.prepare(`INSERT INTO teacher_point_events (user_id, amount, reason) VALUES (?,?,?)`).run(userId, amount, reason);
-  db.prepare(`UPDATE users SET teacher_points = teacher_points + ? WHERE id = ?`).run(amount, userId);
+/** What a teacher has made: lessons with a video, likes from other people on them, and students' solves of the worksheets they sent. */
+export function teacherCreatorStats(teacherId: number): { reels: number; likes: number; worksheetsSolved: number } {
+  const count = (stmt: typeof countTeacherReels) => (stmt.get(teacherId) as { n: number }).n;
+  return { reels: count(countTeacherReels), likes: count(countTeacherLikes), worksheetsSolved: count(countTeacherSolves) };
 }
 
-/** 10 points per full 30-second chunk of video, counting at most
- * TEACHER_VIDEO_MAX_COUNTED_SECONDS of the actual duration (so max 30 points/upload). */
-export function teacherVideoUploadPoints(durationSeconds: number): number {
-  const counted = Math.min(durationSeconds, TEACHER_VIDEO_MAX_COUNTED_SECONDS);
-  return Math.floor(counted / 30) * TEACHER_VIDEO_POINTS_PER_30S;
+/** Recounts a teacher's points from teacherCreatorStats (see above) and logs the change, if any, under `reason`. Does nothing for anyone but a
+ *  teacher, so a caller can pass a lesson's author without checking who that is. */
+export function syncTeacherPoints(teacherId: number | null | undefined, reason: string) {
+  if (!teacherId) return;
+  const u = teacherRow.get(teacherId) as { role: string; teacher_points: number } | undefined;
+  if (u?.role !== 'teacher') return;
+  const s = teacherCreatorStats(teacherId);
+  const adjusted = (adminAdjustedTeacherPoints.get(teacherId) as { n: number }).n;
+  const target = Math.max(
+    0,
+    s.reels * TEACHER_POINTS_PER_REEL + s.likes * TEACHER_POINTS_PER_LIKE + s.worksheetsSolved * TEACHER_POINTS_PER_SOLVE + adjusted
+  );
+  const delta = target - (u.teacher_points ?? 0);
+  if (delta === 0) return;
+  logTeacherPoints.run(teacherId, delta, reason);
+  setTeacherPoints.run(target, teacherId);
 }
 
 const maxCompletedLevel = db.prepare(

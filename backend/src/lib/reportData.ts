@@ -1,10 +1,11 @@
 import { db } from '../db/db.js';
 
 // Per-user usage numbers for the admin reports and the Excel export. Students AND teachers are
-// counted: watch time and worksheets for both, plus what is specific to teachers (videos they
-// uploaded and worksheets they printed). Real accounts only (is_seed = 0). Everything comes straight
-// from the same tables the app itself writes (reel_watch_progress, reel_watch_seconds_events,
-// worksheet_attempts, worksheet_prints, reels) -- no separate log to trust.
+// counted: watch time and worksheets for both, plus what is specific to teachers (lessons they
+// posted, the likes those got and the worksheets they sent that students solved -- the same counts as
+// lib/xp.ts teacherCreatorStats). Real accounts only (is_seed = 0). Everything comes straight from the
+// same tables the app itself writes (reel_watch_progress, reel_watch_seconds_events, worksheet_attempts,
+// sent_worksheets, reel_likes, reels) -- no separate log to trust.
 
 export type RoleFilter = 'all' | 'student' | 'teacher';
 
@@ -43,9 +44,11 @@ export type ReportRow = {
   watchPoints: number;
   /** Worksheets the user generated AND submitted. */
   worksheetsDone: number;
-  /** Worksheets a teacher printed (printing is teacher-only, so 0 for students). */
-  worksheetsPrinted: number;
-  /** Videos a teacher uploaded, and their combined length in seconds. */
+  /** Likes other people gave a teacher's lessons (0 for students). */
+  likesReceived: number;
+  /** Students' solves of the worksheets a teacher sent (0 for students). */
+  worksheetsSolved: number;
+  /** A teacher's lessons with a video, and their combined length in seconds. */
   videosUploaded: number;
   uploadedSeconds: number;
   /** Total XP for students, teacher points for teachers. */
@@ -63,9 +66,10 @@ const SELECT = `
          COALESCE((SELECT COUNT(DISTINCT reel_id) FROM reel_watch_progress WHERE user_id = u.id), 0) AS reels_watched,
          COALESCE((SELECT SUM(xp_awarded) FROM reel_watch_progress WHERE user_id = u.id), 0) AS watch_points,
          (SELECT COUNT(*) FROM worksheet_attempts WHERE user_id = u.id AND status = 'submitted') AS worksheets_done,
-         (SELECT COUNT(*) FROM worksheet_prints WHERE user_id = u.id) AS worksheets_printed,
-         (SELECT COUNT(*) FROM reels WHERE author_user_id = u.id) AS videos_uploaded,
-         COALESCE((SELECT SUM(duration_sec) FROM reels WHERE author_user_id = u.id), 0) AS uploaded_seconds,
+         (SELECT COUNT(*) FROM reels r JOIN reel_likes l ON l.reel_id = r.id WHERE r.author_user_id = u.id AND l.user_id != u.id) AS likes_received,
+         (SELECT COUNT(*) FROM sent_worksheets s JOIN worksheet_attempts a ON a.sent_worksheet_id = s.id AND a.status = 'submitted' WHERE s.teacher_id = u.id) AS worksheets_solved,
+         (SELECT COUNT(*) FROM reels WHERE author_user_id = u.id AND video_url IS NOT NULL) AS videos_uploaded,
+         COALESCE((SELECT SUM(duration_sec) FROM reels WHERE author_user_id = u.id AND video_url IS NOT NULL), 0) AS uploaded_seconds,
          (SELECT COUNT(DISTINCT date(created_at)) FROM reel_watch_seconds_events WHERE user_id = u.id) AS active_days
   FROM users u`;
 
@@ -83,7 +87,8 @@ function toRow(r: any): ReportRow {
     reelsWatched: r.reels_watched,
     watchPoints: r.watch_points,
     worksheetsDone: r.worksheets_done,
-    worksheetsPrinted: r.worksheets_printed,
+    likesReceived: r.likes_received,
+    worksheetsSolved: r.worksheets_solved,
     videosUploaded: r.videos_uploaded,
     uploadedSeconds: Math.round(r.uploaded_seconds),
     points: r.role === 'teacher' ? r.teacher_points ?? 0 : r.total_xp ?? 0,
@@ -110,19 +115,21 @@ export type ReportTotals = {
   teachers: number;
   watchedSeconds: number;
   worksheetsDone: number;
-  worksheetsPrinted: number;
+  likesReceived: number;
+  worksheetsSolved: number;
   videosUploaded: number;
 };
 
 export function reportTotals(role: RoleFilter, grade: number | null): ReportTotals {
   const rows = queryReportRows(role, grade);
-  const t: ReportTotals = { students: 0, teachers: 0, watchedSeconds: 0, worksheetsDone: 0, worksheetsPrinted: 0, videosUploaded: 0 };
+  const t: ReportTotals = { students: 0, teachers: 0, watchedSeconds: 0, worksheetsDone: 0, likesReceived: 0, worksheetsSolved: 0, videosUploaded: 0 };
   for (const r of rows) {
     if (r.role === 'teacher') t.teachers++;
     else t.students++;
     t.watchedSeconds += r.watchedSeconds;
     t.worksheetsDone += r.worksheetsDone;
-    t.worksheetsPrinted += r.worksheetsPrinted;
+    t.likesReceived += r.likesReceived;
+    t.worksheetsSolved += r.worksheetsSolved;
     t.videosUploaded += r.videosUploaded;
   }
   return t;

@@ -26,23 +26,22 @@ const PathIcon = ({ d }: { d: string }) => (
 // Emoji for most nav icons (unchanged), or a component for the ones swapped for a real
 // icon -- `currentColor` means it automatically follows .sidebar-icon-btn's own color,
 // including its .active state, with no extra wiring.
-type SidebarLink = { to: string; key: string; icon: string | ReactNode; end?: boolean };
+type SidebarLink = { to: string; key: string; icon: string | ReactNode; end?: boolean; studentOnly?: boolean };
 
 const HOME_LINK: SidebarLink = { to: '/', key: 'nav.home', icon: <RiHome2Line size={20} />, end: true };
 
-// The full gameplay surface — shared by both account types (see backend/src/index.ts,
-// which no longer role-gates these routes either). A teacher account is a student
-// account plus a few extras, not a separate walled-off experience.
+// The pages both account types share, plus the two games (studentOnly): a teacher makes the lessons rather than playing them, so the
+// Adventure Map and the Quarry are students only (App.tsx's StudentOnly, and backend/src/index.ts).
 const GAME_LINKS: SidebarLink[] = [
   { to: '/reels', key: 'nav.reels', icon: <RiVideoFill size={20} /> },
-  { to: '/map', key: 'nav.map', icon: <RiMapFill size={20} /> },
-  { to: '/craft', key: 'nav.craft', icon: <RiGamepadLine size={20} /> },
+  { to: '/map', key: 'nav.map', icon: <RiMapFill size={20} />, studentOnly: true },
+  { to: '/craft', key: 'nav.craft', icon: <RiGamepadLine size={20} />, studentOnly: true },
   { to: '/worksheets', key: 'nav.worksheets', icon: <RiFilePaper2Line size={20} /> },
   { to: '/leaderboard', key: 'nav.leaderboard', icon: <PathIcon d="M7.5 21H2V9h5.5zm7.25-18h-5.5v18h5.5zM22 11h-5.5v10H22z" /> },
   { to: '/friends', key: 'nav.friends', icon: <PathIcon d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3m-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3m0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5m8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5" /> },
 ];
 
-// Teacher-only extra, on top of the shared game links above.
+// Teacher-only extra, on top of the shared links above.
 const TEACHER_LINKS: SidebarLink[] = [{ to: '/teacher/reels', key: 'nav.myReels', icon: <RiMovie2Line size={20} /> }];
 
 // Admin is a pure account-management role, not a gameplay one -- instead of the shared
@@ -67,7 +66,7 @@ export function Sidebar() {
     user.role === 'admin'
       ? ADMIN_LINKS
       : user.role === 'teacher'
-        ? [HOME_LINK, GAME_LINKS[0], ...TEACHER_LINKS, ...GAME_LINKS.slice(1)]
+        ? [HOME_LINK, GAME_LINKS[0], ...TEACHER_LINKS, ...GAME_LINKS.slice(1).filter((link) => !link.studentOnly)]
         : [HOME_LINK, ...GAME_LINKS];
 
   return (

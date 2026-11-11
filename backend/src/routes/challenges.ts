@@ -1,15 +1,14 @@
 import { z } from 'zod';
 import { asyncRouter } from '../lib/asyncRouter.js';
 import { db } from '../db/db.js';
-import { forbidRole } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { challengePollLimiter } from '../middleware/rateLimit.js';
 import {
   CHALLENGE_COUNTS, CHALLENGE_DIFFICULTIES, CHALLENGE_SUBJECTS, GAME_MS, currentChallenge, finishChallenge, isBusy,
 } from '../lib/challenges.js';
 
+// Students only (index.ts): a challenge pays student XP, which teachers do not earn.
 export const challengesRouter = asyncRouter();
-challengesRouter.use(forbidRole('admin'));
 
 function areFriends(a: number, b: number): boolean {
   const [x, y] = a < b ? [a, b] : [b, a];
@@ -33,6 +32,10 @@ challengesRouter.post('/', requireCsrfHeader, validateBody(createSchema), (req, 
   const friend = db.prepare(`SELECT id, role FROM users WHERE username = ? COLLATE NOCASE`).get(username) as { id: number; role: string } | undefined;
   if (!friend || friend.role === 'admin' || friend.id === req.userId || !areFriends(req.userId!, friend.id)) {
     res.status(404).json({ error: 'You can only challenge your friends.' });
+    return;
+  }
+  if (friend.role === 'teacher') {
+    res.status(400).json({ error: 'Teachers do not take part in challenges. Challenge a student friend instead.' });
     return;
   }
   if (isBusy(req.userId!)) {

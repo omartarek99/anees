@@ -9,7 +9,6 @@ import { authLimiter } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
 import { googleAuthSchema, completeStudentProfileSchema, completeTeacherProfileSchema, signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema, changePasswordSchema, forgotPasswordSchema, resetPasswordSchema } from '../lib/schemas.js';
 import { getPlayerLevel } from '../lib/xp.js';
-import { hasShield } from '../lib/battle.js';
 import { earnedAuraRank, getRankTier, getTeacherRankTier, rankDropOf } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import {
@@ -98,7 +97,6 @@ function publicUser(user: any) {
     createdAt: user.created_at,
     warningMessage: user.warning_message ?? null,
     warningNumber: user.warning_number ?? null,
-    hasShield: hasShield(user.id),
     // false for a Google sign-up that has not given its name / school / grade (or ID) yet: the app shows the profile step until then
     profileComplete: user.profile_complete !== 0,
   };
@@ -212,12 +210,13 @@ authRouter.post(
       throw err;
     }
 
-    // Teachers play through the map exactly like students do, so every new account
-    // (either role) starts with level 1 unlocked.
-    db.prepare(
-      `INSERT INTO user_level_progress (user_id, map_level_id, status)
-       SELECT ?, id, 'available' FROM map_levels WHERE level_number = 1`
-    ).run(userId);
+    // A new student starts with map level 1 unlocked. The map is for students only: teachers make the lessons instead (index.ts).
+    if (role === 'student') {
+      db.prepare(
+        `INSERT INTO user_level_progress (user_id, map_level_id, status)
+         SELECT ?, id, 'available' FROM map_levels WHERE level_number = 1`
+      ).run(userId);
+    }
 
     async function rollback() {
       db.prepare(`DELETE FROM users WHERE id = ?`).run(userId);

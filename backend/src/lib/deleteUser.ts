@@ -6,6 +6,7 @@ import { getFirebaseAdminAuth } from './firebaseAdmin.js';
 import { deleteAvatarPhotoIfAny } from './avatarPhoto.js';
 import { deleteCertificateImageIfAny } from './certificateImage.js';
 import { deleteReelVideoIfAny } from './reelVideo.js';
+import { syncTeacherPoints } from './xp.js';
 
 export type DeleteUserResult =
   | { found: false }
@@ -59,7 +60,16 @@ async function deleteUserRow(user: any): Promise<DeleteUserResult> {
     db.prepare(`DELETE FROM news_posts WHERE author_user_id = ?`).run(user.id);
   }
 
+  // Their likes and their solves of sent worksheets go with them (both cascade), and teachers' points are counted from those (lib/xp.ts):
+  // recount the teachers they touched once they are gone.
+  const touchedTeachers = db
+    .prepare(
+      `SELECT r.author_user_id AS id FROM reel_likes l JOIN reels r ON r.id = l.reel_id WHERE l.user_id = ?
+       UNION SELECT s.teacher_id FROM worksheet_attempts a JOIN sent_worksheets s ON s.id = a.sent_worksheet_id WHERE a.user_id = ?`
+    )
+    .all(user.id, user.id) as { id: number | null }[];
   db.prepare(`DELETE FROM users WHERE id = ?`).run(user.id);
+  for (const t of touchedTeachers) syncTeacherPoints(t.id, 'user_deleted');
   const firebase = await deleteFirebaseUser(decrypt(user.email));
 
   return { found: true, username: user.username, storage, firebase };

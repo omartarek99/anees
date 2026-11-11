@@ -3,9 +3,9 @@ import multer from 'multer';
 import { db } from '../db/db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader, handleUpload } from '../middleware/validate.js';
-import { avatar3dSchema, updateProfileSchema } from '../lib/schemas.js';
+import { updateProfileSchema } from '../lib/schemas.js';
 import { moderateText } from '../lib/moderation.js';
-import { getLevelInfo, getMapLevel } from '../lib/xp.js';
+import { getLevelInfo, getMapLevel, teacherCreatorStats } from '../lib/xp.js';
 import { hasShield } from '../lib/battle.js';
 import { earnedAuraRank, getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
@@ -58,44 +58,39 @@ function userCertificates(userId: number) {
   }));
 }
 
-// The stored 3D character, re-validated on the way out so a hand-edited / legacy row can never
-// reach the client as anything but a well-formed config (or null -> default character).
-function parseAvatar3d(raw: unknown) {
-  if (typeof raw !== 'string') return null;
-  try {
-    const parsed = avatar3dSchema.safeParse(JSON.parse(raw));
-    return parsed.success ? parsed.data : null;
-  } catch {
-    return null;
-  }
-}
-
-function profileSummary(user: any) {
-  const { level: playerLevel, progress: levelProgress } = getLevelInfo(user.id);
+// What a student's profile counts: their adventure-map progress and the worksheets they solved.
+function playerStats(userId: number) {
   const completedLevels = db
     .prepare(`SELECT COUNT(*) as c FROM user_level_progress WHERE user_id = ? AND status = 'completed'`)
-    .get(user.id) as { c: number };
+    .get(userId) as { c: number };
   const bossesDefeated = db
     .prepare(
       `SELECT COUNT(*) as c FROM user_level_progress p
        JOIN map_levels m ON p.map_level_id = m.id
        WHERE p.user_id = ? AND p.status = 'completed' AND m.kind = 'boss'`
     )
-    .get(user.id) as { c: number };
+    .get(userId) as { c: number };
   const worksheetsCompleted = db
     .prepare(`SELECT COUNT(*) as c FROM worksheet_attempts WHERE user_id = ? AND status = 'submitted'`)
-    .get(user.id) as { c: number };
-  const videos = user.role === 'teacher' ? teacherVideos(user.id) : undefined;
-  const worksheetsPrinted = db
-    .prepare(`SELECT COUNT(*) as c FROM worksheet_prints WHERE user_id = ?`)
-    .get(user.id) as { c: number };
+    .get(userId) as { c: number };
+  return {
+    // the adventure-map level they are on
+    mapLevel: getMapLevel(userId),
+    levelsCompleted: completedLevels.c,
+    bossesDefeated: bossesDefeated.c,
+    worksheetsCompleted: worksheetsCompleted.c,
+    hasShield: hasShield(userId),
+  };
+}
+
+function profileSummary(user: any) {
+  const { level: playerLevel, progress: levelProgress } = getLevelInfo(user.id);
 
   return {
     username: user.username,
     displayName: user.display_name,
     avatarKey: user.avatar_key,
     avatarUrl: user.avatar_url ?? null,
-    avatar3d: parseAvatar3d(user.avatar3d),
     role: user.role,
     bio: user.bio ?? '',
     // A teacher's school/subject is professional info shown on their public profile. A
@@ -108,18 +103,13 @@ function profileSummary(user: any) {
     // drives the teacher-only leaderboard, shown on their own profile instead of total XP.
     teacherPoints: user.teacher_points ?? 0,
     playerLevel,
-    // 0..1 toward the next level, and the adventure-map level they are on
+    // 0..1 toward the next level
     levelProgress,
-    mapLevel: getMapLevel(user.id),
     rankTier: user.role === 'teacher' ? getTeacherRankTier(user.teacher_points ?? 0) : getRankTier(user.total_xp),
-    levelsCompleted: completedLevels.c,
-    bossesDefeated: bossesDefeated.c,
-    worksheetsCompleted: worksheetsCompleted.c,
-    videosCount: videos?.length ?? 0,
-    worksheetsPrintedCount: worksheetsPrinted.c,
+    // A teacher makes the lessons instead of playing the map (index.ts): their profile shows what they made -- the same counts their teacher
+    // points come from (lib/xp.ts) -- and their videos as a portfolio.
+    ...(user.role === 'teacher' ? { creatorStats: teacherCreatorStats(user.id), videos: teacherVideos(user.id) } : playerStats(user.id)),
     joinedAt: user.created_at,
-    hasShield: hasShield(user.id),
-    videos,
     certificates: userCertificates(user.id),
   };
 }
@@ -140,11 +130,10 @@ usersRouter.get('/me', requireAuth, (req, res) => {
 });
 
 usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProfileSchema), async (req, res) => {
-  const { displayName, avatarKey, bio, avatar3d, auraRank } = req.body as {
+  const { displayName, avatarKey, bio, auraRank } = req.body as {
     displayName?: string;
     avatarKey?: string;
     bio?: string;
-    avatar3d?: unknown;
     auraRank?: string | null;
   };
 
@@ -176,9 +165,6 @@ usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProf
     const existing = db.prepare(`SELECT avatar_url FROM users WHERE id = ?`).get(req.userId!) as { avatar_url: string | null };
     await deleteAvatarPhotoIfAny(existing.avatar_url);
     db.prepare(`UPDATE users SET avatar_key = ?, avatar_url = NULL WHERE id = ?`).run(avatarKey, req.userId!);
-  }
-  if (avatar3d !== undefined) {
-    db.prepare(`UPDATE users SET avatar3d = ? WHERE id = ?`).run(JSON.stringify(avatar3d), req.userId!);
   }
   if (auraRank !== undefined) {
     db.prepare(`UPDATE users SET aura_rank = ? WHERE id = ?`).run(auraRank, req.userId!);
