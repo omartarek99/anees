@@ -67,7 +67,7 @@ export function Sidebar() {
     user.role === 'admin'
       ? ADMIN_LINKS
       : user.role === 'teacher'
-        ? [HOME_LINK, GAME_LINKS[0], ...TEACHER_LINKS, ...GAME_LINKS.slice(1)]
+        ? [HOME_LINK, GAME_LINKS[0], ...TEACHER_LINKS, ...GAME_LINKS.slice(1).filter((l) => l.to !== '/craft')] // teachers do not get the Quarry game
         : [HOME_LINK, ...GAME_LINKS];
 
   return (

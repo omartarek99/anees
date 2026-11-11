@@ -1363,6 +1363,11 @@ button.list-row.selected {
   grid-template-columns: repeat(4, minmax(0, 300px)); /* all four cards in one row */
   justify-content: center;
 }
+/* a teacher has three cards: they sit together in the middle of the row */
+.grid-cards.home-cards.home-cards-3 {
+  grid-template-columns: repeat(3, minmax(0, 300px));
+  justify-content: center;
+}
 @media (max-width: 900px) {
   .home-hero {
     grid-template-columns: minmax(0, 1fr);
@@ -1375,10 +1380,25 @@ button.list-row.selected {
   .grid-cards.home-cards {
     grid-template-columns: repeat(2, minmax(0, 300px)); /* two by two on a tablet */
   }
+  .grid-cards.home-cards.home-cards-3 {
+    grid-template-columns: repeat(2, minmax(0, 300px));
+  }
+  .home-cards-3 > :last-child {
+    grid-column: 1 / -1;
+    justify-self: center;
+    inline-size: min(100%, 300px);
+  }
 }
 @media (max-width: 520px) {
   .grid-cards.home-cards {
     grid-template-columns: minmax(0, 300px); /* one under another on a phone */
+  }
+  .grid-cards.home-cards.home-cards-3 {
+    grid-template-columns: minmax(0, 300px);
+  }
+  .home-cards-3 > :last-child {
+    grid-column: auto;
+    inline-size: auto;
   }
 }
 

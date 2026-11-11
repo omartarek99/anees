@@ -223,9 +223,15 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
     setQuestions((prev) => prev.filter((_, i) => i !== index));
   }
 
+  // A new lesson can only be created once the teacher has given it a topic name, the lesson text, at least one complete question (the question and all four choices) and the video.
+  const hasCompleteQuestion = questions.some((q) => q.questionText.trim() && q.choices.every((c) => c.trim()));
+  const readyToCreate = title.trim().length >= 2 && scriptText.trim().length > 0 && hasCompleteQuestion && (!!videoFile || !!existingVideoUrl);
+  const blockCreate = !currentId && !readyToCreate;
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setFormError(null);
+    if (blockCreate) return;
     if (videoFile && videoFile.size > MAX_VIDEO_BYTES) {
       setFormError(t('teacherReels.videoTooLarge'));
       return;
@@ -481,7 +487,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
           )}
 
           <div className="flex gap-sm">
-            <button className="btn btn-primary" type="submit" disabled={submitting}>
+            <button className="btn btn-primary" type="submit" disabled={submitting || blockCreate}>
               {submitting
                 ? uploadState === 'checking'
                   ? t('teacherReels.checkingVideo')
@@ -505,6 +511,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
               </button>
             )}
           </div>
+          {blockCreate && <p className="muted" style={{ fontSize: 13, marginTop: 8 }}>{t('teacherReels.createNeeds')}</p>}
         </form>
     </Wrapper>
   );

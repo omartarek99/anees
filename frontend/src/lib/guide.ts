@@ -105,7 +105,7 @@ export function tourStops(role: Role): TourStop[] {
     { target: '/reels', id: 'reels' },
     ...(role === 'teacher' ? [{ target: '/teacher/reels', id: 'myReels' }] : []),
     { target: '/map', id: 'map' },
-    { target: '/craft', id: 'craft' },
+    ...(role === 'teacher' ? [] : [{ target: '/craft', id: 'craft' }]),
     { target: '/worksheets', id: 'worksheets' },
     { target: '/leaderboard', id: 'leaderboard' },
     { target: '/friends', id: 'friends' },

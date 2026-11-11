@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, ApiError } from './api';
+import { reloadIfOutdated } from './version-check';
 import { DEV_BYPASS_LOGIN, DEV_ACCOUNT } from './dev-config';
 import type { RankTier } from '../components/RankBadge';
 import type { RankKey } from './medalLevels';
@@ -144,12 +145,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login: AuthContextValue['login'] = async (input) => {
     const data = await api.post<{ user: User }>('/auth/login', input);
     setUser(data.user);
+    void reloadIfOutdated(); // signing in is a good moment to pick up a newer version of the site (once)
   };
 
   const loginWithGoogle: AuthContextValue['loginWithGoogle'] = async (idToken, role) => {
     const data = await api.post<{ user?: User; created?: boolean; needsRole?: boolean }>('/auth/google', { idToken, role });
     if (data.needsRole || !data.user) return { needsRole: true, created: false };
     setUser(data.user);
+    void reloadIfOutdated();
     return { needsRole: false, created: !!data.created };
   };
 
@@ -186,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const verifyOtp: AuthContextValue['verifyOtp'] = async (idToken, code) => {
     const data = await api.post<{ user: User }>('/auth/verify-otp', { idToken, code });
     setUser(data.user);
+    void reloadIfOutdated();
   };
 
   const resendVerification: AuthContextValue['resendVerification'] = async (idToken, lang) => {

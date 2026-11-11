@@ -140,7 +140,7 @@ export function HomePage() {
   const mapLevel = profile?.mapLevel ?? 1;
   const pct = (n: number) => `${Math.round((n / 50) * 100)}%`;
   // One market card per stat: its picture, a corner chip, the value, and where to go with it.
-  const cards = [
+  const studentCards = [
     { tone: 'blue', src: '/icons/map-icon.webp', title: t('home.mapProgress'), value: `${mapLevel}/50`, chip: pct(mapLevel), to: '/map', cta: t('home.openMap') },
     { tone: 'yellow', src: '/icons/levels-icon.webp', title: t('profile.levelsCompleted'), value: `${completed}/50`, chip: pct(completed), to: '/reels', cta: t('home.watchReel') },
     {
@@ -162,6 +162,13 @@ export function HomePage() {
       cta: t('challenge.homeCta'),
     },
   ];
+  // A teacher's home has three cards instead: the leaderboard, a worksheet, and adding videos.
+  const teacherCards: typeof studentCards = [
+    { tone: 'pink', src: '/icons/teacher-leaders.webp', title: t('home.teacherLeadersTitle'), value: '🏆', chip: '', to: '/leaderboard', cta: t('home.teacherLeadersCta') },
+    { tone: 'blue', src: '/icons/teacher-worksheet.webp', title: t('home.teacherWorksheetTitle'), value: '📄', chip: '', to: '/worksheets', cta: t('home.teacherWorksheetCta') },
+    { tone: 'yellow', src: '/icons/teacher-videos.webp', title: t('home.teacherVideosTitle'), value: '🎬', chip: '', to: '/teacher/reels', cta: t('home.teacherVideosCta') },
+  ];
+  const cards = user?.role === 'teacher' ? teacherCards : studentCards;
 
   return (
     <div className="stack">
@@ -207,12 +214,12 @@ export function HomePage() {
         <h2 id="home-progress-title" className="home-section-title">
           {t('home.yourProgress')}
         </h2>
-        <div className="grid-cards home-cards">
+        <div className={`grid-cards home-cards${cards.length === 3 ? ' home-cards-3' : ''}`}>
           {cards.map((c) => (
             <article key={c.tone} className={`market-card stat-card-${c.tone}`}>
               <div className="market-pic">
                 <img src={c.src} alt="" />
-                <span className="market-chip">{c.chip}</span>
+                {c.chip && <span className="market-chip">{c.chip}</span>}
               </div>
               <div className="market-owner">
                 <div>
