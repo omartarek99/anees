@@ -17,7 +17,7 @@ import '../styles/landing.css';
 // own artwork: the story pictures (teacher, adventure map, student) and the hero's Doha skyline, which scrolls with the page and melts
 // into the ground below it.
 
-/** The three stories, in order: their pictures (720 px square crops for the helix's square cards) and copy (landing.s1.., s2.., s3..). */
+/** The three stories, in order: lessons, the adventure map, ranks and character (all of them come before the mascots). Their pictures (720 px square crops for the helix's square cards) and copy (landing.s1.., s2.., s3..). */
 const STORIES = [
   { id: 'learn', key: 's1', nav: 'navLessons', img: '/images/helix/learn.webp' },
   { id: 'play', key: 's2', nav: 'navAdventure', img: '/images/helix/play.webp' },
@@ -193,12 +193,12 @@ export function LandingPage() {
         </div>
       </section>
 
-      <ParticleForm
-        intro={
-          // Over the vortex as it flies in: the falcon on the right as it arrives, then the fox on the left (the pictures
-          // carry their speech bubbles, so each language has its own)
-          <>
-            <img
+      <ParticleForm>
+        <HelixShowcase stories={stories} label={t('landing.showcaseLabel')} />
+
+        {/* the mascots: after the last story, over the particle form: the falcon arrives first, then the fox (the pictures carry their speech bubbles, so each language has its own) */}
+        <div className="landing-mascots">
+          <img
               className="landing-mascot landing-mascot--eagle"
               src={`/images/mascots/eagle-${lang}.webp`}
               width={1385}
@@ -216,10 +216,7 @@ export function LandingPage() {
               decoding="async"
               alt={t('landing.foxAlt')}
             />
-          </>
-        }
-      >
-        <HelixShowcase stories={stories} label={t('landing.showcaseLabel')} />
+        </div>
 
         <AppDownloadSection />
 

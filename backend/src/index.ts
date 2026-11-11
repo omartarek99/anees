@@ -114,7 +114,7 @@ app.use('/api/challenges', requireAuth, challengesRouter);
 app.use('/api/violations', violationsRouter);
 
 app.use((_req, res) => {
-  res.status(404).json({ error: 'Not found.' });
+  res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
 });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -123,11 +123,11 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   // bad URL encoding) -- report those as the client error they are, not a 500.
   const status = Number(err?.status ?? err?.statusCode);
   if (status >= 400 && status < 500) {
-    res.status(status).json({ error: status === 413 ? 'That request is too large.' : 'Invalid request.' });
+    res.status(status).json({ error: status === 413 ? 'That request is too large.' : 'Something in the form is not right. Check it and try again.' });
     return;
   }
   console.error(err);
-  res.status(500).json({ error: 'Something went wrong. Please try again.' });
+  res.status(500).json({ error: 'Something went wrong on our side. Please try again in a moment.' });
 });
 
 app.listen(PORT, () => {

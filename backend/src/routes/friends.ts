@@ -59,15 +59,15 @@ friendsRouter.post('/request', requireCsrfHeader, validateBody(requestSchema), (
   const target = db.prepare(`SELECT * FROM users WHERE lower(username) = lower(?)`).get(toUsername) as any;
   // Admin accounts can't be friends (no Friends page, hidden from search): a request would sit pending forever.
   if (!target || target.role === 'admin') {
-    res.status(404).json({ error: 'No user found with that username.' });
+    res.status(404).json({ error: 'We couldn\'t find anyone with this username. Check the spelling.' });
     return;
   }
   if (target.id === req.userId!) {
-    res.status(400).json({ error: "You can't add yourself as a friend." });
+    res.status(400).json({ error: "You cannot add yourself as a friend." });
     return;
   }
   if (areFriends(req.userId!, target.id)) {
-    res.status(409).json({ error: 'You are already friends with this user.' });
+    res.status(409).json({ error: 'You are already friends with this person.' });
     return;
   }
   const existingPending = db
@@ -77,7 +77,7 @@ friendsRouter.post('/request', requireCsrfHeader, validateBody(requestSchema), (
     )
     .get(req.userId!, target.id, target.id, req.userId!);
   if (existingPending) {
-    res.status(409).json({ error: 'A friend request is already pending with this user.' });
+    res.status(409).json({ error: 'A friend request with this person is already waiting for an answer.' });
     return;
   }
 
@@ -103,7 +103,7 @@ friendsRouter.post('/request', requireCsrfHeader, validateBody(requestSchema), (
 friendsRouter.post('/requests/:id/accept', requireCsrfHeader, (req, res) => {
   const request = db.prepare(`SELECT * FROM friend_requests WHERE id = ?`).get(Number(req.params.id)) as any;
   if (!request || request.to_user_id !== req.userId! || request.status !== 'pending') {
-    res.status(404).json({ error: 'Friend request not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this friend request. It may have been cancelled.' });
     return;
   }
   const [a, b] = friendshipKey(request.from_user_id, request.to_user_id);
@@ -115,7 +115,7 @@ friendsRouter.post('/requests/:id/accept', requireCsrfHeader, (req, res) => {
 friendsRouter.post('/requests/:id/decline', requireCsrfHeader, (req, res) => {
   const request = db.prepare(`SELECT * FROM friend_requests WHERE id = ?`).get(Number(req.params.id)) as any;
   if (!request || request.to_user_id !== req.userId! || request.status !== 'pending') {
-    res.status(404).json({ error: 'Friend request not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this friend request. It may have been cancelled.' });
     return;
   }
   db.prepare(`UPDATE friend_requests SET status = 'declined' WHERE id = ?`).run(request.id);

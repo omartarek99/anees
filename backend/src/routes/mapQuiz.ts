@@ -30,12 +30,12 @@ function gradeOf(userId: number): number {
 
 function loadLevel(userId: number, levelNumber: number): { level: any; progress: any } | { error: string; status: number } {
   const level = db.prepare(`SELECT * FROM map_levels WHERE level_number = ?`).get(levelNumber) as any;
-  if (!level || level.kind !== 'normal') return { error: 'Level not found.', status: 404 };
-  if (level.status !== 'ready') return { error: 'This level is coming soon.', status: 404 };
+  if (!level || level.kind !== 'normal') return { error: 'We couldn\'t find this level.', status: 404 };
+  if (level.status !== 'ready') return { error: 'This level is not ready yet. It is coming soon.', status: 404 };
   const progress =
     (db.prepare(`SELECT * FROM user_level_progress WHERE user_id = ? AND map_level_id = ?`).get(userId, level.id) as any) ??
     (levelNumber === 1 ? { status: 'available', stars: 0, best_score: 0 } : null);
-  if (!progress || progress.status === 'locked') return { error: 'This level is locked.', status: 403 };
+  if (!progress || progress.status === 'locked') return { error: 'This level is locked. Finish the level before it to open it.', status: 403 };
   return { level, progress };
 }
 
@@ -71,7 +71,7 @@ export function registerLevelQuiz(router: Router) {
     const tier = tierOfLevel(levelNumber, req.userId!);
     const picked = [...pick('math', grade, tier, QUESTIONS_PER_SUBJECT), ...pick('science', grade, tier, QUESTIONS_PER_SUBJECT)];
     if (picked.length === 0) {
-      res.status(404).json({ error: 'No questions available for this level yet.' });
+      res.status(404).json({ error: 'This level has no questions yet. Try another level.' });
       return;
     }
     // Math and Science mixed in a random order.
@@ -111,7 +111,7 @@ export function registerLevelQuiz(router: Router) {
       .prepare(`SELECT * FROM level_quiz_questions WHERE grade = ? AND tier BETWEEN ? AND ? AND id IN (${ids.map(() => '?').join(',')})`)
       .all(grade, tier - 1, tier + 1, ...ids) as any[];
     if (questions.length !== ids.length || ids.length !== answers.length) {
-      res.status(400).json({ error: 'Those answers do not belong to this level.' });
+      res.status(400).json({ error: 'These answers are not for this level. Refresh the page and try again.' });
       return;
     }
 

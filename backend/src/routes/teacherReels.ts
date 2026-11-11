@@ -33,8 +33,8 @@ const VIDEO_TYPE_EXTENSIONS: Record<string, string> = { 'video/mp4': 'mp4', 'vid
 export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 /** The most Supabase takes in one file from the browser on the free plan is 50MB; a little under it leaves room for the upload's own overhead. */
 export const DIRECT_VIDEO_BYTES = 49 * 1024 * 1024;
-const VIDEO_TOO_LARGE = 'This video is larger than 100MB. Please choose a smaller video.';
-const VIDEO_BAD_TYPE = 'Please upload a valid video (MP4, WebM, or MOV, under 100MB).';
+const VIDEO_TOO_LARGE = 'This video is bigger than 100MB. Choose a smaller video or make it shorter.';
+const VIDEO_BAD_TYPE = 'The video must be an MP4, WebM or MOV file smaller than 100MB. Choose another file.';
 // Phones record HEVC (H.265), which many browsers cannot play, and nothing re-encodes it now: ask for an H.264 / VP8 / VP9 / AV1 video instead.
 const PLAYABLE_CODECS = new Set(['h264', 'vp8', 'vp9', 'av1']);
 
@@ -81,8 +81,8 @@ function looksLikeVideo(buffer: Buffer, mimetype: string): boolean {
 
 const handleVideoUpload = handleUpload(
   videoUpload,
-  'Please upload a valid video (MP4, WebM, or MOV, under 100MB).',
-  'This video is larger than 100MB. Please choose a smaller video.'
+  'The video must be an MP4, WebM or MOV file smaller than 100MB. Choose another file.',
+  'This video is bigger than 100MB. Choose a smaller video or make it shorter.'
 );
 
 // An upload sits in memory (up to 100MB) and is then transcoded, so one at a time per teacher and three across
@@ -93,7 +93,7 @@ const processingVideos = new Set<number>();
 function limitConcurrentUploads(req: Request, res: Response, next: NextFunction) {
   const userId = req.userId!;
   if (uploadsInFlight.has(userId) || processingVideos.has(userId) || uploadsInFlight.size + processingVideos.size >= 3) {
-    res.status(429).json({ error: 'An upload is already in progress. Please wait for it to finish.' });
+    res.status(429).json({ error: 'A video is still uploading. Wait until it finishes, then try again.' });
     return;
   }
   uploadsInFlight.add(userId);
@@ -152,7 +152,7 @@ teacherReelsRouter.post(
 
     const subject = db.prepare(`SELECT * FROM subjects WHERE id = ?`).get(body.subjectId) as any;
     if (!subject) {
-      res.status(400).json({ error: 'Invalid subject.' });
+      res.status(400).json({ error: 'This subject is not valid. Choose one from the list.' });
       return;
     }
 
@@ -182,14 +182,14 @@ teacherReelsRouter.post(
 
     if (!result.ok) {
       console.error('Gemini question generation failed:', result.error);
-      res.status(502).json({ error: "We couldn't generate questions right now. Please try again or add them manually." });
+      res.status(502).json({ error: "We couldn't make questions now. Try again, or write them yourself." });
       return;
     }
 
     const parsed = z.array(teacherReelQuestionSchema).min(1).max(10).safeParse(result.data);
     if (!parsed.success) {
       console.error('Gemini response failed validation:', parsed.error.flatten());
-      res.status(502).json({ error: "We couldn't generate questions right now. Please try again or add them manually." });
+      res.status(502).json({ error: "We couldn't make questions now. Try again, or write them yourself." });
       return;
     }
 
@@ -287,7 +287,7 @@ teacherReelsRouter.post('/messages/:id/read', requireAuth, requireRole('teacher'
 teacherReelsRouter.get('/:id', requireAuth, requireRole('teacher', 'admin'), (req, res) => {
   const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
   if (!reel) {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
   const questions = db
@@ -360,12 +360,12 @@ type TeacherReelBody = import('zod').infer<typeof teacherReelSchema>;
  * itself on failure so callers just need `if (!placeholderLevel) return;`. */
 function validateReelBody(res: Response, body: TeacherReelBody) {
   if (!moderateReelContent(body)) {
-    res.status(400).json({ error: 'Please keep your lesson content appropriate.' });
+    res.status(400).json({ error: 'The lesson has words that are not allowed. Change them and try again.' });
     return null;
   }
   const placeholderLevel = resolvePlaceholderLevel(body.subjectId);
   if (!placeholderLevel) {
-    res.status(400).json({ error: 'Invalid subject.' });
+    res.status(400).json({ error: 'This subject is not valid. Choose one from the list.' });
     return null;
   }
   return placeholderLevel;
@@ -416,7 +416,7 @@ teacherReelsRouter.patch(
   (req, res) => {
     const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
     if (!reel) {
-      res.status(404).json({ error: 'Not found.' });
+      res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
       return;
     }
 
@@ -449,7 +449,7 @@ teacherReelsRouter.patch(
 teacherReelsRouter.post('/:id/video/upload-url', requireAuth, requireRole('teacher', 'admin'), requireCsrfHeader, videoUploadLimiter, async (req, res) => {
   const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
   if (!reel) {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
   const { contentType, size } = (req.body ?? {}) as { contentType?: unknown; size?: unknown };
@@ -474,7 +474,7 @@ teacherReelsRouter.post('/:id/video/upload-url', requireAuth, requireRole('teach
   }
   if (size > DIRECT_VIDEO_BYTES) {
     // too big for a direct upload to Supabase: it has to be sent to POST /:id/video instead
-    res.status(400).json({ error: 'This video is too large to upload directly.', code: 'use_server' });
+    res.status(400).json({ error: 'This video is too big to upload this way. Choose a smaller video.', code: 'use_server' });
     return;
   }
   if (!supabaseAdmin) {
@@ -495,7 +495,7 @@ teacherReelsRouter.post('/:id/video/upload-url', requireAuth, requireRole('teach
 teacherReelsRouter.post('/:id/video/complete', requireAuth, requireRole('teacher', 'admin'), requireCsrfHeader, async (req, res) => {
   const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
   if (!reel) {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
   const { path } = (req.body ?? {}) as { path?: unknown };
@@ -520,11 +520,11 @@ teacherReelsRouter.post('/:id/video/complete', requireAuth, requireRole('teacher
   try {
     head = await fetch(publicUrl, { method: 'HEAD' });
   } catch {
-    res.status(502).json({ error: "We couldn't check the uploaded video. Please try again." });
+    res.status(502).json({ error: "We couldn't check the video you uploaded. Please try again." });
     return;
   }
   if (!head.ok) {
-    res.status(400).json({ error: "We couldn't find the uploaded video. Please upload it again." });
+    res.status(400).json({ error: "We couldn't find the video you uploaded. Upload it again." });
     return;
   }
   const bytes = Number(head.headers.get('content-length') ?? 0);
@@ -543,15 +543,15 @@ teacherReelsRouter.post('/:id/video/complete', requireAuth, requireRole('teacher
     probe = await probeVideoFromUrl(publicUrl, MAX_VIDEO_BYTES + 1024 * 1024);
   } catch (err) {
     console.error('Video probe failed:', err instanceof Error ? err.message : err);
-    res.status(502).json({ error: "We couldn't check the uploaded video. Please try again." });
+    res.status(502).json({ error: "We couldn't check the video you uploaded. Please try again." });
     return;
   }
   if (!probe.videoCodec || !probe.durationSeconds || probe.durationSeconds <= 0) {
-    await reject(400, "We couldn't read this video. Please try a different file.");
+    await reject(400, "We couldn't open this video file. Try a different file (MP4 works best).");
     return;
   }
   if (!PLAYABLE_CODECS.has(probe.videoCodec)) {
-    await reject(400, 'This video format can not be played on every device (it is probably HEVC / H.265). Please export it as an MP4 (H.264) and upload it again.');
+    await reject(400, 'This video type doesn\'t play on every phone. Save it again as an MP4 (H.264) and upload it again.');
     return;
   }
 
@@ -583,12 +583,12 @@ teacherReelsRouter.post(
     const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
     if (!reel) {
       await discard();
-      res.status(404).json({ error: 'Not found.' });
+      res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
       return;
     }
     if (!video || !(await looksLikeVideoFile(video.path, video.mimetype))) {
       await discard();
-      res.status(400).json({ error: 'Please upload a valid video (MP4, WebM, or MOV, under 100MB).' });
+      res.status(400).json({ error: 'The video must be an MP4, WebM or MOV file smaller than 100MB. Choose another file.' });
       return;
     }
     if (!supabaseAdmin) {
@@ -654,7 +654,7 @@ async function processVideoUpload(reelId: number, userId: number, originalPath: 
 teacherReelsRouter.delete('/:id', requireAuth, requireRole('teacher', 'admin'), requireCsrfHeader, async (req, res) => {
   const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
   if (!reel) {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
   await deleteReelVideoIfAny(reel.video_url);

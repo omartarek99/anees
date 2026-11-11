@@ -32,15 +32,15 @@ challengesRouter.post('/', requireCsrfHeader, validateBody(createSchema), (req, 
   const { username, subject, difficulty, count } = req.body as z.infer<typeof createSchema>;
   const friend = db.prepare(`SELECT id, role FROM users WHERE username = ? COLLATE NOCASE`).get(username) as { id: number; role: string } | undefined;
   if (!friend || friend.role === 'admin' || friend.id === req.userId || !areFriends(req.userId!, friend.id)) {
-    res.status(404).json({ error: 'You can only challenge your friends.' });
+    res.status(404).json({ error: 'You can only challenge your friends. Add this person as a friend first.' });
     return;
   }
   if (isBusy(req.userId!)) {
-    res.status(409).json({ error: 'You already have a challenge going. Finish it first.' });
+    res.status(409).json({ error: 'You already have a challenge in progress. Finish it first.' });
     return;
   }
   if (isBusy(friend.id)) {
-    res.status(409).json({ error: 'Your friend is busy with another challenge right now. Try again in a moment.' });
+    res.status(409).json({ error: 'Your friend is in another challenge now. Try again in a little while.' });
     return;
   }
   // The questions are for the challenger's grade (grade 6 gets the grade-6 questions, everyone else grade 5), picked at random.
@@ -50,7 +50,7 @@ challengesRouter.post('/', requireCsrfHeader, validateBody(createSchema), (req, 
     .prepare(`SELECT id FROM challenge_questions WHERE subject = ? AND grade = ? AND difficulty = ? ORDER BY RANDOM() LIMIT ?`)
     .all(subject, grade, difficulty, count) as { id: number }[];
   if (picked.length < count) {
-    res.status(409).json({ error: 'There are not enough questions for that choice yet. Pick fewer questions.' });
+    res.status(409).json({ error: 'There are not enough questions for this choice. Pick a smaller number of questions.' });
     return;
   }
   db.prepare(
@@ -67,7 +67,7 @@ function load(id: number, userId: number) {
 challengesRouter.post('/:id/accept', requireCsrfHeader, (req, res) => {
   const row = load(Number(req.params.id), req.userId!);
   if (!row || row.challenged_id !== req.userId! || row.status !== 'pending') {
-    res.status(404).json({ error: 'This challenge is no longer available.' });
+    res.status(404).json({ error: 'This challenge has ended or was cancelled.' });
     return;
   }
   const now = Date.now();
@@ -78,7 +78,7 @@ challengesRouter.post('/:id/accept', requireCsrfHeader, (req, res) => {
 challengesRouter.post('/:id/decline', requireCsrfHeader, (req, res) => {
   const row = load(Number(req.params.id), req.userId!);
   if (!row || row.challenged_id !== req.userId! || row.status !== 'pending') {
-    res.status(404).json({ error: 'This challenge is no longer available.' });
+    res.status(404).json({ error: 'This challenge has ended or was cancelled.' });
     return;
   }
   // the decliner has nothing more to see; the challenger is told
@@ -89,7 +89,7 @@ challengesRouter.post('/:id/decline', requireCsrfHeader, (req, res) => {
 challengesRouter.post('/:id/cancel', requireCsrfHeader, (req, res) => {
   const row = load(Number(req.params.id), req.userId!);
   if (!row || row.challenger_id !== req.userId! || row.status !== 'pending') {
-    res.status(404).json({ error: 'This challenge is no longer available.' });
+    res.status(404).json({ error: 'This challenge has ended or was cancelled.' });
     return;
   }
   db.prepare(`UPDATE friend_challenges SET status = 'cancelled', challenger_seen = 1 WHERE id = ?`).run(row.id);
@@ -110,7 +110,7 @@ function saveAnswers(row: NonNullable<ReturnType<typeof load>>, userId: number, 
 challengesRouter.patch('/:id/answers', requireCsrfHeader, validateBody(answersSchema), (req, res) => {
   const row = load(Number(req.params.id), req.userId!);
   if (!row || row.status !== 'active' || (row.ends_ms !== null && Date.now() > row.ends_ms + 3000)) {
-    res.status(409).json({ error: 'The game is over.' });
+    res.status(409).json({ error: 'This game has ended. Start a new one.' });
     return;
   }
   saveAnswers(row, req.userId!, (req.body as z.infer<typeof answersSchema>).answers);
@@ -121,7 +121,7 @@ challengesRouter.patch('/:id/answers', requireCsrfHeader, validateBody(answersSc
 challengesRouter.post('/:id/submit', requireCsrfHeader, validateBody(answersSchema), (req, res) => {
   const row = load(Number(req.params.id), req.userId!);
   if (!row) {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
   if (row.status === 'active') {
@@ -135,7 +135,7 @@ challengesRouter.post('/:id/submit', requireCsrfHeader, validateBody(answersSche
 challengesRouter.post('/:id/seen', requireCsrfHeader, (req, res) => {
   const row = load(Number(req.params.id), req.userId!);
   if (!row || row.status === 'pending' || row.status === 'active') {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
   const column = row.challenger_id === req.userId! ? 'challenger_seen' : 'challenged_seen';

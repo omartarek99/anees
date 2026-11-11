@@ -305,11 +305,15 @@ html[lang='ar'] .landing-tag {
 }
 /* Empty (ParticleForm renders it): the page shows only the form here while the camera flies in. It lets clicks
    through to the canvas. */
+/* the swirl flies in under the hero as it scrolls away; nothing is written on it, so it is only a short stretch */
 .landing-particles-intro {
-  min-block-size: 220vh;
+  min-block-size: 15vh;
   pointer-events: none;
-  /* the mascots: the falcon at the top (it arrives with the vortex), the fox lower down (after it); the falcon on the
-     right and the fox on the left in both languages */
+}
+/* the mascots, after the last story: the falcon first, the fox lower down; the falcon on the right and the fox on the left in both languages */
+.landing-mascots {
+  min-block-size: 190vh;
+  pointer-events: none;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
@@ -317,7 +321,10 @@ html[lang='ar'] .landing-tag {
 }
 @media (prefers-reduced-motion: reduce) {
   .landing-particles-intro {
-    min-block-size: 100svh; /* no fly-in: one screen of the form (as tall as the mascots need), then the stories */
+    min-block-size: 100svh; /* no fly-in: one screen of the form, then the stories */
+  }
+  .landing-mascots {
+    min-block-size: 100svh;
   }
 }
 
@@ -536,9 +543,8 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
 /* ---------------- Footer ---------------- */
 .landing-footer-wrap {
   position: relative;
-  background:
-    radial-gradient(60% 130% at 12% 100%, rgb(138 111 209 / 0.42) 0%, rgb(138 111 209 / 0.3) 22%, rgb(138 111 209 / 0.16) 45%, rgb(138 111 209 / 0.05) 70%, transparent 100%),
-    radial-gradient(45% 110% at 92% 100%, rgb(240 140 98 / 0.18) 0%, rgb(240 140 98 / 0.09) 40%, rgb(240 140 98 / 0.03) 70%, transparent 100%);
+  z-index: 1;
+  background: var(--land-bg); /* one flat colour: the moving particles stop above the download section */
 }
 .landing-app::before,
 .landing-footer-wrap::before {
@@ -598,8 +604,9 @@ html[dir='rtl'] .landing-more:hover .landing-arrow {
 /* ---------------- Get the app (install to the home screen) ---------------- */
 .landing-app {
   position: relative;
+  z-index: 1;
   padding: clamp(56px, 7vw, 110px) var(--land-edge);
-  background: radial-gradient(70% 120% at 50% 0%, rgb(247 190 114 / 0.1) 0%, transparent 70%);
+  background: var(--land-bg); /* one flat colour, no particles or glow behind it */
 }
 .landing-app-inner {
   display: grid;

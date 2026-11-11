@@ -42,9 +42,9 @@ const ID_DOCUMENT_MIME_TO_EXT: Record<string, string> = {
 };
 
 const ID_VERIFICATION_MESSAGES: Record<IdVerificationFailureReason, string> = {
-  NOT_QATAR_ID: "We couldn't confirm this is a Qatar ID. Please upload a clear photo of your Qatar ID.",
-  UNDERAGE: 'You must be 23 or older to sign up as a teacher.',
-  UNREADABLE: "We couldn't read the date of birth on this ID. Please upload a clearer photo.",
+  NOT_QATAR_ID: "We couldn't see a Qatar ID in this photo. Upload a clear, straight photo of the whole ID.",
+  UNDERAGE: 'Teacher accounts are for people aged 23 or older.',
+  UNREADABLE: "We couldn't read the date of birth on the ID. Upload a clearer photo without glare.",
 };
 
 const idDocumentUpload = multer({
@@ -59,7 +59,7 @@ const idDocumentUpload = multer({
   },
 }).single('idDocument');
 
-const handleIdDocumentUpload = handleUpload(idDocumentUpload, 'Please upload a valid ID (JPG or PNG, under 5MB).');
+const handleIdDocumentUpload = handleUpload(idDocumentUpload, 'The ID photo must be a JPG or PNG file smaller than 5MB. Choose another photo.');
 
 const isProd = process.env.NODE_ENV === 'production';
 const cookieOptions = {
@@ -123,25 +123,25 @@ authRouter.post(
 
     const usernameCheck = moderateText(username);
     if (!usernameCheck.allowed) {
-      res.status(400).json({ error: 'Please choose an appropriate username.' });
+      res.status(400).json({ error: 'This username is not allowed. Choose a different one.' });
       return;
     }
     const nameCheck = moderateText(displayName);
     if (!nameCheck.allowed) {
-      res.status(400).json({ error: 'Please choose an appropriate display name.' });
+      res.status(400).json({ error: 'This display name is not allowed. Choose a different one.' });
       return;
     }
     if (!moderateText(schoolName).allowed) {
-      res.status(400).json({ error: 'Please enter an appropriate school name.' });
+      res.status(400).json({ error: 'This school name is not allowed. Write the real name of your school.' });
       return;
     }
     if (role === 'teacher' && !idDocument) {
-      res.status(400).json({ error: 'Please upload your ID to verify your account.' });
+      res.status(400).json({ error: 'Upload a photo of your ID to confirm your account.' });
       return;
     }
     if (role === 'teacher' && idDocument) {
       if (idChecksRunning >= MAX_CONCURRENT_ID_CHECKS) {
-        res.status(503).json({ error: 'We are busy right now. Please try again in a minute.' });
+        res.status(503).json({ error: 'The site is busy right now. Wait one minute and try again.' });
         return;
       }
       idChecksRunning++;
@@ -161,18 +161,18 @@ authRouter.post(
       .prepare(`SELECT id FROM users WHERE lower(username) = lower(?) OR email_hash = ?`)
       .get(username, hashForLookup(email));
     if (existing) {
-      res.status(409).json({ error: 'That username or email is already taken.' });
+      res.status(409).json({ error: 'This username or email is already used. Choose another one, or log in if it is yours.' });
       return;
     }
 
     const signUpResult = await firebaseSignUp(email, password);
     if (!signUpResult.ok) {
       if (signUpResult.error === 'EMAIL_EXISTS') {
-        res.status(409).json({ error: 'That username or email is already taken.' });
+        res.status(409).json({ error: 'This username or email is already used. Choose another one, or log in if it is yours.' });
       } else {
         console.error('Firebase signUp failed:', signUpResult.error);
         recordIssue('firebase-signup', signUpResult.error);
-        res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
+        res.status(500).json({ error: "We couldn't send the confirmation email. Wait a little and try again." });
       }
       return;
     }
@@ -207,7 +207,7 @@ authRouter.post(
       // 409 -- anything else is a real error for the error middleware.
       await firebaseDeleteUser(idToken);
       if (String((err as Error)?.message).includes('UNIQUE')) {
-        res.status(409).json({ error: 'That username or email is already taken.' });
+        res.status(409).json({ error: 'This username or email is already used. Choose another one, or log in if it is yours.' });
         return;
       }
       throw err;
@@ -229,7 +229,7 @@ authRouter.post(
     if (role === 'teacher' && idDocument) {
       if (!supabaseAdmin) {
         await rollback();
-        res.status(500).json({ error: "We couldn't upload your ID. Please try again." });
+        res.status(500).json({ error: "We couldn't upload your ID photo. Please try again." });
         return;
       }
       const ext = ID_DOCUMENT_MIME_TO_EXT[idDocument.mimetype];
@@ -240,7 +240,7 @@ authRouter.post(
       if (uploadError) {
         await rollback();
         console.error('Supabase ID upload failed:', uploadError.message);
-        res.status(500).json({ error: "We couldn't upload your ID. Please try again." });
+        res.status(500).json({ error: "We couldn't upload your ID photo. Please try again." });
         return;
       }
     }
@@ -263,7 +263,7 @@ authRouter.post(
       await rollback();
       console.error('Sending the verification email failed:', sendResult.error);
       recordIssue('verification-email', sendResult.error);
-      res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
+      res.status(500).json({ error: "We couldn't send the confirmation email. Wait a little and try again." });
       return;
     }
 
@@ -283,7 +283,7 @@ type AuthFailure = { ok: false; status: number; body: Record<string, unknown> };
  * exactly the same proof.
  */
 async function authenticate(username: string, password: string): Promise<{ ok: true; user: any } | AuthFailure> {
-  const wrong: AuthFailure = { ok: false, status: 401, body: { error: 'Incorrect username or password.' } };
+  const wrong: AuthFailure = { ok: false, status: 401, body: { error: 'The username or password is wrong. Check them and try again.' } };
   const user = db.prepare(`SELECT * FROM users WHERE lower(username) = lower(?)`).get(username) as any;
 
   if (!user || user.is_seed) {
@@ -299,11 +299,11 @@ async function authenticate(username: string, password: string): Promise<{ ok: t
   }
 
   if (!user.is_active) {
-    return { ok: false, status: 403, body: { error: 'This account has been deactivated. Contact an administrator.' } };
+    return { ok: false, status: 403, body: { error: 'This account is stopped. Contact the Anees team.' } };
   }
 
   if (isCurrentlyBanned(user.banned_until)) {
-    return { ok: false, status: 403, body: { error: 'This account is temporarily suspended.', bannedUntil: user.banned_until } };
+    return { ok: false, status: 403, body: { error: 'This account is suspended for now. Try again when the suspension ends.', bannedUntil: user.banned_until } };
   }
 
   if (!user.firebase_uid) {
@@ -311,7 +311,7 @@ async function authenticate(username: string, password: string): Promise<{ ok: t
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) return wrong;
     if (!user.email_verified) {
-      return { ok: false, status: 403, body: { error: 'Please verify your email before logging in.' } };
+      return { ok: false, status: 403, body: { error: 'Confirm your email first. We sent you a message with the steps.' } };
     }
     return { ok: true, user };
   }
@@ -330,7 +330,7 @@ async function authenticate(username: string, password: string): Promise<{ ok: t
       ok: false,
       status: 403,
       body: {
-        error: 'Please verify your email before logging in.',
+        error: 'Confirm your email first. We sent you a message with the steps.',
         idToken,
         method: (await otpDeliveryAvailable()) ? 'otp' : 'link',
       },
@@ -401,7 +401,7 @@ authRouter.post('/linked-accounts', authLimiter, requireCsrfHeader, requireAuth,
     return;
   }
   if (result.user.id === req.userId) {
-    res.status(400).json({ error: 'That is the account you are signed in to.' });
+    res.status(400).json({ error: 'You are already using this account.' });
     return;
   }
   const link = db.prepare(`INSERT OR IGNORE INTO linked_accounts (user_id, linked_user_id) VALUES (?, ?)`);
@@ -414,7 +414,7 @@ authRouter.post('/linked-accounts', authLimiter, requireCsrfHeader, requireAuth,
 authRouter.delete('/linked-accounts/:id', requireCsrfHeader, requireAuth, (req, res) => {
   const other = Number(req.params.id);
   if (!Number.isInteger(other)) {
-    res.status(400).json({ error: 'Invalid account.' });
+    res.status(400).json({ error: 'This account cannot be used here.' });
     return;
   }
   // Only a member of the group can take an account out of it, and it leaves the whole group (its links to every account go), so the list is the
@@ -426,16 +426,16 @@ authRouter.delete('/linked-accounts/:id', requireCsrfHeader, requireAuth, (req, 
 authRouter.post('/switch-account', authLimiter, requireCsrfHeader, requireAuth, validateBody(switchAccountSchema), (req, res) => {
   const { userId } = req.body as { userId: number };
   if (userId === req.userId || !isLinked(req.userId!, userId)) {
-    res.status(403).json({ error: 'That account is not linked to this one.' });
+    res.status(403).json({ error: 'This account is not linked to yours. Add it first.' });
     return;
   }
   const target = db.prepare(`SELECT * FROM users WHERE id = ?`).get(userId) as any;
   if (!target || !target.is_active) {
-    res.status(403).json({ error: 'This account has been deactivated. Contact an administrator.' });
+    res.status(403).json({ error: 'This account is stopped. Contact the Anees team.' });
     return;
   }
   if (isCurrentlyBanned(target.banned_until)) {
-    res.status(403).json({ error: 'This account is temporarily suspended.', bannedUntil: target.banned_until });
+    res.status(403).json({ error: 'This account is suspended for now. Try again when the suspension ends.', bannedUntil: target.banned_until });
     return;
   }
   // the account being left is signed out on this device, the other one signed in
@@ -453,10 +453,10 @@ authRouter.post('/google', authLimiter, requireCsrfHeader, validateBody(googleAu
   if (!verified.ok) {
     if (verified.error !== 'NOT_GOOGLE' && verified.error !== 'EMAIL_NOT_VERIFIED') console.error('Google sign-in could not be verified:', verified.error);
     if (verified.error === 'NOT_CONFIGURED') {
-      res.status(503).json({ error: 'Google sign-in is not available right now.' });
+      res.status(503).json({ error: 'Google sign-in is not working right now. Please use your username and password.' });
       return;
     }
-    res.status(401).json({ error: "We couldn't verify your Google account. Please try again." });
+    res.status(401).json({ error: "We couldn't check your Google account. Please try again." });
     return;
   }
 
@@ -479,11 +479,11 @@ authRouter.post('/google', authLimiter, requireCsrfHeader, validateBody(googleAu
   }
 
   if (!user.is_active) {
-    res.status(403).json({ error: 'This account has been deactivated. Contact an administrator.' });
+    res.status(403).json({ error: 'This account is stopped. Contact the Anees team.' });
     return;
   }
   if (isCurrentlyBanned(user.banned_until)) {
-    res.status(403).json({ error: 'This account is temporarily suspended.', bannedUntil: user.banned_until });
+    res.status(403).json({ error: 'This account is suspended for now. Try again when the suspension ends.', bannedUntil: user.banned_until });
     return;
   }
 
@@ -497,21 +497,21 @@ authRouter.post('/google', authLimiter, requireCsrfHeader, validateBody(googleAu
 authRouter.post('/complete-profile', authLimiter, requireCsrfHeader, requireAuth, handleIdDocumentUpload, async (req, res) => {
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!) as any;
   if (!user || user.profile_complete !== 0) {
-    res.status(409).json({ error: 'Your profile is already complete.' });
+    res.status(409).json({ error: 'Your profile is already complete. No more steps are needed.' });
     return;
   }
   const parsed = (user.role === 'teacher' ? completeTeacherProfileSchema : completeStudentProfileSchema).safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid request.', details: parsed.error.flatten() });
+    res.status(400).json({ error: 'Something in the form is not right. Check it and try again.', details: parsed.error.flatten() });
     return;
   }
   const data = parsed.data as { displayName: string; schoolName: string; grade?: number; teacherSubject?: string };
   if (!moderateText(data.displayName).allowed) {
-    res.status(400).json({ error: 'Please choose an appropriate display name.' });
+    res.status(400).json({ error: 'This display name is not allowed. Choose a different one.' });
     return;
   }
   if (!moderateText(data.schoolName).allowed) {
-    res.status(400).json({ error: 'Please enter an appropriate school name.' });
+    res.status(400).json({ error: 'This school name is not allowed. Write the real name of your school.' });
     return;
   }
 
@@ -519,11 +519,11 @@ authRouter.post('/complete-profile', authLimiter, requireCsrfHeader, requireAuth
   if (user.role === 'teacher') {
     const idDocument = req.file;
     if (!idDocument) {
-      res.status(400).json({ error: 'Please upload your ID to verify your account.' });
+      res.status(400).json({ error: 'Upload a photo of your ID to confirm your account.' });
       return;
     }
     if (idChecksRunning >= MAX_CONCURRENT_ID_CHECKS) {
-      res.status(503).json({ error: 'We are busy right now. Please try again in a minute.' });
+      res.status(503).json({ error: 'The site is busy right now. Wait one minute and try again.' });
       return;
     }
     idChecksRunning++;
@@ -538,14 +538,14 @@ authRouter.post('/complete-profile', authLimiter, requireCsrfHeader, requireAuth
       return;
     }
     if (!supabaseAdmin) {
-      res.status(500).json({ error: "We couldn't upload your ID. Please try again." });
+      res.status(500).json({ error: "We couldn't upload your ID photo. Please try again." });
       return;
     }
     idDocumentPath = `teacher-ids/${user.id}-${Date.now()}.${ID_DOCUMENT_MIME_TO_EXT[idDocument.mimetype]}`;
     const { error: uploadError } = await supabaseAdmin.storage.from(ID_DOCUMENT_BUCKET).upload(idDocumentPath, idDocument.buffer, { contentType: idDocument.mimetype });
     if (uploadError) {
       console.error('Supabase ID upload failed:', uploadError.message);
-      res.status(500).json({ error: "We couldn't upload your ID. Please try again." });
+      res.status(500).json({ error: "We couldn't upload your ID photo. Please try again." });
       return;
     }
   }
@@ -573,7 +573,7 @@ authRouter.post(
 
     const confirmResult = await firebaseConfirmVerification(oobCode);
     if (!confirmResult.ok) {
-      res.status(401).json({ error: 'Invalid or expired verification link.' });
+      res.status(401).json({ error: 'This link is not working. It may be old or already used. Ask for a new one.' });
       return;
     }
 
@@ -581,7 +581,7 @@ authRouter.post(
       .prepare(`SELECT * FROM users WHERE email_hash = ?`)
       .get(hashForLookup(confirmResult.data.email)) as any;
     if (!user) {
-      res.status(404).json({ error: 'Account not found.' });
+      res.status(404).json({ error: 'We couldn\'t find this account.' });
       return;
     }
 
@@ -604,11 +604,11 @@ authRouter.post(
 
     const lookupResult = await firebaseLookup(idToken);
     if (!lookupResult.ok || !lookupResult.data.users[0]) {
-      res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
+      res.status(500).json({ error: "We couldn't send the confirmation email. Wait a little and try again." });
       return;
     }
     if (lookupResult.data.users[0].emailVerified) {
-      res.status(400).json({ error: 'This account is already verified.' });
+      res.status(400).json({ error: 'This account is already confirmed. You can log in.' });
       return;
     }
 
@@ -616,13 +616,13 @@ authRouter.post(
     if (await otpDeliveryAvailable()) {
       const row = db.prepare(`SELECT id FROM users WHERE email_hash = ?`).get(hashForLookup(accountEmail)) as { id: number } | undefined;
       if (!row) {
-        res.status(404).json({ error: 'Account not found.' });
+        res.status(404).json({ error: 'We couldn\'t find this account.' });
         return;
       }
       const otp = createOtp(row.id);
       if (!otp.ok) {
         res.status(429).json({
-          error: otp.reason === 'cooldown' ? 'Please wait a minute before requesting another code.' : 'Too many codes requested. Please try again later.',
+          error: otp.reason === 'cooldown' ? 'Wait one minute before asking for another code.' : 'You asked for too many codes. Try again later.',
         });
         return;
       }
@@ -630,7 +630,7 @@ authRouter.post(
       if (!sent.ok) {
         console.error('Sending the verification code failed:', sent.error);
         recordIssue('verification-code-resend', sent.error);
-        res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
+        res.status(500).json({ error: "We couldn't send the confirmation email. Wait a little and try again." });
         return;
       }
       res.json({ ok: true, method: 'otp' });
@@ -640,7 +640,7 @@ authRouter.post(
     const sendResult = await sendVerificationEmail({ email: accountEmail, idToken, lang: lang ?? 'ar' });
     if (!sendResult.ok) {
       console.error('Resending the verification email failed:', sendResult.error);
-      res.status(500).json({ error: "We couldn't send the verification email. Please try again shortly." });
+      res.status(500).json({ error: "We couldn't send the confirmation email. Wait a little and try again." });
       return;
     }
 
@@ -657,43 +657,43 @@ authRouter.post('/verify-otp', authLimiter, requireCsrfHeader, validateBody(veri
   const lookup = await firebaseLookup(idToken);
   const fbUser = lookup.ok ? lookup.data.users[0] : undefined;
   if (!fbUser) {
-    res.status(401).json({ error: 'Your verification session expired. Please log in again.' });
+    res.status(401).json({ error: 'Your confirmation time ended. Log in again to continue.' });
     return;
   }
   const user = db.prepare(`SELECT * FROM users WHERE email_hash = ?`).get(hashForLookup(fbUser.email)) as any;
   if (!user) {
-    res.status(404).json({ error: 'Account not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this account.' });
     return;
   }
   if (fbUser.emailVerified && user.email_verified) {
-    res.status(400).json({ error: 'This account is already verified.' });
+    res.status(400).json({ error: 'This account is already confirmed. You can log in.' });
     return;
   }
 
   const result = verifyOtp(user.id, code);
   if (result === 'invalid') {
-    res.status(400).json({ error: 'That code is incorrect. Please try again.' });
+    res.status(400).json({ error: 'The code is wrong. Check it and try again.' });
     return;
   }
   if (result === 'expired') {
-    res.status(400).json({ error: 'That code has expired. Request a new one.' });
+    res.status(400).json({ error: 'This code has expired. Ask for a new code.' });
     return;
   }
   if (result === 'locked') {
-    res.status(429).json({ error: 'Too many wrong attempts. Request a new code.' });
+    res.status(429).json({ error: 'Too many wrong codes. Ask for a new code.' });
     return;
   }
 
   const adminAuth = await getFirebaseAdminAuth();
   if (!adminAuth) {
-    res.status(500).json({ error: "We couldn't verify your account. Please try again shortly." });
+    res.status(500).json({ error: "We couldn't confirm your account. Wait a little and try again." });
     return;
   }
   try {
     await adminAuth.updateUser(fbUser.localId, { emailVerified: true });
   } catch (err) {
     console.error('Marking the Firebase user verified failed:', err);
-    res.status(500).json({ error: "We couldn't verify your account. Please try again shortly." });
+    res.status(500).json({ error: "We couldn't confirm your account. Wait a little and try again." });
     return;
   }
   db.prepare(`UPDATE users SET email_verified = 1 WHERE id = ?`).run(user.id);
@@ -731,26 +731,26 @@ authRouter.post('/reset-password', authLimiter, requireCsrfHeader, validateBody(
   const user = db.prepare(`SELECT * FROM users WHERE email_hash = ?`).get(hashForLookup(email)) as any;
   // Unknown email or a local account: same answer as a wrong code, so nothing is revealed.
   if (!user || !user.firebase_uid) {
-    res.status(400).json({ error: 'That code is incorrect. Please try again.' });
+    res.status(400).json({ error: 'The code is wrong. Check it and try again.' });
     return;
   }
   const result = verifyOtp(user.id, code, 'reset');
   if (result === 'invalid') {
-    res.status(400).json({ error: 'That code is incorrect. Please try again.' });
+    res.status(400).json({ error: 'The code is wrong. Check it and try again.' });
     return;
   }
   if (result === 'expired') {
-    res.status(400).json({ error: 'That code has expired. Request a new one.' });
+    res.status(400).json({ error: 'This code has expired. Ask for a new code.' });
     return;
   }
   if (result === 'locked') {
-    res.status(429).json({ error: 'Too many wrong attempts. Request a new code.' });
+    res.status(429).json({ error: 'Too many wrong codes. Ask for a new code.' });
     return;
   }
 
   const adminAuth = await getFirebaseAdminAuth();
   if (!adminAuth) {
-    res.status(500).json({ error: "We couldn't change your password. Please try again shortly." });
+    res.status(500).json({ error: "We couldn't change your password. Wait a little and try again." });
     return;
   }
   try {
@@ -758,7 +758,7 @@ authRouter.post('/reset-password', authLimiter, requireCsrfHeader, validateBody(
   } catch (err) {
     console.error('Resetting the Firebase password failed:', err);
     recordIssue('password-reset', err instanceof Error ? err.message : String(err));
-    res.status(500).json({ error: "We couldn't change your password. Please try again shortly." });
+    res.status(500).json({ error: "We couldn't change your password. Wait a little and try again." });
     return;
   }
   clearOtp(user.id, 'reset');
@@ -774,34 +774,34 @@ authRouter.post('/change-password', authLimiter, requireCsrfHeader, requireAuth,
   const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!) as any;
   if (!user) {
-    res.status(404).json({ error: 'Account not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this account.' });
     return;
   }
   if (currentPassword === newPassword) {
-    res.status(400).json({ error: 'Choose a different password from your current one.' });
+    res.status(400).json({ error: 'The new password must be different from your current one.' });
     return;
   }
   if (user.role === 'admin' && newPassword.length < 12) {
-    res.status(400).json({ error: 'Admin passwords need at least 12 characters.' });
+    res.status(400).json({ error: 'An admin password needs at least 12 characters.' });
     return;
   }
 
   if (user.firebase_uid) {
     const signIn = await firebaseSignIn(decrypt(user.email), currentPassword);
     if (!signIn.ok) {
-      res.status(401).json({ error: 'Your current password is incorrect.' });
+      res.status(401).json({ error: 'Your current password is wrong. Check it and try again.' });
       return;
     }
     const updated = await firebaseUpdatePassword(signIn.data.idToken, newPassword);
     if (!updated.ok) {
       console.error('Firebase password update failed:', updated.error);
       recordIssue('change-password', updated.error);
-      res.status(500).json({ error: "We couldn't change your password. Please try again shortly." });
+      res.status(500).json({ error: "We couldn't change your password. Wait a little and try again." });
       return;
     }
   } else {
     if (!(await bcrypt.compare(currentPassword, user.password_hash))) {
-      res.status(401).json({ error: 'Your current password is incorrect.' });
+      res.status(401).json({ error: 'Your current password is wrong. Check it and try again.' });
       return;
     }
     db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(await bcrypt.hash(newPassword, BCRYPT_COST), user.id);
@@ -825,7 +825,7 @@ authRouter.post('/logout', requireCsrfHeader, (req, res) => {
 authRouter.get('/me', requireAuth, (req, res) => {
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!);
   if (!user) {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   res.json({ user: publicUser(user) });

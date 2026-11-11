@@ -67,21 +67,21 @@ export type ModerationResult = { allowed: true } | { allowed: false; reason: str
  * phone-shaped digit run). Use this for any educational content a teacher authors. */
 export function moderateContent(raw: string): ModerationResult {
   if (!raw || !raw.trim()) {
-    return { allowed: false, reason: 'Message cannot be empty.' };
+    return { allowed: false, reason: 'Write a message first.' };
   }
 
   const normalized = normalize(raw);
 
   for (const phrase of PHRASE_BLOCKLIST) {
     if (normalized.includes(phrase)) {
-      return { allowed: false, reason: "Let's keep our chat kind and safe! Try rephrasing your message. 🦅" };
+      return { allowed: false, reason: "Some words in your message are not allowed here. Please write it in a kind way. 🦅" };
     }
   }
 
   const words = normalized.split(/\s+/).filter(Boolean);
   for (const word of words) {
     if (BLOCKLIST.has(word)) {
-      return { allowed: false, reason: "Let's keep our chat kind and safe! Try rephrasing your message. 🦅" };
+      return { allowed: false, reason: "Some words in your message are not allowed here. Please write it in a kind way. 🦅" };
     }
   }
 
@@ -93,13 +93,13 @@ export function moderateText(raw: string): ModerationResult {
   if (!contentCheck.allowed) return contentCheck;
 
   if (EMAIL_PATTERN.test(raw)) {
-    return { allowed: false, reason: "For your safety, you can't share email addresses in chat. Let's keep it inside Anees! 🛡️" };
+    return { allowed: false, reason: "For your safety, do not write email addresses in the chat. 🛡️" };
   }
   if (PHONE_PATTERN.test(raw)) {
-    return { allowed: false, reason: "For your safety, you can't share phone numbers in chat. Let's keep it inside Anees! 🛡️" };
+    return { allowed: false, reason: "For your safety, do not write phone numbers in the chat. 🛡️" };
   }
   if (CONTACT_SOLICIT_PATTERN.test(raw)) {
-    return { allowed: false, reason: "For your safety, let's keep chatting here on Anees instead of other apps! 🛡️" };
+    return { allowed: false, reason: "For your safety, chat here on Anees and do not ask to move to other apps. 🛡️" };
   }
 
   return { allowed: true };

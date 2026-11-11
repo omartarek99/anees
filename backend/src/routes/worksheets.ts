@@ -40,13 +40,13 @@ const generateSchema = z
     reelId: z.coerce.number().int().positive().optional(),
     // The lesson name (درس) typed for a general worksheet -- the AI writes new questions on
     // it each time. Without it, a general worksheet draws from the fixed seeded bank.
-    topic: z.string().trim().min(2, 'Lesson name is too short.').max(80).optional(),
+    topic: z.string().trim().min(2, 'The lesson name is too short. Write at least 2 letters.').max(80).optional(),
     // The grade of the typed lesson (the school book it comes from) -- Math and Science grades 5 and 6.
     grade: z.coerce.number().int().min(5).max(6).optional(),
     // How many questions the worksheet has.
     count: z.coerce.number().int().min(3).max(MAX_QUESTIONS).optional().default(QUESTIONS_PER_WORKSHEET),
   })
-  .refine((b) => b.subject || b.reelId, { message: 'Choose a subject or a video.' });
+  .refine((b) => b.subject || b.reelId, { message: 'Choose a subject or a video first.' });
 
 // Videos a user can build a worksheet from -- the same visibility as the reels feed
 // (routes/reels.ts): a student sees the teacher videos tagged with their own grade, a
@@ -322,7 +322,7 @@ worksheetsRouter.post(
       if (reelId) {
         const reel = loadVisibleVideo(reelId, req.userId!);
         if (!reel) {
-          res.status(404).json({ error: 'Video not found.' });
+          res.status(404).json({ error: 'We couldn\'t find this video. It may have been deleted.' });
           return;
         }
         const picked = await buildAiQuestions(
@@ -341,7 +341,7 @@ worksheetsRouter.post(
           difficulty
         );
         if (picked.length === 0) {
-          res.status(404).json({ error: 'No questions could be made for this video yet. Please try again later.' });
+          res.status(404).json({ error: 'We couldn\'t make questions for this video now. Try again later, or write them yourself.' });
           return;
         }
         const attemptId = createAttempt(req.userId!, reel.subject_id, difficulty, reel.id, picked.map((q) => q.id));
@@ -360,7 +360,7 @@ worksheetsRouter.post(
 
       const subjectRow = db.prepare(`SELECT * FROM subjects WHERE key = ?`).get(subject!) as any;
       if (!subjectRow) {
-        res.status(400).json({ error: 'Unknown subject.' });
+        res.status(400).json({ error: 'This subject is not available.' });
         return;
       }
 
@@ -371,7 +371,7 @@ worksheetsRouter.post(
         // AI prompt, so it must stay a plain label rather than carry extra instructions.
         const topic = rawTopic.replace(/[\u0000-\u001f"`]/g, ' ').replace(/\s+/g, ' ').trim();
         if (topic.length < 2 || !moderateContent(topic).allowed) {
-          res.status(400).json({ error: 'Please keep your lesson name appropriate.' });
+          res.status(400).json({ error: 'This lesson name is not allowed. Write a different name.' });
           return;
         }
         const user = db.prepare(`SELECT grade FROM users WHERE id = ?`).get(req.userId!) as { grade: number | null } | undefined;
@@ -413,7 +413,7 @@ worksheetsRouter.post(
         .prepare(`SELECT * FROM worksheet_questions WHERE subject_id = ? AND difficulty = ? AND reel_id IS NULL AND topic IS NULL`)
         .all(subjectRow.id, difficulty) as any[];
       if (pool.length === 0) {
-        res.status(404).json({ error: 'No questions available for this combination yet.' });
+        res.status(404).json({ error: 'There are no questions for this subject and grade yet. Try a different choice.' });
         return;
       }
 
@@ -430,7 +430,7 @@ worksheetsRouter.post(
       });
     } catch (err) {
       console.error('Worksheet generation failed:', err);
-      res.status(500).json({ error: 'Something went wrong. Please try again.' });
+      res.status(500).json({ error: 'Something went wrong on our side. Please try again in a moment.' });
     }
   }
 );
@@ -442,11 +442,11 @@ const submitSchema = z.object({
 worksheetsRouter.post('/:id/submit', forbidRole('admin'), requireCsrfHeader, validateBody(submitSchema), (req, res) => {
   const attempt = db.prepare(`SELECT * FROM worksheet_attempts WHERE id = ?`).get(Number(req.params.id)) as any;
   if (!attempt || attempt.user_id !== req.userId!) {
-    res.status(404).json({ error: 'Worksheet not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this worksheet.' });
     return;
   }
   if (attempt.status === 'submitted') {
-    res.status(409).json({ error: 'This worksheet was already submitted.' });
+    res.status(409).json({ error: 'You already sent your answers for this worksheet.' });
     return;
   }
 

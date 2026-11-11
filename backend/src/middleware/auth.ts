@@ -14,7 +14,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies?.[SESSION_COOKIE] as string | undefined;
   const userId = getUserIdForToken(token);
   if (!userId) {
-    res.status(401).json({ error: 'Not authenticated.' });
+    res.status(401).json({ error: 'Please log in to continue.' });
     return;
   }
   // Re-checked on every request (not just at login) so an admin deactivating/banning an
@@ -22,15 +22,15 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   // its next fresh login while its existing session cookie would otherwise keep working.
   const user = findAuthUser.get(userId) as { role: string; is_active: number; banned_until: string | null; profile_complete: number } | undefined;
   if (!user || !user.is_active) {
-    res.status(403).json({ error: 'This account has been deactivated.' });
+    res.status(403).json({ error: 'This account is stopped. Contact the Anees team.' });
     return;
   }
   if (isCurrentlyBanned(user.banned_until)) {
-    res.status(403).json({ error: 'This account is temporarily suspended.', bannedUntil: user.banned_until });
+    res.status(403).json({ error: 'This account is suspended for now. Try again when the suspension ends.', bannedUntil: user.banned_until });
     return;
   }
   if (user.profile_complete === 0 && !ALLOWED_WHILE_INCOMPLETE.has(req.originalUrl.split('?')[0])) {
-    res.status(403).json({ error: 'Please complete your profile first.', profileIncomplete: true });
+    res.status(403).json({ error: 'Complete your profile first, then try again.', profileIncomplete: true });
     return;
   }
   req.userId = userId;
@@ -46,7 +46,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 export function forbidRole(role: 'student' | 'teacher' | 'admin') {
   return (req: Request, res: Response, next: NextFunction) => {
     if (req.userRole === role) {
-      res.status(403).json({ error: 'This account type does not have access to this.' });
+      res.status(403).json({ error: 'Your account type can\'t open this page.' });
       return;
     }
     next();
@@ -56,7 +56,7 @@ export function forbidRole(role: 'student' | 'teacher' | 'admin') {
 export function requireRole(...roles: ('student' | 'teacher' | 'admin')[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!roles.includes(req.userRole as 'student' | 'teacher' | 'admin')) {
-      res.status(403).json({ error: 'This account type does not have access to this.' });
+      res.status(403).json({ error: 'Your account type can\'t open this page.' });
       return;
     }
     next();

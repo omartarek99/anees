@@ -133,7 +133,7 @@ function ownProfile(user: any) {
 usersRouter.get('/me', requireAuth, (req, res) => {
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!);
   if (!user) {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   res.json({ profile: ownProfile(user) });
@@ -151,20 +151,20 @@ usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProf
   // Every moderation check runs before the first write, so a request rejected for one field
   // never leaves another field of the same request half-saved.
   if (displayName !== undefined && !moderateText(displayName).allowed) {
-    res.status(400).json({ error: 'Please choose an appropriate display name.' });
+    res.status(400).json({ error: 'This display name is not allowed. Choose a different one.' });
     return;
   }
   // A rank colour is only for a student, and only one they have reached (their own rank or a lower one); null goes back to following their rank.
   if (auraRank && auraRank !== 'normal') {
     const me = db.prepare(`SELECT role, total_xp FROM users WHERE id = ?`).get(req.userId!) as { role: string; total_xp: number };
     if (me.role !== 'student' || earnedAuraRank(auraRank, me.total_xp) !== auraRank) {
-      res.status(400).json({ error: 'You can only pick the colour of a rank you have reached.' });
+      res.status(400).json({ error: 'You can only choose the colour of a rank you have already reached.' });
       return;
     }
   }
   // Empty bio (clearing it) is always fine -- only non-empty text needs moderation.
   if (bio && !moderateText(bio).allowed) {
-    res.status(400).json({ error: 'Please keep your bio appropriate and free of contact info.' });
+    res.status(400).json({ error: 'Your bio cannot have inappropriate words or contact details (phone, email, social accounts). Remove them and try again.' });
     return;
   }
 
@@ -207,12 +207,12 @@ const avatarUpload = multer({
   },
 }).single('photo');
 
-const handleAvatarUpload = handleUpload(avatarUpload, 'Please upload a valid photo (JPG, PNG, or WebP, under 5MB).');
+const handleAvatarUpload = handleUpload(avatarUpload, 'The photo must be a JPG, PNG or WebP file smaller than 5MB. Choose another photo.');
 
 usersRouter.post('/me/avatar', requireAuth, requireCsrfHeader, handleAvatarUpload, async (req, res) => {
   const photo = req.file;
   if (!photo || !looksLikeImage(photo.buffer, photo.mimetype)) {
-    res.status(400).json({ error: 'Please upload a valid photo (JPG, PNG, or WebP, under 5MB).' });
+    res.status(400).json({ error: 'The photo must be a JPG, PNG or WebP file smaller than 5MB. Choose another photo.' });
     return;
   }
   if (!supabaseAdmin) {
@@ -280,14 +280,14 @@ usersRouter.get('/search', requireAuth, (req, res) => {
 usersRouter.get('/:username', requireAuth, (req, res) => {
   const user = db.prepare(`SELECT * FROM users WHERE lower(username) = lower(?)`).get(req.params.username);
   if (!user) {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   // Admin accounts aren't part of the social side of the app (hidden from search, leaderboard and
   // friend requests), so only another admin can open their profile.
   const caller = db.prepare(`SELECT role FROM users WHERE id = ?`).get(req.userId!) as { role: string } | undefined;
   if ((user as any).role === 'admin' && caller?.role !== 'admin') {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   res.json({ profile: profileSummary(user) });

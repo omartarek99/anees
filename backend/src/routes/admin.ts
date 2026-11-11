@@ -75,7 +75,7 @@ function clampPage(requestedPage: number, total: number) {
 function applyUserUpdate(res: Response, targetId: number, runUpdate: () => { changes: number | bigint }, extra: object = {}) {
   const result = runUpdate();
   if (result.changes === 0) {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   const row = db.prepare(`SELECT * FROM users WHERE id = ?`).get(targetId) as any;
@@ -209,7 +209,7 @@ adminRouter.get('/users', (req, res) => {
 adminRouter.patch('/users/:id/active', requireCsrfHeader, validateBody(adminSetActiveSchema), (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
-    res.status(400).json({ error: "You can't deactivate your own account." });
+    res.status(400).json({ error: "You cannot stop your own account." });
     return;
   }
   const { isActive } = req.body as { isActive: boolean };
@@ -219,7 +219,7 @@ adminRouter.patch('/users/:id/active', requireCsrfHeader, validateBody(adminSetA
 adminRouter.patch('/users/:id/role', requireCsrfHeader, validateBody(adminSetRoleSchema), (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
-    res.status(400).json({ error: "You can't change your own role." });
+    res.status(400).json({ error: "You cannot change your own account type." });
     return;
   }
   const { role } = req.body as { role: 'student' | 'teacher' | 'admin' };
@@ -229,12 +229,12 @@ adminRouter.patch('/users/:id/role', requireCsrfHeader, validateBody(adminSetRol
 adminRouter.delete('/users/:id', requireCsrfHeader, async (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
-    res.status(400).json({ error: "You can't delete your own account." });
+    res.status(400).json({ error: "You cannot delete your own account." });
     return;
   }
   const result = await deleteUserById(targetId);
   if (!result.found) {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   res.json({ ok: true });
@@ -266,7 +266,7 @@ adminRouter.patch('/users/:id/warning', requireCsrfHeader, validateBody(adminSet
 adminRouter.patch('/users/:id/ban', requireCsrfHeader, validateBody(adminSetBanSchema), (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
-    res.status(400).json({ error: "You can't ban your own account." });
+    res.status(400).json({ error: "You cannot suspend your own account." });
     return;
   }
   const { bannedUntil } = req.body as { bannedUntil: string | null };
@@ -279,11 +279,11 @@ adminRouter.post('/users/:id/violations', requireCsrfHeader, validateBody(adminA
   const targetId = Number(req.params.id);
   const target = db.prepare(`SELECT role FROM users WHERE id = ?`).get(targetId) as { role: string } | undefined;
   if (!target) {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   if (target.role !== 'student') {
-    res.status(400).json({ error: 'Violations are recorded against student accounts.' });
+    res.status(400).json({ error: 'Violations can only be recorded for student accounts.' });
     return;
   }
   const { violation, note, points } = req.body as { violation: string; note?: string; points?: number };
@@ -302,7 +302,7 @@ function applyPointsChange(res: Response, targetId: number, newPoints: number, a
     | { role: string; total_xp: number; teacher_points: number }
     | undefined;
   if (!before) {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   const teacher = before.role === 'teacher';
@@ -326,7 +326,7 @@ function applyPointsChange(res: Response, targetId: number, newPoints: number, a
 adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSchema), (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
-    res.status(400).json({ error: "You can't edit your own points." });
+    res.status(400).json({ error: "You cannot change your own points." });
     return;
   }
   const { totalXp } = req.body as { totalXp: number };
@@ -337,13 +337,13 @@ adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSch
 adminRouter.post('/users/:id/points', requireCsrfHeader, validateBody(adminAdjustPointsSchema), (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
-    res.status(400).json({ error: "You can't edit your own points." });
+    res.status(400).json({ error: "You cannot change your own points." });
     return;
   }
   const { action, amount, note, violation } = req.body as { action: 'add' | 'remove'; amount: number; note?: string; violation?: string };
   const row = db.prepare(`SELECT role, total_xp, teacher_points FROM users WHERE id = ?`).get(targetId) as { role: string; total_xp: number; teacher_points: number } | undefined;
   if (!row) {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   const current = row.role === 'teacher' ? row.teacher_points ?? 0 : row.total_xp;
@@ -372,7 +372,7 @@ const certificateImageUpload = multer({
   },
 }).single('image');
 
-const handleCertificateImageUpload = handleUpload(certificateImageUpload, 'Please upload a valid image (JPG, PNG, or WebP, under 8MB).');
+const handleCertificateImageUpload = handleUpload(certificateImageUpload, 'The image must be a JPG, PNG or WebP file smaller than 8MB. Choose another image.');
 
 const CERTIFICATE_IMAGE_MIME_TO_EXT: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -418,14 +418,14 @@ adminRouter.get('/certificates', (_req, res) => {
 adminRouter.post('/certificates', requireCsrfHeader, handleCertificateImageUpload, async (req, res) => {
   const parsed = adminIssueCertificateSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid request.', details: parsed.error.flatten() });
+    res.status(400).json({ error: 'Something in the form is not right. Check it and try again.', details: parsed.error.flatten() });
     return;
   }
   const { userId, title, type } = parsed.data;
 
   const recipient = db.prepare(`SELECT id, role FROM users WHERE id = ?`).get(userId) as { id: number; role: string } | undefined;
   if (!recipient || recipient.role === 'admin') {
-    res.status(400).json({ error: 'Certificates can only be issued to a student or teacher account.' });
+    res.status(400).json({ error: 'A certificate can only be given to a student or a teacher.' });
     return;
   }
 
@@ -442,7 +442,7 @@ adminRouter.post('/certificates', requireCsrfHeader, handleCertificateImageUploa
     return;
   }
   if (!looksLikeImage(image.buffer, image.mimetype)) {
-    res.status(400).json({ error: 'Please upload a valid image (JPG, PNG, or WebP, under 8MB).' });
+    res.status(400).json({ error: 'The image must be a JPG, PNG or WebP file smaller than 8MB. Choose another image.' });
     return;
   }
   if (!supabaseAdmin) {
@@ -476,7 +476,7 @@ adminRouter.post('/certificates', requireCsrfHeader, handleCertificateImageUploa
 adminRouter.post('/certificates/:id/revoke', requireCsrfHeader, validateBody(adminRevokeCertificateSchema), (req, res) => {
   const { reason } = req.body as { reason: string };
   if (!revokeCertificate(Number(req.params.id), req.userId!, reason)) {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
   res.json({ ok: true });
@@ -509,18 +509,18 @@ function adminReel(row: any) {
 adminRouter.post('/reels/:id/message', requireCsrfHeader, (req, res) => {
   const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
   if (message.length < 1 || message.length > 500) {
-    res.status(400).json({ error: 'Please write a message (up to 500 characters).' });
+    res.status(400).json({ error: 'Write a message of up to 500 letters.' });
     return;
   }
   const reel = db.prepare(`SELECT r.id, r.author_user_id, u.role AS author_role FROM reels r LEFT JOIN users u ON u.id = r.author_user_id WHERE r.id = ?`).get(Number(req.params.id)) as
     | { id: number; author_user_id: number | null; author_role: string | null }
     | undefined;
   if (!reel) {
-    res.status(404).json({ error: 'Video not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this video. It may have been deleted.' });
     return;
   }
   if (!reel.author_user_id || reel.author_role !== 'teacher') {
-    res.status(400).json({ error: 'This video was not made by a teacher, so there is nobody to send a message to.' });
+    res.status(400).json({ error: 'This video has no teacher, so there is nobody to send the message to.' });
     return;
   }
   const info = db.prepare(`INSERT INTO reel_messages (reel_id, teacher_id, admin_id, message) VALUES (?,?,?,?)`).run(reel.id, reel.author_user_id, req.userId!, message);
@@ -572,7 +572,7 @@ adminRouter.delete('/reels/:id', requireCsrfHeader, async (req, res) => {
   }
   // the app's own lessons (no author) are part of the map, not uploads to moderate
   if (reel.author_user_id === null) {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
   // The file goes first (it never throws, whatever state the storage is in), then the lesson. Every table that points at reels cascades or clears its

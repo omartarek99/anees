@@ -5,7 +5,7 @@ export const authLimiter = rateLimit({
   limit: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many attempts. Please wait a few minutes and try again.' },
+  message: { error: 'Too many attempts. Wait a few minutes, then try again.' },
 });
 
 // For load tests only (loadtest/README.md): one machine firing hundreds of requests a minute would just
@@ -33,7 +33,7 @@ export const aiGenerationLimiter = rateLimit({
   limit: 15,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many attempts. Please wait a few minutes and try again.' },
+  message: { error: 'Too many attempts. Wait a few minutes, then try again.' },
 });
 
 // Worksheets built from a video call the AI on EVERY click (a fresh set each time), so this
@@ -45,7 +45,7 @@ export const worksheetAiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => `user:${(req as any).userId ?? 'anon'}`,
-  message: { error: 'Too many attempts. Please wait a few minutes and try again.' },
+  message: { error: 'Too many attempts. Wait a few minutes, then try again.' },
 });
 
 // A teacher's video uploads each hold up to 100MB in memory and run a transcode: per signed-in user,
@@ -56,7 +56,7 @@ export const videoUploadLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => `user:${(req as any).userId ?? 'anon'}`,
-  message: { error: 'Too many attempts. Please wait a few minutes and try again.' },
+  message: { error: 'Too many attempts. Wait a few minutes, then try again.' },
 });
 
 // One signed-in player may poll for their friend challenge about every second; keyed by user, not IP, so a classroom behind one address is fine.

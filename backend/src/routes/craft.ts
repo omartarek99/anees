@@ -102,7 +102,7 @@ const answerSchema = z.object({ choice: z.number() });
 craftRouter.post('/puzzle/:puzzleId/answer', requireCsrfHeader, validateBody(answerSchema), (req, res) => {
   const pending = pendingPuzzles.get(req.params.puzzleId);
   if (!pending || pending.userId !== req.userId || pending.expiresAt < Date.now()) {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
   pendingPuzzles.delete(req.params.puzzleId);
