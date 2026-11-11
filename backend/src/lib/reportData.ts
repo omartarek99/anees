@@ -92,16 +92,27 @@ function toRow(r: any): ReportRow {
   };
 }
 
-export function countReportUsers(role: RoleFilter, grade: number | null): number {
+/** The extra condition for a name / username / school search (nothing when the search is empty). */
+function searchSql(search: string): { sql: string; params: string[] } {
+  const q = search.trim().replace(/[%_]/g, '');
+  if (!q) return { sql: '', params: [] };
+  const like = `%${q}%`;
+  return { sql: ' AND (u.username LIKE ? OR u.display_name LIKE ? OR u.school_name LIKE ?)', params: [like, like, like] };
+}
+
+export function countReportUsers(role: RoleFilter, grade: number | null, search = ''): number {
   const { where, params } = filterSql(role, grade);
-  return (db.prepare(`SELECT COUNT(*) AS c FROM users u WHERE ${where}`).get(...params) as { c: number }).c;
+  const s = searchSql(search);
+  return (db.prepare(`SELECT COUNT(*) AS c FROM users u WHERE ${where}${s.sql}`).get(...params, ...s.params) as { c: number }).c;
 }
 
 /** Most-watched first. Pass `limit` for a page, omit for everyone (the Excel export). */
-export function queryReportRows(role: RoleFilter, grade: number | null, limit?: number, offset = 0): ReportRow[] {
+export function queryReportRows(role: RoleFilter, grade: number | null, limit?: number, offset = 0, search = ''): ReportRow[] {
   const { where, params } = filterSql(role, grade);
-  const sql = `${SELECT} WHERE ${where} ORDER BY watched_seconds DESC, u.id ASC${limit !== undefined ? ' LIMIT ? OFFSET ?' : ''}`;
-  const rows = (limit !== undefined ? db.prepare(sql).all(...params, limit, offset) : db.prepare(sql).all(...params)) as any[];
+  const s = searchSql(search);
+  const sql = `${SELECT} WHERE ${where}${s.sql} ORDER BY watched_seconds DESC, u.id ASC${limit !== undefined ? ' LIMIT ? OFFSET ?' : ''}`;
+  const all = [...params, ...s.params];
+  const rows = (limit !== undefined ? db.prepare(sql).all(...all, limit, offset) : db.prepare(sql).all(...all)) as any[];
   return rows.map(toRow);
 }
 

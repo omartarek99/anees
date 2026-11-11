@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { api, ApiError } from '../lib/api';
 import { translateApiError } from '../lib/i18n';
+import { Ico } from './Ico';
 import { useLanguage } from '../lib/language-context';
 
 type Account = {
@@ -54,7 +55,7 @@ function AccountLine({ a, children, note }: { a: Account; children: ReactNode; n
           </p>
           {a.schoolName && (
             <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-              🏫 {a.schoolName}
+              <Ico name="school" size={18} /> {a.schoolName}
             </p>
           )}
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>
@@ -135,11 +136,11 @@ function FindAccount() {
         {found?.map((a) => (
           <AccountLine key={a.id} a={a} note={notes[a.id]}>
             <button type="button" className="btn btn-secondary" disabled={busy === a.id || !a.canEmailReset} title={a.canEmailReset ? undefined : t('admin.accResetUnavailable')} onClick={() => sendReset(a)}>
-              {t('admin.accSendReset')}
+              <Ico name="reset" size={22} /> {t('admin.accSendReset')}
             </button>
             {!a.isSelf && (
               <button type="button" className="btn btn-secondary" disabled={busy === a.id} onClick={() => signOut(a)}>
-                {t('admin.accSignOut')}
+                <Ico name="signout" size={22} /> {t('admin.accSignOut')}
               </button>
             )}
           </AccountLine>

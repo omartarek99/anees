@@ -1,3 +1,4 @@
+import { Ico } from './Ico';
 import { useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import type { Role } from '../lib/auth-context';
@@ -210,7 +211,7 @@ export function AdminUserRow({
           </p>
           {u.schoolName && (
             <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-              🏫 {u.schoolName}
+              <Ico name="school" size={18} /> {u.schoolName}
             </p>
           )}
         </div>

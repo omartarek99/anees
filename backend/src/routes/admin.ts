@@ -204,7 +204,11 @@ adminRouter.get('/users', (req, res) => {
   );
   if (search) {
     users = users.filter(
-      (u) => u.username.toLowerCase().includes(search) || u.email.toLowerCase().includes(search) || u.displayName.toLowerCase().includes(search)
+      (u) =>
+        u.username.toLowerCase().includes(search) ||
+        u.email.toLowerCase().includes(search) ||
+        u.displayName.toLowerCase().includes(search) ||
+        (u.schoolName ?? '').toLowerCase().includes(search)
     );
   }
 
@@ -709,10 +713,12 @@ adminRouter.get('/reports/watch-time', (req, res) => {
   const role = parseRoleFilter(req.query.role);
   const grade = parseGrade(req.query.grade);
   const page = Math.max(1, Number(req.query.page) || 1);
+  // the search box above the usage table: a name, a username or a school
+  const search = typeof req.query.search === 'string' ? req.query.search.trim().slice(0, 60) : '';
 
-  const total = countReportUsers(role, grade);
+  const total = countReportUsers(role, grade, search);
   const { page: page_, totalPages } = clampPage(page, total);
-  const rows = queryReportRows(role, grade, PAGE_SIZE, (page_ - 1) * PAGE_SIZE);
+  const rows = queryReportRows(role, grade, PAGE_SIZE, (page_ - 1) * PAGE_SIZE, search);
 
   // `users` covers students AND teachers (filter with ?role=student|teacher); `totals` spans everyone
   // matching the filter, not just this page.

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import Textify from 'textify.js';
 import { gsap } from 'gsap';
 import { Link } from 'react-router-dom';
@@ -12,6 +12,7 @@ import { RANK_FRAMES } from '../lib/frames';
 import type { RankKey } from '../lib/medalLevels';
 import { ChallengePickerModal } from '../components/ChallengePickerModal';
 import { ChallengeSetupModal } from '../components/ChallengeSetupModal';
+import { Ico } from '../components/Ico';
 
 type Profile = {
   levelsCompleted: number;
@@ -140,7 +141,8 @@ export function HomePage() {
   const mapLevel = profile?.mapLevel ?? 1;
   const pct = (n: number) => `${Math.round((n / 50) * 100)}%`;
   // One market card per stat: its picture, a corner chip, the value, and where to go with it.
-  const studentCards = [
+  type HomeCard = { tone: string; src: string; title: string; value: ReactNode; chip: string; to: string | null; cta: string };
+  const studentCards: HomeCard[] = [
     { tone: 'blue', src: '/icons/map-icon.webp', title: t('home.mapProgress'), value: `${mapLevel}/50`, chip: pct(mapLevel), to: '/map', cta: t('home.openMap') },
     { tone: 'yellow', src: '/icons/levels-icon.webp', title: t('profile.levelsCompleted'), value: `${completed}/50`, chip: pct(completed), to: '/reels', cta: t('home.watchReel') },
     {
@@ -163,10 +165,10 @@ export function HomePage() {
     },
   ];
   // A teacher's home has three cards instead: the leaderboard, a worksheet, and adding videos.
-  const teacherCards: typeof studentCards = [
-    { tone: 'pink', src: '/icons/teacher-leaders.webp', title: t('home.teacherLeadersTitle'), value: '🏆', chip: '', to: '/leaderboard', cta: t('home.teacherLeadersCta') },
-    { tone: 'blue', src: '/icons/teacher-worksheet.webp', title: t('home.teacherWorksheetTitle'), value: '📄', chip: '', to: '/worksheets', cta: t('home.teacherWorksheetCta') },
-    { tone: 'yellow', src: '/icons/teacher-videos.webp', title: t('home.teacherVideosTitle'), value: '🎬', chip: '', to: '/teacher/reels', cta: t('home.teacherVideosCta') },
+  const teacherCards: HomeCard[] = [
+    { tone: 'pink', src: '/icons/teacher-leaders.webp', title: t('home.teacherLeadersTitle'), value: <Ico name="trophy" size={40} />, chip: '', to: '/leaderboard', cta: t('home.teacherLeadersCta') },
+    { tone: 'blue', src: '/icons/teacher-worksheet.webp', title: t('home.teacherWorksheetTitle'), value: <Ico name="worksheet" size={40} />, chip: '', to: '/worksheets', cta: t('home.teacherWorksheetCta') },
+    { tone: 'yellow', src: '/icons/teacher-videos.webp', title: t('home.teacherVideosTitle'), value: <Ico name="addvideo" size={40} />, chip: '', to: '/teacher/reels', cta: t('home.teacherVideosCta') },
   ];
   const cards = user?.role === 'teacher' ? teacherCards : studentCards;
 
