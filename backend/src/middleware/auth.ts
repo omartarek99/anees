@@ -4,6 +4,9 @@ import { db } from '../db/db.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
 
 // Prepared once; requireAuth runs on every authenticated request.
+// "Last seen": written at most once a minute per account, so a busy person does not cause a database write on every click.
+const markSeen = db.prepare(`UPDATE users SET last_seen_at = datetime('now') WHERE id = ?`);
+const lastMarked = new Map<number, number>();
 const findAuthUser = db.prepare(`SELECT role, is_active, banned_until, profile_complete FROM users WHERE id = ?`);
 
 // A Google sign-up that has not finished its profile step (lib/googleAuth.ts) may only do these -- a teacher in particular must not reach anything
@@ -32,6 +35,11 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (user.profile_complete === 0 && !ALLOWED_WHILE_INCOMPLETE.has(req.originalUrl.split('?')[0])) {
     res.status(403).json({ error: 'Complete your profile first, then try again.', profileIncomplete: true });
     return;
+  }
+  const nowMs = Date.now();
+  if (nowMs - (lastMarked.get(userId) ?? 0) > 60_000) {
+    lastMarked.set(userId, nowMs);
+    markSeen.run(userId);
   }
   req.userId = userId;
   req.userRole = user.role;

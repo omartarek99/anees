@@ -222,6 +222,7 @@ adminRouter.get('/users', (req, res) => {
 // ---------------------------------------------------------------- Account tools (the "Account tools" icon of the admin bar)
 // "Last active" = the latest of: signing in, earning points, watching a lesson, or (if none) the day the account was made.
 const LAST_ACTIVE_SQL = `MAX(
+  COALESCE(u.last_seen_at, ''),
   COALESCE((SELECT MAX(created_at) FROM sessions WHERE user_id = u.id), ''),
   COALESCE((SELECT MAX(created_at) FROM xp_events WHERE user_id = u.id), ''),
   COALESCE((SELECT MAX(updated_at) FROM reel_watch_progress WHERE user_id = u.id), ''),
@@ -842,6 +843,48 @@ adminRouter.get('/analytics/summary', (_req, res) => {
 // The admin dashboard (the first admin page): headline counts, the points students earned per day and by source over the chosen
 // period, the newest accounts and the top students. Real accounts only (is_seed = 0), like every other admin number.
 const DASHBOARD_PERIODS = [7, 30, 90];
+
+// "Right now": who is online (seen in the last 5 minutes) and the newest things that happened on the site.
+adminRouter.get('/live', (_req, res) => {
+  const online = db
+    .prepare(
+      `SELECT id, username, display_name, role, last_seen_at FROM users
+       WHERE is_seed = 0 AND role != 'admin' AND last_seen_at IS NOT NULL AND last_seen_at >= datetime('now', '-5 minutes')
+       ORDER BY last_seen_at DESC`
+    )
+    .all() as any[];
+
+  type Ev = { type: string; at: string; name: string; role?: string; title?: string; days?: number };
+  const events: Ev[] = [];
+  const add = (rows: any[], map: (r: any) => Ev) => rows.forEach((r) => events.push(map(r)));
+  add(db.prepare(`SELECT display_name, role, created_at FROM users WHERE is_seed = 0 ORDER BY created_at DESC, id DESC LIMIT 20`).all() as any[], (r) => ({ type: 'signup', at: r.created_at, name: r.display_name, role: r.role }));
+  add(
+    db.prepare(`SELECT u.display_name, e.created_at FROM teacher_point_events e JOIN users u ON u.id = e.user_id WHERE e.reason = 'video_upload' AND u.is_seed = 0 ORDER BY e.id DESC LIMIT 20`).all() as any[],
+    (r) => ({ type: 'lesson', at: r.created_at, name: r.display_name })
+  );
+  add(
+    db.prepare(`SELECT u.display_name, c.title, c.created_at FROM certificates c JOIN users u ON u.id = c.user_id WHERE c.revoked_at IS NULL AND u.is_seed = 0 ORDER BY c.id DESC LIMIT 20`).all() as any[],
+    (r) => ({ type: 'certificate', at: r.created_at, name: r.display_name, title: r.title })
+  );
+  add(
+    db.prepare(`SELECT u.display_name, w.created_at FROM user_warnings w JOIN users u ON u.id = w.user_id ORDER BY w.id DESC LIMIT 20`).all() as any[],
+    (r) => ({ type: 'warning', at: r.created_at, name: r.display_name })
+  );
+  add(
+    db.prepare(`SELECT u.display_name, v.created_at, v.suspended_days FROM user_violations v JOIN users u ON u.id = v.user_id ORDER BY v.id DESC LIMIT 20`).all() as any[],
+    (r) => ({ type: 'violation', at: r.created_at, name: r.display_name, days: r.suspended_days })
+  );
+  events.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+
+  res.json({
+    online: {
+      students: online.filter((o) => o.role === 'student').length,
+      teachers: online.filter((o) => o.role === 'teacher').length,
+      people: online.slice(0, 8).map((o) => ({ id: o.id, username: o.username, displayName: o.display_name, role: o.role, lastSeenAt: o.last_seen_at })),
+    },
+    events: events.slice(0, 20),
+  });
+});
 
 adminRouter.get('/dashboard', (req, res) => {
   const asked = Number(req.query.days);
