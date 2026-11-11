@@ -9,11 +9,11 @@ import {
   type RecipeCategory,
 } from '../lib/craftItems';
 
-const TABS: { key: RecipeCategory; labelKey: string; icon: string }[] = [
-  { key: 'blocks', labelKey: 'craft.tabBlocks', icon: '🧱' },
-  { key: 'tools', labelKey: 'craft.tabTools', icon: '⛏️' },
-  { key: 'food', labelKey: 'craft.tabFood', icon: '🍞' },
-  { key: 'potions', labelKey: 'craft.tabPotions', icon: '⚗️' },
+const TABS: { key: RecipeCategory; labelKey: string }[] = [
+  { key: 'blocks', labelKey: 'craft.tabBlocks' },
+  { key: 'tools', labelKey: 'craft.tabTools' },
+  { key: 'food', labelKey: 'craft.tabFood' },
+  { key: 'potions', labelKey: 'craft.tabPotions' },
 ];
 
 function ItemChip({ id, size = 26 }: { id: number; size?: number }) {
@@ -108,16 +108,17 @@ export function CraftMenu({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <strong style={{ fontSize: 15 }}>🧰 {t('craft.craftMenuTitle')}</strong>
+        <strong style={{ fontSize: 15 }}>{t('craft.craftMenuTitle')}</strong>
         <span style={{ flex: 1 }} />
         <button
           type="button"
           onClick={onClose}
           style={{
-            border: '1px solid rgba(255,255,255,0.3)',
-            background: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.42)',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0.06))',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45)',
             color: '#fff',
-            borderRadius: 8,
+            borderRadius: 0,
             width: 30,
             height: 30,
             fontSize: 15,
@@ -135,17 +136,18 @@ export function CraftMenu({
             type="button"
             onClick={() => setTab(tb.key)}
             style={{
-              border: '1px solid rgba(255,255,255,0.22)',
-              background: tab === tb.key ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.07)',
+              border: tab === tb.key ? '1px solid rgba(255,255,255,0.8)' : '1px solid rgba(255,255,255,0.32)',
+              background: tab === tb.key ? 'linear-gradient(180deg, rgba(255,255,255,0.4), rgba(255,255,255,0.14))' : 'linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.04))',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45)',
               color: '#fff',
-              borderRadius: 999,
+              borderRadius: 0,
               padding: '5px 12px',
               fontSize: 12,
               fontWeight: 800,
               cursor: 'pointer',
             }}
           >
-            {tb.icon} {t(tb.labelKey)}
+            {t(tb.labelKey)}
           </button>
         ))}
       </div>
@@ -160,7 +162,7 @@ export function CraftMenu({
                 style={{
                   border: '1px solid rgba(255,255,255,0.15)',
                   background: 'rgba(255,255,255,0.05)',
-                  borderRadius: 10,
+                  borderRadius: 0,
                   padding: 8,
                   opacity: ok ? 1 : 0.55,
                 }}
@@ -194,13 +196,14 @@ export function CraftMenu({
                   onClick={() => onCraft(r.id)}
                   style={{
                     width: '100%',
-                    border: 'none',
-                    borderRadius: 7,
+                    border: ok ? '1px solid rgba(170,240,200,0.7)' : '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: 0,
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45)',
                     padding: '6px 0',
                     fontSize: 12,
                     fontWeight: 800,
                     cursor: ok ? 'pointer' : 'not-allowed',
-                    background: ok ? '#2f8f5b' : 'rgba(255,255,255,0.12)',
+                    background: ok ? 'linear-gradient(180deg, rgba(80,190,130,0.75), rgba(47,143,91,0.55))' : 'rgba(255,255,255,0.1)',
                     color: '#fff',
                   }}
                 >
@@ -223,10 +226,11 @@ export function CraftMenu({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 5,
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(120,200,140,0.16)',
+                border: '1px solid rgba(255,255,255,0.36)',
+                background: 'linear-gradient(180deg, rgba(150,220,170,0.3), rgba(120,200,140,0.1))',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45)',
                 color: '#fff',
-                borderRadius: 8,
+                borderRadius: 0,
                 padding: '5px 9px',
                 fontSize: 12,
                 fontWeight: 700,

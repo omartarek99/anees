@@ -6,7 +6,7 @@
 // -------------------------------------------------------------------------------------------
 import * as THREE from 'three';
 import { getTile, isSolidTile, WATER, WORLD_Y, type Biome, type ChunkWorld } from './craftWorld';
-import { SPECIES_LIST, speciesOf } from './craftAnimals/registry';
+import { MONSTER_LIST, SPECIES_LIST, speciesOf } from './craftAnimals/registry';
 import { createAnimalMesh, getAssets } from './craftAnimals/model';
 import type { Pose } from './craftAnimals/rig';
 import type { SpeciesSpec } from './craftAnimals/types';
@@ -51,13 +51,21 @@ export type Animal = {
   hopSpeed: number;
   /** set when the animal should be removed (a fish stranded on land) */
   gone: boolean;
+  /** seconds before a walker that bumped into something may pick another way (else it spins on the spot) */
+  bump: number;
+  /** monsters: performance.now() ms of their next allowed hit */
+  nextHit: number;
   disposeMesh: () => void;
 };
 
 const GRAVITY = 22;
+/** upward speed for stepping onto the next block */
+const STEP_JUMP = 7.5;
 const FOLLOW_SPEED = 3.2;
 /** beyond this distance (blocks) from the player an animal is hidden and updates at ~4 Hz */
 const SLEEP_DIST = 56;
+/** longest physics step (s): keeps falls under a block per step */
+const MAX_STEP = 1 / 30;
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 
 export function makeAnimal(kind: AnimalKind, x: number, y: number, z: number, variant?: number): Animal {
@@ -95,6 +103,8 @@ export function makeAnimal(kind: AnimalKind, x: number, y: number, z: number, va
     accum: 0,
     hopSpeed: 0,
     gone: false,
+    bump: 0,
+    nextHit: 0,
     disposeMesh: dispose,
   };
   mesh.rotation.y = a.yaw;
@@ -164,8 +174,17 @@ function stepGround(a: Animal, dt: number, world: ChunkWorld, player: { x: numbe
   const wander = spec.speed;
   const follow = Math.max(FOLLOW_SPEED, wander * 2.2);
   let speed = wander;
+  const hunt = spec.hostile;
+  const hunting = !!hunt && dist < hunt.sight && Math.abs(player.y - a.y) < 6;
+  a.bump = Math.max(0, a.bump - dt);
 
-  if (a.tamed && dist > 2.6) {
+  if (hunting) {
+    // a monster walks straight at the player and stops at arm's length to hit (monsterAttack)
+    a.heading = Math.atan2(player.x - a.x, player.z - a.z);
+    speed = dist > a.half + 0.75 ? hunt!.chase : 0;
+    a.pause = 0;
+    if (speed === 0) turnTo(a, a.heading, dt);
+  } else if (a.tamed && dist > 2.6) {
     a.heading = Math.atan2(player.x - a.x, player.z - a.z);
     speed = dist > 6 ? follow : wander;
     a.pause = 0;
@@ -210,24 +229,30 @@ function stepGround(a: Animal, dt: number, world: ChunkWorld, player: { x: numbe
     let moved = false;
     if (!blockedHoriz(world, a, nx, feetY, a.z)) {
       // ledge check: don't stroll off a >2-block drop (tamed pets and hoppers mid-air are allowed to)
-      const groundOk = a.tamed || hopper || solidAt(world, nx, a.y - 1.2, a.z) || solidAt(world, nx, a.y - 0.2, a.z);
+      const groundOk = a.tamed || hunting || hopper || solidAt(world, nx, a.y - 1.2, a.z) || solidAt(world, nx, a.y - 0.2, a.z);
       // and keep out of water: land animals do not swim
       if (groundOk && (wet || !waterAhead(world, nx, a.y, a.z))) {
         a.x = nx;
-        moved = true;
+        moved ||= Math.abs(mvx) > 1e-4; // a zero step along this axis is not progress (else a walker heading straight at a step never climbs it)
       }
     }
     if (!blockedHoriz(world, a, a.x, feetY, nz)) {
-      const groundOk = a.tamed || hopper || solidAt(world, a.x, a.y - 1.2, nz) || solidAt(world, a.x, a.y - 0.2, nz);
+      const groundOk = a.tamed || hunting || hopper || solidAt(world, a.x, a.y - 1.2, nz) || solidAt(world, a.x, a.y - 0.2, nz);
       if (groundOk && (wet || !waterAhead(world, a.x, a.y, nz))) {
         a.z = nz;
-        moved = true;
+        moved ||= Math.abs(mvz) > 1e-4;
       }
     }
-    if (!moved && !a.tamed) a.heading += 1.6; // turn away from the obstacle
+    // turn away from the obstacle ONCE, then give the new way a moment (turning every frame made a stuck animal spin on the spot)
+    if (!moved && !a.tamed && !hunting && a.bump <= 0) {
+      a.heading += Math.PI * rnd(0.5, 1.5);
+      a.headingTimer = rnd(1.5, 4);
+      a.bump = 0.6;
+    }
     // hop up a single step
     if (!moved && a.grounded && !hopper && blockedHoriz(world, a, a.x + Math.sin(a.heading) * 0.4, feetY, a.z + Math.cos(a.heading) * 0.4)) {
-      if (!blockedHoriz(world, a, a.x, a.y + 1.1, a.z)) a.vy = 6;
+      // enough to clear a whole block (v^2 / 2g = 1.28 blocks); 6 only reached ~0.8, so walkers hopped in place at every step
+      if (!blockedHoriz(world, a, a.x, a.y + 1.1, a.z)) a.vy = STEP_JUMP;
     }
     turnTo(a, a.heading, dt);
   }
@@ -362,22 +387,28 @@ export function updateAnimal(a: Animal, dt: number, world: ChunkWorld, player: {
     a.mesh.visible = true;
   }
 
-  switch (a.spec.move) {
-    case 'swim':
-      stepSwim(a, dt, world);
-      break;
-    case 'fly':
-    case 'float':
-      stepAir(a, dt, world, player, dist);
-      break;
-    default:
-      stepGround(a, dt, world, player, dist);
+  // small steps: a far animal thinking at 4 Hz (dt up to 0.5 s) would otherwise fall through floors and walk through corners
+  for (let left = dt; left > 1e-6; left -= MAX_STEP) {
+    const h = Math.min(MAX_STEP, left);
+    switch (a.spec.move) {
+      case 'swim':
+        stepSwim(a, h, world);
+        break;
+      case 'fly':
+      case 'float':
+        stepAir(a, h, world, player, dist);
+        break;
+      default:
+        stepGround(a, h, world, player, dist);
+    }
   }
   if (a.y < -8) {
-    a.x = player.x + (Math.random() - 0.5) * 3;
-    a.z = player.z + (Math.random() - 0.5) * 3;
-    a.y = player.y + 1;
-    a.vy = 0;
+    if (a.tamed) {
+      a.x = player.x + (Math.random() - 0.5) * 3;
+      a.z = player.z + (Math.random() - 0.5) * 3;
+      a.y = player.y + 1;
+      a.vy = 0;
+    } else a.gone = true; // a wild one that fell out of the world just goes (it used to appear next to the player)
   }
 
   // ---- pose: what the shader animates ----
@@ -447,18 +478,33 @@ export function pickSpecies(spot: SpawnSpot): SpeciesSpec | null {
   for (const s of SPECIES_LIST) {
     const fits =
       spot.kind === 'land' ? s.move === 'walk' || s.move === 'hop' : spot.kind === 'water' ? s.move === 'swim' && (s.minWater ?? 1) <= (spot.waterDepth ?? 1) : s.move === 'fly' || s.move === 'float';
-    if (!fits) continue;
+    if (!fits || s.hostile) continue;
     if (s.habitat.biomes && !s.habitat.biomes.includes(spot.biome)) continue;
     pool.push(s);
     total += s.habitat.weight;
   }
-  if (!pool.length) return null;
+  return weighted(pool, total);
+}
+
+/** a random species from the pool, by habitat weight */
+function weighted(pool: SpeciesSpec[], total = pool.reduce((n, s) => n + s.habitat.weight, 0)): SpeciesSpec | null {
   let r = Math.random() * total;
-  for (const s of pool) {
-    r -= s.habitat.weight;
-    if (r <= 0) return s;
-  }
-  return pool[pool.length - 1];
+  for (const s of pool) if ((r -= s.habitat.weight) <= 0) return s;
+  return pool[pool.length - 1] ?? null;
+}
+
+/** A random monster for a land spot in this biome (weighted like the animals). */
+export function pickMonster(biome: Biome): SpeciesSpec | null {
+  return weighted(MONSTER_LIST.filter((s) => !s.habitat.biomes || s.habitat.biomes.includes(biome)));
+}
+
+/** A monster within arm's length (and roughly level with the player) hits when its cooldown is over: returns the damage, or 0. */
+export function monsterAttack(a: Animal, player: { x: number; y: number; z: number }, now: number): number {
+  const hunt = a.spec.hostile;
+  if (!hunt || now < a.nextHit) return 0;
+  if (Math.hypot(player.x - a.x, player.z - a.z) > a.half + 1.15 || Math.abs(player.y - a.y) > 1.6) return 0;
+  a.nextHit = now + hunt.cooldown * 1000;
+  return hunt.damage;
 }
 
 export const animalName = (a: Animal | SpeciesSpec, lang: string): string => {

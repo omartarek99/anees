@@ -15,6 +15,8 @@ import {
   BEDROCK,
   TRANSPARENT,
   WATER,
+  WOOD,
+  LEAVES,
   biomeAt,
   chunkKey,
   chunkCoord,
@@ -44,7 +46,8 @@ import {
   type PotionKind,
 } from '../lib/craftItems';
 import { buildBlockMaterials } from '../lib/craftTextures';
-import { makeAnimal, updateAnimal, disposeAnimal, rayHitsAnimal, animalCenterY, animalName, pickSpecies, type Animal } from '../lib/craftEntities';
+import { closeAudio, getAudioSettings, playSfx, resumeAudio, setAudioSettings, startMusic, type AudioSettings } from '../lib/craftAudio';
+import { makeAnimal, updateAnimal, disposeAnimal, rayHitsAnimal, animalCenterY, animalName, pickSpecies, pickMonster, monsterAttack, type Animal } from '../lib/craftEntities';
 import { disposeAllAssets } from '../lib/craftAnimals/model';
 import { speciesOf } from '../lib/craftAnimals/registry';
 import type { SpeciesSpec } from '../lib/craftAnimals/types';
@@ -68,6 +71,13 @@ const FOG_FAR = 46;
 const MAX_ANIMALS = 22; // a lively world; every animal is one mesh, and far ones barely update
 const MAX_PETS = 5; // befriended animals that follow you (the oldest is released when you befriend a sixth)
 const DESPAWN_DIST = 80;
+const MAX_MONSTERS = 4; // hunting the player at once
+const MONSTER_GRACE_S = 20; // no monsters in the first seconds of a session
+/** seconds of breath under water, then drowning costs a heart (2 hp) a second */
+const MAX_AIR = 15;
+const AIR_BUBBLES = 10;
+/** set once the how-to-play window has been shown: it only opens on the very first game */
+const INTRO_SEEN_KEY = 'anees_craft_intro_seen';
 const WATER_FOG = 0x2a5f9a;
 const SAVE_VERSION = 2;
 
@@ -99,6 +109,16 @@ type GameRef = {
   hungerTimer: number;
   healTimer: number;
   spawnTimer: number;
+  /** seconds until the next monster spawn try */
+  monsterTimer: number;
+  /** seconds played this session (monsters wait MONSTER_GRACE_S) */
+  playTime: number;
+  /** breath left under water, seconds (MAX_AIR when not under water) */
+  air: number;
+  drownTimer: number;
+  /** knock-back velocity from a monster's hit, blocks/s (decays) */
+  knockX: number;
+  knockZ: number;
   hitCooldown: number;
   dirty: boolean;
   saving: boolean;
@@ -121,11 +141,21 @@ type PuzzleModal = {
   xpLost?: number;
 };
 
+// Every Quarry button is a pane of glass with square corners (blocky, like the world): see also .craft-btn in theme.css.
+const glass: CSSProperties = {
+  borderRadius: 0,
+  border: '1px solid rgba(255,255,255,0.42)',
+  background: 'linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0.06))',
+  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5), 0 4px 14px rgba(0,0,0,0.28)',
+  backdropFilter: 'blur(10px) saturate(140%)',
+  WebkitBackdropFilter: 'blur(10px) saturate(140%)',
+};
+
 const glyph = (id: number) => ITEM[id]?.emoji ?? ITEM[id]?.label ?? '▪';
 
 export function CraftPage() {
   const { refreshUser } = useAuth();
-  const { t, lang } = useLanguage();
+  const { t, lang, dir } = useLanguage();
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -134,6 +164,11 @@ export function CraftPage() {
   const rebuildChunkAtRef = useRef<(wx: number, wz: number) => void>(() => {});
   const puzzleOpenRef = useRef(false);
   const introOpenRef = useRef(false);
+  // The main menu covers the game when the page opens (New world / Load world / Settings) and comes back from the menu button.
+  const [mainMenu, setMainMenuState] = useState<'home' | 'settings' | null>('home');
+  const mainMenuRef = useRef<'home' | 'settings' | null>('home');
+  const [hasSave, setHasSave] = useState(false);
+  const [audio, setAudio] = useState<AudioSettings>(getAudioSettings);
   const menuOpenRef = useRef(false);
   const attemptLockRef = useRef<() => void>(() => {});
   const openMenuRef = useRef<() => void>(() => {});
@@ -154,6 +189,8 @@ export function CraftPage() {
   const [toast, setToast] = useState<{ n: number; text: string } | null>(null);
   const [inventory, setInventory] = useState<Inv>({});
   const [survival, setSurvival] = useState({ hp: 20, food: 20 });
+  const [bubbles, setBubbles] = useState(AIR_BUBBLES);
+  const hurtRef = useRef<HTMLDivElement>(null);
   const [effectChips, setEffectChips] = useState<{ kind: PotionKind; secs: number }[]>([]);
   const [puzzle, setPuzzle] = useState<PuzzleModal | null>(null);
   const [puzzleBusy, setPuzzleBusy] = useState(false);
@@ -228,6 +265,32 @@ export function CraftPage() {
   // Escape always exits (never toggles back in) — safe even if the browser's own native
   // fullscreen-exit-on-Escape and this listener both fire for the same keypress.
   useEscapeToClose(exitFullscreenMode, isFullscreen);
+  function setMainMenu(v: 'home' | 'settings' | null) {
+    mainMenuRef.current = v;
+    setMainMenuState(v);
+    if (v) exitLock();
+  }
+  function updateAudio(patch: Partial<AudioSettings>) {
+    setAudio(setAudioSettings(patch));
+  }
+  /** leave the main menu into the world; the how-to-play window opens the very first time only */
+  function enterWorld() {
+    resumeAudio();
+    startMusic();
+    setMainMenu(null);
+    let seen = false;
+    try {
+      seen = localStorage.getItem(INTRO_SEEN_KEY) === '1';
+      localStorage.setItem(INTRO_SEEN_KEY, '1');
+    } catch {
+      /* private mode: show it */
+    }
+    if (!seen) setIntroOpen(true);
+  }
+  function chooseNewWorld() {
+    if (hasSave) setConfirmOpen(true);
+    else enterWorld(); // nothing saved yet: the world that opened is already brand new
+  }
   function setIntroOpen(v: boolean) {
     introOpenRef.current = v;
     setIntroOpenState(v);
@@ -312,6 +375,12 @@ export function CraftPage() {
           hungerTimer: 0,
           healTimer: 0,
           spawnTimer: 2,
+          monsterTimer: 8,
+          playTime: 0,
+          air: MAX_AIR,
+          drownTimer: 0,
+          knockX: 0,
+          knockZ: 0,
           hitCooldown: 0,
           dirty: false,
           saving: false,
@@ -320,7 +389,7 @@ export function CraftPage() {
         setInventory(inv);
         setSurvival({ hp: gameRef.current.hp, food: gameRef.current.food });
         setShowTouch(window.matchMedia('(pointer: coarse)').matches);
-        if (!valid) setIntroOpen(true);
+        setHasSave(!!valid);
         setReady(true);
       } catch (err) {
         if (!cancelled) setLoadError(err instanceof ApiError ? translateApiError(lang, err.message) : t('craft.loadError'));
@@ -328,6 +397,7 @@ export function CraftPage() {
     })();
     return () => {
       cancelled = true;
+      closeAudio();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -352,6 +422,41 @@ export function CraftPage() {
     const dpr = window.devicePixelRatio || 1;
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: dpr < 1.5 });
     renderer.setPixelRatio(Math.min(1.5, dpr));
+
+    // The player's arms, drawn in front of the camera only while swimming: a breaststroke (reach forward, sweep out, pull back).
+    // depthTest off + a late renderOrder so they never clip into a bank.
+    scene.add(camera);
+    const swimArms = new THREE.Group();
+    swimArms.visible = false;
+    camera.add(swimArms);
+    const armGeom = new THREE.BoxGeometry(0.1, 0.1, 0.5);
+    armGeom.translate(0, 0, -0.25);
+    const handGeom = new THREE.BoxGeometry(0.1, 0.1, 0.12);
+    handGeom.translate(0, 0, -0.56);
+    const sleeveMat = new THREE.MeshLambertMaterial({ color: 0x3b6fb6, depthTest: false });
+    const skinMat = new THREE.MeshLambertMaterial({ color: 0xc98d5f, depthTest: false });
+    const arms = [1, -1].map((side) => {
+      const arm = new THREE.Group();
+      const sleeve = new THREE.Mesh(armGeom, sleeveMat);
+      const hand = new THREE.Mesh(handGeom, skinMat);
+      sleeve.renderOrder = hand.renderOrder = 10;
+      arm.add(sleeve, hand);
+      swimArms.add(arm);
+      return { side, arm };
+    });
+    let swimPhase = 0;
+    let wasSwimming = false;
+    function swimPose(dt: number, swimming: boolean, moving: boolean) {
+      swimArms.visible = swimming;
+      if (!swimming) return;
+      swimPhase += dt * (moving ? 5.2 : 2.4);
+      const spread = 0.5 - 0.5 * Math.cos(swimPhase); // 0 = hands together in front, 1 = swept out wide
+      const reach = 0.5 + 0.5 * Math.cos(swimPhase + 0.7); // 1 = arms stretched forward
+      for (const { side, arm } of arms) {
+        arm.position.set(side * (0.12 + 0.26 * spread), -0.26 + 0.05 * Math.sin(swimPhase), 0.05 - 0.22 * reach);
+        arm.rotation.set(0.12 - 0.2 * spread, side * (0.05 + 0.85 * spread), 0);
+      }
+    }
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.72);
     scene.add(ambient);
@@ -605,8 +710,11 @@ export function CraftPage() {
       }
       const swimming = tileAtPos(p.x, p.y + 0.9, p.z) === WATER;
       const spd = MOVE_SPEED * speedMul * (swimming ? 0.6 : 1);
-      const velX = (forwardVec.x * mz + rightVec.x * mx) * spd;
-      const velZ = (forwardVec.z * mz + rightVec.z * mx) * spd;
+      const decay = Math.exp(-7 * dt);
+      game.knockX *= decay;
+      game.knockZ *= decay;
+      const velX = (forwardVec.x * mz + rightVec.x * mx) * spd + game.knockX;
+      const velZ = (forwardVec.z * mz + rightVec.z * mx) * spd + game.knockZ;
 
       const wantsUp = game.keys['Space'] || game.touchJump;
       if (swimming) {
@@ -775,6 +883,7 @@ export function CraftPage() {
     }
 
     function completeMining() {
+      playSfx('break');
       const m = game.mining!;
       game.mining = null;
       if (m.id === RUNE) {
@@ -799,11 +908,12 @@ export function CraftPage() {
         const target = pickAnimal();
         if (target && game.hitCooldown <= 0) {
           const fresh = !game.minePrev;
-          if (target.kind === 'pig') {
+          if (target.kind === 'pig' || target.spec.hostile) {
             game.hitCooldown = 0.4;
             const sword = ITEM[heldId() ?? -1]?.tool === 'sword';
             target.hp -= sword ? 4 : 2;
             target.hurtUntil = performance.now() + 240;
+            playSfx('hit');
             target.vy = Math.max(target.vy, 2);
             camera.getWorldDirection(camDir);
             target.x += camDir.x * 0.35;
@@ -836,12 +946,15 @@ export function CraftPage() {
         game.mining = null;
       }
       if (game.mining) {
+        // a crunch every quarter second while digging
+        if (Math.floor(game.mining.elapsed / 250) !== Math.floor((game.mining.elapsed + dt * 1000) / 250)) playSfx('dig');
         game.mining.elapsed += dt * 1000;
         if (game.mining.elapsed >= game.mining.dur) completeMining();
       }
     }
 
     function placeBlock(id: number) {
+      playSfx('place');
       const r = game.reticle;
       if (!r) return;
       const px = r.x + r.nx;
@@ -861,6 +974,7 @@ export function CraftPage() {
     }
 
     function eat(id: number) {
+      playSfx('eat');
       if (invCount(game.inventory, id) <= 0) return;
       const def = ITEM[id];
       if (!def?.food) return;
@@ -872,6 +986,7 @@ export function CraftPage() {
       toastMsg(`🍗 +${def.food}`);
     }
     function drink(id: number) {
+      playSfx('eat');
       if (invCount(game.inventory, id) <= 0) return;
       const kind = ITEM[id]?.potion;
       if (!kind) return;
@@ -906,6 +1021,9 @@ export function CraftPage() {
       game.hp = 20;
       game.food = 20;
       game.effects = { speed: 0, jump: 0, night: 0 };
+      game.air = MAX_AIR;
+      game.drownTimer = 0;
+      game.knockX = game.knockZ = 0;
       const s = spawnPoint(world);
       game.player.x = s.x;
       game.player.y = s.y;
@@ -934,6 +1052,58 @@ export function CraftPage() {
         }
       }
       if (game.hp <= 0) respawn();
+    }
+
+    /** Damage to the player from a monster or the water: the hearts drop, the screen flashes red, a hit knocks them back. */
+    function hurtPlayer(dmg: number, from?: { x: number; z: number; knock?: number }) {
+      playSfx('hurt');
+      game.hp = Math.max(0, game.hp - dmg);
+      game.dirty = true;
+      if (from) {
+        const dx = game.player.x - from.x;
+        const dz = game.player.z - from.z;
+        const d = Math.hypot(dx, dz) || 1;
+        const k = from.knock ?? 4;
+        game.knockX = (dx / d) * k;
+        game.knockZ = (dz / d) * k;
+        if (game.player.grounded) game.player.vy = Math.max(game.player.vy, 4.5);
+      }
+      const el = hurtRef.current;
+      if (el) {
+        el.style.transition = 'none';
+        el.style.opacity = '1';
+        void el.offsetWidth;
+        el.style.transition = 'opacity 0.45s ease-out';
+        el.style.opacity = '0';
+      }
+      syncSurvival();
+      if (game.hp <= 0) respawn();
+    }
+
+    /** Breath: it runs out while the head is under water (MAX_AIR s), then each second costs a heart; it refills fast above water. */
+    let lastBubbles = AIR_BUBBLES;
+    function breathTick(dt: number) {
+      const p = game.player;
+      const headWet = tileAtPos(p.x, p.y + EYE_HEIGHT, p.z) === WATER;
+      if (headWet) {
+        game.air = Math.max(0, game.air - dt);
+        if (game.air <= 0) {
+          game.drownTimer += dt;
+          if (game.drownTimer >= 1) {
+            game.drownTimer = 0;
+            hurtPlayer(2);
+            toastMsg(`🫧 ${t('craft.drowning')}`);
+          }
+        }
+      } else {
+        game.air = Math.min(MAX_AIR, game.air + dt * 6);
+        game.drownTimer = 0;
+      }
+      const b = Math.ceil((game.air / MAX_AIR) * AIR_BUBBLES);
+      if (b !== lastBubbles) {
+        lastBubbles = b;
+        setBubbles(b);
+      }
     }
 
     // ---- effects → lighting + HUD ----
@@ -980,6 +1150,11 @@ export function CraftPage() {
     clearAnimalsRef.current = () => [...game.animals].forEach(removeAnimal);
     function killAnimal(a: Animal) {
       if (a.kind === 'pig') addItem(RAW_PORK, 2);
+      for (const [id, n] of a.spec.hostile?.drops ?? []) addItem(id, n);
+      if (a.spec.hostile) {
+        playSfx('pop');
+        toastMsg(`⚔️ ${animalName(a, langRef.current)}`);
+      }
       spawnBurst(a.x - 0.5, a.y, a.z - 0.5, '#e06a7a');
       removeAnimal(a);
       syncInv();
@@ -1009,6 +1184,7 @@ export function CraftPage() {
       for (let y = WORLD_Y - 2; y > 4; y--) {
         const g = getTile(world, wx, y, wz);
         if (g === WATER) return null;
+        if (g === LEAVES || g === WOOD) continue; // a tree is not ground: look below it (the trunk then fails the "two air above" test)
         if (g !== AIR && !TRANSPARENT.has(g)) return y;
       }
       return null;
@@ -1022,7 +1198,7 @@ export function CraftPage() {
       }
     }
     function trySpawnAnimal(forceKind?: string) {
-      if (game.animals.length >= MAX_ANIMALS && !forceKind) return;
+      if (game.animals.filter((a) => !a.spec.hostile).length >= MAX_ANIMALS && !forceKind) return;
       const entries = [...rendered.entries()];
       if (!entries.length) return;
       const p = game.player;
@@ -1078,8 +1254,48 @@ export function CraftPage() {
       };
       spawnHerd(spec, ground, wx + 0.5, gy + 1.02, wz + 0.5);
     }
+    /** A monster on open ground at least two chunks from the player (out of sight, like the animals), with room for its height. */
+    function trySpawnMonster(): boolean {
+      const entries = [...rendered.keys()];
+      if (!entries.length) return false;
+      const p = game.player;
+      const pcx = chunkCoord(p.x);
+      const pcz = chunkCoord(p.z);
+      const [cx, cz] = entries[(Math.random() * entries.length) | 0].split(',').map(Number);
+      if (Math.max(Math.abs(cx - pcx), Math.abs(cz - pcz)) < 2) return false;
+      const wx = cx * CHUNK + ((Math.random() * CHUNK) | 0);
+      const wz = cz * CHUNK + ((Math.random() * CHUNK) | 0);
+      const gy = groundAt(wx, wz);
+      if (gy === null) return false;
+      for (let dy = 1; dy <= 3; dy++) if (getTile(world, wx, gy + dy, wz) !== AIR) return false;
+      const spec = pickMonster(biomeAt(world.seed, wx, wz));
+      if (!spec) return false;
+      addAnimal(spec, wx + 0.5, gy + 1.02, wz + 0.5);
+      return true;
+    }
+    function monstersTick(dt: number) {
+      game.playTime += dt;
+      game.monsterTimer -= dt;
+      if (game.monsterTimer <= 0) {
+        game.monsterTimer = 6 + Math.random() * 6;
+        const n = game.animals.filter((a) => a.spec.hostile).length;
+        if (game.playTime > MONSTER_GRACE_S && n < MAX_MONSTERS) trySpawnMonster();
+      }
+      const now = performance.now();
+      const p = game.player;
+      for (const a of game.animals) {
+        if (!a.spec.hostile) continue;
+        const dmg = monsterAttack(a, p, now);
+        if (dmg) {
+          playSfx('growl');
+          hurtPlayer(dmg, { x: a.x, z: a.z, knock: a.spec.hostile.knock });
+          toastMsg(`${a.spec.emoji} -${dmg}`);
+        }
+      }
+    }
     let initialSpawns = 10;
     function animalsTick(dt: number) {
+      monstersTick(dt);
       if (initialSpawns > 0) {
         // populate the world as it opens, a few animals per frame, instead of waiting for the timer
         for (let i = 0; i < 2 && initialSpawns > 0; i++, initialSpawns--) trySpawnAnimal();
@@ -1098,7 +1314,7 @@ export function CraftPage() {
 
     // ---- pointer lock / input ----
     function attemptLock() {
-      if (puzzleOpenRef.current || introOpenRef.current || menuOpenRef.current || showTouch) return;
+      if (puzzleOpenRef.current || introOpenRef.current || menuOpenRef.current || mainMenuRef.current || showTouch) return;
       const result = canvas.requestPointerLock() as unknown;
       if (result && typeof (result as Promise<void>).catch === 'function') {
         (result as Promise<void>).catch(() => setPointerLockUnavailable(true));
@@ -1141,7 +1357,7 @@ export function CraftPage() {
     canvas.addEventListener('contextmenu', onContextMenu);
 
     function onKeyDown(e: KeyboardEvent) {
-      if (puzzleOpenRef.current || introOpenRef.current) return;
+      if (puzzleOpenRef.current || introOpenRef.current || mainMenuRef.current) return;
       if ((e.code === 'KeyF' || e.code === 'KeyC') && !menuOpenRef.current) {
         openMenuRef.current();
         return;
@@ -1175,16 +1391,27 @@ export function CraftPage() {
     function loop(tMs: number) {
       const dt = Math.min(0.033, (tMs - lastT) / 1000);
       lastT = tMs;
-      const active = !puzzleOpenRef.current && !introOpenRef.current && !menuOpenRef.current;
+      const active = !puzzleOpenRef.current && !introOpenRef.current && !menuOpenRef.current && !mainMenuRef.current;
       if (active) {
         updatePhysics(dt);
         survivalTick(dt);
+        breathTick(dt);
         effectsTick(dt);
       }
       const p = game.player;
       camera.position.set(p.x, p.y + EYE_HEIGHT, p.z);
       camera.rotation.order = 'YXZ';
       camera.rotation.set(p.pitch, p.yaw, 0);
+      // swimming: the arms stroke and the view sways a little with each stroke
+      const swimmingNow = tileAtPos(p.x, p.y + 0.9, p.z) === WATER;
+      const movingNow = !!(game.keys['KeyW'] || game.keys['KeyA'] || game.keys['KeyS'] || game.keys['KeyD'] || game.keys['Space'] || game.touchMoveX || game.touchMoveY || game.touchJump);
+      swimPose(active ? dt : 0, swimmingNow, movingNow);
+      if (swimmingNow && !wasSwimming && active) playSfx('splash');
+      wasSwimming = swimmingNow;
+      if (swimmingNow) {
+        camera.rotation.z = Math.sin(swimPhase) * 0.025;
+        camera.position.y += Math.sin(swimPhase * 2) * 0.03;
+      }
       camera.updateMatrixWorld();
       updateStreaming();
       if (active) {
@@ -1231,6 +1458,7 @@ export function CraftPage() {
           for (let i = 0; i < n; i++) {
             updatePhysics(dt);
             survivalTick(dt);
+            breathTick(dt);
             effectsTick(dt);
             camera.position.set(game.player.x, game.player.y + EYE_HEIGHT, game.player.z);
             camera.rotation.order = 'YXZ';
@@ -1445,6 +1673,7 @@ export function CraftPage() {
 
   function startFreshWorld() {
     setConfirmOpen(false);
+    if (mainMenuRef.current) enterWorld();
     const g = gameRef.current;
     if (!g) return;
     g.seed = Math.floor(Math.random() * 1e9);
@@ -1479,13 +1708,9 @@ export function CraftPage() {
   }
 
   const iconBtnStyle: CSSProperties = {
+    ...glass,
     width: 34,
     height: 34,
-    borderRadius: 8,
-    border: '1px solid rgba(255,255,255,0.28)',
-    background: 'rgba(16,20,32,0.6)',
-    backdropFilter: 'blur(6px)',
-    WebkitBackdropFilter: 'blur(6px)',
     color: '#fff',
     fontSize: 15,
     lineHeight: 1,
@@ -1494,15 +1719,11 @@ export function CraftPage() {
     placeItems: 'center',
   };
   const cornerPillStyle: CSSProperties = {
-    border: '1px solid rgba(255,255,255,0.28)',
-    background: 'rgba(16,20,32,0.6)',
-    backdropFilter: 'blur(6px)',
-    WebkitBackdropFilter: 'blur(6px)',
+    ...glass,
     color: '#fff',
     fontSize: 12,
     fontWeight: 800,
-    padding: '6px 10px',
-    borderRadius: 999,
+    padding: '7px 12px',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
   };
@@ -1530,6 +1751,7 @@ export function CraftPage() {
       <div style={{ display: 'flex', gap: 8, fontSize: 12, lineHeight: 1, textShadow: '0 1px 2px #000' }}>
         <span>{'❤️'.repeat(hearts) || '💀'}</span>
         <span>{'🍗'.repeat(drums)}</span>
+        {bubbles < AIR_BUBBLES && <span aria-label={t('craft.breath')}>{'🫧'.repeat(bubbles)}</span>}
       </div>
       <div
         className="no-scrollbar"
@@ -1539,11 +1761,7 @@ export function CraftPage() {
           padding: 5,
           maxWidth: '100%',
           overflowX: 'auto',
-          borderRadius: 12,
-          background: 'rgba(16,20,32,0.55)',
-          backdropFilter: 'blur(6px)',
-          WebkitBackdropFilter: 'blur(6px)',
-          border: '1px solid rgba(255,255,255,0.18)',
+          ...glass,
         }}
       >
         {hotbarIds.map((id, i) => {
@@ -1560,9 +1778,9 @@ export function CraftPage() {
                 flex: '0 0 auto',
                 width: 'clamp(38px, 8.5vw, 48px)',
                 height: 'clamp(38px, 8.5vw, 48px)',
-                borderRadius: 8,
-                border: selected ? '2px solid #fff' : '2px solid rgba(255,255,255,0.22)',
-                background: selected ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.07)',
+                borderRadius: 0,
+                border: selected ? '2px solid #fff' : '1px solid rgba(255,255,255,0.32)',
+                background: selected ? 'linear-gradient(180deg, rgba(255,255,255,0.4), rgba(255,255,255,0.14))' : 'linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.04))',
                 boxShadow: selected ? '0 0 0 2px rgba(255,255,255,0.35)' : 'none',
                 cursor: 'pointer',
                 display: 'grid',
@@ -1627,15 +1845,6 @@ export function CraftPage() {
             overflow: 'hidden',
           }}
         >
-          <div className="flex-between" style={{ padding: '16px 18px 0', flexWrap: 'wrap', gap: 8 }}>
-            <span className="muted" style={{ fontSize: 13, fontWeight: 700, flex: '1 1 220px' }}>
-              {showTouch ? t('craft.digHintTouch') : t('craft.moveHint')}
-            </span>
-            <button type="button" className="btn btn-ghost btn-sm" style={{ flexShrink: 0 }} onClick={() => setConfirmOpen(true)}>
-              🔄 {t('craft.newWorld')}
-            </button>
-          </div>
-
           <div
             ref={wrapRef}
             dir="ltr"
@@ -1652,6 +1861,12 @@ export function CraftPage() {
             }}
           >
             <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%', cursor: showTouch ? 'default' : 'crosshair', touchAction: 'none' }} />
+            {/* red edges when a monster or the water hurts the player (hurtPlayer flashes it) */}
+            <div
+              ref={hurtRef}
+              aria-hidden
+              style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0, zIndex: 3, boxShadow: 'inset 0 0 120px 30px rgba(220,30,30,0.7)' }}
+            />
 
             <div
               aria-hidden
@@ -1767,17 +1982,17 @@ export function CraftPage() {
 
             <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 5, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <button type="button" onClick={() => setMenuOpen(true)} style={cornerPillStyle}>
-                🧰 {t('craft.craftMenuButton')}
+                {t('craft.craftMenuButton')}
                 {!showTouch && ' · F'}
               </button>
-              <button type="button" onClick={openPracticePuzzle} style={{ ...cornerPillStyle, background: 'rgba(203,161,53,0.82)', color: '#1c1204' }}>
+              <button type="button" onClick={openPracticePuzzle} style={{ ...cornerPillStyle, background: 'linear-gradient(180deg, rgba(255,214,120,0.62), rgba(203,161,53,0.42))', borderColor: 'rgba(255,232,170,0.75)', color: '#1c1204' }}>
                 {t('craft.practicePuzzleButton')}
               </button>
             </div>
 
             <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 5, display: 'flex', gap: 6 }}>
-              <button type="button" onClick={() => setIntroOpen(true)} title={t('craft.help')} style={iconBtnStyle}>
-                ❓
+              <button type="button" onClick={() => setMainMenu('home')} title={t('craft.menuTitle')} aria-label={t('craft.menuTitle')} style={iconBtnStyle}>
+                ☰
               </button>
               <button
                 type="button"
@@ -1790,7 +2005,7 @@ export function CraftPage() {
               </button>
             </div>
 
-            {!showTouch && !locked && !pointerLockUnavailable && !menuOpen && (
+            {!showTouch && !locked && !pointerLockUnavailable && !menuOpen && !mainMenu && (
               <div
                 onClick={() => attemptLockRef.current()}
                 style={{
@@ -1811,7 +2026,7 @@ export function CraftPage() {
                     fontWeight: 800,
                     fontSize: 14,
                     padding: '10px 18px',
-                    borderRadius: 'var(--radius-pill)',
+                    borderRadius: 0,
                     boxShadow: 'var(--shadow-3d-md)',
                   }}
                 >
@@ -1847,6 +2062,65 @@ export function CraftPage() {
 
             {!showTouch && pointerLockUnavailable && !menuOpen && <LookDragLayer gameRef={gameRef} digOnHold />}
 
+            {mainMenu && (
+              <div className="craft-main-menu no-scrollbar" role="dialog" aria-modal="true" aria-labelledby="craft-main-menu-title" dir={dir}>
+                {mainMenu === 'home' ? (
+                  <div className="craft-main-menu-panel">
+                    <h2 id="craft-main-menu-title" className="craft-main-menu-title">
+                      {t('craft.title')}
+                    </h2>
+                    <button type="button" className="craft-btn is-primary" onClick={chooseNewWorld}>
+                      {t('craft.menuNewWorld')}
+                    </button>
+                    <button type="button" className="craft-btn" onClick={enterWorld} disabled={!hasSave}>
+                      {t('craft.menuLoadWorld')}
+                    </button>
+                    {!hasSave && <p className="craft-main-menu-note">{t('craft.menuNoSave')}</p>}
+                    <button type="button" className="craft-btn" onClick={() => setMainMenu('settings')}>
+                      {t('craft.menuSettings')}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="craft-main-menu-panel craft-settings">
+                    <h2 id="craft-main-menu-title" className="craft-main-menu-title">
+                      {t('craft.menuSettings')}
+                    </h2>
+                    <h3>{t('craft.settingsAudio')}</h3>
+                    {(['master', 'music', 'sfx'] as const).map((k) => (
+                      <label key={k} className="craft-slider">
+                        <span>{t(`craft.volume_${k}`)}</span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={Math.round(audio[k] * 100)}
+                          disabled={audio.muted}
+                          onChange={(e) => updateAudio({ [k]: Number(e.target.value) / 100 })}
+                        />
+                        <output>{Math.round(audio[k] * 100)}%</output>
+                      </label>
+                    ))}
+                    <label className="craft-check">
+                      <input type="checkbox" checked={audio.muted} onChange={(e) => updateAudio({ muted: e.target.checked })} />
+                      {t('craft.mute')}
+                    </label>
+                    <h3>{t('craft.settingsControls')}</h3>
+                    <ul className="craft-controls">
+                      <li>{showTouch ? t('craft.introMoveTouch') : t('craft.introMove')}</li>
+                      <li>{showTouch ? t('craft.introDigTouch') : t('craft.introDig')}</li>
+                      <li>{showTouch ? t('craft.introBuildTouch') : t('craft.introBuild')}</li>
+                      <li>{t('craft.controlSwim')}</li>
+                      <li>{t('craft.introCraft')}</li>
+                      <li>{t('craft.introFullscreen')}</li>
+                    </ul>
+                    <button type="button" className="craft-btn is-primary" onClick={() => setMainMenu('home')}>
+                      {t('craft.back')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {menuOpen && (
               <CraftMenu inventory={inventory} onCraft={doCraftRecipe} onConsume={consumeFromMenu} onClose={() => setMenuOpen(false)} />
             )}
@@ -1856,7 +2130,7 @@ export function CraftPage() {
 
       {introOpen && (
         <div className="modal-overlay" onClick={() => setIntroOpen(false)}>
-          <div className="modal-panel text-center" role="dialog" aria-modal="true" aria-label={t('craft.introTitle')} style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-panel text-center no-scrollbar" role="dialog" aria-modal="true" aria-label={t('craft.introTitle')} style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ fontSize: 20 }}>{t('craft.introTitle')}</h2>
             <p className="muted" style={{ marginBottom: 16 }}>
               {t('craft.introBody')}
@@ -1868,10 +2142,12 @@ export function CraftPage() {
               <li>{t('craft.introCraft')}</li>
               <li>{t('craft.introSurvive')}</li>
               <li>{t('craft.introAnimals')}</li>
+              <li>{t('craft.introMonsters')}</li>
+              <li>{t('craft.controlSwim')}</li>
               <li>{t('craft.introRune')}</li>
               <li>{t('craft.introFullscreen')}</li>
             </ul>
-            <button type="button" className="btn btn-primary" onClick={() => setIntroOpen(false)}>
+            <button type="button" className="craft-btn is-primary" onClick={() => setIntroOpen(false)}>
               {t('craft.start')}
             </button>
           </div>
@@ -1886,10 +2162,10 @@ export function CraftPage() {
               {t('craft.newWorldConfirmBody')}
             </p>
             <div className="flex gap-sm flex-center">
-              <button type="button" className="btn btn-secondary" onClick={() => setConfirmOpen(false)}>
+              <button type="button" className="craft-btn" onClick={() => setConfirmOpen(false)}>
                 {t('craft.keepWorld')}
               </button>
-              <button type="button" className="btn btn-danger" onClick={startFreshWorld}>
+              <button type="button" className="craft-btn is-danger" onClick={startFreshWorld}>
                 {t('craft.startFresh')}
               </button>
             </div>
@@ -2059,13 +2335,11 @@ function TouchActionButton({ label, onDown, onUp }: { label: string; onDown: () 
       style={{
         width: 56,
         height: 56,
-        borderRadius: '50%',
-        background: 'rgba(245,247,251,.8)',
-        boxShadow: 'var(--shadow-3d-sm)',
+        ...glass,
         display: 'grid',
         placeItems: 'center',
         fontSize: 21,
-        color: 'var(--ink)',
+        color: '#fff',
         userSelect: 'none',
         touchAction: 'none',
       }}

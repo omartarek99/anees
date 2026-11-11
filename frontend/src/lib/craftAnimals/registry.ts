@@ -7,9 +7,13 @@ import { SPECIES as sky } from './species/sky';
 import { SPECIES as fish } from './species/fish';
 import { SPECIES as sea } from './species/sea';
 import { SPECIES as amphibians } from './species/amphibians';
+import { SPECIES as monsters } from './species/monsters';
 
 /** Every animal species, in a stable order. Each module lists its own species. */
-export const SPECIES_LIST: readonly SpeciesSpec[] = [...exemplars, ...pasture, ...equines, ...wildland, ...sky, ...fish, ...sea, ...amphibians];
+export const SPECIES_LIST: readonly SpeciesSpec[] = [...exemplars, ...pasture, ...equines, ...wildland, ...sky, ...fish, ...sea, ...amphibians, ...monsters];
+
+/** The hostile ones (species/monsters.ts). */
+export const MONSTER_LIST: readonly SpeciesSpec[] = SPECIES_LIST.filter((s) => s.hostile);
 
 export const SPECIES: Readonly<Record<string, SpeciesSpec>> = Object.fromEntries(SPECIES_LIST.map((s) => [s.kind, s]));
 

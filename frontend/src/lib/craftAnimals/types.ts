@@ -144,4 +144,8 @@ export interface SpeciesSpec {
   shiver?: boolean;
   /** overall size multiplier on top of the px model (rarely needed) */
   scale?: number;
+  /** a monster: hunts the player within `sight` blocks at `chase` blocks/s and hits for `damage` (half-hearts) every `cooldown` s,
+   *  knocking them back at `knock` blocks/s. Monsters are never offered as animals (pickSpecies) and can't be befriended.
+   *  `drops`: [item id, count] given when it is defeated. */
+  hostile?: { damage: number; chase: number; sight: number; cooldown: number; knock?: number; drops?: readonly (readonly [number, number])[] };
 }
