@@ -200,7 +200,12 @@ export function AdminVideosPanel() {
               )}
             </div>
             <div style={{ flex: 1, minWidth: 200 }}>
-              <strong>{pickText(lang, reel.title, reel.titleAr)}</strong>
+              <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                <strong>{pickText(lang, reel.title, reel.titleAr)}</strong>
+                <span className="badge" title={t('admin.viewsHint')}>
+                  👁 {t('admin.viewsCount', { n: String(reel.viewCount ?? 0) })}
+                </span>
+              </div>
               <p className="muted" style={{ margin: '4px 0', fontSize: 13 }}>
                 {reel.grade
                   ? t('admin.videoMeta', {
@@ -213,10 +218,7 @@ export function AdminVideosPanel() {
                       author: reel.authorDisplayName ?? reel.authorUsername ?? '—',
                     })}
               </p>
-              <div className="flex gap-sm" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
-                <span className="badge" title={t('admin.viewsHint')}>
-                  👁 {t('admin.viewsCount', { n: String(reel.viewCount ?? 0) })}
-                </span>
+              <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setEditing(reel.id)}>
                   ✏️ {t('admin.editVideoButton')}
                 </button>

@@ -151,15 +151,18 @@ export function TeacherReelsPage() {
           {reels?.map((reel) => (
             <div key={reel.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
               <div style={{ minWidth: 0, flex: '1 1 180px' }}>
-                <strong>{pickText(lang, reel.title, reel.titleAr)}</strong>
+                <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                  <strong>{pickText(lang, reel.title, reel.titleAr)}</strong>
+                  <span className="badge" title={t('teacherReels.viewsHint')}>
+                    👁 {t('teacherReels.reelViews', { n: String(reel.viewCount ?? 0) })}
+                  </span>
+                </div>
                 <p className="muted" style={{ margin: 0, fontSize: 13 }}>
                   {t('teacherReels.reelMeta', {
                     grade: String(reel.grade),
                     subject: pickText(lang, reel.subjectName, reel.subjectNameAr),
                     questions: String(reel.questionCount),
                   })}
-                  {' · '}
-                  <span title={t('teacherReels.viewsHint')}>👁 {t('teacherReels.reelViews', { n: String(reel.viewCount ?? 0) })}</span>
                 </p>
                 {reel.videoStatus === 'processing' && (
                   <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--gold-dark, #b07a10)' }}>⏳ {t('teacherReels.videoProcessing')}</p>
