@@ -149,7 +149,7 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: 'student' | '
 
       {totals && users && (users.length > 0 || query) && <TotalsStrip totals={totals} role={roleFilter} />}
 
-      <div className="field" style={{ maxWidth: 420, marginInlineStart: 'auto' }}>
+      <div className="field" style={{ width: '100%' }}>
         <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('admin.usageSearchPlaceholder')} aria-label={t('admin.usageSearchPlaceholder')} />
       </div>
 
