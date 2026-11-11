@@ -21,10 +21,11 @@ import { decrypt } from '../lib/encryption.js';
 import { getDoublePointsStatus, startDoublePointsNow } from '../lib/doublePoints.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { looksLikeImage } from '../lib/imageValidation.js';
-import { mailStatus } from '../lib/mailer.js';
+import { mailStatus, sendResetOtpEmail, otpDeliveryAvailable } from '../lib/mailer.js';
+import { createOtp } from '../lib/otp.js';
 import { parseRoleFilter, parseGrade, pageViewStats, countReportUsers, queryReportRows, reportTotals, monthlyWatch, trailingMonthKeys, SINCE_30_DAYS, quizzesSolvedTotal, pageViewsLast30Days } from '../lib/reportData.js';
 import { buildReportWorkbook } from '../lib/reportExcel.js';
-import { recentIssues } from '../lib/diagnostics.js';
+import { recentIssues, recordIssue } from '../lib/diagnostics.js';
 import { queueAllUnoptimised } from '../lib/videoOptimize.js';
 import { CERTIFICATE_IMAGE_BUCKET, CERTIFICATE_IMAGE_PATH_PREFIX } from '../lib/certificateImage.js';
 import { PLAQUE_PATH, issueRankCertificates, emailCertificate, revokeCertificate } from '../lib/rankCertificates.js';
@@ -75,7 +76,7 @@ function clampPage(requestedPage: number, total: number) {
 function applyUserUpdate(res: Response, targetId: number, runUpdate: () => { changes: number | bigint }, extra: object = {}) {
   const result = runUpdate();
   if (result.changes === 0) {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   const row = db.prepare(`SELECT * FROM users WHERE id = ?`).get(targetId) as any;
@@ -93,6 +94,14 @@ function adminUser(row: any, rank: number | null = null) {
     displayName: row.display_name,
     role: row.role,
     grade: row.grade,
+    schoolName: row.school_name ?? null,
+    // teachers only: how many views all of their lessons have together (a view = a student who watched a lesson)
+    totalViews:
+      row.role === 'teacher'
+        ? ((db
+            .prepare(`SELECT COUNT(*) AS c FROM reel_watch_progress w JOIN reels r ON r.id = w.reel_id WHERE r.author_user_id = ? AND w.watched_seconds > 0 AND w.user_id != r.author_user_id`)
+            .get(row.id) as { c: number }).c)
+        : null,
     totalXp: row.total_xp,
     teacherPoints: row.teacher_points ?? 0,
     // Ranking among every other real (non-seed) account of the same role, by whichever
@@ -195,7 +204,11 @@ adminRouter.get('/users', (req, res) => {
   );
   if (search) {
     users = users.filter(
-      (u) => u.username.toLowerCase().includes(search) || u.email.toLowerCase().includes(search) || u.displayName.toLowerCase().includes(search)
+      (u) =>
+        u.username.toLowerCase().includes(search) ||
+        u.email.toLowerCase().includes(search) ||
+        u.displayName.toLowerCase().includes(search) ||
+        (u.schoolName ?? '').toLowerCase().includes(search)
     );
   }
 
@@ -206,10 +219,117 @@ adminRouter.get('/users', (req, res) => {
   res.json({ users: pageUsers, total, page: page_, totalPages, pageSize: PAGE_SIZE });
 });
 
+// ---------------------------------------------------------------- Account tools (the "Account tools" icon of the admin bar)
+// "Last active" = the latest of: signing in, earning points, watching a lesson, or (if none) the day the account was made.
+const LAST_ACTIVE_SQL = `MAX(
+  COALESCE(u.last_seen_at, ''),
+  COALESCE((SELECT MAX(created_at) FROM sessions WHERE user_id = u.id), ''),
+  COALESCE((SELECT MAX(created_at) FROM xp_events WHERE user_id = u.id), ''),
+  COALESCE((SELECT MAX(updated_at) FROM reel_watch_progress WHERE user_id = u.id), ''),
+  u.created_at
+)`;
+
+function accountToolRow(row: any, selfId: number | undefined) {
+  return {
+    id: row.id,
+    username: row.username,
+    displayName: row.display_name,
+    email: decrypt(row.email),
+    role: row.role,
+    grade: row.grade,
+    schoolName: row.school_name ?? null,
+    isActive: !!row.is_active,
+    lastActiveAt: row.last_active_at as string,
+    // only accounts that signed up with a real mailbox can be emailed a reset code (test accounts have made-up addresses)
+    canEmailReset: !!row.firebase_uid,
+    isSelf: row.id === selfId,
+  };
+}
+
+// Find an account by name, username or email (the email is stored encrypted, so it is matched here, not in SQL).
+adminRouter.get('/accounts/search', (req, res) => {
+  const q = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase() : '';
+  if (q.length < 2) {
+    res.json({ accounts: [] });
+    return;
+  }
+  const rows = db.prepare(`SELECT u.*, ${LAST_ACTIVE_SQL} AS last_active_at FROM users u WHERE u.is_seed = 0 ORDER BY u.created_at DESC`).all() as any[];
+  const accounts = rows
+    .map((r) => accountToolRow(r, req.userId))
+    .filter((a) => a.username.toLowerCase().includes(q) || a.displayName.toLowerCase().includes(q) || a.email.toLowerCase().includes(q))
+    .slice(0, 20);
+  res.json({ accounts });
+});
+
+// Accounts nobody has used for a while (students and teachers that are still switched on), the longest-quiet first.
+adminRouter.get('/accounts/inactive', (req, res) => {
+  const days = Math.min(365, Math.max(7, Number(req.query.days) || 60));
+  const rows = db
+    .prepare(
+      `SELECT * FROM (
+         SELECT u.*, ${LAST_ACTIVE_SQL} AS last_active_at FROM users u
+         WHERE u.is_seed = 0 AND u.is_active = 1 AND u.role != 'admin'
+       ) WHERE julianday('now') - julianday(last_active_at) >= ? ORDER BY last_active_at ASC`
+    )
+    .all(days) as any[];
+  res.json({ days, total: rows.length, accounts: rows.slice(0, 100).map((r) => accountToolRow(r, req.userId)) });
+});
+
+// Email the person a 6-digit code for a new password (they enter it on the "Forgot password" page). Same code and email as that page sends.
+adminRouter.post('/users/:id/send-password-reset', requireCsrfHeader, async (req, res) => {
+  const target = db.prepare(`SELECT * FROM users WHERE id = ?`).get(Number(req.params.id)) as any;
+  if (!target) {
+    res.status(404).json({ error: "We couldn't find this account." });
+    return;
+  }
+  if (!target.firebase_uid) {
+    res.status(400).json({ error: 'We can only email a reset code to accounts with a real email. This account does not have one.' });
+    return;
+  }
+  if (!target.is_active) {
+    res.status(400).json({ error: 'This account is stopped. Turn it on first.' });
+    return;
+  }
+  if (!(await otpDeliveryAvailable())) {
+    res.status(503).json({ error: 'Email sending is not working right now. Try again later.' });
+    return;
+  }
+  const otp = createOtp(target.id, 'reset');
+  if (!otp.ok) {
+    res.status(429).json({ error: otp.reason === 'cooldown' ? 'Wait one minute before asking for another code.' : 'You asked for too many codes. Try again later.' });
+    return;
+  }
+  const lang = req.body?.lang === 'en' ? 'en' : 'ar';
+  const sent = await sendResetOtpEmail(decrypt(target.email), otp.code, lang);
+  if (!sent.ok) {
+    console.error('Sending the password-reset code (from the admin) failed:', sent.error);
+    recordIssue('password-reset-email', sent.error);
+    res.status(502).json({ error: "We couldn't send the reset email. Please try again." });
+    return;
+  }
+  res.json({ ok: true });
+});
+
+// Sign an account out of every device (its sessions are deleted; the next click on the site asks for a login).
+adminRouter.post('/users/:id/sign-out', requireCsrfHeader, (req, res) => {
+  const targetId = Number(req.params.id);
+  if (targetId === req.userId) {
+    res.status(400).json({ error: 'You cannot sign yourself out from here. Use the logout button.' });
+    return;
+  }
+  const exists = db.prepare(`SELECT id FROM users WHERE id = ?`).get(targetId);
+  if (!exists) {
+    res.status(404).json({ error: "We couldn't find this account." });
+    return;
+  }
+  const result = db.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(targetId);
+  res.json({ ok: true, devices: Number(result.changes) });
+});
+
 adminRouter.patch('/users/:id/active', requireCsrfHeader, validateBody(adminSetActiveSchema), (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
-    res.status(400).json({ error: "You can't deactivate your own account." });
+    res.status(400).json({ error: "You cannot stop your own account." });
     return;
   }
   const { isActive } = req.body as { isActive: boolean };
@@ -219,7 +339,7 @@ adminRouter.patch('/users/:id/active', requireCsrfHeader, validateBody(adminSetA
 adminRouter.patch('/users/:id/role', requireCsrfHeader, validateBody(adminSetRoleSchema), (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
-    res.status(400).json({ error: "You can't change your own role." });
+    res.status(400).json({ error: "You cannot change your own account type." });
     return;
   }
   const { role } = req.body as { role: 'student' | 'teacher' | 'admin' };
@@ -229,12 +349,12 @@ adminRouter.patch('/users/:id/role', requireCsrfHeader, validateBody(adminSetRol
 adminRouter.delete('/users/:id', requireCsrfHeader, async (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
-    res.status(400).json({ error: "You can't delete your own account." });
+    res.status(400).json({ error: "You cannot delete your own account." });
     return;
   }
   const result = await deleteUserById(targetId);
   if (!result.found) {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   res.json({ ok: true });
@@ -266,7 +386,7 @@ adminRouter.patch('/users/:id/warning', requireCsrfHeader, validateBody(adminSet
 adminRouter.patch('/users/:id/ban', requireCsrfHeader, validateBody(adminSetBanSchema), (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
-    res.status(400).json({ error: "You can't ban your own account." });
+    res.status(400).json({ error: "You cannot suspend your own account." });
     return;
   }
   const { bannedUntil } = req.body as { bannedUntil: string | null };
@@ -279,11 +399,11 @@ adminRouter.post('/users/:id/violations', requireCsrfHeader, validateBody(adminA
   const targetId = Number(req.params.id);
   const target = db.prepare(`SELECT role FROM users WHERE id = ?`).get(targetId) as { role: string } | undefined;
   if (!target) {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   if (target.role !== 'student') {
-    res.status(400).json({ error: 'Violations are recorded against student accounts.' });
+    res.status(400).json({ error: 'Violations can only be recorded for student accounts.' });
     return;
   }
   const { violation, note, points } = req.body as { violation: string; note?: string; points?: number };
@@ -302,7 +422,7 @@ function applyPointsChange(res: Response, targetId: number, newPoints: number, a
     | { role: string; total_xp: number; teacher_points: number }
     | undefined;
   if (!before) {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   const teacher = before.role === 'teacher';
@@ -326,7 +446,7 @@ function applyPointsChange(res: Response, targetId: number, newPoints: number, a
 adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSchema), (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
-    res.status(400).json({ error: "You can't edit your own points." });
+    res.status(400).json({ error: "You cannot change your own points." });
     return;
   }
   const { totalXp } = req.body as { totalXp: number };
@@ -337,13 +457,13 @@ adminRouter.patch('/users/:id/xp', requireCsrfHeader, validateBody(adminSetXpSch
 adminRouter.post('/users/:id/points', requireCsrfHeader, validateBody(adminAdjustPointsSchema), (req, res) => {
   const targetId = Number(req.params.id);
   if (targetId === req.userId) {
-    res.status(400).json({ error: "You can't edit your own points." });
+    res.status(400).json({ error: "You cannot change your own points." });
     return;
   }
   const { action, amount, note, violation } = req.body as { action: 'add' | 'remove'; amount: number; note?: string; violation?: string };
   const row = db.prepare(`SELECT role, total_xp, teacher_points FROM users WHERE id = ?`).get(targetId) as { role: string; total_xp: number; teacher_points: number } | undefined;
   if (!row) {
-    res.status(404).json({ error: 'User not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   const current = row.role === 'teacher' ? row.teacher_points ?? 0 : row.total_xp;
@@ -372,7 +492,7 @@ const certificateImageUpload = multer({
   },
 }).single('image');
 
-const handleCertificateImageUpload = handleUpload(certificateImageUpload, 'Please upload a valid image (JPG, PNG, or WebP, under 8MB).');
+const handleCertificateImageUpload = handleUpload(certificateImageUpload, 'The image must be a JPG, PNG or WebP file smaller than 8MB. Choose another image.');
 
 const CERTIFICATE_IMAGE_MIME_TO_EXT: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -418,14 +538,14 @@ adminRouter.get('/certificates', (_req, res) => {
 adminRouter.post('/certificates', requireCsrfHeader, handleCertificateImageUpload, async (req, res) => {
   const parsed = adminIssueCertificateSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid request.', details: parsed.error.flatten() });
+    res.status(400).json({ error: 'Something in the form is not right. Check it and try again.', details: parsed.error.flatten() });
     return;
   }
   const { userId, title, type } = parsed.data;
 
   const recipient = db.prepare(`SELECT id, role FROM users WHERE id = ?`).get(userId) as { id: number; role: string } | undefined;
   if (!recipient || recipient.role === 'admin') {
-    res.status(400).json({ error: 'Certificates can only be issued to a student or teacher account.' });
+    res.status(400).json({ error: 'A certificate can only be given to a student or a teacher.' });
     return;
   }
 
@@ -442,7 +562,7 @@ adminRouter.post('/certificates', requireCsrfHeader, handleCertificateImageUploa
     return;
   }
   if (!looksLikeImage(image.buffer, image.mimetype)) {
-    res.status(400).json({ error: 'Please upload a valid image (JPG, PNG, or WebP, under 8MB).' });
+    res.status(400).json({ error: 'The image must be a JPG, PNG or WebP file smaller than 8MB. Choose another image.' });
     return;
   }
   if (!supabaseAdmin) {
@@ -476,7 +596,7 @@ adminRouter.post('/certificates', requireCsrfHeader, handleCertificateImageUploa
 adminRouter.post('/certificates/:id/revoke', requireCsrfHeader, validateBody(adminRevokeCertificateSchema), (req, res) => {
   const { reason } = req.body as { reason: string };
   if (!revokeCertificate(Number(req.params.id), req.userId!, reason)) {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
   res.json({ ok: true });
@@ -501,6 +621,7 @@ function adminReel(row: any) {
     authorDisplayName: row.author_display_name,
     // a message can only go to a teacher: not to a lesson an admin made
     authorRole: row.author_role ?? null,
+    viewCount: row.view_count ?? 0,
     createdAt: row.created_at,
   };
 }
@@ -509,18 +630,18 @@ function adminReel(row: any) {
 adminRouter.post('/reels/:id/message', requireCsrfHeader, (req, res) => {
   const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
   if (message.length < 1 || message.length > 500) {
-    res.status(400).json({ error: 'Please write a message (up to 500 characters).' });
+    res.status(400).json({ error: 'Write a message of up to 500 letters.' });
     return;
   }
   const reel = db.prepare(`SELECT r.id, r.author_user_id, u.role AS author_role FROM reels r LEFT JOIN users u ON u.id = r.author_user_id WHERE r.id = ?`).get(Number(req.params.id)) as
     | { id: number; author_user_id: number | null; author_role: string | null }
     | undefined;
   if (!reel) {
-    res.status(404).json({ error: 'Video not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this video. It may have been deleted.' });
     return;
   }
   if (!reel.author_user_id || reel.author_role !== 'teacher') {
-    res.status(400).json({ error: 'This video was not made by a teacher, so there is nobody to send a message to.' });
+    res.status(400).json({ error: 'This video has no teacher, so there is nobody to send the message to.' });
     return;
   }
   const info = db.prepare(`INSERT INTO reel_messages (reel_id, teacher_id, admin_id, message) VALUES (?,?,?,?)`).run(reel.id, reel.author_user_id, req.userId!, message);
@@ -551,7 +672,8 @@ adminRouter.get('/reels', (req, res) => {
   const rows = db
     .prepare(
       `SELECT r.*, s.name as subject_name, s.name_ar as subject_name_ar,
-              u.username as author_username, u.display_name as author_display_name, u.role as author_role
+              u.username as author_username, u.display_name as author_display_name, u.role as author_role,
+              (SELECT COUNT(*) FROM reel_watch_progress w WHERE w.reel_id = r.id AND w.watched_seconds > 0 AND w.user_id IS NOT r.author_user_id) as view_count
        FROM reels r
        JOIN subjects s ON s.id = r.subject_id
        LEFT JOIN users u ON u.id = r.author_user_id
@@ -572,7 +694,7 @@ adminRouter.delete('/reels/:id', requireCsrfHeader, async (req, res) => {
   }
   // the app's own lessons (no author) are part of the map, not uploads to moderate
   if (reel.author_user_id === null) {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
   // The file goes first (it never throws, whatever state the storage is in), then the lesson. Every table that points at reels cascades or clears its
@@ -594,10 +716,12 @@ adminRouter.get('/reports/watch-time', (req, res) => {
   const role = parseRoleFilter(req.query.role);
   const grade = parseGrade(req.query.grade);
   const page = Math.max(1, Number(req.query.page) || 1);
+  // the search box above the usage table: a name, a username or a school
+  const search = typeof req.query.search === 'string' ? req.query.search.trim().slice(0, 60) : '';
 
-  const total = countReportUsers(role, grade);
+  const total = countReportUsers(role, grade, search);
   const { page: page_, totalPages } = clampPage(page, total);
-  const rows = queryReportRows(role, grade, PAGE_SIZE, (page_ - 1) * PAGE_SIZE);
+  const rows = queryReportRows(role, grade, PAGE_SIZE, (page_ - 1) * PAGE_SIZE, search);
 
   // `users` covers students AND teachers (filter with ?role=student|teacher); `totals` spans everyone
   // matching the filter, not just this page.
@@ -721,6 +845,48 @@ adminRouter.get('/analytics/summary', (_req, res) => {
 // The admin dashboard (the first admin page): headline counts, the points students earned per day and by source over the chosen
 // period, the newest accounts and the top students. Real accounts only (is_seed = 0), like every other admin number.
 const DASHBOARD_PERIODS = [7, 30, 90];
+
+// "Right now": who is online (seen in the last 5 minutes) and the newest things that happened on the site.
+adminRouter.get('/live', (_req, res) => {
+  const online = db
+    .prepare(
+      `SELECT id, username, display_name, role, last_seen_at FROM users
+       WHERE is_seed = 0 AND role != 'admin' AND last_seen_at IS NOT NULL AND last_seen_at >= datetime('now', '-5 minutes')
+       ORDER BY last_seen_at DESC`
+    )
+    .all() as any[];
+
+  type Ev = { type: string; at: string; name: string; role?: string; title?: string; days?: number };
+  const events: Ev[] = [];
+  const add = (rows: any[], map: (r: any) => Ev) => rows.forEach((r) => events.push(map(r)));
+  add(db.prepare(`SELECT display_name, role, created_at FROM users WHERE is_seed = 0 ORDER BY created_at DESC, id DESC LIMIT 20`).all() as any[], (r) => ({ type: 'signup', at: r.created_at, name: r.display_name, role: r.role }));
+  add(
+    db.prepare(`SELECT u.display_name, e.created_at FROM teacher_point_events e JOIN users u ON u.id = e.user_id WHERE e.reason = 'video_upload' AND u.is_seed = 0 ORDER BY e.id DESC LIMIT 20`).all() as any[],
+    (r) => ({ type: 'lesson', at: r.created_at, name: r.display_name })
+  );
+  add(
+    db.prepare(`SELECT u.display_name, c.title, c.created_at FROM certificates c JOIN users u ON u.id = c.user_id WHERE c.revoked_at IS NULL AND u.is_seed = 0 ORDER BY c.id DESC LIMIT 20`).all() as any[],
+    (r) => ({ type: 'certificate', at: r.created_at, name: r.display_name, title: r.title })
+  );
+  add(
+    db.prepare(`SELECT u.display_name, w.created_at FROM user_warnings w JOIN users u ON u.id = w.user_id ORDER BY w.id DESC LIMIT 20`).all() as any[],
+    (r) => ({ type: 'warning', at: r.created_at, name: r.display_name })
+  );
+  add(
+    db.prepare(`SELECT u.display_name, v.created_at, v.suspended_days FROM user_violations v JOIN users u ON u.id = v.user_id ORDER BY v.id DESC LIMIT 20`).all() as any[],
+    (r) => ({ type: 'violation', at: r.created_at, name: r.display_name, days: r.suspended_days })
+  );
+  events.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+
+  res.json({
+    online: {
+      students: online.filter((o) => o.role === 'student').length,
+      teachers: online.filter((o) => o.role === 'teacher').length,
+      people: online.slice(0, 8).map((o) => ({ id: o.id, username: o.username, displayName: o.display_name, role: o.role, lastSeenAt: o.last_seen_at })),
+    },
+    events: events.slice(0, 20),
+  });
+});
 
 adminRouter.get('/dashboard', (req, res) => {
   const asked = Number(req.query.days);

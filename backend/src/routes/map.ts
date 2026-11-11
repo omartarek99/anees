@@ -59,7 +59,7 @@ function waitingForBattle(userId: number, progress: any, res: any): boolean {
   if (progress?.status === 'completed') return false;
   const battle = getBattleStatus(userId);
   if (!battle.lockedUntil) return false;
-  res.status(429).json({ error: 'You are out of tries. Come back when the wait is over.', lockedUntil: battle.lockedUntil, battle });
+  res.status(429).json({ error: 'You have no tries left. Come back when the waiting time ends.', lockedUntil: battle.lockedUntil, battle });
   return true;
 }
 
@@ -67,7 +67,7 @@ mapRouter.get('/boss/:levelNumber', (req, res) => {
   const levelNumber = Number(req.params.levelNumber);
   const found = loadLevelWithProgress(req.userId!, levelNumber);
   if (!found || found.level.kind !== 'boss') {
-    res.status(404).json({ error: 'Boss level not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this guardian level.' });
     return;
   }
   const { level, progress } = found;
@@ -76,7 +76,7 @@ mapRouter.get('/boss/:levelNumber', (req, res) => {
     return;
   }
   if (!progress || progress.status === 'locked') {
-    res.status(403).json({ error: 'Defeat the previous levels first to challenge this boss.' });
+    res.status(403).json({ error: 'Finish the levels before it to challenge this guardian.' });
     return;
   }
   if (waitingForBattle(req.userId!, progress, res)) return;
@@ -113,12 +113,12 @@ mapRouter.post('/boss/:levelNumber/check', requireCsrfHeader, validateBody(bossC
   const levelNumber = Number(req.params.levelNumber);
   const found = loadLevelWithProgress(req.userId!, levelNumber);
   if (!found || found.level.kind !== 'boss') {
-    res.status(404).json({ error: 'Boss level not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this guardian level.' });
     return;
   }
   const { level, progress } = found;
   if (!progress || progress.status === 'locked') {
-    res.status(403).json({ error: 'This boss is locked.' });
+    res.status(403).json({ error: 'This guardian is locked. Finish the levels before it first.' });
     return;
   }
   if (waitingForBattle(req.userId!, progress, res)) return;
@@ -126,7 +126,7 @@ mapRouter.post('/boss/:levelNumber/check', requireCsrfHeader, validateBody(bossC
   const { questionId, choiceIndex } = req.body as { questionId: number; choiceIndex: number };
   const question = db.prepare(`SELECT * FROM boss_questions WHERE id = ? AND map_level_id = ?`).get(questionId, level.id) as any;
   if (!question) {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
 
@@ -150,12 +150,12 @@ mapRouter.post('/boss/:levelNumber/submit', requireCsrfHeader, validateBody(boss
   const levelNumber = Number(req.params.levelNumber);
   const found = loadLevelWithProgress(req.userId!, levelNumber);
   if (!found || found.level.kind !== 'boss') {
-    res.status(404).json({ error: 'Boss level not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this guardian level.' });
     return;
   }
   const { level, progress } = found;
   if (!progress || progress.status === 'locked') {
-    res.status(403).json({ error: 'This boss is locked.' });
+    res.status(403).json({ error: 'This guardian is locked. Finish the levels before it first.' });
     return;
   }
   if (waitingForBattle(req.userId!, progress, res)) return;

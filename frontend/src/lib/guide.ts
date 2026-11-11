@@ -81,6 +81,7 @@ export const PAGE_IDS: Record<string, string> = {
   '/admin/dashboard': 'adminDashboard',
   '/admin/reports': 'adminReports',
   '/admin/users': 'adminUsers',
+  '/admin/accounts': 'adminAccounts',
   '/admin/videos': 'adminVideos',
   '/admin/certificates': 'adminCertificates',
 };
@@ -99,6 +100,7 @@ export function tourStops(role: Role): TourStop[] {
       { target: '/admin/dashboard', id: 'adminDashboard' },
       { target: '/admin/reports', id: 'adminReports' },
       { target: '/admin/users', id: 'adminUsers' },
+      { target: '/admin/accounts', id: 'adminAccounts' },
       { target: '/admin/videos', id: 'adminVideos' },
       { target: '/admin/certificates', id: 'adminCertificates' },
       { target: 'menu', id: 'menu' },

@@ -8,12 +8,13 @@ import { AdminUserRow, type AdminUser } from '../components/AdminUserRow';
 import { AdminVideosPanel } from '../components/AdminVideosPanel';
 import { AdminReportsPanel, ExportButton } from '../components/AdminReportsPanel';
 import { AdminCertificatesPanel } from '../components/AdminCertificatesPanel';
+import { AdminAccountsPanel } from '../components/AdminAccountsPanel';
 import { AdminDashboardPanel, DashboardPeriodSelect, type DashboardPeriod } from '../components/AdminDashboardPanel';
 import { Pagination } from '../components/Pagination';
 import { GradeFilterSelect, type GradeFilter } from '../components/GradeFilterSelect';
 
 type RoleFilter = 'all' | Role;
-type Tab = 'dashboard' | 'users' | 'videos' | 'reports' | 'certificates';
+type Tab = 'dashboard' | 'users' | 'accounts' | 'videos' | 'reports' | 'certificates';
 
 function AdminUsersPanel() {
   const { user: me } = useAuth();
@@ -108,11 +109,12 @@ function AdminUsersPanel() {
   );
 }
 
-const TABS: Tab[] = ['dashboard', 'users', 'videos', 'reports', 'certificates'];
+const TABS: Tab[] = ['dashboard', 'users', 'accounts', 'videos', 'reports', 'certificates'];
 
 const TITLES: Record<Tab, { title: string; subtitle: string }> = {
   dashboard: { title: 'admin.tabDashboard', subtitle: 'admin.subtitleDashboard' },
   users: { title: 'admin.tabUsers', subtitle: 'admin.pageSubtitle' },
+  accounts: { title: 'admin.tabAccounts', subtitle: 'admin.subtitleAccounts' },
   videos: { title: 'admin.tabVideos', subtitle: 'admin.subtitleVideos' },
   reports: { title: 'admin.tabReports', subtitle: 'admin.subtitleReports' },
   certificates: { title: 'admin.tabCertificates', subtitle: 'admin.subtitleCertificates' },
@@ -139,6 +141,7 @@ export function AdminPage() {
 
       {tab === 'dashboard' && <AdminDashboardPanel days={period} />}
       {tab === 'users' && <AdminUsersPanel />}
+      {tab === 'accounts' && <AdminAccountsPanel />}
       {tab === 'videos' && <AdminVideosPanel />}
       {tab === 'reports' && <AdminReportsPanel gradeFilter={reportGrade} onGradeChange={setReportGrade} />}
       {tab === 'certificates' && <AdminCertificatesPanel />}

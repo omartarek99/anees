@@ -41,7 +41,7 @@ certificatesRouter.post('/requests/:id/seen', requireCsrfHeader, (req, res) => {
     .prepare(`UPDATE certificate_requests SET notified_at = datetime('now') WHERE id = ? AND user_id = ? AND notified_at IS NULL`)
     .run(Number(req.params.id), req.userId!);
   if (result.changes === 0) {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
   res.json({ ok: true });
@@ -55,7 +55,7 @@ certificatesRouter.post('/:id/seen', requireCsrfHeader, (req, res) => {
     .prepare(`UPDATE certificates SET viewed_at = datetime('now') WHERE id = ? AND user_id = ? AND viewed_at IS NULL`)
     .run(Number(req.params.id), req.userId!);
   if (result.changes === 0) {
-    res.status(404).json({ error: 'Not found.' });
+    res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
     return;
   }
   res.json({ ok: true });

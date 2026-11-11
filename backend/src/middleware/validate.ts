@@ -1,11 +1,20 @@
 import type { Request, RequestHandler, Response, NextFunction } from 'express';
 import type { ZodTypeAny } from 'zod';
 
+/** The first message that we wrote ourselves for the form (zod's own texts like "Required" or "Invalid input" mean nothing to a person). */
+function firstClearMessage(issues: { message: string }[]): string | null {
+  for (const i of issues) {
+    const m = i.message;
+    if (/^[A-Z]/.test(m) && /[.!?]$/.test(m) && !/^(String|Number|Array|Expected|Invalid|Required|Too )/.test(m)) return m;
+  }
+  return null;
+}
+
 export function validateBody(schema: ZodTypeAny) {
   return (req: Request, res: Response, next: NextFunction) => {
     const result = schema.safeParse(req.body);
     if (!result.success) {
-      res.status(400).json({ error: 'Invalid request.', details: result.error.flatten() });
+      res.status(400).json({ error: firstClearMessage(result.error.issues) ?? 'Something in the form is not right. Check it and try again.', details: result.error.flatten() });
       return;
     }
     req.body = result.data;
@@ -34,7 +43,7 @@ export function handleUpload(upload: RequestHandler, message: string, tooLargeMe
  */
 export function requireCsrfHeader(req: Request, res: Response, next: NextFunction) {
   if (req.header('X-Requested-With') !== 'anees') {
-    res.status(403).json({ error: 'Missing required request header.' });
+    res.status(403).json({ error: 'This request could not be completed. Refresh the page and try again.' });
     return;
   }
   next();

@@ -13,6 +13,7 @@ import {
   RiUserFill,
   RiMovie2Line,
   RiFilmFill,
+  RiUserSettingsFill,
   RiCertificateFill,
   RiMenu2Line,
 } from '@remixicon/react';
@@ -38,6 +39,7 @@ const ICONS: Record<string, (size: number) => ReactNode> = {
   myReels: (s) => <RiMovie2Line size={s} />,
   adminReports: (s) => <RiBarChartBoxFill size={s} />,
   adminUsers: (s) => <RiGroupFill size={s} />,
+  adminAccounts: (s) => <RiUserSettingsFill size={s} />,
   adminVideos: (s) => <RiFilmFill size={s} />,
   adminCertificates: (s) => <RiCertificateFill size={s} />,
   menu: (s) => <RiMenu2Line size={s} />,

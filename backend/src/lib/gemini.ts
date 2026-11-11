@@ -1,4 +1,13 @@
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+// One key or several. The keys are tried in this order, and the next one is used when the one before is out of quota (or rejected):
+//   GEMINI_API_KEY          the main key
+//   GEMINI_API_KEY_BACKUP   a second key, used only when the main one cannot answer
+//   GEMINI_API_KEYS         (optional) any number of keys, comma separated -- they come after the two above
+// Note: the daily quota belongs to the Google PROJECT, not to the key: a second key of the same project shares its quota, so the backup has to come from a
+// different project. Keys are never logged or sent anywhere except to Google.
+const clean = (v: string | undefined) => v?.trim().replace(/^["']+|["']+$/g, '').trim() || '';
+const KEYS = [...new Set([clean(process.env.GEMINI_API_KEY), clean(process.env.GEMINI_API_KEY_BACKUP), ...(process.env.GEMINI_API_KEYS ?? '').split(',').map(clean)].filter(Boolean))];
+const GEMINI_API_KEY = KEYS[0];
+if (KEYS.length > 1) console.log(`[gemini] ${KEYS.length} API keys configured (the others are used when the first is out of quota)`);
 
 if (!GEMINI_API_KEY) {
   console.warn(
@@ -22,7 +31,9 @@ const urlFor = (model: string) => `https://generativelanguage.googleapis.com/v1b
 // A model that just answered "quota exceeded" is skipped for a while -- the quota is per day,
 // so re-asking it on every click only adds latency.
 const QUOTA_SKIP_MS = 30 * 60 * 1000;
-const quotaSkipUntil = new Map<string, number>();
+const quotaSkipUntil = new Map<string, number>(); // key: `${keyIndex}:${model}` -- the quota is per key's project and per model
+const badKeyUntil = new Map<number, number>(); // a key Google refused (invalid, disabled): skipped for a while
+const BAD_KEY_SKIP_MS = 10 * 60 * 1000;
 // Models that answered 400 to a thinking setting (not every model accepts every level): asked again without it, and remembered.
 const thinkingRejected = new Set<string>();
 
@@ -174,16 +185,21 @@ export async function callGemini(prompt: string, schema: unknown, temperature: n
     // One overall budget across the whole model fallback chain: five models x 40s would hold the
     // request open ~200s, past the hosting proxy's own limit (about 100s).
     const deadline = now + budgetMs;
-    const candidates = MODELS.filter((m) => (quotaSkipUntil.get(m) ?? 0) <= now);
-    // Everything was recently out of quota -- still try them all rather than fail without asking.
-    for (const model of candidates.length > 0 ? candidates : MODELS) {
+    const liveKeys = KEYS.map((k, i) => i).filter((i) => (badKeyUntil.get(i) ?? 0) <= now);
+    const keyOrder = liveKeys.length > 0 ? liveKeys : KEYS.map((k, i) => i);
+    // The pairs to try: the first key with every model, then the next key with every model, ... A pair that was recently out of quota is left for last.
+    const pairs = keyOrder.flatMap((ki) => MODELS.map((m) => ({ ki, m })));
+    const fresh = pairs.filter((p) => (quotaSkipUntil.get(`${p.ki}:${p.m}`) ?? 0) <= now);
+    const queue = fresh.length > 0 ? fresh : pairs; // everything was recently out of quota: still try them all rather than fail without asking
+    for (const { ki, m: model } of queue) {
       const budget = deadline - Date.now();
       if (budget < 2_000) break;
+      const apiKey = KEYS[ki];
       let r: Response;
       let d: any;
       try {
         const post = (withThinking: boolean) =>
-          fetch(`${urlFor(model)}?key=${GEMINI_API_KEY}`, {
+          fetch(`${urlFor(model)}?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             // A hung upstream must not hang the user's request forever.
@@ -213,7 +229,13 @@ export async function callGemini(prompt: string, schema: unknown, temperature: n
       data = d;
       if (r.ok) break;
       if (r.status === 429 && /quota/i.test(String(d?.error?.message ?? ''))) {
-        quotaSkipUntil.set(model, Date.now() + QUOTA_SKIP_MS);
+        quotaSkipUntil.set(`${ki}:${model}`, Date.now() + QUOTA_SKIP_MS);
+      }
+      // The key itself was refused (wrong, disabled, restricted): every model would say the same, so go straight to the next key.
+      if (r.status === 403 || (r.status === 400 && /api key|API_KEY/i.test(String(d?.error?.message ?? '')))) {
+        badKeyUntil.set(ki, Date.now() + BAD_KEY_SKIP_MS);
+        console.error(`[gemini] key #${ki + 1} was refused (HTTP ${r.status}); trying the next key if there is one`);
+        continue;
       }
       // Quota / overload / model unavailable: next model. Anything else (bad request,
       // auth) would fail identically on every model, so stop.

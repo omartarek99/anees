@@ -16,10 +16,10 @@ const COMMON_WORDS = /password|passw0rd|qwerty|asdfgh|12345|letmein|welcome|ilov
 /** A new password: long enough, with a capital letter, a small letter, a number and a symbol, and no common word. */
 export const passwordSchema = z
   .string()
-  .min(PASSWORD_MIN, `Password must be at least ${PASSWORD_MIN} characters.`)
-  .refine((p) => Buffer.byteLength(p) <= PASSWORD_MAX_BYTES, 'Password is too long.')
+  .min(PASSWORD_MIN, `The password is too short. Use at least ${PASSWORD_MIN} characters.`)
+  .refine((p) => Buffer.byteLength(p) <= PASSWORD_MAX_BYTES, 'The password is too long. Use at most 72 characters (an Arabic letter counts as 2).')
   .refine(
     (p) => /\p{Lu}/u.test(p) && /\p{Ll}/u.test(p) && /\p{Nd}/u.test(p) && /[^\p{L}\p{N}\s]/u.test(p),
-    'Password must have a capital letter, a small letter, a number and a symbol.'
+    'The password needs a capital letter (like A), a small letter (like a), a number and a symbol (like ! or @).'
   )
-  .refine((p) => !COMMON_WORDS.test(p), 'That password is too easy to guess. Choose another.');
+  .refine((p) => !COMMON_WORDS.test(p), 'This password is too easy to guess. Choose a different one.');

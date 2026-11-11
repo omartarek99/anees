@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, ApiError } from './api';
+import { reloadIfOutdated } from './version-check';
 import { DEV_BYPASS_LOGIN, DEV_ACCOUNT } from './dev-config';
 import type { RankTier } from '../components/RankBadge';
 import type { RankKey } from './medalLevels';
@@ -60,6 +61,8 @@ type AuthContextValue = {
   /** The step after a Google sign-up: name, school and grade (student) or subject + ID photo (teacher). */
   completeProfile: (input: { displayName: string; schoolName: string; grade?: number; teacherSubject?: string; idDocument?: File }) => Promise<void>;
   logout: () => Promise<void>;
+  /** Switches to another of the person's linked accounts (components/AccountSwitcher.tsx) and reloads the app as that account. */
+  switchAccount: (userId: number) => Promise<void>;
   refreshUser: () => Promise<void>;
   verifyEmail: (oobCode: string) => Promise<void>;
   /** Resolves with how the server verifies: a typed 6-digit code ('otp') or an emailed link. */
@@ -140,12 +143,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login: AuthContextValue['login'] = async (input) => {
     const data = await api.post<{ user: User }>('/auth/login', input);
     setUser(data.user);
+    void reloadIfOutdated(); // signing in is a good moment to pick up a newer version of the site (once)
   };
 
   const loginWithGoogle: AuthContextValue['loginWithGoogle'] = async (idToken, role) => {
     const data = await api.post<{ user?: User; created?: boolean; needsRole?: boolean }>('/auth/google', { idToken, role });
     if (data.needsRole || !data.user) return { needsRole: true, created: false };
     setUser(data.user);
+    void reloadIfOutdated();
     return { needsRole: false, created: !!data.created };
   };
 
@@ -168,6 +173,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const switchAccount = async (userId: number) => {
+    await api.post('/auth/switch-account', { userId });
+    // the session cookie is now the other account's: a fresh load starts the whole app from it (no page keeps the last account's data)
+    window.location.assign('/');
+  };
+
   const verifyEmail: AuthContextValue['verifyEmail'] = async (oobCode) => {
     const data = await api.post<{ user: User }>('/auth/verify-email', { oobCode });
     setUser(data.user);
@@ -176,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const verifyOtp: AuthContextValue['verifyOtp'] = async (idToken, code) => {
     const data = await api.post<{ user: User }>('/auth/verify-otp', { idToken, code });
     setUser(data.user);
+    void reloadIfOutdated();
   };
 
   const resendVerification: AuthContextValue['resendVerification'] = async (idToken, lang) => {
@@ -200,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, signup, login, loginWithGoogle, completeProfile, logout, refreshUser, verifyEmail, resendVerification, verifyOtp, dismissWarning, dismissRankDrop }}
+      value={{ user, loading, signup, login, loginWithGoogle, completeProfile, logout, switchAccount, refreshUser, verifyEmail, resendVerification, verifyOtp, dismissWarning, dismissRankDrop }}
     >
       {children}
     </AuthContext.Provider>

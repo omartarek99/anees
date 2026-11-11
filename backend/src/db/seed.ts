@@ -274,7 +274,10 @@ function runOnce(name: string, fn: () => void): void {
 /** Everything that needs the subjects / map levels to exist, so it runs after the content seed. */
 function importProductionData(): void {
   ensureTestAccounts();
-  importLessons();
+  // The sample lessons in seed-data/lessons.json (owned by dev_teacher; their video files are gone from the storage) are NOT added on a deploy any more:
+  // every video on the live site is added by the owner. A lesson that was deleted in the admin panel used to come back on the next deploy, because this
+  // ran on every boot. It still exists for a one-off import: set IMPORT_SEED_LESSONS=1.
+  if (process.env.IMPORT_SEED_LESSONS === '1') importLessons();
   // Clean slate before launch: everyone (demo students and test accounts included) starts at
   // zero points, and the point history behind the leaderboards is cleared.
   runOnce('reset-all-points-2026-10-20', () => {

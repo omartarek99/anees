@@ -12,6 +12,7 @@ import {
   RiBarChartBoxFill,
   RiCertificateFill,
   RiMovie2Line,
+  RiUserSettingsFill,
 } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -51,6 +52,7 @@ const ADMIN_LINKS: SidebarLink[] = [
   { to: '/admin/dashboard', key: 'nav.adminDashboard', icon: <RiDashboardFill size={20} /> },
   { to: '/admin/reports', key: 'nav.adminReports', icon: <RiBarChartBoxFill size={20} /> },
   { to: '/admin/users', key: 'nav.adminUsers', icon: <RiGroupFill size={20} /> },
+  { to: '/admin/accounts', key: 'nav.adminAccounts', icon: <RiUserSettingsFill size={20} /> },
   { to: '/admin/videos', key: 'nav.adminVideos', icon: <RiFilmFill size={20} /> },
   { to: '/admin/certificates', key: 'nav.adminCertificates', icon: <RiCertificateFill size={20} /> },
 ];

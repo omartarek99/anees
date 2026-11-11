@@ -1,3 +1,4 @@
+import { Ico } from './Ico';
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { api, ApiError } from '../lib/api';
@@ -18,6 +19,8 @@ type AdminReel = {
   authorDisplayName: string | null;
   authorRole: string | null;
   createdAt: string;
+  /** How many students watched this lesson. */
+  viewCount: number;
 };
 
 type SentMessage = { id: number; message: string; createdAt: string; readAt: string | null; adminName: string | null };
@@ -197,7 +200,12 @@ export function AdminVideosPanel() {
               )}
             </div>
             <div style={{ flex: 1, minWidth: 200 }}>
-              <strong>{pickText(lang, reel.title, reel.titleAr)}</strong>
+              <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                <strong>{pickText(lang, reel.title, reel.titleAr)}</strong>
+                <span className="badge" title={t('admin.viewsHint')}>
+                  👁 {t('admin.viewsCount', { n: String(reel.viewCount ?? 0) })}
+                </span>
+              </div>
               <p className="muted" style={{ margin: '4px 0', fontSize: 13 }}>
                 {reel.grade
                   ? t('admin.videoMeta', {

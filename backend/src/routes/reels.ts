@@ -151,7 +151,7 @@ reelsRouter.post('/:reelId/watch', requireCsrfHeader, validateBody(watchSchema),
   const reelId = Number(req.params.reelId);
   const reel = visibleReel(req.userId!, reelId);
   if (!reel) {
-    res.status(404).json({ error: 'Lesson not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this lesson. It may have been deleted.' });
     return;
   }
 
@@ -227,7 +227,7 @@ reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema
   const reelId = Number(req.params.reelId);
   const reel = visibleReel(req.userId!, reelId);
   if (!reel) {
-    res.status(404).json({ error: 'Lesson not found.' });
+    res.status(404).json({ error: 'We couldn\'t find this lesson. It may have been deleted.' });
     return;
   }
 

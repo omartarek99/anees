@@ -10,15 +10,15 @@ export const AVATAR_KEYS = ['owl', 'astronaut', 'qatariBoy', 'qatariGirl', 'scie
 export const usernameSchema = z
   .string()
   .trim()
-  .min(3, 'Username must be at least 3 characters.')
-  .max(20, 'Username must be at most 20 characters.')
-  .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores.');
+  .min(3, 'The username is too short. Use at least 3 letters or numbers.')
+  .max(20, 'The username is too long. Use at most 20 characters.')
+  .regex(/^[a-zA-Z0-9_]+$/, 'The username can only have English letters, numbers and _ (underscore). Remove any other character.');
 
 export const displayNameSchema = z
   .string()
   .trim()
-  .min(2, 'Display name must be at least 2 characters.')
-  .max(40, 'Display name must be at most 40 characters.');
+  .min(2, 'The display name is too short. Write at least 2 letters.')
+  .max(40, 'The display name is too long. Use at most 40 letters.');
 
 // What a teacher teaches -- shown as a dropdown at signup. Keys are stored; the Arabic/English
 // labels live in frontend/src/lib/i18n.ts (auth.subject*).
@@ -28,13 +28,13 @@ export const teacherSubjectSchema = z.enum(TEACHER_SUBJECT_KEYS);
 export const schoolNameSchema = z
   .string()
   .trim()
-  .min(2, 'School name must be at least 2 characters.')
-  .max(80, 'School name must be at most 80 characters.');
+  .min(2, 'The school name is too short. Write at least 2 letters.')
+  .max(80, 'The school name is too long. Use at most 80 letters.');
 
-export const emailSchema = z.string().trim().email('Please enter a valid email address.').max(120);
+export const emailSchema = z.string().trim().email('Write your email like this: name@example.com').max(120);
 
 // Allowed to be blank (clears the bio) -- only max-length is enforced.
-export const bioSchema = z.string().trim().max(300, 'Bio must be at most 300 characters.');
+export const bioSchema = z.string().trim().max(300, 'The bio is too long. Use at most 300 letters.');
 
 export const avatarKeySchema = z.enum(AVATAR_KEYS);
 
@@ -63,26 +63,26 @@ export const signupSchema = z
     // form, see AuthShell.tsx) but a generic form-filling bot often does. Left blank by a
     // human, so anything else here fails the same way any other invalid field would --
     // no separate "you're a bot" response that would tip off a bot script either way.
-    website: z.string().max(0, 'Please leave this field blank.').optional().default(''),
+    website: z.string().max(0, 'Something went wrong. Refresh the page and try again.').optional().default(''),
     // Language of the verification email (Firebase's template text can't be edited, only localised).
     lang: z.enum(['en', 'ar']).optional(),
   })
   .refine((data) => data.role !== 'student' || data.grade !== undefined, {
-    message: 'Please enter your grade.',
+    message: 'Choose your grade.',
     path: ['grade'],
   })
   .refine((data) => data.role !== 'teacher' || data.teacherSubject !== undefined, {
-    message: 'Please choose the subject you teach.',
+    message: 'Choose the subject you teach.',
     path: ['teacherSubject'],
   });
 
 export const loginSchema = z.object({
   username: usernameSchema,
-  password: z.string().min(1, 'Password is required.').max(200),
+  password: z.string().min(1, 'Write your password.').max(200),
 });
 
 export const verifyEmailSchema = z.object({
-  oobCode: z.string().min(1, 'Missing verification code.'),
+  oobCode: z.string().min(1, 'The confirmation link is not complete. Open the link from your email again.'),
 });
 
 export const forgotPasswordSchema = z.object({
@@ -92,22 +92,22 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   email: emailSchema,
-  code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code.'),
+  code: z.string().trim().regex(/^\d{6}$/, 'Write the 6-digit code we sent you.'),
   newPassword: passwordSchema,
 });
 
 export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Enter your current password.').max(200),
+  currentPassword: z.string().min(1, 'Write your current password.').max(200),
   newPassword: passwordSchema,
 });
 
 export const verifyOtpSchema = z.object({
-  idToken: z.string().min(1, 'Missing verification token.'),
-  code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code.'),
+  idToken: z.string().min(1, 'Your confirmation session is missing. Log in again to continue.'),
+  code: z.string().trim().regex(/^\d{6}$/, 'Write the 6-digit code we sent you.'),
 });
 
 export const resendVerificationSchema = z.object({
-  idToken: z.string().min(1, 'Missing verification token.'),
+  idToken: z.string().min(1, 'Your confirmation session is missing. Log in again to continue.'),
   lang: z.enum(['en', 'ar']).optional(),
 });
 
@@ -133,18 +133,18 @@ export const adminSetWarningSchema = z.object({
   message: z
     .string()
     .trim()
-    .max(500, 'Warning message is too long.')
+    .max(500, 'The warning is too long. Use at most 500 letters.')
     .nullable()
     .transform((v) => (v && v.length > 0 ? v : null)),
 });
 
 export const adminRevokeCertificateSchema = z.object({
-  reason: z.string().trim().min(3, 'Please say why the certificate is taken back.').max(300, 'That reason is too long.'),
+  reason: z.string().trim().min(3, 'Write the reason for taking this certificate back.').max(300, 'The reason is too long. Use at most 300 letters.'),
 });
 
 export const adminApplyViolationSchema = z.object({
   violation: z.enum(VIOLATION_KEYS),
-  note: z.string().trim().max(300, 'That note is too long.').optional(),
+  note: z.string().trim().max(300, 'The note is too long. Use at most 300 letters.').optional(),
   // how many points were gained unfairly (used only by the measures that take points off)
   points: z.number().int().min(0).max(1_000_000).optional(),
 });
@@ -173,19 +173,19 @@ export const adminSetXpSchema = z.object({
 // string fine.
 export const adminIssueCertificateSchema = z.object({
   userId: z.coerce.number().int(),
-  title: z.string().trim().min(1, 'Name is required.').max(120),
+  title: z.string().trim().min(1, 'Write the name.').max(120),
   type: z.enum(['bronze', 'silver', 'gold', 'platinum', 'diamond', 'warrior', 'champion']),
 });
 
 const choiceSchema = z.string().trim().min(1).max(120);
 
 export const teacherReelQuestionSchema = z.object({
-  questionText: z.string().trim().min(3, 'Question is too short.').max(300),
+  questionText: z.string().trim().min(3, 'The question is too short. Write at least 3 letters.').max(300),
   questionTextAr: z.string().trim().max(300).optional().default(''),
-  choices: z.array(choiceSchema).length(4, 'Exactly 4 choices are required.'),
+  choices: z.array(choiceSchema).length(4, 'Each question needs exactly 4 choices.'),
   choicesAr: z.array(z.string().trim().max(120)).length(4).optional().default(['', '', '', '']),
   correctIndex: z.number().int().min(0).max(3),
-  explanation: z.string().trim().min(3, 'Explanation is too short.').max(500),
+  explanation: z.string().trim().min(3, 'The explanation is too short. Write at least 3 letters.').max(500),
   explanationAr: z.string().trim().max(500).optional().default(''),
 });
 
@@ -202,9 +202,9 @@ export const generateQuestionsSchema = z.object({
 export const teacherReelSchema = z.object({
   subjectId: z.number().int(),
   grade: z.coerce.number().int().min(1).max(12),
-  title: z.string().trim().min(3, 'Title is too short.').max(120),
+  title: z.string().trim().min(3, 'The title is too short. Write at least 3 letters.').max(120),
   titleAr: z.string().trim().max(120).optional().default(''),
-  scriptText: z.string().trim().min(10, 'Script is too short.').max(2000),
+  scriptText: z.string().trim().min(10, 'The lesson text is too short. Write at least 10 letters.').max(2000),
   scriptTextAr: z.string().trim().max(2000).optional().default(''),
   durationSec: z.number().int().min(10).max(300).optional().default(60),
   // Optional -- a lesson can be video/script only, with no quiz at all.

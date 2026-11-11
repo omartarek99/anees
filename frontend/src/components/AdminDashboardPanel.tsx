@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AdminLivePanel } from './AdminLivePanel';
 import { Link } from "react-router-dom";
 import {
   RiGraduationCapFill,
@@ -202,6 +203,11 @@ export function AdminDashboardPanel({ days }: { days: DashboardPeriod }) {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* "Right now" comes under the four number cards, which stay at the very top */}
+        <div className="dash-wide">
+          <AdminLivePanel />
         </div>
 
         <section className="card dash-reports">

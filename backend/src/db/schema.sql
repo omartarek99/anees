@@ -467,3 +467,11 @@ CREATE TABLE IF NOT EXISTS user_violations (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_user_violations_user ON user_violations(user_id, violation);
+
+-- Accounts one person has linked so they can switch between them with one tap (routes/auth.ts, /linked-accounts). Both directions are stored.
+CREATE TABLE IF NOT EXISTS linked_accounts (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  linked_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, linked_user_id)
+);

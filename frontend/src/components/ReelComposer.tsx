@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { FieldError } from './FieldError';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError, pickText } from '../lib/i18n';
@@ -55,8 +56,9 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
   const [formError, setFormError] = useState<string | null>(null);
   // The Create / Auto-generate buttons are far below this banner -- bring a new error into view.
   const formErrorRef = useRef<HTMLDivElement>(null);
+  const [errorTick, setErrorTick] = useState(0); // bumps on every blocked click, so the page scrolls to the message each time
   useEffect(() => {
-    if (formError) formErrorRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (formError && !showErrors) formErrorRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }, [formError]);
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
 
@@ -88,6 +90,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
     setExistingVideoUrl(null);
     setHasArabicExtra(false);
     setFormError(null);
+    setShowErrors(false);
   }
 
   // Opening a lesson for editing (or switching to another) loads it into the form; no lesson clears the form.
@@ -223,9 +226,57 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
     setQuestions((prev) => prev.filter((_, i) => i !== index));
   }
 
+  // What is empty or wrong, field by field. Nothing shows until the button has been pressed once; after that each message sits under its field and goes
+  // away the moment that field is fixed. A new lesson needs the subject, the grade, a topic name, the lesson text, the video and at least one complete question;
+  // any question that is there must be complete (the question, its 4 choices and the explanation).
+  const [showErrors, setShowErrors] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const qIssues = questions.map((q) => ({
+    text: !q.questionText.trim(),
+    choices: q.choices.map((c) => !c.trim()),
+    explanation: !q.explanation.trim(),
+  }));
+  const questionIncomplete = (i: number) => qIssues[i].text || qIssues[i].explanation || qIssues[i].choices.some(Boolean);
+  const issue = {
+    subject: !subjectId,
+    grade: !grade,
+    title: title.trim().length < 2,
+    script: !scriptText.trim(),
+    video: !currentId && !videoFile && !existingVideoUrl,
+    noQuestion: !currentId && questions.length === 0,
+    someQuestion: questions.some((_, i) => questionIncomplete(i)),
+  };
+  const hasIssues = Object.values(issue).some(Boolean);
+  /** what is still missing, in words, for the summary at the top of the form */
+  function missingParts(): string[] {
+    const m: string[] = [];
+    if (issue.subject) m.push(t('teacherReels.missingSubject'));
+    if (issue.grade) m.push(t('teacherReels.missingGrade'));
+    if (issue.title) m.push(t('teacherReels.missingTitle'));
+    if (issue.script) m.push(t('teacherReels.missingScript'));
+    if (issue.noQuestion || issue.someQuestion) m.push(t('teacherReels.missingQuestion'));
+    if (issue.video) m.push(t('teacherReels.missingVideo'));
+    return m;
+  }
+  // After a blocked press: scroll to the first message under a field and put the cursor there.
+  useEffect(() => {
+    if (!errorTick) return;
+    const first = formRef.current?.querySelector('.field-error');
+    if (!first) return;
+    first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const box = first.closest('.field') ?? first.parentElement;
+    (box?.querySelector('input:not([type=radio]), select, textarea') as HTMLElement | null)?.focus({ preventScroll: true });
+  }, [errorTick]);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setFormError(null);
+    if (hasIssues) {
+      setShowErrors(true);
+      setFormError(t('teacherReels.missingIntro') + ' ' + missingParts().join('، '));
+      setErrorTick((n) => n + 1);
+      return;
+    }
     if (videoFile && videoFile.size > MAX_VIDEO_BYTES) {
       setFormError(t('teacherReels.videoTooLarge'));
       return;
@@ -283,7 +334,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
         {currentId ? t('teacherReels.editTitle') : t('teacherReels.composerTitle')}
       </h3>
       {optionsError && <div className="form-error-banner">{optionsError}</div>}
-        <form onSubmit={handleSubmit}>
+        <form ref={formRef} onSubmit={handleSubmit} noValidate>
           {formError && (
             <div ref={formErrorRef} className="form-error-banner" role="alert">
               {formError}
@@ -293,7 +344,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
           <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
             <div className="field" style={{ flex: 1, minWidth: 160 }}>
               <label htmlFor="reelSubject">{t('teacherReels.subjectLabel')}</label>
-              <select id="reelSubject" value={subjectId} onChange={(e) => setSubjectId(e.target.value)} required>
+              <select id="reelSubject" value={subjectId} onChange={(e) => setSubjectId(e.target.value)}>
                 <option value="">{t('teacherReels.subjectPlaceholder')}</option>
                 {subjects?.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -301,10 +352,11 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
                   </option>
                 ))}
               </select>
+              {showErrors && issue.subject && <FieldError>{t('teacherReels.errSubject')}</FieldError>}
             </div>
             <div className="field" style={{ flex: 1, minWidth: 160 }}>
               <label htmlFor="reelGrade">{t('teacherReels.gradeLabel')}</label>
-              <select id="reelGrade" value={grade} onChange={(e) => setGrade(e.target.value)} required>
+              <select id="reelGrade" value={grade} onChange={(e) => setGrade(e.target.value)}>
                 <option value="">{t('teacherReels.gradePlaceholder')}</option>
                 {grades.map((g) => (
                   <option key={g} value={g}>
@@ -312,12 +364,14 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
                   </option>
                 ))}
               </select>
+              {showErrors && issue.grade && <FieldError>{t('teacherReels.errGrade')}</FieldError>}
             </div>
           </div>
 
           <div className="field">
             <label htmlFor="reelTitle">{t('teacherReels.titleLabel')}</label>
-            <input id="reelTitle" className="lesson-text-field" dir="auto" value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={120} placeholder={t('teacherReels.anyLanguageHint')} />
+            <input id="reelTitle" className="lesson-text-field" dir="auto" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} placeholder={t('teacherReels.anyLanguageHint')} />
+            {showErrors && issue.title && <FieldError>{t('teacherReels.errTitle')}</FieldError>}
           </div>
           {hasArabicExtra && (
             <div className="field">
@@ -334,10 +388,10 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
               placeholder={t('teacherReels.anyLanguageHint')}
               value={scriptText}
               onChange={(e) => setScriptText(e.target.value)}
-              required
               maxLength={2000}
               rows={4}
             />
+            {showErrors && issue.script && <FieldError>{t('teacherReels.errScript')}</FieldError>}
           </div>
           {hasArabicExtra && (
             <div className="field">
@@ -373,6 +427,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
               }}
             />
             <small className="muted">{t('teacherReels.videoHint')}</small>
+            {showErrors && issue.video && <FieldError>{t('teacherReels.errVideo')}</FieldError>}
             {existingVideoUrl && !videoFile && (
               <p className="muted" style={{ marginTop: 6 }}>
                 {t('teacherReels.currentVideo')}
@@ -395,6 +450,11 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
               {generatingQuestions ? t('teacherReels.generatingQuestions') : t('teacherReels.generateQuestionsButton')}
             </button>
           </div>
+          {showErrors && issue.noQuestion && (
+            <div className="field">
+              <FieldError>{t('teacherReels.errNoQuestion')}</FieldError>
+            </div>
+          )}
           {questions.map((q, qi) => (
             <div className="card" key={qi} style={{ marginBottom: 12, background: 'var(--surface-2, rgba(0,0,0,0.03))' }}>
               <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -410,9 +470,9 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
                 <input
                   value={q.questionText}
                   onChange={(e) => updateQuestion(qi, { questionText: e.target.value })}
-                  required
                   maxLength={300}
                 />
+                {showErrors && qIssues[qi].text && <FieldError>{t('teacherReels.errQuestionText')}</FieldError>}
               </div>
               <div className="field">
                 <label>{t('teacherReels.questionTextArLabel')}</label>
@@ -440,7 +500,6 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
                     placeholder={t('teacherReels.choicePlaceholder', { number: String(ci + 1) })}
                     value={q.choices[ci]}
                     onChange={(e) => updateChoice(qi, ci, e.target.value, false)}
-                    required
                     maxLength={120}
                   />
                   <input
@@ -452,6 +511,11 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
                     onChange={(e) => updateChoice(qi, ci, e.target.value, true)}
                     maxLength={120}
                   />
+                  {showErrors && qIssues[qi].choices[ci] && (
+                    <div style={{ flex: '1 1 100%' }}>
+                      <FieldError>{t('teacherReels.errChoice', { number: String(ci + 1) })}</FieldError>
+                    </div>
+                  )}
                 </div>
               ))}
               <div className="field">
@@ -459,9 +523,9 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
                 <input
                   value={q.explanation}
                   onChange={(e) => updateQuestion(qi, { explanation: e.target.value })}
-                  required
                   maxLength={500}
                 />
+                {showErrors && qIssues[qi].explanation && <FieldError>{t('teacherReels.errExplanation')}</FieldError>}
               </div>
               <div className="field">
                 <label>{t('teacherReels.explanationArLabel')}</label>

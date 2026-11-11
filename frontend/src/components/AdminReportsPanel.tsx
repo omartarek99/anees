@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Ico } from './Ico';
 import { RiEyeLine, RiCheckboxCircleLine, RiFileExcel2Line } from '@remixicon/react';
 import { api } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
@@ -19,6 +20,7 @@ type WatchTimeUser = {
   role: 'student' | 'teacher';
   grade: number | null;
   teacherSubject: string | null;
+  schoolName?: string | null;
   watchedSeconds: number;
   reelsWatched: number;
   watchPoints: number;
@@ -113,14 +115,21 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: 'student' | '
   const [totals, setTotals] = useState<ReportTotals | null>(null);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
+  // the search box above the table (a name, a username or a school); it asks the server, because the table is paged
+  const [search, setSearch] = useState('');
+  const [query, setQuery] = useState('');
+  useEffect(() => {
+    const id = setTimeout(() => setQuery(search.trim()), 300);
+    return () => clearTimeout(id);
+  }, [search]);
 
   // A filter change invalidates the current page number, same as AdminUsersPanel.
-  useEffect(() => setPage(1), [roleFilter, gradeFilter]);
+  useEffect(() => setPage(1), [roleFilter, gradeFilter, query]);
 
   useEffect(() => {
     api
       .get<{ users: WatchTimeUser[]; totals: ReportTotals; totalPages: number }>(
-        `/admin/reports/watch-time?${reportQuery(roleFilter, gradeFilter, { page: String(page) })}`
+        `/admin/reports/watch-time?${reportQuery(roleFilter, gradeFilter, { page: String(page), ...(query ? { search: query } : {}) })}`
       )
       .then((data) => {
         setUsers(data.users);
@@ -128,7 +137,7 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: 'student' | '
         setTotalPages(data.totalPages);
       })
       .catch(() => setUsers([]));
-  }, [roleFilter, gradeFilter, page]);
+  }, [roleFilter, gradeFilter, page, query]);
 
   const isTeacher = roleFilter === 'teacher';
   const th = { padding: '6px 8px' } as const;
@@ -141,14 +150,18 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: 'student' | '
         {isTeacher ? t('admin.watchTimeTeachersSectionSub') : t('admin.watchTimeStudentsSectionSub')}
       </p>
 
-      {totals && users && users.length > 0 && <TotalsStrip totals={totals} role={roleFilter} />}
+      {totals && users && (users.length > 0 || query) && <TotalsStrip totals={totals} role={roleFilter} />}
+
+      <div className="field" style={{ width: '100%' }}>
+        <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('admin.usageSearchPlaceholder')} aria-label={t('admin.usageSearchPlaceholder')} />
+      </div>
 
       {!users && (
         <div className="empty-state">
           <div className="spinner" />
         </div>
       )}
-      {users && users.length === 0 && <p className="muted">{t('admin.watchTimeEmpty')}</p>}
+      {users && users.length === 0 && <p className="muted">{t(query ? 'admin.usageSearchNone' : 'admin.watchTimeEmpty')}</p>}
 
       {users && users.length > 0 && (
         <div style={{ overflowX: 'auto' }}>
@@ -173,6 +186,11 @@ function WatchTimeTable({ roleFilter, gradeFilter }: { roleFilter: 'student' | '
                 <tr key={u.userId} style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
                   <td style={td}>
                     {u.displayName} <span className="muted"><bdi dir="ltr">@{u.username}</bdi></span>
+                    {u.schoolName && (
+                      <div className="muted" style={{ fontSize: 12 }}>
+                        <Ico name="school" size={14} /> {u.schoolName}
+                      </div>
+                    )}
                   </td>
                   <td style={td}>
                     {u.role === 'teacher'

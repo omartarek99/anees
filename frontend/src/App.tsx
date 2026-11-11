@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
 import { Navigate, Route, BrowserRouter, Routes, Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth-context';
 import { LanguageProvider, useLanguage } from './lib/language-context';
@@ -9,6 +9,7 @@ import { IntroSplash } from './components/IntroSplash';
 import { trackPageview } from './lib/analytics';
 import { Sidebar } from './components/Sidebar';
 import { AvatarBoundary } from './components/avatar3d/AvatarBoundary';
+import { PageBoundary } from './components/PageBoundary';
 import { LanguageToggle } from './components/LanguageToggle';
 import { ThemeToggle } from './components/ThemeToggle';
 import { QuickMenu } from './components/QuickMenu';
@@ -180,11 +181,21 @@ function ProtectedLayout() {
           <PointsNoticeModal />
           {/* A page's chunk can fail to download (offline, or a stale filename after a redeploy) -- show an
               error here instead of letting the rejected lazy import blank the whole app. */}
-          <AvatarBoundary fallback={<div className="form-error-banner">{t('messages.loadError')}</div>}>
+          <PageBoundary
+            key={pathname}
+            fallback={(reload) => (
+              <div className="form-error-banner" style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span>{t('messages.loadError')}</span>
+                <button type="button" className="btn btn-secondary" onClick={reload}>
+                  {t('messages.reload')}
+                </button>
+              </div>
+            )}
+          >
             <Suspense fallback={<div className="empty-state"><div className="spinner" /></div>}>
               <Outlet />
             </Suspense>
-          </AvatarBoundary>
+          </PageBoundary>
         </main>
         {!hideFooter && <Footer />}
       </div>

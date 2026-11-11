@@ -85,6 +85,10 @@ if (!userCols.some((c) => c.name === 'id_document_path')) {
 if (!userCols.some((c) => c.name === 'firebase_uid')) {
   db.exec(`ALTER TABLE users ADD COLUMN firebase_uid TEXT`);
 }
+// The last time the account did anything on the site (written at most once a minute, see middleware/auth.ts): the admin "online now" panel and "last active" read it.
+if (!userCols.some((c) => c.name === 'last_seen_at')) {
+  db.exec(`ALTER TABLE users ADD COLUMN last_seen_at TEXT`);
+}
 // Typed-code email verification was tried and reverted in favor of Firebase's built-in
 // link-based flow -- drop the columns from any database that briefly had them.
 if (userCols.some((c) => c.name === 'verification_code_hash')) {
