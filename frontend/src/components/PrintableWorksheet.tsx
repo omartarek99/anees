@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../lib/language-context';
-import { textDir } from '../lib/bidi';
+import { choiceLabel } from '../lib/bidi';
+import { QText } from './QText';
 
 export type PrintableQuestion = { id: number; text: string; choices: string[] };
 
@@ -22,10 +23,7 @@ export function PrintableWorksheet({
   difficultyIcon: string;
   questions: PrintableQuestion[];
 }) {
-  const { t, dir } = useLanguage();
-  // Always Latin letters, even in the Arabic layout -- A/B/C/D is how a multiple-choice
-  // worksheet is conventionally lettered for this age group either way.
-  const letters = ['A', 'B', 'C', 'D'];
+  const { t, dir, lang } = useLanguage();
   // Cycles a handful of print-safe pastel tints across questions purely for visual
   // variety -- grade 5/6 age group, so the page reads as a fun activity sheet rather
   // than a plain exam.
@@ -74,12 +72,16 @@ export function PrintableWorksheet({
         <ol className="printable-worksheet-questions">
           {questions.map((q, i) => (
             <li key={q.id} className={tints[i % tints.length]}>
-              <p dir={textDir(q.text)}>{q.text}</p>
+              <p className="quiz-q">
+                <QText text={q.text} />
+              </p>
               <ul>
                 {q.choices.map((choice, ci) => (
                   <li key={ci}>
-                    <span className="printable-worksheet-choice-box">{letters[ci]}</span>
-                    {choice}
+                    <span className="printable-worksheet-choice-box">{choiceLabel(ci, lang)}</span>
+                    <span className="quiz-choice-text">
+<QText text={choice} />
+</span>
                   </li>
                 ))}
               </ul>

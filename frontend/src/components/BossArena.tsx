@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
+import { choiceLabel } from '../lib/bidi';
+import { QText } from './QText';
 import { pickText, translateApiError } from '../lib/i18n';
 import { QuizResults, type ResultItem } from './QuizResults';
 import { BossArt } from './BossArt';
@@ -317,7 +319,9 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
 
                 {!submitting && currentQ && (
                   <div className="stack">
-                    <p style={{ fontWeight: 700, fontSize: 17 }}>{currentText}</p>
+                    <p className="quiz-q" style={{ fontSize: 17 }}>
+                      <QText text={currentText} />
+                    </p>
                     <div className="stack" style={{ gap: 8 }}>
                       {currentChoices.map((choice, ci) => {
                         const isSelected = selected === ci;
@@ -359,9 +363,11 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
                                 marginInlineEnd: 8,
                               }}
                             >
-                              {String.fromCharCode(65 + ci)}
+                              {choiceLabel(ci, lang)}
                             </span>
-                            {choice}
+                            <span className="quiz-choice-text">
+<QText text={choice} />
+</span>
                           </button>
                         );
                       })}

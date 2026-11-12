@@ -2,8 +2,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, type ElementRef, type 
 import { useFrame, useThree } from '@react-three/fiber';
 import { MapControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { clamp, lerp } from './math';
-import { zoneAtZ } from './layout';
+import { clamp, lerp, smoothstep } from './math';
+import { nodeXZ, zoneAtZ } from './layout';
 import { pathBaseY } from './ground';
 import { nearestOnPath, PATH_POINTS, PATH_STEP } from './pathLine';
 import type { MapWorld } from './schema';
@@ -80,6 +80,30 @@ const ORBIT_FOV = 38;
 const WALK_PITCH = -0.1; // looking a touch down the road
 const MAX_YAW = 1.2;
 const MAX_PITCH = 0.45;
+/** How high a glide between an orbit view and the walk arcs over the land, so it never cuts through a hill. */
+const BLEND_ARC = 6;
+
+/**
+ * How much higher the walker's eyes must be at (x, z) to stay out of the level models the road runs through (nodes/pad.ts,
+ * nodes/arena.ts): without it the eye walked straight through a pad's number plate and a boss gate, and from inside a block the
+ * map behind showed through.
+ *   pad    climb its three steps (1.25 high, 2.7 across), and a little more over the middle, clear of the floating star;
+ *   arena  climb the platform (4.5 across), then rise over the 5-block gate and come down on the far side.
+ */
+function nodeLift(x: number, z: number): number {
+  let lift = 0;
+  for (const id of zoneAtZ(z).nodeIds) {
+    const n = nodeXZ(id);
+    const d = Math.hypot(n.x - x, n.z - z);
+    if (d > 5) continue;
+    const arena = id % 5 === 0; // layout.ts: every fifth level is a boss arena
+    const h = arena
+      ? 1.25 * smoothstep(4.7, 3.4, d) + 4.2 * smoothstep(3.4, 1.4, d)
+      : 1.25 * smoothstep(2.9, 2.0, d) + 1.0 * smoothstep(1.3, 0.4, d);
+    lift = Math.max(lift, h);
+  }
+  return lift;
+}
 const BLEND_SECONDS = 0.8;
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -156,7 +180,7 @@ export function CameraRig({
     const f = i - i0;
     const x = lerp(a.x, b.x, f);
     const z = lerp(a.z, b.z, f);
-    const ground = pathBaseY(x, z) + SURFACE;
+    const ground = pathBaseY(x, z) + SURFACE + nodeLift(x, z);
     const yaw = Math.atan2(lerp(a.tx, b.tx, f), lerp(a.tz, b.tz, f)) + w.yaw;
     const pitch = WALK_PITCH + w.pitch;
     const eye = new THREE.Vector3(x, ground + EYE, z);
@@ -338,6 +362,7 @@ export function CameraRig({
         const e = ease(b.t);
         const to = b.kind === 'toWalk' ? here : b.dest!;
         camera.position.lerpVectors(b.from.pos, to.pos, e);
+        camera.position.y += Math.sin(Math.PI * e) * BLEND_ARC; // over the hills, not through them
         camera.quaternion.slerpQuaternions(b.from.quat, to.quat, e);
         camera.fov = lerp(b.from.fov, to.fov, e);
         camera.near = lerp(b.from.near, to.near, e);

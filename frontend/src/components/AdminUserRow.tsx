@@ -228,7 +228,7 @@ export function AdminUserRow({
             <span className="badge badge-gold" title={u.role === 'teacher' ? t('admin.teacherPointsLabel') : t('admin.pointsLabel')}>
               #{u.rank} ·{' '}
               {u.role === 'teacher' ? (
-                `🏆 ${u.teacherPoints}`
+                `${u.teacherPoints} ${t('common.pointsUnit')}`
               ) : (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, verticalAlign: 'middle' }}>
                   <XpIcon size={22} /> {u.totalXp}

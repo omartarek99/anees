@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { FieldError } from './FieldError';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
+import { duplicateChoices, textProblem } from '../lib/textRules';
 import { translateApiError, pickText } from '../lib/i18n';
 import { MAX_VIDEO_BYTES, uploadLessonVideo } from '../lib/videoUpload';
 
@@ -231,17 +232,22 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
   // any question that is there must be complete (the question, its 4 choices and the explanation).
   const [showErrors, setShowErrors] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const qIssues = questions.map((q) => ({
-    text: !q.questionText.trim(),
-    choices: q.choices.map((c) => !c.trim()),
-    explanation: !q.explanation.trim(),
-  }));
-  const questionIncomplete = (i: number) => qIssues[i].text || qIssues[i].explanation || qIssues[i].choices.some(Boolean);
+  // each issue is the key of the message to show (or empty): empty fields first, then what is wrong with what was typed (lib/textRules.ts)
+  const qIssues = questions.map((q) => {
+    const dup = duplicateChoices(q.choices);
+    const dupAr = duplicateChoices(q.choicesAr);
+    return {
+      text: !q.questionText.trim() ? 'teacherReels.errQuestionText' : textProblem(q.questionText, 'question') ?? textProblem(q.questionTextAr, 'arabic') ?? '',
+      choices: q.choices.map((c, ci) => (!c.trim() ? 'teacherReels.errChoice' : dup[ci] || dupAr[ci] ? 'validation.duplicateChoice' : '')),
+      explanation: !q.explanation.trim() ? 'teacherReels.errExplanation' : textProblem(q.explanation, 'sentence') ?? textProblem(q.explanationAr, 'arabic') ?? '',
+    };
+  });
+  const questionIncomplete = (i: number) => !!qIssues[i].text || !!qIssues[i].explanation || qIssues[i].choices.some(Boolean);
   const issue = {
     subject: !subjectId,
     grade: !grade,
-    title: title.trim().length < 2,
-    script: !scriptText.trim(),
+    title: title.trim().length < 2 ? 'teacherReels.errTitle' : textProblem(title, 'words') ?? textProblem(titleAr, 'arabic') ?? '',
+    script: !scriptText.trim() ? 'teacherReels.errScript' : textProblem(scriptText, 'sentence') ?? textProblem(scriptTextAr, 'arabic') ?? '',
     video: !currentId && !videoFile && !existingVideoUrl,
     noQuestion: !currentId && questions.length === 0,
     someQuestion: questions.some((_, i) => questionIncomplete(i)),
@@ -371,7 +377,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
           <div className="field">
             <label htmlFor="reelTitle">{t('teacherReels.titleLabel')}</label>
             <input id="reelTitle" className="lesson-text-field" dir="auto" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} placeholder={t('teacherReels.anyLanguageHint')} />
-            {showErrors && issue.title && <FieldError>{t('teacherReels.errTitle')}</FieldError>}
+            {showErrors && issue.title && <FieldError>{t(issue.title)}</FieldError>}
           </div>
           {hasArabicExtra && (
             <div className="field">
@@ -391,7 +397,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
               maxLength={2000}
               rows={4}
             />
-            {showErrors && issue.script && <FieldError>{t('teacherReels.errScript')}</FieldError>}
+            {showErrors && issue.script && <FieldError>{t(issue.script)}</FieldError>}
           </div>
           {hasArabicExtra && (
             <div className="field">
@@ -472,7 +478,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
                   onChange={(e) => updateQuestion(qi, { questionText: e.target.value })}
                   maxLength={300}
                 />
-                {showErrors && qIssues[qi].text && <FieldError>{t('teacherReels.errQuestionText')}</FieldError>}
+                {showErrors && qIssues[qi].text && <FieldError>{t(qIssues[qi].text)}</FieldError>}
               </div>
               <div className="field">
                 <label>{t('teacherReels.questionTextArLabel')}</label>
@@ -513,7 +519,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
                   />
                   {showErrors && qIssues[qi].choices[ci] && (
                     <div style={{ flex: '1 1 100%' }}>
-                      <FieldError>{t('teacherReels.errChoice', { number: String(ci + 1) })}</FieldError>
+                      <FieldError>{t(qIssues[qi].choices[ci], { number: String(ci + 1) })}</FieldError>
                     </div>
                   )}
                 </div>
@@ -525,7 +531,7 @@ export function ReelComposer({ editId, onSaved, onCancel, bare = false }: { edit
                   onChange={(e) => updateQuestion(qi, { explanation: e.target.value })}
                   maxLength={500}
                 />
-                {showErrors && qIssues[qi].explanation && <FieldError>{t('teacherReels.errExplanation')}</FieldError>}
+                {showErrors && qIssues[qi].explanation && <FieldError>{t(qIssues[qi].explanation)}</FieldError>}
               </div>
               <div className="field">
                 <label>{t('teacherReels.explanationArLabel')}</label>

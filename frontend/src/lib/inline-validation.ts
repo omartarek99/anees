@@ -2,6 +2,9 @@
 // small pop-up bubble that points at one field at a time and then disappears. The browser still decides what is wrong (required, e-mail, length, pattern);
 // this only changes how it is shown. The message goes away as soon as the person edits that field. The lesson form (components/ReelComposer.tsx) shows
 // its own, more specific messages and is switched to noValidate, so it never reaches this.
+import { translate } from './i18n';
+import { textProblem, type TextRule } from './textRules';
+
 type Lang = 'ar' | 'en';
 const TEXT: Record<Lang, Record<string, string>> = {
   ar: {
@@ -51,6 +54,8 @@ type Field = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 function messageFor(el: Field): string {
   const T = TEXT[currentLang()];
   const v = el.validity;
+  // a data-rule message (set while typing, below) says exactly what is wrong with the text
+  if (v.customError) return el.validationMessage;
   const fill = (s: string) => s.replace('{min}', String((el as HTMLInputElement).minLength > 0 ? (el as HTMLInputElement).minLength : (el as HTMLInputElement).min)).replace('{max}', String((el as HTMLInputElement).maxLength > 0 ? (el as HTMLInputElement).maxLength : (el as HTMLInputElement).max));
   if (v.valueMissing) {
     if (el instanceof HTMLSelectElement) return T.valueMissingSelect;
@@ -106,9 +111,31 @@ function showError(el: Field) {
   el.addEventListener('change', gone);
 }
 
+/** A field marked data-rule="<rule>" (lib/textRules.ts) is checked as it is typed in, so a form refuses it with the rule's own message. */
+function applyRule(el: Field) {
+  const rule = el.getAttribute('data-rule') as TextRule | null;
+  if (!rule || el instanceof HTMLSelectElement) return;
+  const key = textProblem(el.value, rule);
+  el.setCustomValidity(key ? translate(currentLang(), key) : '');
+}
+
 /** Call once at start-up. */
 export function startInlineValidation(): void {
   let pending: number | null = null;
+  const check = (event: Event) => {
+    const el = event.target;
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) applyRule(el);
+  };
+  document.addEventListener('input', check, true);
+  // a form is checked just before it is sent, too (a value filled in by the browser, or a field never typed in)
+  document.addEventListener(
+    'click',
+    (event) => {
+      const form = (event.target as Element | null)?.closest?.('button[type="submit"], button:not([type])') ? (event.target as Element).closest('form') : null;
+      form?.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[data-rule]').forEach(applyRule);
+    },
+    true
+  );
   // 'invalid' does not bubble, so listen in the capture phase on the document: it fires once for every field that fails when a form is submitted.
   document.addEventListener(
     'invalid',

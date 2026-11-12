@@ -66,13 +66,14 @@ export function CompleteProfilePage() {
 
         <div className="field">
           <label htmlFor="displayName">{t('auth.name')}</label>
-          <input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required minLength={2} maxLength={40} autoComplete="name" />
+          <input id="displayName" data-rule="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required minLength={2} maxLength={40} autoComplete="name" />
         </div>
 
         <div className="field">
           <label htmlFor="schoolName">{t('auth.school')}</label>
           <input
             id="schoolName"
+            data-rule="name"
             value={schoolName}
             onChange={(e) => setSchoolName(e.target.value)}
             required
@@ -100,18 +101,17 @@ export function CompleteProfilePage() {
         ) : (
           <div className="field">
             <label htmlFor="grade">{t('auth.grade')}</label>
-            <input
-              id="grade"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={12}
-              placeholder={t('auth.gradePlaceholder')}
-              value={grade}
-              onChange={(e) => setGrade(e.target.value)}
-              required
-              title={t('auth.gradeHint')}
-            />
+            {/* a list to pick from (and change at any time before sending), like the grade pickers on the profile and in the admin panel */}
+            <select id="grade" value={grade} onChange={(e) => setGrade(e.target.value)} required title={t('auth.gradeHint')}>
+              <option value="" disabled>
+                {t('teacherReels.gradePlaceholder')}
+              </option>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((g) => (
+                <option key={g} value={g}>
+                  {t('teacherReels.gradeOption', { number: String(g) })}
+                </option>
+              ))}
+            </select>
           </div>
         )}
 

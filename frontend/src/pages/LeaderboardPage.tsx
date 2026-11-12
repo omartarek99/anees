@@ -184,7 +184,6 @@ export function LeaderboardPage() {
 
         {data && data.leaders.length === 0 && (
           <div className="empty-state">
-            <div style={{ fontSize: 40 }}>🌱</div>
             <p>{t(isTeacherBoard ? 'leaderboard.teacherEmpty' : 'leaderboard.empty')}</p>
           </div>
         )}

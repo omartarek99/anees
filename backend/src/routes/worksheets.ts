@@ -1,6 +1,7 @@
 import { asyncRouter } from '../lib/asyncRouter.js';
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import { wordsText } from '../lib/textRules.js';
 import { db } from '../db/db.js';
 import { forbidRole, requireRole } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
@@ -40,7 +41,7 @@ const generateSchema = z
     reelId: z.coerce.number().int().positive().optional(),
     // The lesson name (درس) typed for a general worksheet -- the AI writes new questions on
     // it each time. Without it, a general worksheet draws from the fixed seeded bank.
-    topic: z.string().trim().min(2, 'The lesson name is too short. Write at least 2 letters.').max(80).optional(),
+    topic: wordsText(z.string().trim().min(2, 'The lesson name is too short. Write at least 2 letters.').max(80, 'The lesson name is too long. Use at most 80 letters.'), 'lesson name').optional(),
     // The grade of the typed lesson (the school book it comes from) -- Math and Science grades 5 and 6.
     grade: z.coerce.number().int().min(5).max(6).optional(),
     // How many questions the worksheet has.

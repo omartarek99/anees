@@ -1,3 +1,4 @@
+import compression from 'compression';
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -88,6 +89,9 @@ app.use((_req, res, next) => {
   if (isProd) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   next();
 });
+
+// gzip every text response (JSON, HTML): about 70% smaller on the wire. Already-compressed types (images, video, xlsx) are left alone.
+app.use(compression());
 
 app.use('/api', apiLimiter);
 

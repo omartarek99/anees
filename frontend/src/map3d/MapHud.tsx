@@ -25,13 +25,14 @@ export function MapHud({
   return (
     <>
       <div className="map3d-hud">
-        <div className="map3d-zones" role="group" aria-label={labels.zones}>
+        {/* one drop-down instead of a row of five zone buttons (they crowded the top of the map, worst on a phone) */}
+        <select className="map3d-zone-select" aria-label={labels.zones} value={activeZone} onChange={(e) => onZone(Number(e.target.value))}>
           {zoneNames.map((name, i) => (
-            <button key={name} type="button" className={i === activeZone ? 'is-active' : undefined} aria-pressed={i === activeZone} onClick={() => onZone(i)}>
+            <option key={name} value={i}>
               {name}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
         <div className="map3d-side">
           <button type="button" className="map3d-here" onClick={onMyLevel}>
             <span aria-hidden="true">◎</span> {labels.myLevel}

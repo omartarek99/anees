@@ -40,40 +40,55 @@
   gap: 8px;
   pointer-events: none; /* only the buttons take the pointer: the rest of the canvas stays draggable */
 }
-.map3d-zones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  pointer-events: auto;
-}
-.map3d-zones button,
+.map3d-zone-select,
 .map3d-here {
   pointer-events: auto;
   padding: 7px 13px;
   border-radius: var(--radius-pill);
-  border: 1.5px solid var(--glass-border);
-  background: var(--glass-bg-strong);
-  -webkit-backdrop-filter: var(--glass-blur-sm);
-  backdrop-filter: var(--glass-blur-sm);
-  color: var(--ink);
   font: inherit;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--shadow-3d-sm);
   transition: transform 0.15s ease, background-color 0.15s ease;
 }
-.map3d-zones button:hover,
+.map3d-zone-select:hover,
 .map3d-here:hover {
   transform: translateY(-1px);
-  background: var(--surface-hover);
 }
-.map3d-zones button.is-active {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: #2b1b00;
+/* the zone list: the pill look of the buttons beside it, with a small arrow at the end (on the left in Arabic) */
+.map3d-zone-select {
+  -webkit-appearance: none;
+  appearance: none;
+  min-inline-size: 170px;
+  padding-inline-end: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
 }
-.map3d-zones button:focus-visible,
+[dir='rtl'] .map3d-zone-select {
+  background-position: left 13px center;
+}
+/* Smoky glass, like the site's glass panels: a see-through dark tint, blurred, with a light rim and a highlight on top. Dark rather
+   than white so the white text reads over the bright sand as well as the night sky. */
+.map3d-zone-select,
+.map3d-here {
+  background-color: rgb(24 18 40 / 0.42);
+  border: 1px solid rgb(255 255 255 / 0.38);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 6px 18px rgb(0 0 0 / 0.22);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  color: #fff;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+}
+.map3d-zone-select:hover,
+.map3d-here:hover {
+  background-color: rgb(24 18 40 / 0.55);
+}
+.map3d-zone-select option {
+  color: #fff;
+  background: #2a2140;
+}
+.map3d-zone-select:focus-visible,
 .map3d-here:focus-visible {
   outline: 3px solid var(--gold);
   outline-offset: 2px;
@@ -224,8 +239,18 @@
   .map3d-views button span {
     font-size: 16px;
   }
+  /* a phone: the map is one screen tall above the tab bar, so scrolled to it, all of it is in view */
   .map3d {
-    block-size: clamp(420px, 72vh, 640px);
+    block-size: clamp(380px, calc(100vh - var(--tabbar-h, 62px) - 28px), 720px);
+  }
+  @supports (height: 100dvh) {
+    .map3d {
+      block-size: clamp(380px, calc(100dvh - var(--tabbar-h, 62px) - 28px - env(safe-area-inset-bottom, 0px)), 720px);
+    }
+  }
+  .map3d-zone-select {
+    min-inline-size: 0;
+    max-inline-size: 58vw;
   }
   .map3d-banner {
     font-size: 18px;

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { VIOLATION_KEYS } from './violations.js';
 import { RANK_KEYS } from './ranks.js';
 import { passwordSchema } from './password.js';
+import { DUPLICATE_CHOICES, USERNAME_CHARS, arabicText, distinctChoices, nameText, questionText, sentenceText, wordsText } from './textRules.js';
 
 // 'anonymous' = the plain person silhouette that teachers get by default (not a student hero choice).
 // The pictures in frontend/src/components/Avatar.tsx (AVATAR_OPTIONS), plus teachers' plain 'anonymous'.
@@ -12,29 +13,28 @@ export const usernameSchema = z
   .trim()
   .min(3, 'The username is too short. Use at least 3 letters or numbers.')
   .max(20, 'The username is too long. Use at most 20 characters.')
-  .regex(/^[a-zA-Z0-9_]+$/, 'The username can only have English letters, numbers and _ (underscore). Remove any other character.');
+  .regex(USERNAME_CHARS, 'The username can only have letters (Arabic or English), numbers and _ (underscore). Remove spaces and other symbols.')
+  .refine((s) => /\p{L}/u.test(s), 'The username needs at least one letter, not only numbers.');
 
-export const displayNameSchema = z
-  .string()
-  .trim()
-  .min(2, 'The display name is too short. Write at least 2 letters.')
-  .max(40, 'The display name is too long. Use at most 40 letters.');
+export const displayNameSchema = nameText(
+  z.string().trim().min(2, 'The display name is too short. Write at least 2 letters.').max(40, 'The display name is too long. Use at most 40 letters.'),
+  'name'
+);
 
 // What a teacher teaches -- shown as a dropdown at signup. Keys are stored; the Arabic/English
 // labels live in frontend/src/lib/i18n.ts (auth.subject*).
 export const TEACHER_SUBJECT_KEYS = ['math', 'science', 'islamic', 'english', 'arabic', 'ict', 'social', 'art'] as const;
 export const teacherSubjectSchema = z.enum(TEACHER_SUBJECT_KEYS);
 
-export const schoolNameSchema = z
-  .string()
-  .trim()
-  .min(2, 'The school name is too short. Write at least 2 letters.')
-  .max(80, 'The school name is too long. Use at most 80 letters.');
+export const schoolNameSchema = nameText(
+  z.string().trim().min(2, 'The school name is too short. Write at least 2 letters.').max(80, 'The school name is too long. Use at most 80 letters.'),
+  'school name'
+);
 
 export const emailSchema = z.string().trim().email('Write your email like this: name@example.com').max(120);
 
 // Allowed to be blank (clears the bio) -- only max-length is enforced.
-export const bioSchema = z.string().trim().max(300, 'The bio is too long. Use at most 300 letters.');
+export const bioSchema = wordsText(z.string().trim().max(300, 'The bio is too long. Use at most 300 letters.'), 'bio');
 
 export const avatarKeySchema = z.enum(AVATAR_KEYS);
 
@@ -151,7 +151,7 @@ export const adminSetWarningSchema = z.object({
 });
 
 export const adminRevokeCertificateSchema = z.object({
-  reason: z.string().trim().min(3, 'Write the reason for taking this certificate back.').max(300, 'The reason is too long. Use at most 300 letters.'),
+  reason: wordsText(z.string().trim().min(3, 'Write the reason for taking this certificate back.').max(300, 'The reason is too long. Use at most 300 letters.'), 'reason'),
 });
 
 export const adminApplyViolationSchema = z.object({
@@ -185,27 +185,27 @@ export const adminSetXpSchema = z.object({
 // string fine.
 export const adminIssueCertificateSchema = z.object({
   userId: z.coerce.number().int(),
-  title: z.string().trim().min(1, 'Write the name.').max(120),
+  title: wordsText(z.string().trim().min(1, 'Write the name.').max(120), 'certificate name'),
   type: z.enum(['bronze', 'silver', 'gold', 'platinum', 'diamond', 'warrior', 'champion']),
 });
 
-const choiceSchema = z.string().trim().min(1).max(120);
+const choiceSchema = z.string().trim().min(1, 'Write every answer: an answer is empty.').max(120, 'An answer is too long. Use at most 120 letters.');
 
 export const teacherReelQuestionSchema = z.object({
-  questionText: z.string().trim().min(3, 'The question is too short. Write at least 3 letters.').max(300),
-  questionTextAr: z.string().trim().max(300).optional().default(''),
-  choices: z.array(choiceSchema).length(4, 'Each question needs exactly 4 choices.'),
-  choicesAr: z.array(z.string().trim().max(120)).length(4).optional().default(['', '', '', '']),
-  correctIndex: z.number().int().min(0).max(3),
-  explanation: z.string().trim().min(3, 'The explanation is too short. Write at least 3 letters.').max(500),
-  explanationAr: z.string().trim().max(500).optional().default(''),
+  questionText: questionText(z.string().trim().min(3, 'The question is too short. Write at least 3 letters.').max(300, 'The question is too long. Use at most 300 letters.')),
+  questionTextAr: arabicText(z.string().trim().max(300), 'question').optional().default(''),
+  choices: z.array(choiceSchema).length(4, 'Each question needs exactly 4 choices.').refine(distinctChoices, DUPLICATE_CHOICES),
+  choicesAr: z.array(z.string().trim().max(120)).length(4).refine(distinctChoices, DUPLICATE_CHOICES).optional().default(['', '', '', '']),
+  correctIndex: z.number({ invalid_type_error: 'Choose the right answer of every question.' }).int().min(0).max(3),
+  explanation: sentenceText(z.string().trim().min(3, 'The explanation is too short. Write at least 3 letters.').max(500, 'The explanation is too long. Use at most 500 letters.'), 'explanation'),
+  explanationAr: arabicText(z.string().trim().max(500), 'explanation').optional().default(''),
 });
 
 // Questions are generated from the lesson name only (the video's title) -- the school question bank (lib/questionBank.ts) is searched for that
 // lesson -- not from the lesson script.
 export const generateQuestionsSchema = z.object({
-  title: z.string().trim().min(2, 'Write the lesson name first.').max(120),
-  titleAr: z.string().trim().max(120).optional().default(''),
+  title: wordsText(z.string().trim().min(2, 'Write the lesson name first.').max(120), 'lesson name'),
+  titleAr: arabicText(z.string().trim().max(120), 'lesson name').optional().default(''),
   subjectId: z.number().int(),
   grade: z.coerce.number().int().min(1).max(12),
   count: z.coerce.number().int().min(1).max(10).optional().default(4),
@@ -214,10 +214,13 @@ export const generateQuestionsSchema = z.object({
 export const teacherReelSchema = z.object({
   subjectId: z.number().int(),
   grade: z.coerce.number().int().min(1).max(12),
-  title: z.string().trim().min(3, 'The title is too short. Write at least 3 letters.').max(120),
-  titleAr: z.string().trim().max(120).optional().default(''),
-  scriptText: z.string().trim().min(10, 'The lesson text is too short. Write at least 10 letters.').max(2000),
-  scriptTextAr: z.string().trim().max(2000).optional().default(''),
+  title: wordsText(z.string().trim().min(3, 'The title is too short. Write at least 3 letters.').max(120, 'The title is too long. Use at most 120 letters.'), 'lesson title'),
+  titleAr: arabicText(z.string().trim().max(120), 'title').optional().default(''),
+  scriptText: sentenceText(
+    z.string().trim().min(10, 'The lesson text is too short. Write at least 10 letters.').max(2000, 'The lesson text is too long. Use at most 2000 letters.'),
+    'lesson explanation'
+  ),
+  scriptTextAr: arabicText(z.string().trim().max(2000), 'lesson explanation').optional().default(''),
   durationSec: z.number().int().min(10).max(300).optional().default(60),
   // Optional -- a lesson can be video/script only, with no quiz at all.
   questions: z.array(teacherReelQuestionSchema).max(10).optional().default([]),

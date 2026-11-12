@@ -356,6 +356,8 @@ svg {
   z-index: 40;
   display: flex;
   align-items: center;
+  /* centred; "safe" keeps the start reachable when the links overflow and scroll on a phone */
+  justify-content: safe center;
   gap: 12px;
   block-size: var(--teacher-nav-h);
   padding-inline: 16px;
@@ -376,6 +378,7 @@ svg {
 }
 .teacher-nav-links {
   display: flex;
+  justify-content: safe center;
   gap: 4px;
   min-inline-size: 0;
   overflow-x: auto;
@@ -3373,6 +3376,32 @@ label,
   font-size: 0.9rem;
   opacity: 0.85;
 }
+/* A phone: the keys panel above the map stays short. The items are one row that scrolls sideways instead of three rows of chips. */
+@media (max-width: 640px) {
+  .story-bar {
+    gap: 8px;
+    padding: 12px 14px;
+  }
+  .story-bag {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: -14px;
+    padding-inline: 14px;
+  }
+  .story-bag::-webkit-scrollbar {
+    display: none;
+  }
+  .story-bag li {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    padding: 4px 10px;
+  }
+  .story-next {
+    font-size: 0.82rem;
+  }
+}
 .story-window {
   text-align: center;
 }
@@ -4292,7 +4321,7 @@ label,
 }
 /* The map's own controls keep clear of the button in the corner: where they would start under it (the zones when the page reads left to right, the "my level" and
    view buttons when it reads right to left) they are moved aside, not the button. */
-:root[dir='ltr'] .map-fs-root .map3d-zones {
+:root[dir='ltr'] .map-fs-root .map3d-zone-select {
   margin-left: 50px;
 }
 :root[dir='rtl'] .map-fs-root .map3d-side {
@@ -4393,8 +4422,32 @@ label,
   gap: 16px;
 }
 .ws-preview-question {
-  font-weight: 700;
   margin: 0 0 12px;
+}
+/* A question (and its answers) everywhere: the line takes the page direction and alignment (start = right in Arabic) and the text
+   keeps its own direction (lib/bidi.ts). Arabic letters sit taller and join, so Arabic lines get more room and no letter-spacing. */
+.quiz-q {
+  font-weight: 700;
+  line-height: 1.6;
+  text-align: start;
+  margin-block-start: 0;
+}
+.quiz-choice-text {
+  line-height: 1.5;
+  text-align: start;
+}
+:root:lang(ar) .quiz-q {
+  line-height: 1.95;
+  letter-spacing: 0;
+  word-spacing: 0.06em;
+}
+/* a maths run inside an Arabic sentence (QText): left to right, kept on one line */
+.quiz-math {
+  white-space: nowrap;
+}
+:root:lang(ar) .quiz-choice-text {
+  line-height: 1.8;
+  letter-spacing: 0;
 }
 .ws-preview-choices {
   gap: 8px;
@@ -4409,7 +4462,7 @@ label,
   font-weight: 600;
   text-align: start;
 }
-.ws-preview-choices li > span {
+.ws-preview-choices .ws-choice-label {
   width: 24px;
   height: 24px;
   border-radius: 50%;

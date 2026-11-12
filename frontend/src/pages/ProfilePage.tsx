@@ -4,6 +4,7 @@ import { RiCalculatorLine, RiAtomLine, RiPencilLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
+import { textProblem } from '../lib/textRules';
 import { pickText, translateApiError } from '../lib/i18n';
 import { Avatar } from '../components/Avatar';
 import { AvatarPicker } from '../components/AvatarPicker';
@@ -79,10 +80,9 @@ const STAT_COLORS = ['stat-card-yellow', 'stat-card-green', 'stat-card-pink'];
 const RING_R = 34;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_R;
 
-function StatCard({ icon, label, value, color }: { icon: string; label: string; value: number | string; color: string }) {
+function StatCard({ label, value, color }: { label: string; value: number | string; color: string }) {
   return (
     <div className={`stat-card ${color}`}>
-      <span className="stat-card-icon">{icon}</span>
       <div className="stat-card-label">{label}</div>
       <div className="stat-card-value">{value}</div>
     </div>
@@ -130,6 +130,11 @@ export function ProfilePage() {
       setSaveError(t('profile.nameRequired'));
       return;
     }
+    const nameProblem = textProblem(nameDraft, 'name');
+    if (nameProblem) {
+      setSaveError(t(nameProblem));
+      return;
+    }
     setSaving(true);
     setSaveError(null);
     try {
@@ -156,8 +161,9 @@ export function ProfilePage() {
     const changes: { schoolName?: string; grade?: number } = {};
     const school = schoolDraft.trim();
     if (school !== (profile.schoolName ?? '')) {
-      if (school.length < 2) {
-        setSaveError(t('auth.schoolInvalid'));
+      const schoolProblem = school.length < 2 ? 'auth.schoolInvalid' : textProblem(school, 'name');
+      if (schoolProblem) {
+        setSaveError(t(schoolProblem));
         return;
       }
       changes.schoolName = school;
@@ -182,6 +188,11 @@ export function ProfilePage() {
   }
 
   async function saveBio() {
+    const bioProblem = textProblem(bioDraft, 'words');
+    if (bioProblem) {
+      setSaveError(t(bioProblem));
+      return;
+    }
     setSaving(true);
     setSaveError(null);
     try {
@@ -388,7 +399,7 @@ export function ProfilePage() {
             <RankBadge tier={profile.rankTier} size={84} />
             {profile.role === 'teacher' && (
               <span style={{ fontSize: 13, fontWeight: 700 }}>
-                🏆 {profile.teacherPoints} {t('profile.teacherPoints')}
+                {profile.teacherPoints} {t('profile.teacherPoints')}
               </span>
             )}
             {profile.rankTier.nextMinXp !== null && (
@@ -441,14 +452,14 @@ export function ProfilePage() {
       <div className="grid-cards">
         {profile.role === 'teacher' ? (
           <>
-            <StatCard icon="❤️" label={t('profile.likes')} value={profile.creatorStats?.likes ?? 0} color={STAT_COLORS[2]} />
-            <StatCard icon="🎬" label={t('profile.reelsPosted')} value={profile.creatorStats?.reels ?? 0} color={STAT_COLORS[0]} />
-            <StatCard icon="📝" label={t('profile.worksheetsSolved')} value={profile.creatorStats?.worksheetsSolved ?? 0} color={STAT_COLORS[1]} />
+            <StatCard label={t('profile.likes')} value={profile.creatorStats?.likes ?? 0} color={STAT_COLORS[2]} />
+            <StatCard label={t('profile.reelsPosted')} value={profile.creatorStats?.reels ?? 0} color={STAT_COLORS[0]} />
+            <StatCard label={t('profile.worksheetsSolved')} value={profile.creatorStats?.worksheetsSolved ?? 0} color={STAT_COLORS[1]} />
           </>
         ) : (
           <>
-            <StatCard icon="🐉" label={t('profile.bossesDefeated')} value={profile.bossesDefeated ?? 0} color={STAT_COLORS[0]} />
-            <StatCard icon="📝" label={t('profile.worksheetsDone')} value={profile.worksheetsCompleted ?? 0} color={STAT_COLORS[1]} />
+            <StatCard label={t('profile.bossesDefeated')} value={profile.bossesDefeated ?? 0} color={STAT_COLORS[0]} />
+            <StatCard label={t('profile.worksheetsDone')} value={profile.worksheetsCompleted ?? 0} color={STAT_COLORS[1]} />
           </>
         )}
       </div>

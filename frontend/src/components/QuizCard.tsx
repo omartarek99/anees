@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLanguage } from '../lib/language-context';
-import { textDir } from '../lib/bidi';
+import { choiceLabel } from '../lib/bidi';
+import { QText } from './QText';
 
 export type QuizQuestion = { id: number; text: string; choices: string[] };
 export type QuizAnswer = { questionId: number; choiceIndex: number };
@@ -16,7 +17,7 @@ export function QuizCard({
   submitting: boolean;
   submitLabel?: string;
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [answers, setAnswers] = useState<Record<number, number>>({});
 
   const allAnswered = questions.every((q) => answers[q.id] !== undefined);
@@ -34,9 +35,9 @@ export function QuizCard({
     <div className="stack">
       {questions.map((q, qi) => (
         <div key={q.id} className="card">
-          {/* textDir: a pure-math question ("36 ÷ 6 = ؟") reads left-to-right even in the Arabic UI. */}
-          <p dir={textDir(q.text)} style={{ fontWeight: 700, marginBottom: 12 }}>
-            {qi + 1}. {q.text}
+          {/* page direction for the line, the text's own direction inside (lib/bidi.ts) */}
+          <p className="quiz-q">
+            {qi + 1}. <QText text={q.text} />
           </p>
           <div className="stack" style={{ gap: 8 }}>
             {q.choices.map((choice, ci) => {
@@ -70,9 +71,11 @@ export function QuizCard({
                       flexShrink: 0,
                     }}
                   >
-                    {String.fromCharCode(65 + ci)}
+                    {choiceLabel(ci, lang)}
                   </span>
-                  {choice}
+                  <span className="quiz-choice-text">
+<QText text={choice} />
+</span>
                 </button>
               );
             })}

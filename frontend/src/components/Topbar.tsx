@@ -48,7 +48,7 @@ export function Topbar({ title, subtitle, actions, hideStats }: { title?: ReactN
         {user.role !== 'admin' && !hideStats && (
           <>
             <span className="stat-pill" style={{ color: 'var(--pastel-blue-ink)' }} title={t(user.role === 'teacher' ? 'profile.teacherPoints' : 'common.xpUnit')}>
-              {user.role === 'teacher' ? `🏆 ${user.teacherPoints}` : (<><XpIcon size={26} /> {user.totalXp}</>)}
+              {user.role === 'teacher' ? `${user.teacherPoints} ${t('common.pointsUnit')}` : (<><XpIcon size={26} /> {user.totalXp}</>)}
             </span>
             <span className="stat-pill" style={{ color: 'var(--gold-ink)' }} title={t('common.level')}>
               <MedalIcon size={19} /> {user.playerLevel}

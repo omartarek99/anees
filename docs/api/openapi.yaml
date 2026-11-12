@@ -1,0 +1,3219 @@
+openapi: 3.0.3
+info:
+  title: Anees API
+  version: "1.0"
+  description: >-
+    REST API of Anees (Express + SQLite). Generated from backend/src/routes. Authentication is a session cookie
+    (anees_session, httpOnly) set by POST /api/auth/login (or /signup, /google); every state-changing request
+    must also send the header "X-Requested-With: anees" (CSRF guard). Errors are JSON {"error": "<sentence>"}.
+    Role rules per endpoint are listed in each description and in x-roles.
+servers:
+  - url: https://anees-qa.site
+    description: Production (frontend proxies /api to the backend)
+  - url: http://localhost:4000
+    description: Local backend
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: anees_session
+    csrfHeader:
+      type: apiKey
+      in: header
+      name: X-Requested-With
+      description: Must be the value "anees" on POST / PUT / PATCH / DELETE.
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+tags:
+  - name: "Auth"
+  - name: "Users"
+  - name: "Reels"
+  - name: "Adventure map"
+  - name: "Worksheets"
+  - name: "Leaderboard"
+  - name: "Friends"
+  - name: "Quarry game"
+  - name: "Teacher lessons"
+  - name: "Admin"
+  - name: "Analytics"
+  - name: "Certificates"
+  - name: "Guide"
+  - name: "Challenges"
+  - name: "Violations"
+  - name: "Health"
+paths:
+  "/api/admin/accounts/inactive":
+    get:
+      tags: ["Admin"]
+      summary: "Accounts nobody has used for a while (students and teachers that are still switched on), the longest-quiet fir"
+      description: "Accounts nobody has used for a while (students and teachers that are still switched on), the longest-quiet first. Access: Signed-in admin."
+      operationId: "getapi_admin_accounts_inactive"
+      x-roles: "Signed-in admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/accounts/search":
+    get:
+      tags: ["Admin"]
+      summary: "Find an account by name, username or email (the email is stored encrypted, so it is matched here, not in SQL)."
+      description: "Find an account by name, username or email (the email is stored encrypted, so it is matched here, not in SQL). Access: Signed-in admin."
+      operationId: "getapi_admin_accounts_search"
+      x-roles: "Signed-in admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/analytics/summary":
+    get:
+      tags: ["Admin"]
+      summary: "First-party pageview analytics (see routes/analytics.ts / schema.sql) -- top paths and a daily total for the l"
+      description: "First-party pageview analytics (see routes/analytics.ts / schema.sql) -- top paths and a daily total for the last 30 days. Intentionally just that: this is a usage-visibility count, not a marketing-analytics product, so it doesn't grow into referrers/devices/funnels. Access: Signed-in admin."
+      operationId: "getapi_admin_analytics_summary"
+      x-roles: "Signed-in admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/certificates":
+    get:
+      tags: ["Admin"]
+      summary: "GET /api/admin/certificates"
+      description: "Access: Signed-in admin."
+      operationId: "getapi_admin_certificates"
+      x-roles: "Signed-in admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+    post:
+      tags: ["Admin"]
+      summary: "POST /api/admin/certificates"
+      description: "Access: Signed-in admin. Requires header X-Requested-With: anees."
+      operationId: "postapi_admin_certificates"
+      x-roles: "Signed-in admin."
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/certificates/{id}/revoke":
+    post:
+      tags: ["Admin"]
+      summary: "Taking a certificate back (a violation, a mistake)"
+      description: "Taking a certificate back (a violation, a mistake). The row stays, with who and why, so the record is kept and the tier is not sent again (lib/rankCertificates.ts); it just leaves the owner's profile. Access: Signed-in admin. Requires header X-Requested-With: anees. Body validated by adminRevokeCertificateSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_admin_certificates_id_revoke"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/dashboard":
+    get:
+      tags: ["Admin"]
+      summary: "GET /api/admin/dashboard"
+      description: "Access: Signed-in admin."
+      operationId: "getapi_admin_dashboard"
+      x-roles: "Signed-in admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/diagnostics":
+    get:
+      tags: ["Admin"]
+      summary: "GET /api/admin/diagnostics"
+      description: "Access: Signed-in admin."
+      operationId: "getapi_admin_diagnostics"
+      x-roles: "Signed-in admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/double-points/start":
+    post:
+      tags: ["Admin"]
+      summary: "Manually kicks off a double-quiz-points window right now, on top of the automatic random one -- e.g"
+      description: "Manually kicks off a double-quiz-points window right now, on top of the automatic random one -- e.g. to spotlight it during a live class or demo instead of waiting on chance. Access: Signed-in admin. Requires header X-Requested-With: anees."
+      operationId: "postapi_admin_double_points_start"
+      x-roles: "Signed-in admin."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/live":
+    get:
+      tags: ["Admin"]
+      summary: "\"Right now\": who is online (seen in the last 5 minutes) and the newest things that happened on the site."
+      description: "\"Right now\": who is online (seen in the last 5 minutes) and the newest things that happened on the site. Access: Signed-in admin."
+      operationId: "getapi_admin_live"
+      x-roles: "Signed-in admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/optimize-videos":
+    post:
+      tags: ["Admin"]
+      summary: "Admin-only: how email is configured, and the latest failures that users only see as a generic message"
+      description: "Admin-only: how email is configured, and the latest failures that users only see as a generic message. Never returns secrets (only key lengths/prefixes and error codes). Makes the small, fast-starting copy (see lib/videoOptimize.ts) of every lesson video that is still the teacher's original. One at a time, in the background. Access: Signed-in admin. Requires header X-Requested-With: anees."
+      operationId: "postapi_admin_optimize_videos"
+      x-roles: "Signed-in admin."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/reels":
+    get:
+      tags: ["Admin"]
+      summary: "GET /api/admin/reels"
+      description: "Access: Signed-in admin."
+      operationId: "getapi_admin_reels"
+      x-roles: "Signed-in admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/reels/{id}":
+    delete:
+      tags: ["Admin"]
+      summary: "DELETE /api/admin/reels/{id}"
+      description: "Access: Signed-in admin. Requires header X-Requested-With: anees."
+      operationId: "deleteapi_admin_reels_id"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/reels/{id}/message":
+    post:
+      tags: ["Admin"]
+      summary: "A message to the teacher who made a lesson: it pops up for them (until they close it) with the lesson's title."
+      description: "A message to the teacher who made a lesson: it pops up for them (until they close it) with the lesson's title. Access: Signed-in admin. Requires header X-Requested-With: anees."
+      operationId: "postapi_admin_reels_id_message"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/reels/{id}/messages":
+    get:
+      tags: ["Admin"]
+      summary: "The messages already sent about a lesson, newest first, and whether the teacher has closed each."
+      description: "The messages already sent about a lesson, newest first, and whether the teacher has closed each. Access: Signed-in admin."
+      operationId: "getapi_admin_reels_id_messages"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/reports/export.xlsx":
+    get:
+      tags: ["Admin"]
+      summary: "Locked, branded Excel version of the report (see lib/reportExcel.ts)"
+      description: "Locked, branded Excel version of the report (see lib/reportExcel.ts). Admin-only like everything on this router. ?grade=N (students only) &lang=ar|en. Always has separate Students / Teachers / Most-visited-pages sheets, so there is no role filter. Access: Signed-in admin."
+      operationId: "getapi_admin_reports_export_xlsx"
+      x-roles: "Signed-in admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/reports/watch-time":
+    get:
+      tags: ["Admin"]
+      summary: "--------------------------------------------------------------------------------------- Watch-time report -- p"
+      description: "--------------------------------------------------------------------------------------- Watch-time report -- per-student totals across every reel, real numbers straight from reel_watch_progress (the same table routes/reels.ts's own anti-manipulation check protects, see its comment), not a separate log an admin has to trust blindly. Access: Signed-in admin."
+      operationId: "getapi_admin_reports_watch_time"
+      x-roles: "Signed-in admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/reports/watch-time/monthly":
+    get:
+      tags: ["Admin"]
+      summary: "GET /api/admin/reports/watch-time/monthly"
+      description: "Access: Signed-in admin."
+      operationId: "getapi_admin_reports_watch_time_monthly"
+      x-roles: "Signed-in admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/users":
+    get:
+      tags: ["Admin"]
+      summary: "Role/grade filtering (and the is_seed exclusion) stay in SQL -- cheap, indexed-enough filters on a list that g"
+      description: "Role/grade filtering (and the is_seed exclusion) stay in SQL -- cheap, indexed-enough filters on a list that grows with every signup. Free-text search can't: `email` is encrypted at rest (lib/encryption.ts), so it can't be LIKE-matched in SQL without decrypting every row first anyway. Access: Signed-in admin."
+      operationId: "getapi_admin_users"
+      x-roles: "Signed-in admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/users/{id}":
+    delete:
+      tags: ["Admin"]
+      summary: "DELETE /api/admin/users/{id}"
+      description: "Access: Signed-in admin. Requires header X-Requested-With: anees."
+      operationId: "deleteapi_admin_users_id"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/users/{id}/active":
+    patch:
+      tags: ["Admin"]
+      summary: "PATCH /api/admin/users/{id}/active"
+      description: "Access: Signed-in admin. Requires header X-Requested-With: anees. Body validated by adminSetActiveSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "patchapi_admin_users_id_active"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/users/{id}/ban":
+    patch:
+      tags: ["Admin"]
+      summary: "Timed suspension -- bannedUntil: null lifts it immediately, otherwise an ISO datetime in the future"
+      description: "Timed suspension -- bannedUntil: null lifts it immediately, otherwise an ISO datetime in the future. Self-banning would lock the only admin out of the panel with no one able to undo it, so (unlike warnings) this one is blocked the same as role/active/delete. Access: Signed-in admin. Requires header X-Requested-With: anees. Body validated by adminSetBanSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "patchapi_admin_users_id_ban"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/users/{id}/points":
+    post:
+      tags: ["Admin"]
+      summary: "Adds points to an account, or takes some away (never below 0), and sends the person a pop-up window about it."
+      description: "Adds points to an account, or takes some away (never below 0), and sends the person a pop-up window about it. Access: Signed-in admin. Requires header X-Requested-With: anees. Body validated by adminAdjustPointsSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_admin_users_id_points"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/users/{id}/profile":
+    patch:
+      tags: ["Admin"]
+      summary: "Correct an account's details: the class (students), the school and the teacher's subject"
+      description: "Correct an account's details: the class (students), the school and the teacher's subject. The name and the email are not editable here. Access: Signed-in admin. Requires header X-Requested-With: anees. Body validated by adminEditProfileSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "patchapi_admin_users_id_profile"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/users/{id}/role":
+    patch:
+      tags: ["Admin"]
+      summary: "PATCH /api/admin/users/{id}/role"
+      description: "Access: Signed-in admin. Requires header X-Requested-With: anees. Body validated by adminSetRoleSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "patchapi_admin_users_id_role"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/users/{id}/send-password-reset":
+    post:
+      tags: ["Admin"]
+      summary: "Email the person a 6-digit code for a new password (they enter it on the \"Forgot password\" page)"
+      description: "Email the person a 6-digit code for a new password (they enter it on the \"Forgot password\" page). Same code and email as that page sends. Access: Signed-in admin. Requires header X-Requested-With: anees."
+      operationId: "postapi_admin_users_id_send_password_reset"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/users/{id}/sign-out":
+    post:
+      tags: ["Admin"]
+      summary: "Sign an account out of every device (its sessions are deleted; the next click on the site asks for a login)."
+      description: "Sign an account out of every device (its sessions are deleted; the next click on the site asks for a login). Access: Signed-in admin. Requires header X-Requested-With: anees."
+      operationId: "postapi_admin_users_id_sign_out"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/users/{id}/violations":
+    post:
+      tags: ["Admin"]
+      summary: "Records a rule a student broke and applies its measures (lib/violations.ts): a numbered warning, points off, c"
+      description: "Records a rule a student broke and applies its measures (lib/violations.ts): a numbered warning, points off, certificates taken back, a suspension or closing the account -- whatever the rule says for this being the 1st, 2nd or 3rd time. Access: Signed-in admin. Requires header X-Requested-With: anees. Body validated by adminApplyViolationSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_admin_users_id_violations"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/users/{id}/warning":
+    patch:
+      tags: ["Admin"]
+      summary: "Sends a warning (kept as the account's next numbered one: 1st, 2nd, 3rd ...) or clears (message: null/\"\") the "
+      description: "Sends a warning (kept as the account's next numbered one: 1st, 2nd, 3rd ...) or clears (message: null/\"\") the one showing -- the numbered history stays either way. No self-block here -- unlike role/active/delete there's no lockout risk, but self-warning is nonsensical so the UI simply doesn't offer it; the backend doesn't need to enforce what isn't dangerous. Access: Signed-in admin. Requires header X-Requested-With: anees. Body validated by adminSetWarningSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "patchapi_admin_users_id_warning"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/admin/users/{id}/xp":
+    patch:
+      tags: ["Admin"]
+      summary: "Sets the points to a number (the older way; the admin panel now adds or removes, below)."
+      description: "Sets the points to a number (the older way; the admin panel now adds or removes, below). Access: Signed-in admin. Requires header X-Requested-With: anees. Body validated by adminSetXpSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "patchapi_admin_users_id_xp"
+      x-roles: "Signed-in admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/analytics/pageview":
+    post:
+      tags: ["Analytics"]
+      summary: "No requireAuth: pre-login pages (login/signup/legal) need tracking too, and this deliberately never records wh"
+      description: "No requireAuth: pre-login pages (login/signup/legal) need tracking too, and this deliberately never records who -- see schema.sql's comment on page_views for why. Access: Public (no sign-in). Body validated by pageviewSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_analytics_pageview"
+      x-roles: "Public (no sign-in)."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  "/api/auth/change-password":
+    post:
+      tags: ["Auth"]
+      summary: "Change your own password"
+      description: "Change your own password. Accounts that sign in through Firebase (everyone who signed up) have it changed there; local accounts (admin, test accounts) in our own bcrypt column. The current password is always required, and every other session is signed out afterwards. Access: Signed-in users. Requires header X-Requested-With: anees. Body validated by changePasswordSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_auth_change_password"
+      x-roles: "Signed-in users."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/auth/complete-profile":
+    post:
+      tags: ["Auth"]
+      summary: "The step after a Google sign-up: a student gives name, school and grade; a teacher name, school, subject and a"
+      description: "The step after a Google sign-up: a student gives name, school and grade; a teacher name, school, subject and a Qatar ID photo (checked and stored exactly as at an ordinary teacher signup). Until it is done every other call is refused (middleware/auth.ts). Access: Signed-in users. Requires header X-Requested-With: anees."
+      operationId: "postapi_auth_complete_profile"
+      x-roles: "Signed-in users."
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/auth/dismiss-rank-drop":
+    post:
+      tags: ["Auth"]
+      summary: "The account owner clears their own warning once they've seen it (e.g"
+      description: "The account owner clears their own warning once they've seen it (e.g. dismissing the in-app banner) -- an admin can also clear it directly from the admin panel. The student has seen the \"your rank dropped\" pop-up (frontend RankDemotionPopup). Access: Signed-in users. Requires header X-Requested-With: anees."
+      operationId: "postapi_auth_dismiss_rank_drop"
+      x-roles: "Signed-in users."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/auth/dismiss-warning":
+    post:
+      tags: ["Auth"]
+      summary: "POST /api/auth/dismiss-warning"
+      description: "Access: Signed-in users. Requires header X-Requested-With: anees."
+      operationId: "postapi_auth_dismiss_warning"
+      x-roles: "Signed-in users."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/auth/forgot-password":
+    post:
+      tags: ["Auth"]
+      summary: "\"Forgot password\", step 1: email a 6-digit code"
+      description: "\"Forgot password\", step 1: email a 6-digit code. Always answers the same ({ ok: true }) whether or not the email belongs to an account, so it can't be used to find out who is registered. Only Firebase accounts (everyone who signed up) have a real mailbox; local accounts (admin, test accounts) use made-up addresses and are never emailed. Access: Public (no sign-in). Requires header X-Requested-With: anees. Body validated by forgotPasswordSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_auth_forgot_password"
+      x-roles: "Public (no sign-in)."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  "/api/auth/google":
+    post:
+      tags: ["Auth"]
+      summary: "Sign up or sign in with Google"
+      description: "Sign up or sign in with Google. A person who already has an account is signed in; a new one needs `role` (student / teacher) -- without it we answer needsRole so the page can ask -- and gets an account that is held on the profile step (see lib/googleAuth.ts). Access: Public (no sign-in). Requires header X-Requested-With: anees. Body validated by googleAuthSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_auth_google"
+      x-roles: "Public (no sign-in)."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  "/api/auth/linked-accounts":
+    get:
+      tags: ["Auth"]
+      summary: "GET /api/auth/linked-accounts"
+      description: "Access: Signed-in users."
+      operationId: "getapi_auth_linked_accounts"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+    post:
+      tags: ["Auth"]
+      summary: "POST /api/auth/linked-accounts"
+      description: "Access: Signed-in users. Requires header X-Requested-With: anees. Body validated by linkAccountSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_auth_linked_accounts"
+      x-roles: "Signed-in users."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/auth/linked-accounts/{id}":
+    delete:
+      tags: ["Auth"]
+      summary: "DELETE /api/auth/linked-accounts/{id}"
+      description: "Access: Signed-in users. Requires header X-Requested-With: anees."
+      operationId: "deleteapi_auth_linked_accounts_id"
+      x-roles: "Signed-in users."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/auth/login":
+    post:
+      tags: ["Auth"]
+      summary: "POST /api/auth/login"
+      description: "Access: Public (no sign-in). Requires header X-Requested-With: anees. Body validated by loginSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_auth_login"
+      x-roles: "Public (no sign-in)."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  "/api/auth/logout":
+    post:
+      tags: ["Auth"]
+      summary: "POST /api/auth/logout"
+      description: "Access: Public (no sign-in). Requires header X-Requested-With: anees."
+      operationId: "postapi_auth_logout"
+      x-roles: "Public (no sign-in)."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  "/api/auth/me":
+    get:
+      tags: ["Auth"]
+      summary: "GET /api/auth/me"
+      description: "Access: Signed-in users."
+      operationId: "getapi_auth_me"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/auth/resend-verification":
+    post:
+      tags: ["Auth"]
+      summary: "POST /api/auth/resend-verification"
+      description: "Access: Public (no sign-in). Requires header X-Requested-With: anees. Body validated by resendVerificationSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_auth_resend_verification"
+      x-roles: "Public (no sign-in)."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  "/api/auth/reset-password":
+    post:
+      tags: ["Auth"]
+      summary: "\"Forgot password\", step 2: check the code, set the new password in Firebase, sign out every device."
+      description: "\"Forgot password\", step 2: check the code, set the new password in Firebase, sign out every device. Access: Public (no sign-in). Requires header X-Requested-With: anees. Body validated by resetPasswordSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_auth_reset_password"
+      x-roles: "Public (no sign-in)."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  "/api/auth/signup":
+    post:
+      tags: ["Auth"]
+      summary: "POST /api/auth/signup"
+      description: "Access: Public (no sign-in). Requires header X-Requested-With: anees. Body validated by signupSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_auth_signup"
+      x-roles: "Public (no sign-in)."
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+      security:
+        - csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  "/api/auth/switch-account":
+    post:
+      tags: ["Auth"]
+      summary: "POST /api/auth/switch-account"
+      description: "Access: Signed-in users. Requires header X-Requested-With: anees. Body validated by switchAccountSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_auth_switch_account"
+      x-roles: "Signed-in users."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/auth/verify-email":
+    post:
+      tags: ["Auth"]
+      summary: "POST /api/auth/verify-email"
+      description: "Access: Public (no sign-in). Requires header X-Requested-With: anees. Body validated by verifyEmailSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_auth_verify_email"
+      x-roles: "Public (no sign-in)."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  "/api/auth/verify-otp":
+    post:
+      tags: ["Auth"]
+      summary: "Confirms the 6-digit code from the email"
+      description: "Confirms the 6-digit code from the email. The Firebase idToken (from signup, or from the \"please verify\" login response) proves the caller knows the account's password, so codes can't be guessed for someone else's email -- and each code allows only a few wrong tries. Access: Public (no sign-in). Requires header X-Requested-With: anees. Body validated by verifyOtpSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_auth_verify_otp"
+      x-roles: "Public (no sign-in)."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  "/api/certificates/requests/unseen":
+    get:
+      tags: ["Certificates"]
+      summary: "The level-reached congratulations (\"your shield is being prepared\"): announced once, the next time the student"
+      description: "The level-reached congratulations (\"your shield is being prepared\"): announced once, the next time the student loads the app. Access: Signed-in users."
+      operationId: "getapi_certificates_requests_unseen"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/certificates/requests/{id}/seen":
+    post:
+      tags: ["Certificates"]
+      summary: "POST /api/certificates/requests/{id}/seen"
+      description: "Access: Signed-in users. Requires header X-Requested-With: anees."
+      operationId: "postapi_certificates_requests_id_seen"
+      x-roles: "Signed-in users."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/certificates/unseen":
+    get:
+      tags: ["Certificates"]
+      summary: "Polled once on app load (CertificateAwardPopup.tsx) to announce any certificate the signed-in user hasn't seen"
+      description: "Polled once on app load (CertificateAwardPopup.tsx) to announce any certificate the signed-in user hasn't seen yet -- oldest first, so if an admin issued several while the recipient was away, they're announced in the order they were actually awarded. Access: Signed-in users."
+      operationId: "getapi_certificates_unseen"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/certificates/{id}/seen":
+    post:
+      tags: ["Certificates"]
+      summary: "Marks one certificate as seen once its popup has been dismissed -- scoped to the caller's own certificates (us"
+      description: "Marks one certificate as seen once its popup has been dismissed -- scoped to the caller's own certificates (userId in the WHERE, not just the id) so one account can't mark another's certificate as viewed. Access: Signed-in users. Requires header X-Requested-With: anees."
+      operationId: "postapi_certificates_id_seen"
+      x-roles: "Signed-in users."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/challenges":
+    post:
+      tags: ["Challenges"]
+      summary: "POST /api/challenges"
+      description: "Access: Signed-in student. Requires header X-Requested-With: anees. Body validated by createSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_challenges"
+      x-roles: "Signed-in student."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/challenges/current":
+    get:
+      tags: ["Challenges"]
+      summary: "What this player should see right now (polled): an invitation, a running game, or a result they have not close"
+      description: "What this player should see right now (polled): an invitation, a running game, or a result they have not closed. Access: Signed-in student."
+      operationId: "getapi_challenges_current"
+      x-roles: "Signed-in student."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/challenges/{id}/accept":
+    post:
+      tags: ["Challenges"]
+      summary: "POST /api/challenges/{id}/accept"
+      description: "Access: Signed-in student. Requires header X-Requested-With: anees."
+      operationId: "postapi_challenges_id_accept"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/challenges/{id}/answers":
+    patch:
+      tags: ["Challenges"]
+      summary: "PATCH /api/challenges/{id}/answers"
+      description: "Access: Signed-in student. Requires header X-Requested-With: anees. Body validated by answersSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "patchapi_challenges_id_answers"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/challenges/{id}/cancel":
+    post:
+      tags: ["Challenges"]
+      summary: "POST /api/challenges/{id}/cancel"
+      description: "Access: Signed-in student. Requires header X-Requested-With: anees."
+      operationId: "postapi_challenges_id_cancel"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/challenges/{id}/decline":
+    post:
+      tags: ["Challenges"]
+      summary: "POST /api/challenges/{id}/decline"
+      description: "Access: Signed-in student. Requires header X-Requested-With: anees."
+      operationId: "postapi_challenges_id_decline"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/challenges/{id}/seen":
+    post:
+      tags: ["Challenges"]
+      summary: "Closing a result (or the \"declined\" note) so it is not shown again."
+      description: "Closing a result (or the \"declined\" note) so it is not shown again. Access: Signed-in student. Requires header X-Requested-With: anees."
+      operationId: "postapi_challenges_id_seen"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/challenges/{id}/submit":
+    post:
+      tags: ["Challenges"]
+      summary: "Whoever submits first ends the game for both: both are graded from the answers saved so far."
+      description: "Whoever submits first ends the game for both: both are graded from the answers saved so far. Access: Signed-in student. Requires header X-Requested-With: anees. Body validated by answersSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_challenges_id_submit"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/craft":
+    get:
+      tags: ["Quarry game"]
+      summary: "GET /api/craft"
+      description: "Access: Signed-in student."
+      operationId: "getapi_craft"
+      x-roles: "Signed-in student."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/craft/puzzle":
+    post:
+      tags: ["Quarry game"]
+      summary: "POST /api/craft/puzzle"
+      description: "Access: Signed-in student. Requires header X-Requested-With: anees."
+      operationId: "postapi_craft_puzzle"
+      x-roles: "Signed-in student."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/craft/puzzle/{puzzleId}/answer":
+    post:
+      tags: ["Quarry game"]
+      summary: "POST /api/craft/puzzle/{puzzleId}/answer"
+      description: "Access: Signed-in student. Requires header X-Requested-With: anees. Body validated by answerSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_craft_puzzle_puzzleId_answer"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: puzzleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/craft/save":
+    post:
+      tags: ["Quarry game"]
+      summary: "POST /api/craft/save"
+      description: "Access: Signed-in student. Requires header X-Requested-With: anees. Body validated by saveSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_craft_save"
+      x-roles: "Signed-in student."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/friends":
+    get:
+      tags: ["Friends"]
+      summary: "GET /api/friends"
+      description: "Access: Signed-in users."
+      operationId: "getapi_friends"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/friends/request":
+    post:
+      tags: ["Friends"]
+      summary: "POST /api/friends/request"
+      description: "Access: Signed-in users. Requires header X-Requested-With: anees."
+      operationId: "postapi_friends_request"
+      x-roles: "Signed-in users."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/friends/requests":
+    get:
+      tags: ["Friends"]
+      summary: "GET /api/friends/requests"
+      description: "Access: Signed-in users."
+      operationId: "getapi_friends_requests"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/friends/requests/{id}/accept":
+    post:
+      tags: ["Friends"]
+      summary: "POST /api/friends/requests/{id}/accept"
+      description: "Access: Signed-in users. Requires header X-Requested-With: anees."
+      operationId: "postapi_friends_requests_id_accept"
+      x-roles: "Signed-in users."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/friends/requests/{id}/decline":
+    post:
+      tags: ["Friends"]
+      summary: "POST /api/friends/requests/{id}/decline"
+      description: "Access: Signed-in users. Requires header X-Requested-With: anees."
+      operationId: "postapi_friends_requests_id_decline"
+      x-roles: "Signed-in users."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/guide":
+    get:
+      tags: ["Guide"]
+      summary: "GET /api/guide"
+      description: "Access: Signed-in users."
+      operationId: "getapi_guide"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+    post:
+      tags: ["Guide"]
+      summary: "POST /api/guide"
+      description: "Access: Signed-in users. Requires header X-Requested-With: anees. Body validated by seenSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_guide"
+      x-roles: "Signed-in users."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/health":
+    get:
+      tags: ["Health"]
+      summary: "Liveness check: {\"ok\": true}."
+      description: "Liveness check: {\"ok\": true}. Access: Public (no sign-in)."
+      operationId: "getapi_health"
+      x-roles: "Public (no sign-in)."
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  "/api/leaderboard":
+    get:
+      tags: ["Leaderboard"]
+      summary: "Teachers get a separate ranking driven by what they made -- lessons posted, likes on them, worksheets students"
+      description: "Teachers get a separate ranking driven by what they made -- lessons posted, likes on them, worksheets students solved (teacher_points, teacher_point_events -- see lib/xp.ts) -- instead of the student XP board: they don't earn XP at all, and mixing the two currencies on one board wouldn't mean anything. Which board a caller sees is entirely determined by their own role. Access: Signed-in users."
+      operationId: "getapi_leaderboard"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/map":
+    get:
+      tags: ["Adventure map"]
+      summary: "GET /api/map"
+      description: "Access: Signed-in student."
+      operationId: "getapi_map"
+      x-roles: "Signed-in student."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/map/boss/{levelNumber}":
+    get:
+      tags: ["Adventure map"]
+      summary: "GET /api/map/boss/{levelNumber}"
+      description: "Access: Signed-in student."
+      operationId: "getapi_map_boss_levelNumber"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: levelNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/map/boss/{levelNumber}/check":
+    post:
+      tags: ["Adventure map"]
+      summary: "Real-time single-question grading — lets the arena drop the boss's HP live as each question is answered, witho"
+      description: "Real-time single-question grading — lets the arena drop the boss's HP live as each question is answered, without waiting for the end-of-fight /submit to persist progress. Access: Signed-in student. Requires header X-Requested-With: anees. Body validated by bossCheckSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_map_boss_levelNumber_check"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: levelNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/map/boss/{levelNumber}/submit":
+    post:
+      tags: ["Adventure map"]
+      summary: "POST /api/map/boss/{levelNumber}/submit"
+      description: "Access: Signed-in student. Requires header X-Requested-With: anees. Body validated by bossSubmitSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_map_boss_levelNumber_submit"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: levelNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/map/quiz/{levelNumber}":
+    get:
+      tags: ["Adventure map"]
+      summary: "GET /api/map/quiz/{levelNumber}"
+      description: "Access: Signed-in student."
+      operationId: "getapi_map_quiz_levelNumber"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: levelNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/map/quiz/{levelNumber}/submit":
+    post:
+      tags: ["Adventure map"]
+      summary: "POST /api/map/quiz/{levelNumber}/submit"
+      description: "Access: Signed-in student. Requires header X-Requested-With: anees. Body validated by submitSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_map_quiz_levelNumber_submit"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: levelNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/reels/double-points-status":
+    get:
+      tags: ["Reels"]
+      summary: "Polled by the frontend (see DoublePointsNotification.tsx) to pop up a notification the moment the hour's rando"
+      description: "Polled by the frontend (see DoublePointsNotification.tsx) to pop up a notification the moment the hour's random double-points window opens, without needing any push mechanism. Access: Signed-in users."
+      operationId: "getapi_reels_double_points_status"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/reels/feed":
+    get:
+      tags: ["Reels"]
+      summary: "Every lesson the caller can watch, in one response: each reel with its subject, its author (`rankKey` is the r"
+      description: "Every lesson the caller can watch, in one response: each reel with its subject, its author (`rankKey` is the rank the uploader's picture is framed with -- the frame files are named after it), its quiz and its likes. Three queries in all, however many lessons there are -- the reels (subject, author and like counts joined in), then every one of their questions, grouped here. Access: Signed-in users."
+      operationId: "getapi_reels_feed"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/reels/{reelId}/like":
+    post:
+      tags: ["Reels"]
+      summary: "Liking a lesson: anyone who can watch it (admins do not use reels)"
+      description: "Liking a lesson: anyone who can watch it (admins do not use reels). It sets the like rather than toggling it, so a double tap or a retried request cannot flip it back. A like from anyone but the lesson's own teacher is worth points to that teacher, so their points are recounted (lib/xp.ts). Access: Signed-in users (not admin). Requires header X-Requested-With: anees. Body validated by likeSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_reels_reelId_like"
+      x-roles: "Signed-in users (not admin)."
+      parameters:
+        - name: reelId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/reels/{reelId}/submit":
+    post:
+      tags: ["Reels"]
+      summary: "POST /api/reels/{reelId}/submit"
+      description: "Access: Signed-in users. Requires header X-Requested-With: anees. Body validated by submitSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_reels_reelId_submit"
+      x-roles: "Signed-in users."
+      parameters:
+        - name: reelId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/reels/{reelId}/watch":
+    post:
+      tags: ["Reels"]
+      summary: "Reports a batch of genuine watch-time seconds (sent periodically by the player while a reel is actively in vie"
+      description: "Reports a batch of genuine watch-time seconds (sent periodically by the player while a reel is actively in view). Access: Signed-in users. Requires header X-Requested-With: anees. Body validated by watchSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_reels_reelId_watch"
+      x-roles: "Signed-in users."
+      parameters:
+        - name: reelId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/teacher-reels":
+    get:
+      tags: ["Teacher lessons"]
+      summary: "GET /api/teacher-reels"
+      description: "Access: Signed-in teacher or admin."
+      operationId: "getapi_teacher_reels"
+      x-roles: "Signed-in teacher or admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+    post:
+      tags: ["Teacher lessons"]
+      summary: "POST /api/teacher-reels"
+      description: "Access: Signed-in teacher or admin. Requires header X-Requested-With: anees. Body validated by teacherReelSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_teacher_reels"
+      x-roles: "Signed-in teacher or admin."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/teacher-reels/generate-questions":
+    post:
+      tags: ["Teacher lessons"]
+      summary: "Auto-generates quiz questions from the lesson script the teacher has already written -- grounded in that scrip"
+      description: "Auto-generates quiz questions from the lesson script the teacher has already written -- grounded in that script (not general knowledge), bilingual, matching the exact shape a manually-written question would have. Doesn't touch the DB or require a reel to exist yet -- the teacher reviews/edits the result in the composer before ever saving anything, same as a manually-typed question would be. Access: Signed-in teacher or admin. Requires header X-Requested-With: anees. Body validated by generateQuestionsSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_teacher_reels_generate_questions"
+      x-roles: "Signed-in teacher or admin."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/teacher-reels/messages":
+    get:
+      tags: ["Teacher lessons"]
+      summary: "Messages an admin sent about this teacher's lessons that they have not closed yet: the app pops them up (compo"
+      description: "Messages an admin sent about this teacher's lessons that they have not closed yet: the app pops them up (components/AdminMessageModal.tsx). Access: Signed-in teacher."
+      operationId: "getapi_teacher_reels_messages"
+      x-roles: "Signed-in teacher."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/teacher-reels/messages/{id}/read":
+    post:
+      tags: ["Teacher lessons"]
+      summary: "POST /api/teacher-reels/messages/{id}/read"
+      description: "Access: Signed-in teacher. Requires header X-Requested-With: anees."
+      operationId: "postapi_teacher_reels_messages_id_read"
+      x-roles: "Signed-in teacher."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/teacher-reels/options":
+    get:
+      tags: ["Teacher lessons"]
+      summary: "GET /api/teacher-reels/options"
+      description: "Access: Signed-in teacher or admin."
+      operationId: "getapi_teacher_reels_options"
+      x-roles: "Signed-in teacher or admin."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/teacher-reels/reports/watch-time":
+    get:
+      tags: ["Teacher lessons"]
+      summary: "Registered before GET /:id on purpose -- Express matches routes in order, and \"reports\" would otherwise be cap"
+      description: "Registered before GET /:id on purpose -- Express matches routes in order, and \"reports\" would otherwise be captured by :id (Number(\"reports\") is NaN, getOwnReel(NaN, ...) just 404s, so it'd fail rather than crash, but it'd never reach this handler at all). Access: Signed-in teacher."
+      operationId: "getapi_teacher_reels_reports_watch_time"
+      x-roles: "Signed-in teacher."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/teacher-reels/{id}":
+    get:
+      tags: ["Teacher lessons"]
+      summary: "GET /api/teacher-reels/{id}"
+      description: "Access: Signed-in teacher or admin."
+      operationId: "getapi_teacher_reels_id"
+      x-roles: "Signed-in teacher or admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+    patch:
+      tags: ["Teacher lessons"]
+      summary: "PATCH /api/teacher-reels/{id}"
+      description: "Access: Signed-in teacher or admin. Requires header X-Requested-With: anees. Body validated by teacherReelSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "patchapi_teacher_reels_id"
+      x-roles: "Signed-in teacher or admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+    delete:
+      tags: ["Teacher lessons"]
+      summary: "DELETE /api/teacher-reels/{id}"
+      description: "Access: Signed-in teacher or admin. Requires header X-Requested-With: anees."
+      operationId: "deleteapi_teacher_reels_id"
+      x-roles: "Signed-in teacher or admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/teacher-reels/{id}/video":
+    post:
+      tags: ["Teacher lessons"]
+      summary: "BIG videos (over DIRECT_VIDEO_BYTES): received here, answered at once, then compressed and stored in the backg"
+      description: "BIG videos (over DIRECT_VIDEO_BYTES): received here, answered at once, then compressed and stored in the background (reels.video_status). Access: Signed-in teacher or admin. Requires header X-Requested-With: anees."
+      operationId: "postapi_teacher_reels_id_video"
+      x-roles: "Signed-in teacher or admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/teacher-reels/{id}/video/complete":
+    post:
+      tags: ["Teacher lessons"]
+      summary: "Step 2: the browser has uploaded the file; check what was actually stored, and only then attach it to the less"
+      description: "Step 2: the browser has uploaded the file; check what was actually stored, and only then attach it to the lesson. A file that fails is removed. Access: Signed-in teacher or admin. Requires header X-Requested-With: anees."
+      operationId: "postapi_teacher_reels_id_video_complete"
+      x-roles: "Signed-in teacher or admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/teacher-reels/{id}/video/upload-url":
+    post:
+      tags: ["Teacher lessons"]
+      summary: "Step 1: a one-time link the browser uploads the video to"
+      description: "Step 1: a one-time link the browser uploads the video to. The size and type are checked here (before anything is sent) and again on the stored file. Access: Signed-in teacher or admin. Requires header X-Requested-With: anees."
+      operationId: "postapi_teacher_reels_id_video_upload_url"
+      x-roles: "Signed-in teacher or admin."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/users/me":
+    get:
+      tags: ["Users"]
+      summary: "GET /api/users/me"
+      description: "Access: Signed-in users."
+      operationId: "getapi_users_me"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+    patch:
+      tags: ["Users"]
+      summary: "PATCH /api/users/me"
+      description: "Access: Signed-in users. Requires header X-Requested-With: anees. Body validated by updateProfileSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "patchapi_users_me"
+      x-roles: "Signed-in users."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/users/me/avatar":
+    post:
+      tags: ["Users"]
+      summary: "POST /api/users/me/avatar"
+      description: "Access: Signed-in users. Requires header X-Requested-With: anees."
+      operationId: "postapi_users_me_avatar"
+      x-roles: "Signed-in users."
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/users/me/points-notices":
+    get:
+      tags: ["Users"]
+      summary: "Points an admin added or took from this account that they have not closed yet: the app pops them up (component"
+      description: "Points an admin added or took from this account that they have not closed yet: the app pops them up (components/PointsNoticeModal.tsx). Access: Signed-in users."
+      operationId: "getapi_users_me_points_notices"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/users/me/points-notices/{id}/read":
+    post:
+      tags: ["Users"]
+      summary: "POST /api/users/me/points-notices/{id}/read"
+      description: "Access: Signed-in users. Requires header X-Requested-With: anees."
+      operationId: "postapi_users_me_points_notices_id_read"
+      x-roles: "Signed-in users."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/users/search":
+    get:
+      tags: ["Users"]
+      summary: "GET /api/users/search"
+      description: "Access: Signed-in users."
+      operationId: "getapi_users_search"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/users/{username}":
+    get:
+      tags: ["Users"]
+      summary: "GET /api/users/{username}"
+      description: "Access: Signed-in users."
+      operationId: "getapi_users_username"
+      x-roles: "Signed-in users."
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/violations":
+    get:
+      tags: ["Violations"]
+      summary: "The rules and what happens when they are broken -- public, like the Terms page that lists them, and the same l"
+      description: "The rules and what happens when they are broken -- public, like the Terms page that lists them, and the same list the admin panel applies. Access: Public (no sign-in)."
+      operationId: "getapi_violations"
+      x-roles: "Public (no sign-in)."
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  "/api/worksheets/generate":
+    post:
+      tags: ["Worksheets"]
+      summary: "POST /api/worksheets/generate"
+      description: "Access: Signed-in users (not admin). Requires header X-Requested-With: anees. Body validated by generateSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_worksheets_generate"
+      x-roles: "Signed-in users (not admin)."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/worksheets/received":
+    get:
+      tags: ["Worksheets"]
+      summary: "\"From your teachers\": every sent worksheet (they go to all students, whatever their grade), newest first, with"
+      description: "\"From your teachers\": every sent worksheet (they go to all students, whatever their grade), newest first, with where this student is on each. Access: Signed-in student."
+      operationId: "getapi_worksheets_received"
+      x-roles: "Signed-in student."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/worksheets/received/{sentId}/start":
+    post:
+      tags: ["Worksheets"]
+      summary: "Opens a sent worksheet for this student, in the same shape as POST /generate: their attempt from before if the"
+      description: "Opens a sent worksheet for this student, in the same shape as POST /generate: their attempt from before if they started it already, a new one otherwise. Once solved it cannot be solved again. Access: Signed-in student. Requires header X-Requested-With: anees."
+      operationId: "postapi_worksheets_received_sentId_start"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: sentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/worksheets/sent":
+    get:
+      tags: ["Worksheets"]
+      summary: "The teacher's own sent worksheets, newest first, with how many students have solved each."
+      description: "The teacher's own sent worksheets, newest first, with how many students have solved each. Access: Signed-in teacher."
+      operationId: "getapi_worksheets_sent"
+      x-roles: "Signed-in teacher."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/worksheets/videos":
+    get:
+      tags: ["Worksheets"]
+      summary: "GET /api/worksheets/videos"
+      description: "Access: Signed-in users."
+      operationId: "getapi_worksheets_videos"
+      x-roles: "Signed-in users."
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/worksheets/{id}/send":
+    post:
+      tags: ["Worksheets"]
+      summary: "POST /api/worksheets/{id}/send"
+      description: "Access: Signed-in teacher. Requires header X-Requested-With: anees."
+      operationId: "postapi_worksheets_id_send"
+      x-roles: "Signed-in teacher."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/worksheets/{id}/submit":
+    post:
+      tags: ["Worksheets"]
+      summary: "Students only: a teacher builds a worksheet to preview, print and send to the students (below), not to solve i"
+      description: "Students only: a teacher builds a worksheet to preview, print and send to the students (below), not to solve it. Access: Signed-in student. Requires header X-Requested-With: anees. Body validated by submitSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_worksheets_id_submit"
+      x-roles: "Signed-in student."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this

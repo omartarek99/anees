@@ -205,6 +205,7 @@ export function SignupPage() {
             <label htmlFor="displayName">{t('auth.name')}</label>
             <input
               id="displayName"
+              data-rule="name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               required
@@ -220,7 +221,9 @@ export function SignupPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              pattern="[a-zA-Z0-9_]{3,20}"
+              data-rule="username"
+              minLength={3}
+              maxLength={20}
               title={t('auth.usernameHint')}
               autoComplete="username"
             />
@@ -249,6 +252,7 @@ export function SignupPage() {
             <label htmlFor="schoolName">{t('auth.school')}</label>
             <input
               id="schoolName"
+              data-rule="name"
               value={schoolName}
               onChange={(e) => setSchoolName(e.target.value)}
               required
@@ -269,18 +273,17 @@ export function SignupPage() {
                 transition={{ duration: 0.2 }}
               >
                 <label htmlFor="grade">{t('auth.grade')}</label>
-                <input
-                  id="grade"
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={12}
-                  placeholder={t('auth.gradePlaceholder')}
-                  value={grade}
-                  onChange={(e) => setGrade(e.target.value)}
-                  required
-                  title={t('auth.gradeHint')}
-                />
+                {/* a list to pick from (and change at any time before sending), like the grade pickers on the profile and in the admin panel */}
+                <select id="grade" value={grade} onChange={(e) => setGrade(e.target.value)} required title={t('auth.gradeHint')}>
+                  <option value="" disabled>
+                    {t('teacherReels.gradePlaceholder')}
+                  </option>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((g) => (
+                    <option key={g} value={g}>
+                      {t('teacherReels.gradeOption', { number: String(g) })}
+                    </option>
+                  ))}
+                </select>
               </m.div>
             )}
             {role === 'teacher' && (

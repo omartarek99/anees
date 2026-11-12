@@ -3,8 +3,10 @@ import { RiVideoLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
+import { textProblem } from '../lib/textRules';
 import { pickText, translateApiError } from '../lib/i18n';
-import { textDir } from '../lib/bidi';
+import { choiceLabel } from '../lib/bidi';
+import { QText } from '../components/QText';
 import { QuizCard, type QuizAnswer, type QuizQuestion } from '../components/QuizCard';
 import { QuizResults, type ResultItem } from '../components/QuizResults';
 import { Topbar } from '../components/Topbar';
@@ -69,19 +71,21 @@ type SubmitResponse = {
 
 /** A teacher's look at a worksheet before printing or sending it: the questions and their choices, with nothing to answer. */
 function WorksheetPreview({ questions }: { questions: QuizQuestion[] }) {
+  const { lang } = useLanguage();
   return (
     <ol className="ws-preview">
       {questions.map((q, qi) => (
         <li key={q.id} className="card">
-          {/* textDir: a pure-math question ("36 ÷ 6 = ؟") reads left-to-right even in the Arabic UI. */}
-          <p dir={textDir(q.text)} className="ws-preview-question">
-            {qi + 1}. {q.text}
+          <p className="ws-preview-question quiz-q">
+            {qi + 1}. <QText text={q.text} />
           </p>
           <ul className="ws-preview-choices">
             {q.choices.map((choice, ci) => (
               <li key={ci}>
-                <span aria-hidden>{String.fromCharCode(65 + ci)}</span>
-                {choice}
+                <span aria-hidden className="ws-choice-label">{choiceLabel(ci, lang)}</span>
+                <span className="quiz-choice-text">
+<QText text={choice} />
+</span>
               </li>
             ))}
           </ul>
@@ -179,6 +183,11 @@ export function WorksheetsPage() {
     })) ?? [];
 
   async function generate() {
+    const topicProblem = selectedVideo ? null : textProblem(typedName, 'words');
+    if (topicProblem) {
+      setError(t(topicProblem));
+      return;
+    }
     setError(null);
     setLoading(true);
     setResult(null);
