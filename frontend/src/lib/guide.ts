@@ -109,7 +109,7 @@ export function tourStops(role: Role): TourStop[] {
   const stops: TourStop[] = [
     { target: '/', id: 'home' },
     { target: '/reels', id: 'reels' },
-    // a teacher has their own lessons where a student has the two games (Sidebar.tsx)
+    // a teacher has their own lessons where a student has the two games (a teacher's stops point at the dashboard tiles on their home page)
     ...(role === 'teacher'
       ? [{ target: '/teacher/reels', id: 'myReels' }]
       : [

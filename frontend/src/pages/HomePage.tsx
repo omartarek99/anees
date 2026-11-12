@@ -8,6 +8,7 @@ import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 import { Topbar } from '../components/Topbar';
 import { Avatar } from '../components/Avatar';
+import { RiBarChartBoxFill, RiFilePaper2Line, RiGroupFill, RiMovie2Line, RiUserSettingsFill, RiVideoFill } from '@remixicon/react';
 import { RANK_FRAMES } from '../lib/frames';
 import type { RankKey } from '../lib/medalLevels';
 import { ChallengePickerModal } from '../components/ChallengePickerModal';
@@ -21,6 +22,9 @@ type Profile = {
   mapLevel?: number;
   avatarKey: string;
   avatarUrl: string | null;
+  // teachers only (backend routes/users.ts)
+  teacherPoints?: number;
+  creatorStats?: { likes: number; reels: number; worksheetsSolved: number };
 };
 
 // The picture and its frame are smaller on a phone.
@@ -33,6 +37,56 @@ function useNarrow() {
     return () => mq.removeEventListener('change', onChange);
   }, []);
   return narrow;
+}
+
+/** A teacher's dashboard: their creator numbers, then a tile for everything they can do, so the home page is where their work starts
+ *  (the sidebar has the same places, as icons only). */
+function TeacherDashboard({ profile }: { profile: Profile | null }) {
+  const { t } = useLanguage();
+  const s = profile?.creatorStats;
+  const stats = [
+    { label: t('profile.teacherPoints'), value: profile?.teacherPoints },
+    { label: t('profile.likes'), value: s?.likes },
+    { label: t('profile.reelsPosted'), value: s?.reels },
+    { label: t('profile.worksheetsSolved'), value: s?.worksheetsSolved },
+  ];
+  const tiles = [
+    { to: '/teacher/reels', icon: <RiMovie2Line size={26} />, key: 'lessons' },
+    { to: '/worksheets', icon: <RiFilePaper2Line size={26} />, key: 'worksheets' },
+    { to: '/reels', icon: <RiVideoFill size={26} />, key: 'reels' },
+    { to: '/leaderboard', icon: <RiBarChartBoxFill size={26} />, key: 'leaderboard' },
+    { to: '/friends', icon: <RiGroupFill size={26} />, key: 'friends' },
+    { to: '/profile', icon: <RiUserSettingsFill size={26} />, key: 'profile' },
+  ];
+  return (
+    // data-tour: the guide's tour stops point at the dashboard (a teacher has no sidebar)
+    <section className="teacher-dash" aria-labelledby="teacher-dash-title" data-tour="/">
+      <h2 id="teacher-dash-title" className="home-section-title">
+        {t('home.dashTitle')}
+      </h2>
+      <dl className="teacher-dash-stats">
+        {stats.map((x) => (
+          <div key={x.label} className="teacher-dash-stat">
+            <dt>{x.label}</dt>
+            <dd>{x.value ?? '–'}</dd>
+          </div>
+        ))}
+      </dl>
+      <nav className="teacher-dash-tiles" aria-label={t('home.dashTitle')}>
+        {tiles.map((x) => (
+          <Link key={x.to} to={x.to} className="teacher-dash-tile" data-tour={x.to}>
+            <span className="teacher-dash-icon" aria-hidden="true">
+              {x.icon}
+            </span>
+            <span className="teacher-dash-text">
+              <strong>{t(`home.dash_${x.key}`)}</strong>
+              <span>{t(`home.dash_${x.key}Body`)}</span>
+            </span>
+          </Link>
+        ))}
+      </nav>
+    </section>
+  );
 }
 
 /** A student's progress cards (map, levels, XP, a friend challenge) and the challenge windows. A teacher plays none of these -- they make the
@@ -238,7 +292,7 @@ export function HomePage() {
         </Link>
       </div>
 
-      <section className="home-hero" ref={heroRef}>
+      <section className={`home-hero${isStudent ? '' : ' is-text-only'}`} ref={heroRef}>
         <div className="home-hero-copy">
           {user && (
             <p key={eyebrow} className="home-eyebrow large-animation-0">
@@ -255,12 +309,15 @@ export function HomePage() {
             {tagline}
           </p>
         </div>
-        <div className="home-hero-art">
-          <img className="home-hero-image" src="/images/home-hero.webp" width={1240} height={837} decoding="async" alt="" />
-        </div>
+        {/* the big picture is the students' welcome; a teacher's home is just the greeting */}
+        {isStudent && (
+          <div className="home-hero-art">
+            <img className="home-hero-image" src="/images/home-hero.webp" width={1240} height={837} decoding="async" alt="" />
+          </div>
+        )}
       </section>
 
-      {isStudent && <StudentProgress profile={profile} />}
+      {isStudent ? <StudentProgress profile={profile} /> : <TeacherDashboard profile={profile} />}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { RankSky } from './components/RankSky';
 import { IntroSplash } from './components/IntroSplash';
 import { trackPageview } from './lib/analytics';
 import { Sidebar } from './components/Sidebar';
+import { TeacherNav } from './components/TeacherNav';
 import { AvatarBoundary } from './components/avatar3d/AvatarBoundary';
 import { PageBoundary } from './components/PageBoundary';
 import { LanguageToggle } from './components/LanguageToggle';
@@ -171,10 +172,11 @@ function ProtectedLayout() {
   // immersive video feed anyway.
   const hideFooter = pathname === '/reels';
   return (
-    <div className="app-shell">
+    <div className={`app-shell${user?.role === 'teacher' ? ' has-teacher-nav' : ''}`}>
       <RankSky />
       <Sidebar />
       <div className="app-content-col">
+        <TeacherNav />
         <main className="app-main">
           <WarningModal />
           <AdminMessageModal />
