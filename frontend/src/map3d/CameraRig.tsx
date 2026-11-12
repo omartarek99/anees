@@ -58,8 +58,6 @@ export const VIEWS: Record<'adventure' | 'eagle', Limits> = {
   eagle: { distance: 108, min: 70, max: 150, polar: 0.14, minPolar: 0, maxPolar: 0.45 },
 };
 
-export const DEFAULT_VIEW = { distance: VIEWS.adventure.distance, polar: VIEWS.adventure.polar, azimuth: 0 } as const;
-
 /** The orbit view a mode uses (walk leaves the orbit views as the camera it returns to). */
 export const orbitOf = (mode: ViewMode) => (mode === 'eagle' ? VIEWS.eagle : VIEWS.adventure);
 

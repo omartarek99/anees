@@ -55,8 +55,6 @@ export function makeLadder<T extends LadderTier>(tiers: T[], per: number) {
 }
 
 export const STUDENT_LADDER = makeLadder(RANK_LADDER, POINTS_PER_DIVISION);
-export const DIVISIONS = STUDENT_LADDER.divisions;
-export const TIER_START = STUDENT_LADDER.tierStart;
 export const standingFor = STUDENT_LADDER.standingFor;
 export const lineFraction = STUDENT_LADDER.lineFraction;
 

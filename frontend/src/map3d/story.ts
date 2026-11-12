@@ -4,7 +4,6 @@ import type { ApiLevel } from './schema';
 // a key from the guardian that ends each world, and a new item every three keys. Pure data and rules: the words live in
 // i18n.ts (the `story` group) and the screens in components/StoryPanel.tsx. Nothing here changes the map's shape.
 
-export const WORLD_COUNT = 10;
 export const KEY_COUNT = 10;
 
 /** The world a level belongs to, 0..9 (levels 1-5 are world 0, 6-10 world 1, ...). */
