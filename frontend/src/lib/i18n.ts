@@ -930,6 +930,8 @@ const en = {
   profile: {
     joined: 'Joined {date}',
     school: 'School',
+    gradeLabel: 'Class',
+    editSchoolTitle: 'Edit your school and class',
     teachesSubject: 'Teaches',
     changePassword: 'Change password',
     changePasswordSubtitle: 'Choose a new password. You will stay signed in here and be signed out everywhere else.',
@@ -2097,6 +2099,8 @@ const ar: typeof en = {
   profile: {
     joined: 'انضم في {date}',
     school: 'المدرسة',
+    gradeLabel: 'الصف',
+    editSchoolTitle: 'تعديل مدرستك وصفك',
     teachesSubject: 'معلم مادة',
     changePassword: 'تغيير كلمة المرور',
     changePasswordSubtitle: 'اختر كلمة مرور جديدة. ستبقى مسجّلًا هنا ويتم تسجيل خروجك من الأجهزة الأخرى.',

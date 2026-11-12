@@ -117,7 +117,7 @@ function profileSummary(user: any) {
 // The caller's OWN profile: profileSummary plus the private-to-owner school name (profileSummary only
 // shows it for teachers, publicly). Every self-returning route uses this so a save never blanks it.
 function ownProfile(user: any) {
-  return { ...profileSummary(user), schoolName: user.school_name ?? null };
+  return { ...profileSummary(user), schoolName: user.school_name ?? null, grade: user.grade ?? null };
 }
 
 usersRouter.get('/me', requireAuth, (req, res) => {
@@ -130,11 +130,13 @@ usersRouter.get('/me', requireAuth, (req, res) => {
 });
 
 usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProfileSchema), async (req, res) => {
-  const { displayName, avatarKey, bio, auraRank } = req.body as {
+  const { displayName, avatarKey, bio, auraRank, schoolName, grade } = req.body as {
     displayName?: string;
     avatarKey?: string;
     bio?: string;
     auraRank?: string | null;
+    schoolName?: string;
+    grade?: number;
   };
 
   // Every moderation check runs before the first write, so a request rejected for one field
@@ -148,6 +150,22 @@ usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProf
     const me = db.prepare(`SELECT role, total_xp FROM users WHERE id = ?`).get(req.userId!) as { role: string; total_xp: number };
     if (me.role !== 'student' || earnedAuraRank(auraRank, me.total_xp) !== auraRank) {
       res.status(400).json({ error: 'You can only choose the colour of a rank you have already reached.' });
+      return;
+    }
+  }
+  // The class is a student's; the school is a student's or a teacher's (an admin account has none).
+  if (schoolName !== undefined || grade !== undefined) {
+    const me = db.prepare(`SELECT role FROM users WHERE id = ?`).get(req.userId!) as { role: string };
+    if (grade !== undefined && me.role !== 'student') {
+      res.status(400).json({ error: 'Only students have a class (grade).' });
+      return;
+    }
+    if (schoolName !== undefined && me.role === 'admin') {
+      res.status(400).json({ error: 'Admin accounts have no school.' });
+      return;
+    }
+    if (schoolName !== undefined && !moderateText(schoolName).allowed) {
+      res.status(400).json({ error: 'This school name is not allowed. Write the real name of your school.' });
       return;
     }
   }
@@ -171,6 +189,12 @@ usersRouter.patch('/me', requireAuth, requireCsrfHeader, validateBody(updateProf
   }
   if (bio !== undefined) {
     db.prepare(`UPDATE users SET bio = ? WHERE id = ?`).run(bio, req.userId!);
+  }
+  if (schoolName !== undefined) {
+    db.prepare(`UPDATE users SET school_name = ? WHERE id = ?`).run(schoolName, req.userId!);
+  }
+  if (grade !== undefined) {
+    db.prepare(`UPDATE users SET grade = ? WHERE id = ?`).run(grade, req.userId!);
   }
 
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!);

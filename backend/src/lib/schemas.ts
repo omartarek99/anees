@@ -115,6 +115,9 @@ export const updateProfileSchema = z.object({
   displayName: displayNameSchema.optional(),
   avatarKey: avatarKeySchema.optional(),
   bio: bioSchema.optional(),
+  // The person's own school and (students) class.
+  schoolName: schoolNameSchema.optional(),
+  grade: z.number().int().min(1).max(12).optional(),
   // A tier key or 'normal' (the site's own colours), or null to follow the current rank; users.ts checks the student has reached it.
   auraRank: z.enum([...RANK_KEYS, 'normal']).nullable().optional(),
 });

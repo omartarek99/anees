@@ -43,6 +43,8 @@ type Profile = {
   bio: string;
   // Teachers: public. Students: only present on their own profile.
   schoolName?: string | null;
+  // A student's class: only on their own profile (private, like the school).
+  grade?: number | null;
   teacherSubject?: string | null;
   totalXp: number;
   // Separate currency from totalXp, only ever nonzero for teachers: worked out from their
@@ -99,6 +101,10 @@ export function ProfilePage() {
   const [nameDraft, setNameDraft] = useState('');
   const [editingBio, setEditingBio] = useState(false);
   const [bioDraft, setBioDraft] = useState('');
+  // The school and (for a student) the class, edited together with the pen next to them
+  const [editingSchool, setEditingSchool] = useState(false);
+  const [schoolDraft, setSchoolDraft] = useState('');
+  const [gradeDraft, setGradeDraft] = useState('');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -143,6 +149,36 @@ export function ProfilePage() {
     const data = await api.patch<{ profile: Profile }>('/users/me', { avatarKey });
     setProfile(data.profile);
     await refreshUser();
+  }
+
+  async function saveSchoolAndGrade() {
+    if (!profile) return;
+    const changes: { schoolName?: string; grade?: number } = {};
+    const school = schoolDraft.trim();
+    if (school !== (profile.schoolName ?? '')) {
+      if (school.length < 2) {
+        setSaveError(t('auth.schoolInvalid'));
+        return;
+      }
+      changes.schoolName = school;
+    }
+    if (profile.role === 'student' && gradeDraft && Number(gradeDraft) !== profile.grade) changes.grade = Number(gradeDraft);
+    if (Object.keys(changes).length === 0) {
+      setEditingSchool(false);
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const data = await api.patch<{ profile: Profile }>('/users/me', changes);
+      setProfile(data.profile);
+      setEditingSchool(false);
+      await refreshUser();
+    } catch (err) {
+      setSaveError(err instanceof ApiError ? translateApiError(lang, err.message) : t('common.genericError'));
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function saveBio() {
@@ -223,20 +259,66 @@ export function ProfilePage() {
 
       {saveError && <div className="form-error-banner">{saveError}</div>}
 
-      {(profile.schoolName || profile.teacherSubject) && (
-        <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
-          {profile.teacherSubject && (
-            <span className="badge badge-gold">
-              🧑‍🏫 {t('profile.teachesSubject')} {t(`auth.subject_${profile.teacherSubject}` as 'auth.subject_math')}
-            </span>
-          )}
-          {profile.schoolName && (
-            <span className="badge badge-gold">
-              🏫 {t('profile.school')}: {profile.schoolName}
-            </span>
-          )}
-        </div>
-      )}
+      {(profile.schoolName || profile.teacherSubject || (isOwnProfile && profile.role !== 'admin')) &&
+        (editingSchool ? (
+          <div className="card flex gap-sm" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <label style={{ display: 'grid', gap: 4, fontSize: 12.5, flex: '1 1 220px', minWidth: 0 }}>
+              {t('profile.school')}
+              <input value={schoolDraft} onChange={(e) => setSchoolDraft(e.target.value)} maxLength={80} autoFocus />
+            </label>
+            {profile.role === 'student' && (
+              <label style={{ display: 'grid', gap: 4, fontSize: 12.5 }}>
+                {t('profile.gradeLabel')}
+                <select value={gradeDraft} onChange={(e) => setGradeDraft(e.target.value)}>
+                  {!profile.grade && <option value="">{t('teacherReels.gradePlaceholder')}</option>}
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((g) => (
+                    <option key={g} value={g}>
+                      {t('teacherReels.gradeOption', { number: String(g) })}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <button className="btn btn-primary btn-sm" onClick={saveSchoolAndGrade} disabled={saving}>
+              {t('common.save')}
+            </button>
+            <button className="btn btn-ghost btn-sm" onClick={() => setEditingSchool(false)}>
+              {t('common.cancel')}
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-sm" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
+            {profile.teacherSubject && (
+              <span className="badge badge-gold">
+                🧑‍🏫 {t('profile.teachesSubject')} {t(`auth.subject_${profile.teacherSubject}` as 'auth.subject_math')}
+              </span>
+            )}
+            {profile.schoolName && (
+              <span className="badge badge-gold">
+                🏫 {t('profile.school')}: {profile.schoolName}
+              </span>
+            )}
+            {isOwnProfile && profile.role === 'student' && profile.grade ? (
+              <span className="badge badge-gold">{t('teacherReels.gradeOption', { number: String(profile.grade) })}</span>
+            ) : null}
+            {isOwnProfile && profile.role !== 'admin' && (
+              <button
+                type="button"
+                className="pen-btn"
+                aria-label={t('profile.editSchoolTitle')}
+                title={t('profile.editSchoolTitle')}
+                onClick={() => {
+                  setSchoolDraft(profile.schoolName ?? '');
+                  setGradeDraft(profile.grade ? String(profile.grade) : '');
+                  setSaveError(null);
+                  setEditingSchool(true);
+                }}
+              >
+                <RiPencilLine size={16} />
+              </button>
+            )}
+          </div>
+        ))}
 
       <div className="card flex gap-md" style={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <div className="avatar-edit-wrap">
