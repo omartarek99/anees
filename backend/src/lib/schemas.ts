@@ -115,6 +115,9 @@ export const updateProfileSchema = z.object({
   displayName: displayNameSchema.optional(),
   avatarKey: avatarKeySchema.optional(),
   bio: bioSchema.optional(),
+  // The person's own school and (students) class.
+  schoolName: schoolNameSchema.optional(),
+  grade: z.number().int().min(1).max(12).optional(),
   // A tier key or 'normal' (the site's own colours), or null to follow the current rank; users.ts checks the student has reached it.
   auraRank: z.enum([...RANK_KEYS, 'normal']).nullable().optional(),
 });
@@ -122,6 +125,15 @@ export const updateProfileSchema = z.object({
 export const adminSetRoleSchema = z.object({
   role: adminRoleSchema,
 });
+
+// An admin correcting an account's details: the class (students), the school (students and teachers) and the subject (teachers). The name and the email are never changed from here.
+export const adminEditProfileSchema = z
+  .object({
+    grade: z.number().int().min(1).max(12).optional(),
+    schoolName: schoolNameSchema.optional(),
+    teacherSubject: teacherSubjectSchema.optional(),
+  })
+  .refine((v) => v.grade !== undefined || v.schoolName !== undefined || v.teacherSubject !== undefined, { message: 'Change at least one thing before saving.' });
 
 export const adminSetActiveSchema = z.object({
   isActive: z.boolean(),
