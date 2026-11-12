@@ -5,6 +5,7 @@ import type { Role } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { pickText, translateApiError } from '../lib/i18n';
 import { XpIcon } from './XpIcon';
+import { AdminEditDetails } from './AdminEditDetails';
 import { warningName } from '../lib/warningOrdinal';
 import { AdminViolationForm } from './AdminViolationForm';
 import { useViolations } from '../lib/violations';
@@ -19,6 +20,8 @@ export type AdminUser = {
   totalXp: number;
   /** The school the account gave when it signed up (null for older accounts). */
   schoolName: string | null;
+  /** Teachers only: the subject they teach (a key like 'math'). */
+  teacherSubject: string | null;
   /** Teachers only: views of all their lessons together (a view = a student who watched a lesson). */
   totalViews: number | null;
   // Separate currency from totalXp, only ever nonzero for teachers -- see backend
@@ -272,6 +275,8 @@ export function AdminUserRow({
 
       {expanded && (
         <div className="stack" style={{ gap: 12, marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+          <AdminEditDetails user={u} onUpdated={onUpdated} />
+
           <div className="field" style={{ margin: 0 }}>
             <label style={{ fontSize: 13, fontWeight: 600 }}>
               {t(u.role === 'teacher' ? 'admin.teacherPointsLabel' : 'admin.pointsLabel')} · {t('admin.pointsNow', { n: String(points) })}

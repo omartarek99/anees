@@ -4,7 +4,7 @@ import { db } from '../db/db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { requireCsrfHeader, validateBody, handleUpload } from '../middleware/validate.js';
 import {
-  adminSetActiveSchema,
+  adminSetActiveSchema, adminEditProfileSchema,
   adminSetRoleSchema,
   adminSetWarningSchema,
   adminSetBanSchema,
@@ -15,6 +15,7 @@ import {
   adminApplyViolationSchema,
 } from '../lib/schemas.js';
 import { deleteUserById } from '../lib/deleteUser.js';
+import { moderateText } from '../lib/moderation.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
 import { deleteReelVideoIfAny } from '../lib/reelVideo.js';
 import { decrypt } from '../lib/encryption.js';
@@ -95,6 +96,7 @@ function adminUser(row: any, rank: number | null = null) {
     role: row.role,
     grade: row.grade,
     schoolName: row.school_name ?? null,
+    teacherSubject: row.teacher_subject ?? null,
     // teachers only: how many views all of their lessons have together (a view = a student who watched a lesson)
     totalViews:
       row.role === 'teacher'
@@ -324,6 +326,39 @@ adminRouter.post('/users/:id/sign-out', requireCsrfHeader, (req, res) => {
   }
   const result = db.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(targetId);
   res.json({ ok: true, devices: Number(result.changes) });
+});
+
+// Correct an account's details: the class (students), the school and the teacher's subject. The name and the email are not editable here.
+adminRouter.patch('/users/:id/profile', requireCsrfHeader, validateBody(adminEditProfileSchema), (req, res) => {
+  const targetId = Number(req.params.id);
+  const target = db.prepare(`SELECT id, role FROM users WHERE id = ?`).get(targetId) as { id: number; role: string } | undefined;
+  if (!target) {
+    res.status(404).json({ error: "We couldn't find this account." });
+    return;
+  }
+  const { grade, schoolName, teacherSubject } = req.body as { grade?: number; schoolName?: string; teacherSubject?: string };
+  if (grade !== undefined && target.role !== 'student') {
+    res.status(400).json({ error: 'Only students have a class (grade).' });
+    return;
+  }
+  if (teacherSubject !== undefined && target.role !== 'teacher') {
+    res.status(400).json({ error: 'Only teachers have a subject.' });
+    return;
+  }
+  if (schoolName !== undefined && target.role === 'admin') {
+    res.status(400).json({ error: 'Admin accounts have no school.' });
+    return;
+  }
+  if (schoolName !== undefined && !moderateText(schoolName).allowed) {
+    res.status(400).json({ error: 'This school name is not allowed. Write the real name of your school.' });
+    return;
+  }
+  const sets: string[] = [];
+  const values: (string | number)[] = [];
+  if (grade !== undefined) { sets.push('grade = ?'); values.push(grade); }
+  if (schoolName !== undefined) { sets.push('school_name = ?'); values.push(schoolName); }
+  if (teacherSubject !== undefined) { sets.push('teacher_subject = ?'); values.push(teacherSubject); }
+  applyUserUpdate(res, targetId, () => db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).run(...values, targetId));
 });
 
 adminRouter.patch('/users/:id/active', requireCsrfHeader, validateBody(adminSetActiveSchema), (req, res) => {
