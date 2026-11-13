@@ -1,0 +1,33 @@
+{
+  "startedAt": "2026-11-13T21:05:44.339Z",
+  "stages": [
+    {
+      "logins": 60,
+      "allDoneSeconds": 120,
+      "answered401": 53,
+      "busy503": 0,
+      "tooMany429": 0,
+      "failedOrTimedOut": 7,
+      "other": 0,
+      "loginMedianS": 71.2,
+      "loginP95S": 120,
+      "loginSlowestS": 120,
+      "healthPings": 159,
+      "healthOk": 159,
+      "healthMedianMs": 362,
+      "healthP95Ms": 516,
+      "healthSlowestMs": 12807
+    }
+  ],
+  "healthBaseline": {
+    "median": 255,
+    "p95": 346
+  },
+  "stoppedBecause": "stopped after 60 logins: server looked unhealthy",
+  "recovery": {
+    "ok": 8,
+    "of": 8,
+    "medianMs": 455
+  },
+  "finishedAt": "2026-11-13T21:07:58.210Z"
+}

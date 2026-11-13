@@ -1,6 +1,250 @@
 [
- {"profile":"desktop (app browser, files already cached)","path":"/welcome (landing page)","fcp":null,"lcp":null,"load":1372,"transferKB":401,"resources":19,"cls":null,"failed":[],"errors":[]},
- {"profile":"desktop (app browser, files already cached)","path":"/privacy","fcp":null,"lcp":null,"load":111,"transferKB":15,"resources":27,"cls":null,"failed":[],"errors":[]},
- {"profile":"desktop (app browser, files already cached)","path":"/terms","fcp":null,"lcp":null,"load":92,"transferKB":15,"resources":30,"cls":null,"failed":[],"errors":[]},
- {"profile":"desktop (app browser, signed in as admin)","path":"/admin/dashboard (7 API calls at start: 291-404 ms each)","fcp":null,"lcp":null,"load":95,"transferKB":null,"resources":39,"cls":null,"failed":[],"errors":[]}
+  {
+    "profile": "desktop",
+    "path": "/",
+    "wallMs": 3531,
+    "ttfb": 206.89999999990687,
+    "domContentLoaded": 660.2999999998137,
+    "load": 760.6000000000931,
+    "fcp": 0,
+    "lcp": 0,
+    "cls": 0,
+    "transferKB": 425,
+    "resources": 16,
+    "heapMB": 4,
+    "title": "Anees | أنيس",
+    "failed": [
+      "401 /api/auth/me"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  {
+    "profile": "desktop",
+    "path": "/login",
+    "wallMs": 2712,
+    "ttfb": 171.39999999990687,
+    "domContentLoaded": 222.29999999981374,
+    "load": 251,
+    "fcp": 0,
+    "lcp": 0,
+    "cls": 0,
+    "transferKB": 172,
+    "resources": 30,
+    "heapMB": 4,
+    "title": "Log in | تسجيل الدخول | Anees",
+    "failed": [
+      "401 /api/auth/me"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  {
+    "profile": "desktop",
+    "path": "/signup",
+    "wallMs": 2601,
+    "ttfb": 73.79999999981374,
+    "domContentLoaded": 125.10000000009313,
+    "load": 147.79999999981374,
+    "fcp": 0,
+    "lcp": 0,
+    "cls": 0,
+    "transferKB": 13,
+    "resources": 30,
+    "heapMB": 5,
+    "title": "Sign up | إنشاء حساب | Anees",
+    "failed": [
+      "401 /api/auth/me"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  {
+    "profile": "desktop",
+    "path": "/welcome",
+    "wallMs": 2621,
+    "ttfb": 96,
+    "domContentLoaded": 147,
+    "load": 253.5,
+    "fcp": 0,
+    "lcp": 0,
+    "cls": 0,
+    "transferKB": 13,
+    "resources": 15,
+    "heapMB": 4,
+    "title": "Anees | أنيس",
+    "failed": [
+      "401 /api/auth/me"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  {
+    "profile": "desktop",
+    "path": "/privacy",
+    "wallMs": 2343,
+    "ttfb": 97.5,
+    "domContentLoaded": 145.1999999997206,
+    "load": 167.60000000009313,
+    "fcp": 1472,
+    "lcp": 1472,
+    "cls": 0,
+    "transferKB": 13,
+    "resources": 16,
+    "heapMB": 4,
+    "title": "Privacy policy | سياسة الخصوصية | Anees",
+    "failed": [
+      "401 /api/auth/me"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  {
+    "profile": "desktop",
+    "path": "/this-page-does-not-exist",
+    "wallMs": 3187,
+    "ttfb": 64.5,
+    "domContentLoaded": 141.5,
+    "load": 167.89999999990687,
+    "fcp": 224,
+    "lcp": 836,
+    "cls": 0,
+    "transferKB": 410,
+    "resources": 23,
+    "heapMB": 43,
+    "title": "Anees | أنيس",
+    "failed": [],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  {
+    "profile": "phone (fast 4G, 4x slower CPU)",
+    "path": "/",
+    "wallMs": 6722,
+    "ttfb": 89.39999999990687,
+    "domContentLoaded": 1292.1000000000931,
+    "load": 1293.3999999999069,
+    "fcp": 460,
+    "lcp": 2844,
+    "cls": 0,
+    "transferKB": 46,
+    "resources": 23,
+    "heapMB": 17,
+    "title": "Anees | أنيس",
+    "failed": [
+      "401 /api/auth/me"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  {
+    "profile": "phone (fast 4G, 4x slower CPU)",
+    "path": "/login",
+    "wallMs": 5443,
+    "ttfb": 90.8000000002794,
+    "domContentLoaded": 1059.1000000000931,
+    "load": 1246.8000000002794,
+    "fcp": 1052,
+    "lcp": 1448,
+    "cls": 0,
+    "transferKB": 13,
+    "resources": 30,
+    "heapMB": 5,
+    "title": "Log in | تسجيل الدخول | Anees",
+    "failed": [
+      "401 /api/auth/me"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  {
+    "profile": "phone (fast 4G, 4x slower CPU)",
+    "path": "/signup",
+    "wallMs": 5682,
+    "ttfb": 99.39999999990687,
+    "domContentLoaded": 772.5,
+    "load": 774.3999999999069,
+    "fcp": 360,
+    "lcp": 1096,
+    "cls": 0,
+    "transferKB": 13,
+    "resources": 30,
+    "heapMB": 5,
+    "title": "Sign up | إنشاء حساب | Anees",
+    "failed": [
+      "401 /api/auth/me"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  {
+    "profile": "phone (fast 4G, 4x slower CPU)",
+    "path": "/welcome",
+    "wallMs": 6915,
+    "ttfb": 62.5,
+    "domContentLoaded": 783.6999999997206,
+    "load": 795.1999999997206,
+    "fcp": 604,
+    "lcp": 2592,
+    "cls": 0.07141887611809812,
+    "transferKB": 13,
+    "resources": 23,
+    "heapMB": 18,
+    "title": "Anees | أنيس",
+    "failed": [
+      "401 /api/auth/me"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  {
+    "profile": "phone (fast 4G, 4x slower CPU)",
+    "path": "/privacy",
+    "wallMs": 4031,
+    "ttfb": 88.70000000018626,
+    "domContentLoaded": 877.7000000001863,
+    "load": 1238.1000000000931,
+    "fcp": 620,
+    "lcp": 1228,
+    "cls": 0.3145003101748584,
+    "transferKB": 13,
+    "resources": 16,
+    "heapMB": 3,
+    "title": "Privacy policy | سياسة الخصوصية | Anees",
+    "failed": [
+      "401 /api/auth/me"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  {
+    "profile": "phone (fast 4G, 4x slower CPU)",
+    "path": "/this-page-does-not-exist",
+    "wallMs": 15892,
+    "ttfb": 164.20000000018626,
+    "domContentLoaded": 1656.2000000001863,
+    "load": 1690,
+    "fcp": 1000,
+    "lcp": 6220,
+    "cls": 0,
+    "transferKB": 13,
+    "resources": 23,
+    "heapMB": 17,
+    "title": "Anees | أنيس",
+    "failed": [],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  }
 ]
