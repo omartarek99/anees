@@ -36,6 +36,10 @@ const SCENARIOS = {
     students: { executor: 'ramping-vus', exec: 'student', startVUs: 0, stages: [{ duration: '2m', target: STUDENTS }, { duration: '3m', target: STUDENTS }, { duration: '30s', target: 0 }], gracefulRampDown: '20s' },
     teachers: { executor: 'ramping-vus', exec: 'teacher', startVUs: 0, stages: [{ duration: '2m', target: TEACHERS }, { duration: '3m', target: TEACHERS }, { duration: '30s', target: 0 }], gracefulRampDown: '20s' },
   },
+  // the real site, students only (no teacher account needed): 300 students reach full strength in 30 s, stay 2 minutes, leave in 20 s. All of them use ONE test student's login.
+  live300: {
+    students: { executor: 'ramping-vus', exec: 'student', startVUs: 0, stages: [{ duration: '30s', target: 300 }, { duration: '2m', target: 300 }, { duration: '20s', target: 0 }], gracefulRampDown: '20s' },
+  },
   // the real site, first look: 10 students + 2 teachers for 60 s (run this before live250)
   'live-smoke': {
     students: { executor: 'constant-vus', exec: 'student', vus: 10, duration: '60s' },
@@ -111,7 +115,7 @@ export function setup() {
     if (r.status !== 200 || !c) throw new Error('Login as "' + user + '" failed (' + r.status + '). Check the username and password (the password you typed has ' + String(pass || '').length + ' characters). The k6 run stops here; nothing else was sent.');
     return c.value;
   };
-  return { student: one(__ENV.TEST_STUDENT, __ENV.TEST_STUDENT_PASS), teacher: one(__ENV.TEST_TEACHER, __ENV.TEST_TEACHER_PASS) };
+  return { student: one(__ENV.TEST_STUDENT, __ENV.TEST_STUDENT_PASS), teacher: PROFILE === 'live300' ? null : one(__ENV.TEST_TEACHER, __ENV.TEST_TEACHER_PASS) };
 }
 
 let loggedIn = false;

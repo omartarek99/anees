@@ -17,7 +17,7 @@
     {
       "status": 200,
       "limit": "20000",
-      "remaining": "19999",
+      "remaining": "19998",
       "reset": "60",
       "policy": "20000;w=60"
     },
@@ -33,64 +33,65 @@
     {
       "status": 200,
       "limit": "20000",
-      "remaining": "19999",
-      "reset": "60",
+      "remaining": "19990",
+      "reset": "37",
       "policy": "20000;w=60"
     },
     {
       "status": 200,
       "limit": "20000",
-      "remaining": "19998",
-      "reset": "60",
+      "remaining": "19989",
+      "reset": "37",
       "policy": "20000;w=60"
     },
     {
       "status": 200,
       "limit": "20000",
-      "remaining": "19997",
-      "reset": "60",
+      "remaining": "19988",
+      "reset": "36",
       "policy": "20000;w=60"
     },
     {
       "status": 200,
       "limit": "20000",
-      "remaining": "19996",
-      "reset": "60",
+      "remaining": "19987",
+      "reset": "36",
       "policy": "20000;w=60"
     }
   ],
   "latency_site": {
-    "min": 273,
-    "median": 336,
-    "p95": 680,
-    "max": 680,
-    "avg": 358
+    "min": 294,
+    "median": 320,
+    "p95": 924,
+    "max": 924,
+    "avg": 379
   },
   "latency_render": {
-    "min": 198,
-    "median": 225,
-    "p95": 310,
-    "max": 310,
-    "avg": 246
+    "min": 216,
+    "median": 306,
+    "p95": 334,
+    "max": 334,
+    "avg": 292
   },
   "renderHeaders": {
     "server": "cloudflare",
     "x-render-origin-server": "Render",
-    "rndr-id": "31440d98-f368-40b6",
-    "cf-ray": "a59facc4db23ed11-DOH",
+    "rndr-id": "2b02f4c2-8601-43e2",
+    "cf-ray": "a5a0b9f9c88fe0dc-DOH",
     "content-type": "application/json; charset=utf-8",
     "content-encoding": "br"
   },
   "siteApiHeaders": {
     "server": "cloudflare",
-    "cf-ray": "a59facc6ed70e0c8-DOH",
-    "x-vercel-id": "bom1::6r29z-1794592815215-27a725193a3d",
+    "cf-ray": "a5a0b9fbdf0fa2d4-DOH",
+    "x-vercel-id": "bom1::c9z4c-1794603841928-6cbe3eb2b5db",
     "x-vercel-cache": "MISS",
     "content-encoding": "br",
     "strict-transport-security": "max-age=31536000; includeSubDomains",
     "x-content-type-options": "nosniff",
     "x-frame-options": "DENY",
-    "referrer-policy": "no-referrer"
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()"
   },
   "homeHeaders": {
     "server": "cloudflare",
@@ -98,14 +99,18 @@
     "cache-control": "public, max-age=0, must-revalidate",
     "content-encoding": "br",
     "strict-transport-security": "max-age=63072000",
-    "age": "19143"
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+    "age": "82"
   },
   "homeBytes": 7808,
   "mainScript": {
-    "path": "/assets/index-CiiVmVZh.js",
+    "path": "/assets/index-MtnmUoDA.js",
     "status": 200,
-    "bytesDownloaded": 430047,
-    "ms": 46,
+    "bytesDownloaded": 443051,
+    "ms": 42,
     "content-encoding": "br",
     "cache-control": "public, max-age=31536000, immutable"
   },
@@ -142,5 +147,5 @@
     "status": 401,
     "body": "{\"error\":\"Please log in to continue.\"}"
   },
-  "checkedAt": "2026-11-13T18:00:16.455Z"
+  "checkedAt": "2026-11-13T21:04:03.798Z"
 }

@@ -323,6 +323,15 @@ async function authenticate(username: string, password: string): Promise<{ ok: t
       throw e;
     }
     if (!ok) return wrong;
+    // An older hash made with a higher cost (12) is re-saved at the current one: this person's next logins are faster. Best effort -- never
+    // blocks the login.
+    try {
+      if (bcrypt.getRounds(user.password_hash) > BCRYPT_COST) {
+        db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(await hashPassword(password, BCRYPT_COST), user.id);
+      }
+    } catch {
+      // keeps the old hash
+    }
     if (!user.email_verified) {
       return { ok: false, status: 403, body: { error: 'Confirm your email first. We sent you a message with the steps.' } };
     }
