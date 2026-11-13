@@ -75,6 +75,9 @@ function tableRow(ws, row, values, opts = {}) {
     c.border = box;
     if (opts.zebra) c.fill = fill(C.lilac);
   });
+  // exact height so the whole text shows in every viewer (Excel, phone, Google Sheets): lines needed by the longest cell
+  const need = values.map((v, i) => { const w = Math.max(6, (ws.getColumn(2 + i).width || 10) * 0.92); return String(v ?? '').split('\n').reduce((n, seg) => n + Math.max(1, Math.ceil(seg.length / w)), 0); });
+  ws.getRow(row).height = Math.min(409, Math.max(22, Math.max(...need) * 15 + 8));
 }
 function paragraph(ws, row, text, cols, opts = {}) {
   ws.mergeCells(row, 2, row, cols);

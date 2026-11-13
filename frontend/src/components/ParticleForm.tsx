@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Object3D, PerspectiveCamera, Quaternion } from 'three';
 import { VORTEX } from '../lib/particle-field/presets';
+import { afterIntro } from '../lib/intro-gate';
 
 type ParticleStudio = import('../lib/particle-field/engine').ParticleStudio;
 
@@ -283,12 +284,17 @@ export function ParticleForm({ children, intro }: { children: ReactNode; intro?:
     );
     // Not before the page is idle: loading three, compiling the shaders and seeding 250k particles would otherwise
     // compete with the hero and the opening scene on first load (the stage is close enough to fire the observer).
+    // It also waits for the opening scene (IntroSplash) to be gone: the scene is all animation, and loading three here at the same
+    // time made it stutter.
     const whenIdle = window.requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 1500));
-    whenIdle(() => {
-      if (!cancelled) near.observe(container);
-    }, { timeout: 3000 });
+    const cancelWait = afterIntro(() => {
+      whenIdle(() => {
+        if (!cancelled) near.observe(container);
+      }, { timeout: 3000 });
+    });
 
     return () => {
+      cancelWait();
       cancelled = true;
       near.disconnect();
       window.removeEventListener('scroll', onScroll);

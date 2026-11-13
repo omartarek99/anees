@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { useLanguage } from '../lib/language-context';
+import { introFinished, introStarted } from '../lib/intro-gate';
 
 // The opening scene, shown once each time the site is opened in a tab: the logo and the 3D pieces (cap, star, light bulb) spin in
 // from the top-left behind a gold comet trail, land with a shockwave and a burst of sparks, then the pieces circle the logo, the
@@ -7,7 +8,7 @@ import { useLanguage } from '../lib/language-context';
 // with a tap or a key, and is not shown at all to people who asked for less motion.
 
 const SEEN_KEY = 'anees_intro_seen';
-const SHOW_MS = 4450; // when it starts to leave (it is gone 5 seconds after it appears)
+const SHOW_MS = 3450; // when it starts to leave (it is gone 4 seconds after it appears)
 const LEAVE_MS = 550; // how long leaving takes
 
 const PIECES = [
@@ -40,7 +41,16 @@ function shouldShow(): boolean {
 
 export function IntroSplash() {
   const { t } = useLanguage();
-  const [phase, setPhase] = useState<'show' | 'leave' | 'gone'>(() => (shouldShow() ? 'show' : 'gone'));
+  const [phase, setPhase] = useState<'show' | 'leave' | 'gone'>(() => {
+    if (!shouldShow()) return 'gone';
+    introStarted(); // the page's heavy start-up work (lib/intro-gate) waits until this scene is gone
+    return 'show';
+  });
+
+  useEffect(() => {
+    if (phase === 'gone') introFinished();
+  }, [phase]);
+  useEffect(() => introFinished, []); // if it is removed early, let the waiting work go
 
   // it counts as seen once it is on screen (not while deciding whether to show it, which React may do twice)
   useEffect(() => {

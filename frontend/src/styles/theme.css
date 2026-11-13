@@ -4517,13 +4517,16 @@ label,
   position: absolute;
   left: 50%;
   top: 42%;
-  inline-size: 190vmax;
-  block-size: 190vmax;
-  margin: -95vmax 0 0 -95vmax;
+  /* only the middle of this ever shows (the mask fades it out at 46vmax from the centre), so the layer is cut to that: the old 190vmax square
+     was a texture of tens of millions of pixels turning every frame, the main cause of the lag */
+  inline-size: 100vmax;
+  block-size: 100vmax;
+  margin: -50vmax 0 0 -50vmax;
   background: repeating-conic-gradient(from 0deg, rgba(255, 214, 120, 0.16) 0deg 7deg, transparent 7deg 24deg);
-  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 34%);
-  mask-image: radial-gradient(circle, #000 0%, transparent 34%);
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 0%, transparent 92%);
+  mask-image: radial-gradient(circle closest-side, #000 0%, transparent 92%);
   animation: intro-rays-in 0.9s 0.9s ease-out both, intro-rays-spin 26s linear infinite;
+  will-change: transform;
 }
 .intro-glow {
   position: absolute;
@@ -4535,6 +4538,7 @@ label,
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 196, 92, 0.55) 0%, rgba(255, 150, 60, 0.18) 45%, transparent 70%);
   animation: intro-glow-in 0.9s 0.95s ease-out both, intro-glow-pulse 2.6s 1.9s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 .intro-spark {
   position: absolute;
@@ -4643,7 +4647,7 @@ label,
   max-inline-size: none;
   animation: intro-fade-in 0.4s 0.3s ease-out both; /* the fade is on the picture, not the ring: fading the ring would flatten the 3D */
   display: block;
-  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 14px rgba(255, 200, 100, 0.45));
+  /* no filter here: a filter on a picture inside a turning 3D ring is redrawn on the CPU every frame (the glow behind gives the light) */
 }
 .intro-logo {
   position: absolute;
@@ -4654,24 +4658,32 @@ label,
   margin: calc(min(60vw, 250px) / -2) 0 0 calc(min(60vw, 250px) / -2);
   transform-style: preserve-3d;
   animation: intro-logo-in 1.7s both, intro-logo-float 3.4s 1.8s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 .intro-logo img {
   display: block;
   inline-size: 100%;
   block-size: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 26px rgba(255, 190, 90, 0.4));
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.5));
 }
 /* a band of light that sweeps across the logo, shaped by the logo itself */
 .intro-gloss {
   position: absolute;
   inset: 0;
-  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.85) 50%, transparent 65%) no-repeat;
-  background-size: 250% 100%;
-  background-position: 150% 0;
+  overflow: hidden;
   -webkit-mask: url(/icons/logo-mark.png) center / contain no-repeat;
   mask: url(/icons/logo-mark.png) center / contain no-repeat;
-  animation: intro-gloss 1.2s 1.6s ease-in-out both, intro-gloss 1.2s 3.3s ease-in-out both;
+}
+/* the band itself slides by transform (the compositor's job), not by moving a background, which repainted the masked layer every frame */
+.intro-gloss::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.85) 50%, transparent 65%);
+  transform: translate3d(-70%, 0, 0);
+  animation: intro-gloss 1.2s 1.6s ease-in-out both;
+  will-change: transform;
 }
 .intro-words {
   position: relative;
@@ -4713,7 +4725,7 @@ label,
   to { opacity: 1; }
 }
 @keyframes intro-leave {
-  to { opacity: 0; transform: scale(1.25); filter: blur(6px); }
+  to { opacity: 0; transform: scale(1.25); } /* no blur here: blurring a whole screen while it zooms is what stuttered the hand-over */
 }
 @keyframes intro-rays-in {
   from { opacity: 0; }
@@ -4736,11 +4748,11 @@ label,
 }
 /* the logo: out of the top-left corner, spinning twice, over-shoots the middle a little, wobbles, settles */
 @keyframes intro-logo-in {
-  0% { opacity: 0; transform: var(--from) rotateZ(-720deg) scale(0.15); filter: blur(6px); animation-timing-function: ease-out; }
+  0% { opacity: 0; transform: var(--from) rotateZ(-720deg) scale(0.15); animation-timing-function: ease-out; }
   10% { opacity: 1; }
-  60% { opacity: 1; transform: translate3d(0, 0, 0) rotateZ(24deg) scale(1.2); filter: blur(0); animation-timing-function: ease-in-out; }
+  60% { opacity: 1; transform: translate3d(0, 0, 0) rotateZ(24deg) scale(1.2); animation-timing-function: ease-in-out; }
   80% { transform: translate3d(0, 0, 0) rotateZ(-9deg) scale(0.95); animation-timing-function: ease-in-out; }
-  100% { opacity: 1; transform: translate3d(0, 0, 0) rotateZ(0) scale(1); filter: blur(0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) rotateZ(0) scale(1); }
 }
 @keyframes intro-logo-float {
   0%, 100% { transform: translateY(0) rotateY(0); }
@@ -4772,8 +4784,8 @@ label,
   to { transform: rotateZ(-360deg); }
 }
 @keyframes intro-gloss {
-  from { background-position: 150% 0; }
-  to { background-position: -50% 0; }
+  from { transform: translate3d(-70%, 0, 0); }
+  to { transform: translate3d(70%, 0, 0); }
 }
 @keyframes intro-words-in {
   from { opacity: 0; transform: translateY(30px) scale(0.85); }

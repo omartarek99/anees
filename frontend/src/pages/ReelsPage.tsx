@@ -9,7 +9,7 @@ import { setReelsMuted as setMuted, useReelsMuted } from '../lib/reelSound';
 // rose again, and a trackpad's momentum (or a smooth-scrolling mouse) keeps sending rising deltas for a second or more, so one
 // flick skipped two or three reels. Here a gesture is a run of wheel events with gaps under WHEEL_QUIET ms: its first real
 // movement turns one reel and the rest of the run is swallowed. The quiz and results sheets (swiper-no-mousewheel) scroll themselves.
-const WHEEL_QUIET = 200;
+const WHEEL_QUIET = 140;
 function oneReelPerWheelGesture(el: HTMLElement, getSwiper: () => SwiperClass | null) {
   let last = -Infinity;
   let used = false;
@@ -234,7 +234,7 @@ export function ReelsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handleCompleted() {
+  async function completedNow() {
     try {
       // One request covers both jobs the old code needed two round trips for: fresh
       // progress/stars on reels already in the feed, and any reel the completion just
@@ -254,6 +254,12 @@ export function ReelsPage() {
       // feed will resync on next visit
     }
   }
+
+  // The slides are memoised, so what they are handed must stay the same function between renders.
+  const completedRef = useRef(completedNow);
+  completedRef.current = completedNow;
+  const handleCompleted = useCallback(() => completedRef.current(), []);
+  const handleNext = useCallback(() => swiperRef.current?.slideNext(), []);
 
   if (loading) {
     return (
@@ -328,6 +334,9 @@ export function ReelsPage() {
         <Swiper
           key={slides.length}
           direction="vertical"
+          speed={260}
+          threshold={4}
+          longSwipesRatio={0.2}
           loop={loopEnabled}
           initialSlide={current}
           // A reel never has to finish playing before the student can move on — swiping (or
@@ -353,7 +362,7 @@ export function ReelsPage() {
                 muted={muted}
                 onSoundBlocked={handleSoundBlocked}
                 onCompleted={handleCompleted}
-                onNext={() => swiperRef.current?.slideNext()}
+                onNext={handleNext}
                 onVideoFailed={handleVideoFailed}
                 hasNext={loopEnabled}
                 registerActiveControls={registerActiveControls}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RiCalculatorLine, RiAtomLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
@@ -56,7 +56,8 @@ const STILL_WATCHING_LOOP_THRESHOLD = 3;
 // to that cap instead of just closing the loophole it exists for.
 const WATCH_FLUSH_INTERVAL_SECONDS = 10;
 
-export function ReelSlide({
+// memo: a swipe changes only the three slides near it; the rest of a long feed no longer re-render with every swipe or like.
+export const ReelSlide = memo(function ReelSlide({
   data,
   isActive,
   loadVideo = true,
@@ -430,7 +431,7 @@ export function ReelSlide({
               <h2 style={{ flex: 1, minWidth: 0, color: 'white', fontSize: 19, margin: 0, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
               <span
                 className="badge"
-                style={{ flexShrink: 0, background: 'rgba(255,255,255,0.18)', color: 'white', backdropFilter: 'blur(6px)' }}
+                style={{ flexShrink: 0, background: 'rgba(255,255,255,0.22)', color: 'white' /* no backdrop blur: it re-blurs the playing video under it on every frame */ }}
               >
                 {data.subjectKey === 'math' ? (
                   <RiCalculatorLine size={13} />
@@ -612,4 +613,4 @@ export function ReelSlide({
       <LevelUpToast newLevel={levelUpValue} onDismiss={() => setLevelUpValue(null)} />
     </div>
   );
-}
+});
