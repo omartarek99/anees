@@ -31,16 +31,6 @@
   /* the ring and its numbers take the colour of what they count */
   --tone: var(--maroon);
 }
-.dash-stat-icon {
-  flex: none;
-  display: grid;
-  place-items: center;
-  inline-size: 56px;
-  block-size: 56px;
-  border-radius: 50%;
-  color: var(--tone);
-  background: color-mix(in srgb, var(--tone) 22%, transparent);
-}
 .dash-stat-value {
   font-size: 22px;
   font-weight: 800;

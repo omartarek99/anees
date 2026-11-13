@@ -73,7 +73,6 @@ export function AdminMessageModal() {
             style={{ maxWidth: 440 }}
           >
             <div className="text-center">
-              <div style={{ fontSize: 42 }}>✉️</div>
               <h2 style={{ fontSize: 20, marginTop: 6 }}>{t('adminMessage.title')}</h2>
               <p className="muted" style={{ margin: '2px 0 0', fontSize: 13.5 }}>
                 {t('adminMessage.about', { title: pickText(lang, current.reelTitle, current.reelTitleAr) })}

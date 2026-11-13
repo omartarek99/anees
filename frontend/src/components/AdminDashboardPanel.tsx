@@ -2,10 +2,6 @@ import { useEffect, useState } from "react";
 import { AdminLivePanel } from './AdminLivePanel';
 import { Link } from "react-router-dom";
 import {
-  RiGraduationCapFill,
-  RiUserStarFill,
-  RiFilmFill,
-  RiCertificateFill,
   RiMoreFill,
   RiArrowDownSLine,
 } from "@remixicon/react";
@@ -101,25 +97,21 @@ const STATS = [
   {
     key: "students",
     labelKey: "admin.dashStudents",
-    Icon: RiGraduationCapFill,
     color: "var(--viz-5)",
   },
   {
     key: "teachers",
     labelKey: "admin.dashTeachers",
-    Icon: RiUserStarFill,
     color: "var(--viz-4)",
   },
   {
     key: "videos",
     labelKey: "admin.dashVideos",
-    Icon: RiFilmFill,
     color: "var(--viz-1)",
   },
   {
     key: "certificates",
     labelKey: "admin.dashCertificates",
-    Icon: RiCertificateFill,
     color: "var(--viz-5)",
   },
 ] as const;
@@ -186,15 +178,12 @@ export function AdminDashboardPanel({ days }: { days: DashboardPeriod }) {
         )}
 
         <div className="dash-stats dash-wide">
-          {STATS.map(({ key, labelKey, Icon, color }) => (
+          {STATS.map(({ key, labelKey, color }) => (
             <div
               key={key}
               className="card dash-stat"
               style={{ "--tone": color } as React.CSSProperties}
             >
-              <span className="dash-stat-icon" aria-hidden="true">
-                <Icon size={24} />
-              </span>
               <div>
                 <div className="dash-stat-value">
                   {number.format(data.totals[key])}

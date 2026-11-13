@@ -79,7 +79,7 @@
 }
 .dial-dot {
   position: absolute;
-  inset-block-start: 17%;
+  inset-block-start: 9.9%; /* midway between the well (r 13% of the stage) and the knob's rim (r 34%) */
   left: 50%;
   translate: -50% 0;
   inline-size: 11%;

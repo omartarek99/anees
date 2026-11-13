@@ -99,6 +99,13 @@ export const resetPasswordSchema = z.object({
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Write your current password.').max(200),
   newPassword: passwordSchema,
+  // the code emailed by /change-password/code; required for accounts with a real mailbox (Firebase)
+  code: z.string().trim().regex(/^\d{6}$/, 'Write the 6-digit code we sent you.').optional(),
+});
+
+export const changePasswordCodeSchema = z.object({
+  currentPassword: z.string().min(1, 'Write your current password.').max(200),
+  lang: z.enum(['en', 'ar']).optional(),
 });
 
 export const verifyOtpSchema = z.object({

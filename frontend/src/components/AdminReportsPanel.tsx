@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Ico } from './Ico';
-import { RiEyeLine, RiCheckboxCircleLine, RiFileExcel2Line } from '@remixicon/react';
+import { RiFileExcel2Line } from '@remixicon/react';
 import { api } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { formatWatchTime } from '../lib/format';
@@ -245,12 +245,10 @@ function AnalyticsSummaryCard() {
         <h3 style={{ fontSize: 16, marginBottom: 12 }}>{t('admin.analyticsTitle')}</h3>
         <div className="grid-cards" style={{ marginBottom: 16 }}>
           <div className="stat-card stat-card-blue">
-            <span className="stat-card-icon"><RiEyeLine size={16} /></span>
             <div className="stat-card-label">{t('admin.analyticsTotalViewsLabel')}</div>
             <div className="stat-card-value">{summary.totalViews}</div>
           </div>
           <div className="stat-card stat-card-green">
-            <span className="stat-card-icon"><RiCheckboxCircleLine size={16} /></span>
             <div className="stat-card-label">{t('admin.analyticsQuizzesSolvedLabel')}</div>
             <div className="stat-card-value">{summary.quizzesSolved}</div>
           </div>

@@ -175,7 +175,7 @@ export function AdminVideosPanel() {
           />
         </div>
         <button type="button" className="btn btn-primary" onClick={() => setEditing('new')}>
-          ➕ {t('admin.addVideoButton')}
+          {t('admin.addVideoButton')}
         </button>
       </div>
 
@@ -203,7 +203,7 @@ export function AdminVideosPanel() {
               <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
                 <strong>{pickText(lang, reel.title, reel.titleAr)}</strong>
                 <span className="badge" title={t('admin.viewsHint')}>
-                  👁 {t('admin.viewsCount', { n: String(reel.viewCount ?? 0) })}
+                  {t('admin.viewsCount', { n: String(reel.viewCount ?? 0) })}
                 </span>
               </div>
               <p className="muted" style={{ margin: '4px 0', fontSize: 13 }}>
@@ -220,11 +220,11 @@ export function AdminVideosPanel() {
               </p>
               <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setEditing(reel.id)}>
-                  ✏️ {t('admin.editVideoButton')}
+                  {t('admin.editVideoButton')}
                 </button>
                 {reel.authorRole === 'teacher' && (
                   <button type="button" className="btn btn-secondary" onClick={() => setMessaging(reel)}>
-                    ✉️ {t('admin.messageTeacherButton')}
+                    {t('admin.messageTeacherButton')}
                   </button>
                 )}
                 <button type="button" className="btn btn-secondary" onClick={() => handleDelete(reel)}>

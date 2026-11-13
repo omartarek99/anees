@@ -221,7 +221,7 @@ export function AdminUserRow({
         <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
           {u.role === 'teacher' && typeof u.totalViews === 'number' && (
             <span className="badge" title={t('admin.teacherViewsLabel')}>
-              👁 {t('admin.viewsCount', { n: String(u.totalViews) })}
+              {t('admin.viewsCount', { n: String(u.totalViews) })}
             </span>
           )}
           {u.rank !== null && (
@@ -251,7 +251,7 @@ export function AdminUserRow({
           </span>
           {u.warnings.length > 0 && (
             <span className="badge badge-maroon" title={warningName(u.warnings.length, lang)}>
-              ⚠️ {u.warnings.length}
+              {u.warnings.length}
             </span>
           )}
           {u.isBanned && <span className="badge badge-gold">{t('admin.bannedUntil', { date: new Date(u.bannedUntil!).toLocaleDateString(lang === 'ar' ? 'ar' : 'en-US') })}</span>}
@@ -283,8 +283,8 @@ export function AdminUserRow({
             </label>
             <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
               <select value={pointsAction} onChange={(e) => setPointsAction(e.target.value as 'add' | 'remove')} disabled={isSelf} aria-label={t('admin.pointsActionLabel')}>
-                <option value="add">➕ {t('admin.pointsAdd')}</option>
-                <option value="remove">➖ {t('admin.pointsRemove')}</option>
+                <option value="add">{t('admin.pointsAdd')}</option>
+                <option value="remove">{t('admin.pointsRemove')}</option>
               </select>
               <input
                 type="number"

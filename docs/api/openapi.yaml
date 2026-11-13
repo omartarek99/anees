@@ -928,9 +928,38 @@ paths:
   "/api/auth/change-password":
     post:
       tags: ["Auth"]
-      summary: "Change your own password"
-      description: "Change your own password. Accounts that sign in through Firebase (everyone who signed up) have it changed there; local accounts (admin, test accounts) in our own bcrypt column. The current password is always required, and every other session is signed out afterwards. Access: Signed-in users. Requires header X-Requested-With: anees. Body validated by changePasswordSchema (backend/src/lib/schemas.ts or the route file)."
+      summary: "Change password, step 2"
+      description: "Change password, step 2. Accounts that sign in through Firebase (everyone who signed up) need the emailed code and have the password changed there; local accounts (admin, test accounts) in our own bcrypt column. The current password is always required, and every other session is signed out afterwards. Access: Signed-in users. Requires header X-Requested-With: anees. Body validated by changePasswordSchema (backend/src/lib/schemas.ts or the route file)."
       operationId: "postapi_auth_change_password"
+      x-roles: "Signed-in users."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - sessionCookie: []
+          csrfHeader: []
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not signed in
+        '403':
+          description: Signed in with a role that may not use this
+  "/api/auth/change-password/code":
+    post:
+      tags: ["Auth"]
+      summary: "Change password, step 1: check the current password, then email a 6-digit code to the account's address (the s"
+      description: "Change password, step 1: check the current password, then email a 6-digit code to the account's address (the same code kind as \"forgot password\"). Local accounts (admin, test accounts) have made-up addresses and no mailbox: they answer { method: 'none' } and change with the current password alone. Access: Signed-in users. Requires header X-Requested-With: anees. Body validated by changePasswordCodeSchema (backend/src/lib/schemas.ts or the route file)."
+      operationId: "postapi_auth_change_password_code"
       x-roles: "Signed-in users."
       requestBody:
         required: false

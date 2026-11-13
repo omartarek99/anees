@@ -17,6 +17,17 @@ export function ChangePasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [code, setCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false); // a code was emailed: show the code box
+
+  async function resend() {
+    setError(null);
+    try {
+      await api.post('/auth/change-password/code', { currentPassword: current, lang });
+    } catch (err) {
+      setError(translateApiError(lang, err instanceof ApiError ? err.message : 'Something went wrong. Please try again.'));
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -32,11 +43,21 @@ export function ChangePasswordPage() {
     }
     setSubmitting(true);
     try {
-      await api.post('/auth/change-password', { currentPassword: current, newPassword: next });
+      // Step 1 checks the current password and emails a code; accounts without a mailbox (method 'none') skip it.
+      if (!codeSent) {
+        const { method } = await api.post<{ method: 'otp' | 'none' }>('/auth/change-password/code', { currentPassword: current, lang });
+        if (method === 'otp') {
+          setCodeSent(true);
+          return;
+        }
+      }
+      await api.post('/auth/change-password', { currentPassword: current, newPassword: next, ...(codeSent ? { code } : {}) });
       setDone(true);
       setCurrent('');
       setNext('');
       setConfirm('');
+      setCode('');
+      setCodeSent(false);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
       setError(translateApiError(lang, message));
@@ -65,7 +86,10 @@ export function ChangePasswordPage() {
             id="current-password"
             type="password"
             value={current}
-            onChange={(e) => setCurrent(e.target.value)}
+            onChange={(e) => {
+              setCurrent(e.target.value);
+              setCodeSent(false); // a different password needs a fresh check
+            }}
             autoComplete="current-password"
             required
           />
@@ -94,8 +118,32 @@ export function ChangePasswordPage() {
             required
           />
         </div>
-        <button className="btn btn-primary" type="submit" disabled={submitting}>
-          {submitting ? t('profile.changingPassword') : t('profile.changePasswordButton')}
+        {codeSent && (
+          <div className="field">
+            <label htmlFor="change-code">{t('auth.otpLabel')}</label>
+            <input
+              id="change-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              placeholder="000000"
+              dir="ltr"
+              autoFocus
+              required
+              style={{ textAlign: 'center', fontSize: 28, letterSpacing: '0.45em', fontVariantNumeric: 'tabular-nums' }}
+            />
+            <small className="muted">
+              {t('profile.passwordCodeSent')} {t('auth.otpHint')}
+            </small>
+            <button type="button" className="btn btn-ghost" onClick={resend} style={{ width: 'fit-content' }}>
+              {t('auth.otpResend')}
+            </button>
+          </div>
+        )}
+        <button className="btn btn-primary" type="submit" disabled={submitting || (codeSent && code.length !== 6)}>
+          {submitting ? t('profile.changingPassword') : codeSent ? t('profile.changePasswordButton') : t('auth.sendResetCode')}
         </button>
       </form>
     </div>

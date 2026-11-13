@@ -8,7 +8,7 @@ import { moderateText } from '../lib/moderation.js';
 import { validateBody, requireCsrfHeader, handleUpload } from '../middleware/validate.js';
 import { authLimiter } from '../middleware/rateLimit.js';
 import { requireAuth } from '../middleware/auth.js';
-import { googleAuthSchema, completeStudentProfileSchema, completeTeacherProfileSchema, signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema, changePasswordSchema, forgotPasswordSchema, resetPasswordSchema } from '../lib/schemas.js';
+import { googleAuthSchema, completeStudentProfileSchema, completeTeacherProfileSchema, signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema, changePasswordSchema, changePasswordCodeSchema, forgotPasswordSchema, resetPasswordSchema } from '../lib/schemas.js';
 import { getPlayerLevel } from '../lib/xp.js';
 import { earnedAuraRank, getRankTier, getTeacherRankTier, rankDropOf } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
@@ -766,11 +766,49 @@ authRouter.post('/reset-password', authLimiter, requireCsrfHeader, validateBody(
   res.json({ ok: true });
 });
 
-// Change your own password. Accounts that sign in through Firebase (everyone who signed up) have it
-// changed there; local accounts (admin, test accounts) in our own bcrypt column. The current password
-// is always required, and every other session is signed out afterwards.
+// Change password, step 1: check the current password, then email a 6-digit code to the account's address
+// (the same code kind as "forgot password"). Local accounts (admin, test accounts) have made-up addresses
+// and no mailbox: they answer { method: 'none' } and change with the current password alone.
+authRouter.post('/change-password/code', authLimiter, requireCsrfHeader, requireAuth, validateBody(changePasswordCodeSchema), async (req, res) => {
+  const { currentPassword, lang } = req.body as { currentPassword: string; lang?: 'en' | 'ar' };
+  const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!) as any;
+  if (!user) {
+    res.status(404).json({ error: 'We couldn\'t find this account.' });
+    return;
+  }
+  const ok = user.firebase_uid ? (await firebaseSignIn(decrypt(user.email), currentPassword)).ok : await bcrypt.compare(currentPassword, user.password_hash);
+  if (!ok) {
+    res.status(401).json({ error: 'Your current password is wrong. Check it and try again.' });
+    return;
+  }
+  if (!user.firebase_uid) {
+    res.json({ ok: true, method: 'none' });
+    return;
+  }
+  if (!(await otpDeliveryAvailable())) {
+    res.status(503).json({ error: "We couldn't send the code. Wait a little and try again." });
+    return;
+  }
+  const otp = createOtp(user.id, 'reset');
+  if (!otp.ok) {
+    res.status(429).json({ error: otp.reason === 'cooldown' ? 'Wait one minute before asking for another code.' : 'You asked for too many codes. Try again later.' });
+    return;
+  }
+  const sent = await sendResetOtpEmail(decrypt(user.email), otp.code, lang ?? 'ar');
+  if (!sent.ok) {
+    console.error('Sending the password-change code failed:', sent.error);
+    recordIssue('change-password-email', sent.error);
+    res.status(503).json({ error: "We couldn't send the code. Wait a little and try again." });
+    return;
+  }
+  res.json({ ok: true, method: 'otp' });
+});
+
+// Change password, step 2. Accounts that sign in through Firebase (everyone who signed up) need the emailed
+// code and have the password changed there; local accounts (admin, test accounts) in our own bcrypt column.
+// The current password is always required, and every other session is signed out afterwards.
 authRouter.post('/change-password', authLimiter, requireCsrfHeader, requireAuth, validateBody(changePasswordSchema), async (req, res) => {
-  const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
+  const { currentPassword, newPassword, code } = req.body as { currentPassword: string; newPassword: string; code?: string };
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!) as any;
   if (!user) {
     res.status(404).json({ error: 'We couldn\'t find this account.' });
@@ -786,6 +824,17 @@ authRouter.post('/change-password', authLimiter, requireCsrfHeader, requireAuth,
   }
 
   if (user.firebase_uid) {
+    if (!code) {
+      res.status(400).json({ error: 'Write the 6-digit code we sent you.' });
+      return;
+    }
+    const check = verifyOtp(user.id, code, 'reset');
+    if (check !== 'ok') {
+      res.status(check === 'locked' ? 429 : 400).json({
+        error: check === 'invalid' ? 'The code is wrong. Check it and try again.' : check === 'expired' ? 'This code has expired. Ask for a new code.' : 'Too many wrong codes. Ask for a new code.',
+      });
+      return;
+    }
     const signIn = await firebaseSignIn(decrypt(user.email), currentPassword);
     if (!signIn.ok) {
       res.status(401).json({ error: 'Your current password is wrong. Check it and try again.' });
@@ -798,6 +847,7 @@ authRouter.post('/change-password', authLimiter, requireCsrfHeader, requireAuth,
       res.status(500).json({ error: "We couldn't change your password. Wait a little and try again." });
       return;
     }
+    clearOtp(user.id, 'reset');
   } else {
     if (!(await bcrypt.compare(currentPassword, user.password_hash))) {
       res.status(401).json({ error: 'Your current password is wrong. Check it and try again.' });
