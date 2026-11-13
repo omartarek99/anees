@@ -4,7 +4,7 @@ import { useLanguage } from '../lib/language-context';
 
 type Status = { active: boolean; windowId: string; secondsRemaining: number; secondsUntilNext: number };
 
-const POLL_INTERVAL_MS = 15000;
+const POLL_INTERVAL_MS = 60000; // it was 15 s: a double-points window lasts minutes and the countdown runs on the page, so a minute is plenty
 
 function formatCountdown(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);

@@ -1,44 +1,105 @@
 {
-  "startedAt": "2026-11-13T21:04:13.525Z",
+  "startedAt": "2026-11-13T21:42:09.007Z",
   "healthBaseline": {
-    "median": 250,
-    "p95": 329
+    "median": 258,
+    "p95": 871
   },
   "oneLogin": [
     {
       "status": 401,
-      "ms": 2404
+      "ms": 2304
     },
     {
       "status": 401,
-      "ms": 2797
+      "ms": 2385
     },
     {
       "status": 401,
-      "ms": 2297
+      "ms": 2488
     }
   ],
   "rush": {
     "logins": 6,
-    "allDoneInMs": 13429,
+    "allDoneInMs": 13549,
     "loginMs": [
-      5029,
-      9095,
-      9230,
-      13428,
-      13428,
-      4519
+      4664,
+      13241,
+      9747,
+      13547,
+      5460,
+      9049
     ],
     "statuses": [
       401
     ],
-    "pingsDuring": 21,
+    "pingsDuring": 22,
     "healthMedianDuring": 405,
-    "healthSlowestDuring": 1321
+    "healthSlowestDuring": 1667
   },
   "estimate": {
-    "secondsPerLoginOnTheServer": 2.24,
-    "a250LoginRushWouldTakeSeconds": 560
+    "secondsPerLoginOnTheServer": 2.26,
+    "a250LoginRushWouldTakeSeconds": 565
   },
-  "finishedAt": "2026-11-13T21:04:44.055Z"
+  "stages": [
+    {
+      "users": 100,
+      "requests": 4995,
+      "perSecond": 416,
+      "ok": 4995,
+      "tooMany429": 0,
+      "failed": 0,
+      "failedKinds": [],
+      "p50": 196,
+      "p95": 535,
+      "p99": 605,
+      "max": 705
+    },
+    {
+      "users": 250,
+      "requests": 5776,
+      "perSecond": 481,
+      "ok": 5776,
+      "tooMany429": 0,
+      "failed": 0,
+      "failedKinds": [],
+      "p50": 599,
+      "p95": 999,
+      "p99": 1203,
+      "max": 1468
+    },
+    {
+      "users": 500,
+      "requests": 6157,
+      "perSecond": 513,
+      "ok": 6157,
+      "tooMany429": 0,
+      "failed": 0,
+      "failedKinds": [],
+      "p50": 701,
+      "p95": 1993,
+      "p99": 2095,
+      "max": 2207
+    },
+    {
+      "users": 1000,
+      "requests": 8276,
+      "perSecond": 690,
+      "ok": 8276,
+      "tooMany429": 0,
+      "failed": 0,
+      "failedKinds": [],
+      "p50": 787,
+      "p95": 12017,
+      "p99": 12405,
+      "max": 13803
+    }
+  ],
+  "stoppedBecause": "stopped after the 1000-user stage: 0.0% failed, p95 12017 ms",
+  "recovery": {
+    "ok": 10,
+    "of": 10,
+    "medianMs": 299,
+    "slowestMs": 312
+  },
+  "finishedAt": "2026-11-13T21:43:58.830Z"
 }

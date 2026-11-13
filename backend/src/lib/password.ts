@@ -4,10 +4,10 @@ import { z } from 'zod';
 // password hashed by Firebase (users.password_hash stays ''); only local accounts (admin, test accounts) keep a
 // bcrypt hash of their own, and a database trigger (schema.sql) refuses anything else in that column.
 
-/** bcrypt work factor for every hash we create (OWASP's floor is 10; this is only paid on a local account's login). It was 12, which takes
- *  about 2.3 s on the free Render plan and made a login rush take minutes; 10 is about a quarter of that. A local account's older, slower hash
- *  keeps working and is re-saved at this cost the next time its owner logs in (routes/auth.ts). */
-export const BCRYPT_COST = 10;
+/** bcrypt work factor for every hash we create (OWASP's floor is 10; this is only paid on a local account's login). Kept at 12 on purpose: it takes
+ *  about 2.3 s on the free Render plan, so a login rush of local accounts is slow, but a stolen database is harder to crack. 10 would be about
+ *  4 times faster (tried and put back). A hash made with a higher cost is re-saved at this one on login (routes/auth.ts). */
+export const BCRYPT_COST = 12;
 
 const PASSWORD_MIN = 8;
 const PASSWORD_MAX_BYTES = 72; // bcrypt ignores everything after 72 bytes, so a longer password would be only partly checked

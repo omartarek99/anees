@@ -1,9 +1,10 @@
 import { asyncRouter } from '../lib/asyncRouter.js';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import type { Request, Response } from 'express';
 import multer from 'multer';
 import { db } from '../db/db.js';
-import { createSession, destroySession, SESSION_COOKIE } from '../lib/session.js';
+import { createSession, destroySession, getUserIdForToken, SESSION_COOKIE } from '../lib/session.js';
 import { moderateText } from '../lib/moderation.js';
 import { validateBody, requireCsrfHeader, handleUpload } from '../middleware/validate.js';
 import { authLimiter, loginAccountLimiter, loginIpLimiter } from '../middleware/rateLimit.js';
@@ -894,13 +895,25 @@ authRouter.post('/logout', requireCsrfHeader, (req, res) => {
   res.json({ ok: true });
 });
 
-authRouter.get('/me', requireAuth, (req, res) => {
+const sendMe = (req: Request, res: Response) => {
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!);
   if (!user) {
     res.status(404).json({ error: 'We couldn\'t find this user.' });
     return;
   }
   res.json({ user: publicUser(user) });
+};
+
+authRouter.get('/me', requireAuth, sendMe);
+
+// The same as /me, but a visitor who is not logged in gets a normal answer ({ user: null }) instead of a 401. The app asks this on every first
+// load, and a 401 there showed up as a red error in the browser console of every logged-out visitor (it was not a fault, just noise).
+authRouter.get('/session', (req, res, next) => {
+  if (!getUserIdForToken(req.cookies?.[SESSION_COOKIE])) {
+    res.json({ user: null });
+    return;
+  }
+  requireAuth(req, res, () => sendMe(req, res));
 });
 
 // The account owner clears their own warning once they've seen it (e.g. dismissing the

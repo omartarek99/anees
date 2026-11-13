@@ -4,7 +4,7 @@
 // It never logs in, never creates an account and never writes anything: sign-up sends real emails and uses the Firebase / Resend quotas,
 // and real passwords must not be typed by a script. The logged-in flows are measured on a local copy (full-250.js).
 //
-// Safety: stages ramp 10 -> 50 -> 100 -> 250 visitors, and the whole run stops by itself if a stage fails too much.
+// Safety: stages ramp 10 -> 50 -> 100 -> 250 -> 500 -> 1000 visitors, and the whole run stops by itself if a stage fails too much.
 //   node loadtest/prod-visitors.mjs [https://anees-qa.site]
 import { writeFileSync } from 'node:fs';
 
@@ -14,6 +14,8 @@ const STAGES = [
   { visitors: 50, seconds: 20 },
   { visitors: 100, seconds: 20 },
   { visitors: 250, seconds: 30 },
+  { visitors: 500, seconds: 30 },
+  { visitors: 1000, seconds: 30 },
 ];
 const ABORT_ERROR_RATE = 0.25; // stop the run when more than 25% of a stage's requests fail (5xx / no answer)
 const ABORT_P95_MS = 20000;

@@ -11,7 +11,7 @@ const findAuthUser = db.prepare(`SELECT role, is_active, banned_until, profile_c
 
 // A Google sign-up that has not finished its profile step (lib/googleAuth.ts) may only do these -- a teacher in particular must not reach anything
 // before their ID has been checked.
-const ALLOWED_WHILE_INCOMPLETE = new Set(['/api/auth/me', '/api/auth/logout', '/api/auth/complete-profile', '/api/auth/dismiss-warning']);
+const ALLOWED_WHILE_INCOMPLETE = new Set(['/api/auth/me', '/api/auth/session', '/api/auth/logout', '/api/auth/complete-profile', '/api/auth/dismiss-warning']);
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies?.[SESSION_COOKIE] as string | undefined;

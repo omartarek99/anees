@@ -40,6 +40,10 @@ const SCENARIOS = {
   live300: {
     students: { executor: 'ramping-vus', exec: 'student', startVUs: 0, stages: [{ duration: '30s', target: 300 }, { duration: '2m', target: 300 }, { duration: '20s', target: 0 }], gracefulRampDown: '20s' },
   },
+  // the real site, students only, climbing in steps to find where it breaks: 300 -> 500 -> 750 -> 1000 students (all use ONE test student's login). Stops by itself after 300 server errors.
+  live1000: {
+    students: { executor: 'ramping-vus', exec: 'student', startVUs: 0, stages: [{ duration: '30s', target: 300 }, { duration: '1m', target: 300 }, { duration: '20s', target: 500 }, { duration: '1m', target: 500 }, { duration: '20s', target: 750 }, { duration: '1m', target: 750 }, { duration: '20s', target: 1000 }, { duration: '1m', target: 1000 }, { duration: '20s', target: 0 }], gracefulRampDown: '20s' },
+  },
   // the real site, first look: 10 students + 2 teachers for 60 s (run this before live250)
   'live-smoke': {
     students: { executor: 'constant-vus', exec: 'student', vus: 10, duration: '60s' },
@@ -62,6 +66,7 @@ const NAMES = [
 const thresholds = {};
 for (const n of NAMES) thresholds[`http_req_duration{name:${n}}`] = ['p(95)<600000']; // never fails: only here so the summary lists each call
 thresholds['app_failures'] = SHARED ? [{ threshold: 'count<300', abortOnFail: true, delayAbortEval: '20s' }] : ['count<100000']; // on the real site the run stops itself after 300 server errors
+for (const s of ['400', '401', '403', '404', '409', '422', '429']) thresholds[`unexpected_4xx{status:${s}}`] = ['count>=0']; // which status the unexpected 4xx were, listed in the summary
 for (const n of NAMES) {
   thresholds[`http_reqs{name:${n}}`] = ['count>=0'];
   thresholds[`app_failures{name:${n}}`] = ['count>=0'];
@@ -115,7 +120,7 @@ export function setup() {
     if (r.status !== 200 || !c) throw new Error('Login as "' + user + '" failed (' + r.status + '). Check the username and password (the password you typed has ' + String(pass || '').length + ' characters). The k6 run stops here; nothing else was sent.');
     return c.value;
   };
-  return { student: one(__ENV.TEST_STUDENT, __ENV.TEST_STUDENT_PASS), teacher: PROFILE === 'live300' ? null : one(__ENV.TEST_TEACHER, __ENV.TEST_TEACHER_PASS) };
+  return { student: one(__ENV.TEST_STUDENT, __ENV.TEST_STUDENT_PASS), teacher: PROFILE === 'live300' || PROFILE === 'live1000' ? null : one(__ENV.TEST_TEACHER, __ENV.TEST_TEACHER_PASS) };
 }
 
 let loggedIn = false;

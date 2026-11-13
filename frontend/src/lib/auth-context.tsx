@@ -96,7 +96,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       setLoading(true);
       try {
-        const data = await api.get<{ user: User }>('/auth/me');
+        // /auth/session answers a visitor who is not logged in with { user: null } (no red 401 in the console). An older server that does not
+        // have it yet answers 404, and then the old /auth/me is used, so the two parts can be put live in either order.
+        let data: { user: User | null };
+        try {
+          data = await api.get<{ user: User | null }>('/auth/session');
+        } catch (e) {
+          if (!(e instanceof ApiError) || e.status !== 404) throw e;
+          data = await api.get<{ user: User }>('/auth/me');
+        }
+        if (!data.user) throw new ApiError('Please log in to continue.', 401);
         setUser(data.user);
       } catch (err) {
         if (!(err instanceof ApiError) || err.status !== 401) {

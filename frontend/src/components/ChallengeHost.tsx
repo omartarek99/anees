@@ -78,7 +78,8 @@ export function ChallengeHost() {
   useEffect(() => {
     poll();
     const fast = ch !== null && (ch.status === 'pending' || ch.status === 'active');
-    const every = document.hidden ? 15_000 : fast ? 2_000 : 6_000;
+    // idle: every 12 s (it was 6 s -- with hundreds of students online that background question was a steady load on the server)
+    const every = document.hidden ? 30_000 : fast ? 2_000 : 12_000;
     const id = window.setInterval(poll, every);
     const onEvent = () => poll();
     window.addEventListener(CHALLENGE_EVENT, onEvent);
