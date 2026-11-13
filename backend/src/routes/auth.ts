@@ -6,7 +6,8 @@ import { db } from '../db/db.js';
 import { createSession, destroySession, SESSION_COOKIE } from '../lib/session.js';
 import { moderateText } from '../lib/moderation.js';
 import { validateBody, requireCsrfHeader, handleUpload } from '../middleware/validate.js';
-import { authLimiter } from '../middleware/rateLimit.js';
+import { authLimiter, loginAccountLimiter, loginIpLimiter } from '../middleware/rateLimit.js';
+import { comparePassword, hashPassword, PasswordBusyError } from '../lib/passwordQueue.js';
 import { requireAuth } from '../middleware/auth.js';
 import { googleAuthSchema, completeStudentProfileSchema, completeTeacherProfileSchema, signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema, changePasswordSchema, changePasswordCodeSchema, forgotPasswordSchema, resetPasswordSchema } from '../lib/schemas.js';
 import { getPlayerLevel } from '../lib/xp.js';
@@ -74,6 +75,8 @@ const WRONG_CREDENTIALS_ERRORS = new Set(['EMAIL_NOT_FOUND', 'INVALID_PASSWORD',
 
 // See its one use in /login below -- a fixed hash to burn bcrypt time against when no
 // account exists at all, so that path can't be timed apart from a real wrong-password check.
+// when too many people are logging in at the same moment (lib/passwordQueue.ts)
+const BUSY = { ok: false as const, status: 503, body: { error: 'The site is busy right now. Wait one minute and try again.' } };
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync('anees-timing-safety-placeholder', BCRYPT_COST);
 
 function publicUser(user: any) {
@@ -293,7 +296,12 @@ async function authenticate(username: string, password: string): Promise<{ ok: t
     // enumeration despite the identical error text. DUMMY_PASSWORD_HASH is precomputed once
     // at module load (bcrypt.compare itself does the expensive part) purely to burn
     // roughly the same time as the real compare on the path below.
-    await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
+    try {
+      await comparePassword(password, DUMMY_PASSWORD_HASH);
+    } catch (e) {
+      if (e instanceof PasswordBusyError) return BUSY;
+      throw e;
+    }
     return wrong;
   }
 
@@ -307,7 +315,13 @@ async function authenticate(username: string, password: string): Promise<{ ok: t
 
   if (!user.firebase_uid) {
     // Seed/legacy account — untouched bcrypt check, keeps the zero-config demo working.
-    const ok = await bcrypt.compare(password, user.password_hash);
+    let ok = false;
+    try {
+      ok = await comparePassword(password, user.password_hash);
+    } catch (e) {
+      if (e instanceof PasswordBusyError) return BUSY;
+      throw e;
+    }
     if (!ok) return wrong;
     if (!user.email_verified) {
       return { ok: false, status: 403, body: { error: 'Confirm your email first. We sent you a message with the steps.' } };
@@ -342,7 +356,7 @@ async function authenticate(username: string, password: string): Promise<{ ok: t
   return { ok: true, user: db.prepare(`SELECT * FROM users WHERE id = ?`).get(user.id) };
 }
 
-authRouter.post('/login', authLimiter, requireCsrfHeader, validateBody(loginSchema), async (req, res) => {
+authRouter.post('/login', loginIpLimiter, loginAccountLimiter, requireCsrfHeader, validateBody(loginSchema), async (req, res) => {
   const { username, password } = req.body;
   const result = await authenticate(username, password);
   if (!result.ok) {
@@ -776,7 +790,7 @@ authRouter.post('/change-password/code', authLimiter, requireCsrfHeader, require
     res.status(404).json({ error: 'We couldn\'t find this account.' });
     return;
   }
-  const ok = user.firebase_uid ? (await firebaseSignIn(decrypt(user.email), currentPassword)).ok : await bcrypt.compare(currentPassword, user.password_hash);
+  const ok = user.firebase_uid ? (await firebaseSignIn(decrypt(user.email), currentPassword)).ok : await comparePassword(currentPassword, user.password_hash);
   if (!ok) {
     res.status(401).json({ error: 'Your current password is wrong. Check it and try again.' });
     return;
@@ -849,11 +863,11 @@ authRouter.post('/change-password', authLimiter, requireCsrfHeader, requireAuth,
     }
     clearOtp(user.id, 'reset');
   } else {
-    if (!(await bcrypt.compare(currentPassword, user.password_hash))) {
+    if (!(await comparePassword(currentPassword, user.password_hash))) {
       res.status(401).json({ error: 'Your current password is wrong. Check it and try again.' });
       return;
     }
-    db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(await bcrypt.hash(newPassword, BCRYPT_COST), user.id);
+    db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(await hashPassword(newPassword, BCRYPT_COST), user.id);
   }
 
   // Sign every other device out, keep this one logged in with a fresh session.

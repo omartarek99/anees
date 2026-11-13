@@ -485,10 +485,11 @@ worksheetsRouter.post('/:id/submit', requireRole('student'), requireCsrfHeader, 
   const { results, correctCount, wrongCount } = gradeAnswers(questions, answers);
 
   const xpPerCorrect = WORKSHEET_XP_PER_CORRECT[attempt.difficulty as 'easy' | 'medium' | 'hard'];
-  const xpEarned = correctCount * xpPerCorrect;
+  const xpOffered = correctCount * xpPerCorrect;
   // wrong answers are charged first, so only the net of this submission can move a rank (see lib/xp.ts)
   const xpLost = penalizeWrongAnswers(req.userId!, wrongCount);
-  if (xpEarned > 0) awardXp(req.userId!, xpEarned, `worksheet_${attempt.difficulty}`);
+  // what was really paid (the daily cap in lib/xp.ts can pay less than offered), so the screen never shows points that were not given
+  const xpEarned = xpOffered > 0 ? awardXp(req.userId!, xpOffered, `worksheet_${attempt.difficulty}`) : 0;
 
   db.prepare(
     `UPDATE worksheet_attempts SET score = ?, xp_earned = ?, answers_json = ?, status = 'submitted' WHERE id = ?`

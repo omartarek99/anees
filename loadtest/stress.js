@@ -164,7 +164,6 @@ export default function (data) {
     sleep(Math.random() + 0.3);
     get('/api/leaderboard', 'GET /api/leaderboard', data, leaderboardTime);
     sleep(Math.random() + 0.3);
-    get('/api/news', 'GET /api/news', data);
   });
 
   if (WRITES) {

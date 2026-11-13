@@ -1,0 +1,146 @@
+{
+  "rateLimit_site": [
+    {
+      "status": 200,
+      "limit": "20000",
+      "remaining": "19999",
+      "reset": "60",
+      "policy": "20000;w=60"
+    },
+    {
+      "status": 200,
+      "limit": "20000",
+      "remaining": "19999",
+      "reset": "60",
+      "policy": "20000;w=60"
+    },
+    {
+      "status": 200,
+      "limit": "20000",
+      "remaining": "19999",
+      "reset": "60",
+      "policy": "20000;w=60"
+    },
+    {
+      "status": 200,
+      "limit": "20000",
+      "remaining": "19999",
+      "reset": "60",
+      "policy": "20000;w=60"
+    }
+  ],
+  "rateLimit_render": [
+    {
+      "status": 200,
+      "limit": "20000",
+      "remaining": "19999",
+      "reset": "60",
+      "policy": "20000;w=60"
+    },
+    {
+      "status": 200,
+      "limit": "20000",
+      "remaining": "19998",
+      "reset": "60",
+      "policy": "20000;w=60"
+    },
+    {
+      "status": 200,
+      "limit": "20000",
+      "remaining": "19997",
+      "reset": "60",
+      "policy": "20000;w=60"
+    },
+    {
+      "status": 200,
+      "limit": "20000",
+      "remaining": "19996",
+      "reset": "60",
+      "policy": "20000;w=60"
+    }
+  ],
+  "latency_site": {
+    "min": 273,
+    "median": 336,
+    "p95": 680,
+    "max": 680,
+    "avg": 358
+  },
+  "latency_render": {
+    "min": 198,
+    "median": 225,
+    "p95": 310,
+    "max": 310,
+    "avg": 246
+  },
+  "renderHeaders": {
+    "server": "cloudflare",
+    "x-render-origin-server": "Render",
+    "rndr-id": "31440d98-f368-40b6",
+    "cf-ray": "a59facc4db23ed11-DOH",
+    "content-type": "application/json; charset=utf-8",
+    "content-encoding": "br"
+  },
+  "siteApiHeaders": {
+    "server": "cloudflare",
+    "cf-ray": "a59facc6ed70e0c8-DOH",
+    "x-vercel-id": "bom1::6r29z-1794592815215-27a725193a3d",
+    "x-vercel-cache": "MISS",
+    "content-encoding": "br",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
+    "referrer-policy": "no-referrer"
+  },
+  "homeHeaders": {
+    "server": "cloudflare",
+    "x-vercel-cache": "HIT",
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-encoding": "br",
+    "strict-transport-security": "max-age=63072000",
+    "age": "19143"
+  },
+  "homeBytes": 7808,
+  "mainScript": {
+    "path": "/assets/index-CiiVmVZh.js",
+    "status": 200,
+    "bytesDownloaded": 430047,
+    "ms": 46,
+    "content-encoding": "br",
+    "cache-control": "public, max-age=31536000, immutable"
+  },
+  "missingAsset": {
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "startsWith": "<!doctype html>\r\n<html lang=\"en\">\r\n  <he"
+  },
+  "missingPage": {
+    "status": 200,
+    "contentType": "text/html; charset=utf-8"
+  },
+  "apiNews": {
+    "status": 404,
+    "body": "{\"error\":\"We couldn't find what you asked for.\"}"
+  },
+  "httpToHttps": {
+    "status": 308,
+    "location": "https://anees-qa.site/"
+  },
+  "anonymous /api/auth/me": {
+    "status": 401,
+    "body": "{\"error\":\"Please log in to continue.\"}"
+  },
+  "anonymous /api/reels/feed": {
+    "status": 401,
+    "body": "{\"error\":\"Please log in to continue.\"}"
+  },
+  "anonymous /api/admin/users": {
+    "status": 401,
+    "body": "{\"error\":\"Please log in to continue.\"}"
+  },
+  "anonymous /api/users/me": {
+    "status": 401,
+    "body": "{\"error\":\"Please log in to continue.\"}"
+  },
+  "checkedAt": "2026-11-13T18:00:16.455Z"
+}

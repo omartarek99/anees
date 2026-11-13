@@ -19,15 +19,15 @@ const TEACHERS = 50;
 const LESSONS = 16;
 const pad = (n: number, w: number) => String(n).padStart(w, '0');
 
-function clean() {
+async function clean() {
   const users = db.prepare(`SELECT id FROM users WHERE username LIKE 'lt\\_%' ESCAPE '\\'`).all() as { id: number }[];
-  for (const u of users) deleteUserById(u.id);
+  for (const u of users) await deleteUserById(u.id); // it is async: wait, or the new accounts below collide with the old ones
   db.prepare(`DELETE FROM reels WHERE title LIKE 'LT lesson %'`).run();
   console.log(`removed ${users.length} test accounts and the test lessons`);
 }
 
-function seed() {
-  clean();
+async function seed() {
+  await clean();
   // bcrypt cost 12, same as the real accounts, so the login cost is realistic (computed once, shared by every test account)
   const hash = bcrypt.hashSync(PASSWORD, 12);
   const insertUser = db.prepare(
@@ -43,6 +43,8 @@ function seed() {
     const info = insertUser.run(username, encrypt(email), hashForLookup(email), hash, `Load Student ${i}`, 'owl', (i * 37) % 900, 0, 'student', grade, `Load School ${(i % 12) + 1}`, null);
     ids.s.push(Number(info.lastInsertRowid));
   }
+  // one extra student for the daily-cap check (loadtest/verify-cap.mjs)
+  insertUser.run('lt_cap01', encrypt('lt_cap01@loadtest.local'), hashForLookup('lt_cap01@loadtest.local'), hash, 'Cap test', 'owl', 0, 0, 'student', 5, 'Load School 1', null);
   const subjects = ['math', 'science', 'arabic', 'english'];
   for (let i = 1; i <= TEACHERS; i++) {
     const username = `lt_t${pad(i, 2)}`;
@@ -71,6 +73,6 @@ function seed() {
 }
 
 const cmd = process.argv[2];
-if (cmd === 'seed') seed();
-else if (cmd === 'clean') clean();
+if (cmd === 'seed') await seed();
+else if (cmd === 'clean') await clean();
 else console.log('usage: tsx scripts/loadtest-seed.ts seed|clean');

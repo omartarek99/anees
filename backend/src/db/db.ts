@@ -85,6 +85,11 @@ if (!userCols.some((c) => c.name === 'id_document_path')) {
 if (!userCols.some((c) => c.name === 'firebase_uid')) {
   db.exec(`ALTER TABLE users ADD COLUMN firebase_uid TEXT`);
 }
+// When a lesson's quiz last paid this student points (routes/reels.ts): the same quiz pays again only after a day, so repeating it cannot farm points.
+const progressCols = db.prepare(`PRAGMA table_info(reel_watch_progress)`).all() as { name: string }[];
+if (!progressCols.some((c) => c.name === 'quiz_paid_at')) {
+  db.exec(`ALTER TABLE reel_watch_progress ADD COLUMN quiz_paid_at TEXT`);
+}
 // The last time the account did anything on the site (written at most once a minute, see middleware/auth.ts): the admin "online now" panel and "last active" read it.
 if (!userCols.some((c) => c.name === 'last_seen_at')) {
   db.exec(`ALTER TABLE users ADD COLUMN last_seen_at TEXT`);

@@ -109,8 +109,7 @@ craftRouter.post('/puzzle/:puzzleId/answer', requireCsrfHeader, validateBody(ans
 
   const { choice } = req.body as { choice: number };
   const correct = choice === pending.answer;
-  const xpEarned = correct ? CRAFT_PUZZLE_XP_BY_TIER[pending.tier - 1] : 0;
-  if (correct) awardXp(req.userId!, xpEarned, 'craft_puzzle');
+  const xpEarned = correct ? awardXp(req.userId!, CRAFT_PUZZLE_XP_BY_TIER[pending.tier - 1], 'craft_puzzle') : 0; // what was really paid
   const xpLost = correct ? 0 : penalizeWrongAnswers(req.userId!, 1);
 
   res.json({ correct, correctAnswer: pending.answer, xpEarned, xpLost });

@@ -38,7 +38,7 @@ reelsRouter.get('/feed', (req, res) => {
   // every teacher -- the same full library a student is shown, not just the ones they uploaded.
   const user = db.prepare(`SELECT grade, role FROM users WHERE id = ?`).get(req.userId!) as { grade: number | null; role: string };
   const scope =
-    user?.role === 'teacher' ? { where: `r.grade IS NOT NULL`, params: [] as number[] } : user?.grade ? { where: `r.grade = ?`, params: [user.grade] } : null;
+    user?.role === 'teacher' ? { where: `r.grade IS NOT NULL AND r.video_url IS NOT NULL`, params: [] as number[] } : user?.grade ? { where: `r.grade = ? AND r.video_url IS NOT NULL`, params: [user.grade] } : null;
   if (!scope) {
     res.json([]);
     return;
@@ -150,7 +150,7 @@ const watchSchema = z.object({
 reelsRouter.post('/:reelId/watch', requireCsrfHeader, validateBody(watchSchema), (req, res) => {
   const reelId = Number(req.params.reelId);
   const reel = visibleReel(req.userId!, reelId);
-  if (!reel) {
+  if (!reel || !reel.video_url) {
     res.status(404).json({ error: 'We couldn\'t find this lesson. It may have been deleted.' });
     return;
   }
@@ -226,7 +226,7 @@ const submitSchema = z.object({
 reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema), (req, res) => {
   const reelId = Number(req.params.reelId);
   const reel = visibleReel(req.userId!, reelId);
-  if (!reel) {
+  if (!reel || !reel.video_url) {
     res.status(404).json({ error: 'We couldn\'t find this lesson. It may have been deleted.' });
     return;
   }
@@ -250,21 +250,26 @@ reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema
   const watchRow = db.prepare(`SELECT * FROM reel_watch_progress WHERE user_id = ? AND reel_id = ?`).get(req.userId!, reelId) as any;
 
   const levelBeforeXp = getPlayerLevel(req.userId!);
+  // A lesson's quiz pays (and charges for wrong answers) once a day: sending it again the same day shows the result but moves no points, so repeating
+  // one request cannot farm points. A lesson with no questions pays nothing at all.
+  const paidRecently = !!watchRow?.quiz_paid_at && (db.prepare(`SELECT ? >= datetime('now', '-1 day') AS recent`).get(watchRow.quiz_paid_at) as { recent: number }).recent === 1;
+  const pays = total > 0 && !paidRecently;
   // wrong answers are charged first, so only the net of this submission can move a rank (see lib/xp.ts)
-  const xpLost = penalizeWrongAnswers(req.userId!, wrongCount);
+  const xpLost = pays ? penalizeWrongAnswers(req.userId!, wrongCount) : 0;
   // what was actually paid: nothing for a teacher (lib/xp.ts awardXp)
-  const xpEarned = awardXp(req.userId!, doublePoints.active ? basePoints * DOUBLE_POINTS_MULTIPLIER : basePoints, 'reel_quiz');
+  const xpEarned = pays ? awardXp(req.userId!, doublePoints.active ? basePoints * DOUBLE_POINTS_MULTIPLIER : basePoints, 'reel_quiz') : 0;
 
   // passed_quiz is sticky -- once a reel has been passed at >=50%, a later poor retry
   // (e.g. reviewing the lesson again) never revokes that.
   const passedQuiz = passedThisAttempt || !!watchRow?.passed_quiz;
   if (watchRow) {
-    db.prepare(`UPDATE reel_watch_progress SET quiz_completed = 1, passed_quiz = ? WHERE id = ?`).run(passedQuiz ? 1 : 0, watchRow.id);
+    db.prepare(`UPDATE reel_watch_progress SET quiz_completed = 1, passed_quiz = ?, quiz_paid_at = CASE WHEN ? THEN datetime('now') ELSE quiz_paid_at END WHERE id = ?`).run(passedQuiz ? 1 : 0, pays ? 1 : 0, watchRow.id);
   } else {
-    db.prepare(`INSERT INTO reel_watch_progress (user_id, reel_id, quiz_completed, passed_quiz) VALUES (?,?,1,?)`).run(
+    db.prepare(`INSERT INTO reel_watch_progress (user_id, reel_id, quiz_completed, passed_quiz, quiz_paid_at) VALUES (?,?,1,?, CASE WHEN ? THEN datetime('now') ELSE NULL END)`).run(
       req.userId!,
       reelId,
-      passedQuiz ? 1 : 0
+      passedQuiz ? 1 : 0,
+      pays ? 1 : 0
     );
   }
 
@@ -275,6 +280,8 @@ reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema
     total,
     xpEarned,
     xpLost,
+    // true when this lesson's quiz already paid today (the result is shown, no points move)
+    repeated: total > 0 && paidRecently,
     stars,
     doublePointsActive: doublePoints.active,
     leveledUp: levelAfterXp > levelBeforeXp,

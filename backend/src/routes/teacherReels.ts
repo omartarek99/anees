@@ -386,6 +386,11 @@ teacherReelsRouter.post(
 
     const placeholderLevel = validateReelBody(res, body);
     if (!placeholderLevel) return;
+    // the form requires a question; the server requires it too (a lesson with none paid points for nothing and is useless to students)
+    if (!body.questions || body.questions.length < 1) {
+      res.status(400).json({ error: 'Add at least one question before saving the lesson.' });
+      return;
+    }
 
     const reelId = Number(
       db

@@ -2743,6 +2743,7 @@ const apiErrorMap: Record<string, string> = {
   "Only students have a class (grade).": "الصف للطلاب فقط.",
   "Only teachers have a subject.": "المادة للمعلمين فقط.",
   "Admin accounts have no school.": "حسابات المسؤولين ليس لها مدرسة.",
+  "Add at least one question before saving the lesson.": "أضف سؤالًا واحدًا على الأقل قبل حفظ الدرس.",
 };
 
 /** Picks the Arabic variant of a bilingual content field when in Arabic mode (falls back to English if missing). */

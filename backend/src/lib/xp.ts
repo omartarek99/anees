@@ -89,9 +89,19 @@ export function penalizePoints(userId: number, amount: number, reason: string): 
 
 /** Pays a student `amount` points and returns what was paid. Only students earn XP: a teacher makes the content and climbs their own ladder (teacher
  *  points, below) and an admin does not play, so a teacher watching a reel or taking its quiz simply earns nothing -- every point source routes through here. */
+// A safety net on top of every gameplay payout: one student can earn at most DAILY_XP_CAP points in a day (UTC). Real play stays far below it; a script
+// repeating a request does not. DAILY_XP_CAP=0 switches it off. Admin changes and penalties are not payouts and are never capped.
+const DAILY_XP_CAP = Number.isInteger(Number(process.env.DAILY_XP_CAP)) && process.env.DAILY_XP_CAP !== '' ? Number(process.env.DAILY_XP_CAP) : 1500;
+const earnedToday = db.prepare(`SELECT COALESCE(SUM(amount), 0) AS n FROM xp_events WHERE user_id = ? AND amount > 0 AND created_at >= date('now')`);
+
 export function awardXp(userId: number, amount: number, reason: string): number {
   if (amount === 0) return 0;
   if ((roleAndXp.get(userId) as { role: string } | undefined)?.role !== 'student') return 0;
+  if (amount > 0 && DAILY_XP_CAP > 0) {
+    const today = (earnedToday.get(userId) as { n: number }).n;
+    amount = Math.min(amount, Math.max(0, DAILY_XP_CAP - today));
+    if (amount === 0) return 0;
+  }
   logXp.run(userId, amount, reason);
   addXp.run(amount, userId);
   issueRankCertificates(userId);

@@ -108,7 +108,7 @@ export function setup() {
   const one = (user, pass) => {
     const r = http.post(BASE + '/api/auth/login', JSON.stringify({ username: user, password: pass }), { headers: JSON_H });
     const c = r.cookies.anees_session && r.cookies.anees_session[0];
-    if (r.status !== 200 || !c) throw new Error('Login as ' + user + ' failed (' + r.status + '): ' + String(r.body).slice(0, 120));
+    if (r.status !== 200 || !c) throw new Error('Login as "' + user + '" failed (' + r.status + '). Check the username and password (the password you typed has ' + String(pass || '').length + ' characters). The k6 run stops here; nothing else was sent.');
     return c.value;
   };
   return { student: one(__ENV.TEST_STUDENT, __ENV.TEST_STUDENT_PASS), teacher: one(__ENV.TEST_TEACHER, __ENV.TEST_TEACHER_PASS) };
@@ -129,6 +129,7 @@ function login(username) {
 }
 
 function pageviews(paths) {
+  if (SHARED) return; // the real site: no fake visits in the admin's page-view statistics
   for (const p of paths) call('POST', '/api/analytics/pageview', 'pageview', { path: p }, [204, 400]);
 }
 
@@ -163,7 +164,7 @@ export function student(data) {
       call('POST', `/api/reels/${reel.id}/watch`, 'watch', { seconds: 15 }, [409, 429]);
       think(0.3, 1);
       call('POST', `/api/reels/${reel.id}/watch`, 'watch', { seconds: 15 }, [409, 429]);
-      call('POST', `/api/reels/${reel.id}/like`, 'like', { liked: Math.random() < 0.5 }, [409]);
+      if (!SHARED) call('POST', `/api/reels/${reel.id}/like`, 'like', { liked: Math.random() < 0.5 }, [409]); // not on the real site: it would change the real like counts
       const qs = reel.questions || item.questions || [];
       if (qs.length > 0) call('POST', `/api/reels/${reel.id}/submit`, 'quiz-submit', { answers: randomAnswers(qs) }, [409]);
       think();
@@ -181,7 +182,8 @@ export function student(data) {
       call('POST', `/api/worksheets/${ws.worksheetId}/submit`, 'ws-submit', { answers: randomAnswers(ws.questions) }, [409]);
     }
     // a worksheet about a typed lesson name: the AI path (no Gemini key here, so it takes the fall-back to the fixed question bank)
-    if (idx % 3 === 0) {
+    // never on the real site: this one calls the AI (Gemini) and spends the daily quota
+    if (idx % 3 === 0 && !SHARED) {
       const ws2 = json(call('POST', '/api/worksheets/generate', 'ws-generate', { subject: 'math', difficulty: 'easy', topic: 'الكسور', grade: 5 }, [429]));
       if (ws2 && ws2.worksheetId) call('POST', `/api/worksheets/${ws2.worksheetId}/submit`, 'ws-submit', { answers: randomAnswers(ws2.questions) }, [409]);
     }
@@ -242,7 +244,7 @@ export function student(data) {
 
   group('profile', () => {
     pageviews(['/profile']);
-    if (idx % 4 === 0) call('PATCH', '/api/users/me', 'profile-edit', { bio: `hello from student ${idx}` });
+    if (idx % 4 === 0 && !SHARED) call('PATCH', '/api/users/me', 'profile-edit', { bio: `hello from student ${idx}` });
   });
   sleep(rnd(1, 3));
 }
@@ -302,7 +304,7 @@ export function teacher(data) {
     if (lessons.length) {
       const item = pick(lessons);
       const reel = item.reel || item;
-      if (reel && reel.id) call('POST', `/api/reels/${reel.id}/like`, 'like', { liked: Math.random() < 0.5 }, [403, 409]);
+      if (reel && reel.id && !SHARED) call('POST', `/api/reels/${reel.id}/like`, 'like', { liked: Math.random() < 0.5 }, [403, 409]);
     }
     call('GET', '/api/leaderboard', 'leaderboard');
   });
@@ -314,7 +316,7 @@ export function teacher(data) {
     const ws = json(call('POST', '/api/worksheets/generate', 'ws-generate', { subject: pick(['math', 'science']), difficulty: pick(['easy', 'medium', 'hard']) }, [429]));
     if (ws && ws.worksheetId) {
       think(0.3, 1);
-      call('POST', `/api/worksheets/${ws.worksheetId}/send`, 'ws-send', {}, [409]);
+      if (!SHARED) call('POST', `/api/worksheets/${ws.worksheetId}/send`, 'ws-send', {}, [409]); // never on the real site: it would send test worksheets to every real student
     }
     call('GET', '/api/worksheets/sent', 'ws-sent');
   });

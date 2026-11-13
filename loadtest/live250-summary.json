@@ -1,0 +1,1597 @@
+{
+    "root_group": {
+        "checks": {},
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+                "open the app": {
+                    "checks": {},
+                    "name": "open the app",
+                    "path": "::open the app",
+                    "id": "7a72a56075534b64103e5f969153ce0f",
+                    "groups": {}
+                },
+                "my lessons and reports": {
+                    "name": "my lessons and reports",
+                    "path": "::my lessons and reports",
+                    "id": "669d6ba760b41309fe3b9edfc594e5a8",
+                    "groups": {},
+                    "checks": {}
+                },
+                "lessons (reels) and quizzes": {
+                    "path": "::lessons (reels) and quizzes",
+                    "id": "31146a3052d97251fe19f1d19fa0a3d4",
+                    "groups": {},
+                    "checks": {},
+                    "name": "lessons (reels) and quizzes"
+                },
+                "lessons feed and leaderboard": {
+                    "name": "lessons feed and leaderboard",
+                    "path": "::lessons feed and leaderboard",
+                    "id": "9af6ab244ac08c6a50d4792ec9c95ba6",
+                    "groups": {},
+                    "checks": {}
+                },
+                "worksheets": {
+                    "name": "worksheets",
+                    "path": "::worksheets",
+                    "id": "b420ba66070e95bed4aeb25c3e652b78",
+                    "groups": {},
+                    "checks": {}
+                },
+                "profile": {
+                    "name": "profile",
+                    "path": "::profile",
+                    "id": "3910467d3a5a4c38ae1745ce5750ae19",
+                    "groups": {},
+                    "checks": {}
+                },
+                "adventure map": {
+                    "name": "adventure map",
+                    "path": "::adventure map",
+                    "id": "d317459eb42b5b82a76bc6b64b35ba3f",
+                    "groups": {},
+                    "checks": {}
+                },
+                "the Quarry game": {
+                    "name": "the Quarry game",
+                    "path": "::the Quarry game",
+                    "id": "5cbd21d68bfc1defebfef0a0579517fb",
+                    "groups": {},
+                    "checks": {}
+                },
+                "friends and challenges": {
+                    "name": "friends and challenges",
+                    "path": "::friends and challenges",
+                    "id": "8f19fbd8f18710ac9beefe9152fc58ce",
+                    "groups": {},
+                    "checks": {}
+                }
+            }
+    },
+    "metrics": {
+        "unexpected_4xx{name:t-watch-report}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:friend-requests}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:t-watch-report}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:craft-load}": {
+            "count": 766,
+            "rate": 2.179277005786079,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:t-delete}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:friends}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:pageview}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:ws-sent}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:watch}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:quiz-submit}": {
+            "count": 1355,
+            "rate": 3.8549873927416938,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:challenge-accept}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:feed}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:profile-view}": {
+            "count": 1011,
+            "rate": 2.8763042465401125,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:map-quiz}": {
+            "avg": 2059.693593710689,
+            "min": 182.092,
+            "med": 1721.0702,
+            "p(90)": 4200.24682,
+            "p(95)": 4485.77655,
+            "p(99)": 5079.943489999999,
+            "max": 5408.6529,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_req_duration{name:craft-puzzle}": {
+            "avg": 2007.1625370517916,
+            "min": 186.8998,
+            "med": 1398.6912,
+            "p(90)": 4154.74282,
+            "p(95)": 4440.79744,
+            "p(99)": 5139.902568000001,
+            "max": 5681.8248,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "unexpected_4xx{name:profile}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "iterations": {
+            "count": 990,
+            "rate": 2.816559054475481
+        },
+        "http_reqs{name:watch}": {
+            "count": 3331,
+            "rate": 9.476725465108917,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:map-quiz-submit}": {
+            "min": 198.9987,
+            "med": 1263.9517,
+            "p(90)": 4308.58898,
+            "p(95)": 4573.794704999999,
+            "p(99)": 5054.337697,
+            "max": 5580.9961,
+            "avg": 2013.0723777215146,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_reqs{name:t-update}": {
+            "count": 311,
+            "rate": 0.8847978443857318,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:ws-videos}": {
+            "count": 1117,
+            "rate": 3.177875216009204,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:feed}": {
+            "count": 1142,
+            "rate": 3.249000444657575,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:me}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:challenge-submit}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:craft-save}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:friends}": {
+            "min": 187.7502,
+            "med": 1076.8822,
+            "p(90)": 4295.98888,
+            "p(95)": 4597.66644,
+            "p(99)": 5246.9989559999985,
+            "max": 5818.6576,
+            "avg": 1969.4521881309693,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "app_failures{name:t-delete}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:ws-generate}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:t-messages}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:quiz-submit}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:ws-send}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:t-update}": {
+            "p(99)": 5092.850909999999,
+            "max": 5311.0016,
+            "avg": 2184.9239231511265,
+            "min": 196.5706,
+            "med": 2508.9539,
+            "p(90)": 4228.3171,
+            "p(95)": 4469.1149000000005,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "data_received": {
+            "count": 83459051,
+            "rate": 237441.76340604134
+        },
+        "app_failures{name:ws-submit}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:points-notices}": {
+            "p(95)": 4362.03698,
+            "p(99)": 5105.780072,
+            "max": 5837.5523,
+            "avg": 1948.3829917319413,
+            "min": 181.3459,
+            "med": 1427.7693,
+            "p(90)": 4092.38706,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_reqs{name:challenge-accept}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:t-options}": {
+            "count": 315,
+            "rate": 0.8961778809694712,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:craft-save}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:pageview}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_blocked": {
+            "p(99)": 0,
+            "max": 693.6301,
+            "avg": 0.42078332246613054,
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_reqs{name:map-quiz}": {
+            "count": 795,
+            "rate": 2.2617822710181894,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:feed}": {
+            "avg": 2127.359737565674,
+            "min": 191.5656,
+            "med": 1726.6790999999998,
+            "p(90)": 4390.30542,
+            "p(95)": 4648.122490000001,
+            "p(99)": 5352.263162999997,
+            "max": 5766.8704,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_reqs{name:profile}": {
+            "count": 1149,
+            "rate": 3.2689155086791186,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:profile}": {
+            "avg": 1925.2292723237586,
+            "min": 184.9508,
+            "med": 1129.8802,
+            "p(90)": 4173.92766,
+            "p(95)": 4439.238359999998,
+            "p(99)": 5018.974612,
+            "max": 5471.2531,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_reqs{name:ws-send}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "group_duration": {
+            "p(99)": 28771.360409,
+            "max": 38759.5266,
+            "avg": 8565.032719062028,
+            "min": 0,
+            "med": 8018.099099999999,
+            "p(90)": 17447.85408,
+            "p(95)": 21988.767115
+        },
+        "data_sent": {
+            "count": 12512013,
+            "rate": 35596.79141905548
+        },
+        "http_reqs{name:challenge-current}": {
+            "count": 720,
+            "rate": 2.048406585073077,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:t-update}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:challenge-current}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_tls_handshaking": {
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "max": 353.6359,
+            "avg": 0.2567070926610157
+        },
+        "app_failures{name:challenge-answers}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:t-options}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:ws-submit}": {
+            "count": 166,
+            "rate": 0.47227151822518165,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_sending": {
+            "p(90)": 0.58785,
+            "p(95)": 1.081825,
+            "p(99)": 2.751090000000003,
+            "max": 16.2801,
+            "avg": 0.18882092298775663,
+            "min": 0,
+            "med": 0
+        },
+        "http_req_duration{name:challenge-accept}": {
+            "p(95)": 0,
+            "p(99)": 0,
+            "max": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_req_duration{name:t-messages}": {
+            "p(99)": 5004.848666,
+            "max": 5190.3924,
+            "avg": 2021.5079282539664,
+            "min": 186.8505,
+            "med": 1630.8957,
+            "p(90)": 4207.999500000001,
+            "p(95)": 4508.92356,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "unexpected_4xx{name:challenge-create}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:boss}": {
+            "count": 779,
+            "rate": 2.216262124683232,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:challenge-answers}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:guide}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:ws-sent}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:watch}": {
+            "p(99)": 5220.573619999996,
+            "max": 5727.9935,
+            "avg": 1915.4415884719274,
+            "min": 187.1284,
+            "med": 995.3041,
+            "p(90)": 4223.3116,
+            "p(95)": 4501.8864,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "app_failures{name:map-quiz}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:like}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:friends}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:challenge-create}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:pageview}": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "max": 0,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "app_failures{name:pageview}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:ws-generate}": {
+            "avg": 2035.9644880503156,
+            "min": 189.6178,
+            "med": 1400.8151,
+            "p(90)": 4202.29248,
+            "p(95)": 4471.15706,
+            "p(99)": 4993.670111999999,
+            "max": 5808.9589,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_req_connecting": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "max": 375.9738,
+            "avg": 0.15949408099688472,
+            "min": 0,
+            "med": 0
+        },
+        "app_failures{name:double-points}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:craft-answer}": {
+            "count": 748,
+            "rate": 2.128066841159252,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:login}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:map-quiz-submit}": {
+            "count": 790,
+            "rate": 2.247557225288515,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:t-get}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:friends}": {
+            "rate": 2.0853917039702297,
+            "count": 733,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:like}": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "max": 0,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_req_duration{name:t-watch-report}": {
+            "max": 5386.7855,
+            "avg": 2032.6587768253967,
+            "min": 188.0683,
+            "med": 1576.659,
+            "p(90)": 4200.6187199999995,
+            "p(95)": 4585.396900000001,
+            "p(99)": 4997.109292000001,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_req_duration{name:challenge-answers}": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "max": 0,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_reqs{name:profile-edit}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration": {
+            "p(99)": 5115.954225,
+            "max": 5891.761,
+            "avg": 1994.8326408679275,
+            "min": 179.4395,
+            "med": 1336.5522,
+            "p(90)": 4229.38075,
+            "p(95)": 4503.11975
+        },
+        "http_reqs{name:ws-generate}": {
+            "count": 1113,
+            "rate": 3.166495179425465,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:craft-save}": {
+            "p(90)": 4188.7027,
+            "p(95)": 4500.8197,
+            "p(99)": 5053.033339999999,
+            "max": 5684.8576,
+            "avg": 2017.1714576872519,
+            "min": 184.8174,
+            "med": 1664.6932,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_req_duration{name:double-points}": {
+            "avg": 1985.6490015587553,
+            "min": 182.981,
+            "med": 1519.77075,
+            "p(90)": 4188.11006,
+            "p(95)": 4500.942094999999,
+            "p(99)": 5096.240955999999,
+            "max": 5649.014,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "app_failures{name:profile}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:quiz-submit}": {
+            "p(90)": 4230.5113200000005,
+            "p(95)": 4488.3861,
+            "p(99)": 5077.218574,
+            "max": 5891.761,
+            "avg": 1983.8815643542505,
+            "min": 186.1986,
+            "med": 1124.3951,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_req_duration{name:t-delete}": {
+            "avg": 1757.449867419355,
+            "min": 189.2453,
+            "med": 470.88085,
+            "p(90)": 4099.04087,
+            "p(95)": 4284.30742,
+            "p(99)": 4767.030263000001,
+            "max": 5656.0159,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_req_duration{name:profile-edit}": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "max": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_reqs{name:t-watch-report}": {
+            "count": 315,
+            "rate": 0.8961778809694712,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_receiving": {
+            "p(90)": 0.40290000000000004,
+            "p(95)": 1.5744,
+            "p(99)": 5.862650000000002,
+            "max": 28.9525,
+            "avg": 0.2536940665072812,
+            "min": 0,
+            "med": 0
+        },
+        "http_reqs{name:craft-save}": {
+            "count": 761,
+            "rate": 2.165051960056405,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:points-notices}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:t-get}": {
+            "min": 183.9217,
+            "med": 1400.3822,
+            "p(90)": 4211.2317,
+            "p(95)": 4551.2055,
+            "p(99)": 5288.856499999997,
+            "max": 5582.7794,
+            "avg": 2004.3297334405147,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "app_failures{name:craft-load}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:me}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:craft-load}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:boss}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:challenge-current}": {
+            "med": 2436.8502,
+            "p(90)": 4220.18267,
+            "p(95)": 4507.217435,
+            "p(99)": 5162.780067999997,
+            "max": 5641.7564,
+            "avg": 2137.8429263888925,
+            "min": 186.687,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_reqs{name:me}": {
+            "count": 1149,
+            "rate": 3.2689155086791186,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:t-messages}": {
+            "count": 315,
+            "rate": 0.8961778809694712,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(90)": 4222.714749999999,
+            "p(95)": 4500.3480500000005,
+            "p(99)": 5115.470640000001,
+            "max": 5891.761,
+            "avg": 1959.1008206103813,
+            "min": 179.4395,
+            "med": 1172.8319000000001
+        },
+        "unexpected_4xx{name:ws-videos}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:quiz-submit}": {
+            "count": 335,
+            "rate": 0.9530780638881677,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:friend-requests}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:ws-generate}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:ws-send}": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "max": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_req_duration{name:ws-submit}": {
+            "avg": 2017.927916169155,
+            "min": 201.2917,
+            "med": 1163.8189,
+            "p(90)": 4295.52207,
+            "p(95)": 4521.354609999999,
+            "p(99)": 5038.912524000002,
+            "max": 5718.2883,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_reqs{name:points-notices}": {
+            "count": 1149,
+            "rate": 3.2689155086791186,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:challenge-submit}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:challenge-accept}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:leaderboard}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:ws-submit}": {
+            "count": 804,
+            "rate": 2.2873873533316025,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:boss}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:leaderboard}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:map}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:t-create}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:t-delete}": {
+            "count": 310,
+            "rate": 0.8819528352397971,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:guide}": {
+            "count": 1149,
+            "rate": 3.2689155086791186,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:craft-answer}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:feed}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:craft-puzzle}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:profile-edit}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:profile-view}": {
+            "med": 1878.9296,
+            "p(90)": 4206.2971,
+            "p(95)": 4494.17945,
+            "p(99)": 4944.048309999999,
+            "max": 5782.8004,
+            "avg": 2059.0224832838803,
+            "min": 185.6566,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "app_failures{name:t-update}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:t-create}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:ws-videos}": {
+            "p(99)": 5116.472755999998,
+            "max": 5810.6013,
+            "avg": 1962.3663150402858,
+            "min": 188.9891,
+            "med": 954.4286,
+            "p(90)": 4376.0611,
+            "p(95)": 4589.3368,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "vus_max": {
+            "value": 250,
+            "min": 250,
+            "max": 250
+        },
+        "http_req_duration{name:guide}": {
+            "avg": 1923.7886315926883,
+            "min": 179.4395,
+            "med": 1261.1939,
+            "p(90)": 4098.542820000001,
+            "p(95)": 4419.390939999999,
+            "p(99)": 4990.59834,
+            "max": 5708.6861,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "app_failures{name:like}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:map-quiz-submit}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:watch}": {
+            "count": 532,
+            "rate": 1.5135448656373292,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:craft-load}": {
+            "avg": 2068.814990731071,
+            "min": 191.2751,
+            "med": 1438.76775,
+            "p(90)": 4303.3405999999995,
+            "p(95)": 4558.80705,
+            "p(99)": 5052.9349950000005,
+            "max": 5810.7495,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "unexpected_4xx{name:double-points}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx": {
+            "count": 1407,
+            "rate": 4.002927868330305
+        },
+        "http_req_duration{name:challenge-submit}": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "max": 0,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_req_duration{name:t-create}": {
+            "avg": 2141.391028343948,
+            "min": 193.2779,
+            "med": 2415.5697,
+            "p(90)": 4100.2371299999995,
+            "p(95)": 4341.6897549999985,
+            "p(99)": 5181.8574180000005,
+            "max": 5632.0335,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "app_failures{name:t-messages}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:ws-videos}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:me}": {
+            "avg": 1757.0483446475218,
+            "min": 184.4123,
+            "med": 385.0204,
+            "p(90)": 4225.20488,
+            "p(95)": 4471.849139999999,
+            "p(99)": 4918.570251999999,
+            "max": 5669.787,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_reqs{name:t-create}": {
+            "count": 314,
+            "rate": 0.8933328718235364,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:challenge-submit}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:t-options}": {
+            "p(99)": 5278.52841,
+            "max": 5618.5572,
+            "avg": 2090.4052273015873,
+            "min": 190.4024,
+            "med": 1965.7889,
+            "p(90)": 4297.121160000001,
+            "p(95)": 4656.05147,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_req_waiting": {
+            "max": 5891.761,
+            "avg": 1994.3901258784326,
+            "min": 179.4395,
+            "med": 1335.9151499999998,
+            "p(90)": 4229.0213,
+            "p(95)": 4502.6332,
+            "p(99)": 5115.470640000001
+        },
+        "http_reqs": {
+            "rate": 78.5393224826769,
+            "count": 27606
+        },
+        "app_failures{name:t-lessons}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:login}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:map}": {
+            "p(95)": 4524.0259,
+            "p(99)": 5216.714683999999,
+            "max": 5810.7495,
+            "avg": 1927.6033568381415,
+            "min": 191.4289,
+            "med": 918.5512,
+            "p(90)": 4262.54678,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_req_duration{name:ws-sent}": {
+            "p(95)": 4500.181065,
+            "p(99)": 5070.105455999999,
+            "max": 5593.7015,
+            "avg": 2087.2727818791955,
+            "min": 186.307,
+            "med": 1651.6974,
+            "p(90)": 4305.79899,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_reqs{name:double-points}": {
+            "count": 834,
+            "rate": 2.3727376277096477,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:ws-send}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:guide}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "iteration_duration": {
+            "p(95)": 90760.06044999999,
+            "p(99)": 97884.018429,
+            "max": 106195.9095,
+            "avg": 60724.79401515163,
+            "min": 10752.3057,
+            "med": 64104.665550000005,
+            "p(90)": 86786.29312999999
+        },
+        "http_req_duration{name:t-lessons}": {
+            "p(99)": 5070.321756000002,
+            "max": 5606.0725,
+            "avg": 2144.885277777779,
+            "min": 190.0482,
+            "med": 2418.1774,
+            "p(90)": 4315.195500000001,
+            "p(95)": 4508.11344,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "unexpected_4xx{name:points-notices}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_failed": {
+            "passes": 2900,
+            "fails": 24706,
+            "value": 0.10504962689270449
+        },
+        "app_failures{name:craft-puzzle}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:map}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:profile-view}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:profile-edit}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:profile-view}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "vus": {
+            "value": 3,
+            "min": 0,
+            "max": 250
+        },
+        "http_req_duration{name:login}": {
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "max": 0,
+            "avg": 0,
+            "min": 0,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_reqs{name:craft-puzzle}": {
+            "count": 753,
+            "rate": 2.1422918868889265,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:friend-requests}": {
+            "count": 727,
+            "rate": 2.068321649094621,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:like}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:challenge-create}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:challenge-answers}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:map}": {
+            "rate": 2.2674722893100587,
+            "count": 797,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "app_failures{name:t-options}": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:craft-answer}": {
+            "max": 5627.1903,
+            "avg": 2169.0683272727265,
+            "min": 190.6882,
+            "med": 2675.8189,
+            "p(90)": 4206.77242,
+            "p(95)": 4418.069764999999,
+            "p(99)": 4765.334303000001,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_reqs{name:t-lessons}": {
+            "count": 315,
+            "rate": 0.8961778809694712,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:t-get}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:login}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:challenge-create}": {
+            "p(99)": 0,
+            "max": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_req_duration{name:leaderboard}": {
+            "avg": 1995.1710370896226,
+            "min": 186.2517,
+            "med": 1217.6629,
+            "p(90)": 4327.6128,
+            "p(95)": 4551.03883,
+            "p(99)": 5216.534712000001,
+            "max": 5866.0026,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "app_failures": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count<300": false
+            }
+        },
+        "app_failures{name:map-quiz-submit}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:ws-sent}": {
+            "rate": 0.8478127254885791,
+            "count": 298,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:map-quiz}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:boss}": {
+            "p(95)": 4442.748969999998,
+            "p(99)": 4990.497374000001,
+            "max": 5827.7114,
+            "avg": 1935.0754659820282,
+            "min": 183.9876,
+            "med": 952.4346,
+            "p(90)": 4217.18958,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "http_reqs{name:leaderboard}": {
+            "count": 1127,
+            "rate": 3.2063253074685525,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_req_duration{name:friend-requests}": {
+            "avg": 2148.61017469051,
+            "min": 183.5963,
+            "med": 2518.8845,
+            "p(90)": 4178.96274,
+            "p(95)": 4489.879909999999,
+            "p(99)": 5004.902742,
+            "max": 5811.4132,
+            "thresholds": {
+                "p(95)<600000": false
+            }
+        },
+        "unexpected_4xx{name:craft-answer}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:challenge-current}": {
+            "count": 374,
+            "rate": 1.064033420579626,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "http_reqs{name:t-get}": {
+            "count": 311,
+            "rate": 0.8847978443857318,
+            "thresholds": {
+                "count>=0": false
+            }
+        },
+        "unexpected_4xx{name:t-lessons}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count>=0": false
+            }
+        }
+    },
+    "setup_data": {
+        "student": "7530cae190a77adbbfdb2b40bfb32e85d2298a7e083e6151bbda47b727f0e978",
+        "teacher": "86a5b8a05721e31232ab22a418f320fabd186730177abafef765a30ae77c6722"
+    }
+}

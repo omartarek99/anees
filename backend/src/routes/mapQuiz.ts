@@ -125,11 +125,11 @@ export function registerLevelQuiz(router: Router) {
     // wrong answers.
     const doublePoints = getDoublePointsStatus();
     const basePoints = passed ? QUIZ_PASS_POINTS : 0;
-    const xpEarned = doublePoints.active ? basePoints * DOUBLE_POINTS_MULTIPLIER : basePoints;
+    const xpOffered = doublePoints.active ? basePoints * DOUBLE_POINTS_MULTIPLIER : basePoints;
     const levelBeforeXp = getPlayerLevel(req.userId!);
     // what is lost is charged first, so only the net of this submission can move a rank (see lib/xp.ts)
     const xpLost = penalizeWrongAnswers(req.userId!, wrongCount) + (passed ? 0 : penalizePoints(req.userId!, LEVEL_QUIZ_FAIL_LOSS, 'level_quiz_fail'));
-    awardXp(req.userId!, xpEarned, 'level_quiz');
+    const xpEarned = awardXp(req.userId!, xpOffered, 'level_quiz'); // what was really paid
 
     // Passing (at least half right) completes the level -- sticky, a later poor retry never undoes it -- and opens the next one.
     const completed = passed || progress.status === 'completed';

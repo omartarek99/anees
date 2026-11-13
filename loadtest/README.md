@@ -90,22 +90,40 @@ Never load-test signup, OTP or the AI worksheet endpoints: they send real emails
 
 One computer cannot make 250 different real logins: login is limited to 20 per 15 minutes per address and sign-up needs real e-mails.
 So `SHARED=1` logs in ONE test student and ONE test teacher, and all 250 virtual users use those two sessions. It measures the server under
-the real load of every call (login is the only thing it does not repeat 250 times). Use test accounts (for example `dev_student` and
-`dev_teacher`), never the admin and never a real student. Type the passwords into your own terminal (Read-Host), not into chat or a file.
+the real load of every call (the login is done once, not 250 times).
+
+**Which accounts.** `dev_student` / `dev_teacher` on the live site have passwords nobody knows (backend/seed-data/test-accounts.json only holds their hashes).
+Use instead:
+- a NEW student made on the site (sign up with an e-mail you own, for example name+test1@gmail.com, grade 5), used only for tests;
+- your own teacher account (teachers need an ID check to sign up, so a new one is hard). The test creates and deletes temporary lessons on it.
+Never the admin, never a real student. Type the passwords in your own terminal, never in chat or in a file.
+
+**What this mode does NOT do on the real site:** it sends no page-view statistics, no worksheets to students, no likes and no bio edits, so the
+admin statistics and the real students are not touched. It does earn points for the test student (take them back afterwards) and makes and deletes
+temporary lessons for the teacher.
 
 1. Render > the backend service > Environment > add `API_RATE_LIMIT_PER_MIN` = `20000` > Save (it restarts, wait for "Live").
    Check `TRUST_PROXY_HOPS` too (2 behind Vercel). Do the test at night, when students are not using the site.
-2. First look (60 s, 10 students + 2 teachers):
+2. In PowerShell (the passwords are asked for and never shown):
    ```powershell
    cd C:\Mahmoud_Emad\TFQ_Project_v1\anees
-   $sp = Read-Host "Test STUDENT password"; $tp = Read-Host "Test TEACHER password"
-   & "C:\Program Files\k6\k6.exe" run -e PROFILE=live-smoke -e SHARED=1 -e ALLOW_REMOTE=1 -e BASE_URL=https://anees-01h6.onrender.com -e TEST_STUDENT=dev_student -e TEST_STUDENT_PASS=$sp -e TEST_TEACHER=dev_teacher -e TEST_TEACHER_PASS=$tp loadtest/full-250.js
+   $env:TEST_STUDENT = "your_test_student_username"
+   $env:TEST_TEACHER = "your_teacher_username"
+   $s = Read-Host "Test STUDENT password" -AsSecureString
+   $env:TEST_STUDENT_PASS = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($s))
+   $t = Read-Host "TEACHER password" -AsSecureString
+   $env:TEST_TEACHER_PASS = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($t))
    ```
-3. The real run (about 5.5 minutes, 250 at full strength for 3 minutes; stops by itself after 300 server errors):
+   (k6 reads these variables by itself, so special characters in a password cannot break the command.)
+3. First look (60 s, 10 students + 2 teachers):
    ```powershell
-   & "C:\Program Files\k6\k6.exe" run -e PROFILE=live250 -e SHARED=1 -e ALLOW_REMOTE=1 -e BASE_URL=https://anees-01h6.onrender.com -e TEST_STUDENT=dev_student -e TEST_STUDENT_PASS=$sp -e TEST_TEACHER=dev_teacher -e TEST_TEACHER_PASS=$tp --summary-export loadtest/live250-summary.json loadtest/full-250.js
+   & "C:\Program Files\k6\k6.exe" run -e PROFILE=live-smoke -e SHARED=1 -e ALLOW_REMOTE=1 -e BASE_URL=https://anees-01h6.onrender.com loadtest/full-250.js
+   ```
+4. The real run (about 5.5 minutes, 250 at full strength for 3 minutes; stops by itself after 300 server errors):
+   ```powershell
+   & "C:\Program Files\k6\k6.exe" run -e PROFILE=live250 -e SHARED=1 -e ALLOW_REMOTE=1 -e BASE_URL=https://anees-01h6.onrender.com --summary-export loadtest/live250-summary.json loadtest/full-250.js
    ```
    Keep Render > Metrics open (CPU and memory) while it runs.
-4. Afterwards: remove `API_RATE_LIMIT_PER_MIN` on Render (the limit is the protection), and in the admin Users page take the extra points back from the
-   test student (Manage > remove points), because the test earns a lot of them.
-5. Send the file `loadtest/live250-summary.json` (no passwords are in it) and the numbers get turned into a report like the local one.
+5. Afterwards: remove `API_RATE_LIMIT_PER_MIN` on Render (the limit is the protection); in the admin Users page take the extra points back from the test
+   student (Manage > remove points); close the PowerShell window (it holds the passwords).
+6. Send the file `loadtest/live250-summary.json` (no passwords are in it) and the numbers get turned into a report like the local one.
