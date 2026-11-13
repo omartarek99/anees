@@ -19,6 +19,8 @@ import {
 } from '@remixicon/react';
 import { useAuth, type Role } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
+import { setReelsMuted, useReelsMuted } from '../lib/reelSound';
+import { RiVolumeMuteFill, RiVolumeUpFill } from '@remixicon/react';
 import { PAGE_IDS, finishTour, guideEnabled, guideTextId, markPageSeen, pageSeen, syncGuide, tourDone, tourStops, type TourStop } from '../lib/guide';
 
 // First-run guide for new accounts (rules in lib/guide.ts): a welcome window, then each icon in the menu bar is lit
@@ -57,6 +59,8 @@ const rise = (i: number) => ({ style: { animationDelay: `${0.18 + i * 0.07}s` },
 
 function Welcome({ onStart, onSkip }: { onStart: () => void; onSkip: () => void }) {
   const g = useGuideText();
+  const { t } = useLanguage();
+  const muted = useReelsMuted();
   return createPortal(
     <m.div className="modal-overlay guide-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <m.div
@@ -69,6 +73,17 @@ function Welcome({ onStart, onSkip }: { onStart: () => void; onSkip: () => void 
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={spring}
       >
+        {/* the reels behind this window may be playing with sound: let the person switch it off without leaving the tour */}
+        <button
+          type="button"
+          className="guide-sound"
+          data-sound-toggle
+          onClick={() => setReelsMuted((m) => !m)}
+          aria-label={t(muted ? 'reels.unmute' : 'reels.mute')}
+          aria-pressed={muted}
+        >
+          {muted ? <RiVolumeMuteFill size={20} /> : <RiVolumeUpFill size={20} />}
+        </button>
         <span className="guide-halo">
           <img className="guide-logo" src="/icons/logo-mark.png" alt="" width={76} height={76} />
         </span>

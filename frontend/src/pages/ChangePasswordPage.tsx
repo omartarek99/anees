@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { toLatinDigits } from '../lib/bidi';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
@@ -124,7 +125,7 @@ export function ChangePasswordPage() {
             <input
               id="change-code"
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onChange={(e) => setCode(toLatinDigits(e.target.value).replace(/\D/g, '').slice(0, 6))}
               inputMode="numeric"
               autoComplete="one-time-code"
               maxLength={6}

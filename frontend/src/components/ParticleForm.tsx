@@ -212,7 +212,7 @@ export function ParticleForm({ children, intro }: { children: ReactNode; intro?:
       // scrolled past the entrance, so that starts where the scroll is.
       const side = () => (document.documentElement.dir === 'rtl' ? -1 : 1);
       let turnY = 0, turnX = 0, enter = enterGoal, sideNow = side(), lens = 1;
-      let playing = true, last = performance.now(), slowFor = 0;
+      let playing = true, last = performance.now(), slowFor = 0, owed = 0, odd = false;
       // Drawing pauses until the stage shows past its faded top edge (the canvas mask fades its top 16%), so the
       // sliver that peeks under the hero on tall screens does not cost a full 250k-particle render every frame.
       io = new IntersectionObserver((entries) => { playing = entries[entries.length - 1].isIntersecting; last = performance.now(); }, { threshold: 0.01, rootMargin: '0px 0px -16% 0px' });
@@ -258,7 +258,13 @@ export function ParticleForm({ children, intro }: { children: ReactNode; intro?:
               s.setSize(base.size * lens ** LENS_GROW);
             }
           }
-          s.renderFrame(dt);
+          // Phones draw the particles every other frame (30 a second: they drift slowly, the eye can't tell), which halves
+          // the GPU work under the scroll; the helix and the page itself still move at the full rate.
+          owed += dt;
+          if (!phone || (odd = !odd)) {
+            s.renderFrame(Math.min(0.05, owed));
+            owed = 0;
+          }
         }
         raf = requestAnimationFrame(tick);
       };

@@ -85,6 +85,13 @@ export const verifyEmailSchema = z.object({
   oobCode: z.string().min(1, 'The confirmation link is not complete. Open the link from your email again.'),
 });
 
+// An emailed 6-digit code. Arabic-Indic (٠-٩) and Persian (۰-۹) digits count too: an Arabic keyboard types those
+// (both ranges start at a code point divisible by 16, so the digit is the code point mod 16).
+const otpCode = z
+  .string()
+  .transform((s) => s.trim().replace(/[٠-٩۰-۹]/g, (d) => String(d.charCodeAt(0) % 16)))
+  .pipe(z.string().regex(/^\d{6}$/, 'Write the 6-digit code we sent you.'));
+
 export const forgotPasswordSchema = z.object({
   email: emailSchema,
   lang: z.enum(['en', 'ar']).optional(),
@@ -92,7 +99,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   email: emailSchema,
-  code: z.string().trim().regex(/^\d{6}$/, 'Write the 6-digit code we sent you.'),
+  code: otpCode,
   newPassword: passwordSchema,
 });
 
@@ -100,7 +107,7 @@ export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Write your current password.').max(200),
   newPassword: passwordSchema,
   // the code emailed by /change-password/code; required for accounts with a real mailbox (Firebase)
-  code: z.string().trim().regex(/^\d{6}$/, 'Write the 6-digit code we sent you.').optional(),
+  code: otpCode.optional(),
 });
 
 export const changePasswordCodeSchema = z.object({
@@ -110,7 +117,7 @@ export const changePasswordCodeSchema = z.object({
 
 export const verifyOtpSchema = z.object({
   idToken: z.string().min(1, 'Your confirmation session is missing. Log in again to continue.'),
-  code: z.string().trim().regex(/^\d{6}$/, 'Write the 6-digit code we sent you.'),
+  code: otpCode,
 });
 
 export const resendVerificationSchema = z.object({

@@ -3044,6 +3044,21 @@ label,
   position: relative;
   overflow: hidden;
 }
+.guide-sound {
+  position: absolute;
+  inset-block-start: 14px;
+  inset-inline-end: 14px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 40px;
+  block-size: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--ink);
+  cursor: pointer;
+}
 /* a soft glow behind the top of the window */
 .guide-welcome::before,
 .guide-pop::before {

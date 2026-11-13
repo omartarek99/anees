@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { toLatinDigits } from '../lib/bidi';
 import { useAuth } from '../lib/auth-context';
 import { ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
@@ -71,7 +72,7 @@ export function OtpVerifyForm({ idToken, initialCooldown = 60 }: { idToken: stri
         <input
           id="otp-code"
           value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          onChange={(e) => setCode(toLatinDigits(e.target.value).replace(/\D/g, '').slice(0, 6))}
           inputMode="numeric"
           autoComplete="one-time-code"
           maxLength={6}

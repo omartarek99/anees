@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperClass } from 'swiper';
 import 'swiper/css';
+import { setReelsMuted as setMuted, useReelsMuted } from '../lib/reelSound';
 
 // One wheel or trackpad gesture moves exactly one reel. Swiper's Mousewheel module started a new slide whenever the wheel delta
 // rose again, and a trackpad's momentum (or a smooth-scrolling mouse) keeps sending rising deltas for a second or more, so one
@@ -114,7 +115,7 @@ export function ReelsPage() {
   // Starts with the sound ON. A browser only lets a video start with sound after the person has touched the page (so on a fresh load of
   // /reels -- a reload, a bookmark -- it refuses): ReelSlide then reports it (onSoundBlocked), the video plays muted instead, and the first tap
   // anywhere on the page switches the sound on. Coming from another page of the app (a click already happened) it just plays with sound.
-  const [muted, setMuted] = useState(false);
+  const muted = useReelsMuted(); // shared with the welcome window's sound button (GuideHost)
   const [soundBlocked, setSoundBlocked] = useState(false);
   const toggleMute = useCallback(() => {
     setSoundBlocked(false);
@@ -132,7 +133,8 @@ export function ReelsPage() {
     let done = false;
     const unmute = (e: Event) => {
       // the speaker button handles its own tap
-      if (done || (e.target as Element | null)?.closest?.('[data-sound-toggle]')) return;
+      // a speaker button (here or on the welcome window) handles its own tap; a tap on the welcome window is not a wish for sound
+      if (done || (e.target as Element | null)?.closest?.('[data-sound-toggle], .guide-welcome')) return;
       done = true;
       document.querySelectorAll<HTMLVideoElement>('.swiper-slide-active video').forEach((v) => {
         v.muted = false;

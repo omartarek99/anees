@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth, type Role } from '../lib/auth-context';
 import { ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
-import { GoogleSignInError, getGoogleIdToken } from '../lib/googleSignIn';
+import { GoogleSignInError, getGoogleIdToken, prepareGoogle } from '../lib/googleSignIn';
 
 const GoogleMark = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
@@ -33,6 +33,7 @@ export function GoogleSignInButton({
   const { loginWithGoogle } = useAuth();
   const { t, lang } = useLanguage();
   const [busy, setBusy] = useState(false);
+  useEffect(() => void prepareGoogle()?.catch(() => {}), []); // ready before the press: see prepareGoogle
 
   async function start() {
     onError(null);

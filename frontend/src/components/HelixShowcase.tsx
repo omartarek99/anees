@@ -19,7 +19,8 @@ const EXPORT_PARAMS = {"cornerRadius":3,"padding":6,"shadowEnabled":false,"turns
 const CARDS = 9;
 const PARAMS = { ...EXPORT_PARAMS, cardCount: CARDS, turns: 3, cardSize: 60, gap: 10, ringSize: 90 };
 const EASE = 10; // how fast the drawn helix catches up with the scroll (1/s)
-const SHOW_WITHIN = 0.3; // a story's paragraph shows while its picture is within this many card steps of the middle
+const SHOW_WITHIN = 0.5; // a story's paragraph shows while its picture is the one nearest the middle: picture and paragraph change together
+const HOLD = 0.4; // the middle part of each story's stretch where the helix stands still, so its paragraph can be read
 
 function loadImage(src: string): Promise<HTMLImageElement | undefined> {
   const img = new Image();
@@ -31,14 +32,16 @@ function loadImage(src: string): Promise<HTMLImageElement | undefined> {
 }
 
 /** Where the helix stands for a scroll position r (0..n across the pinned stretch, story i's stretch is i..i+1), in card steps: story i's
- *  picture is in the middle at i. Within a stretch the helix eases in to the picture, rests there and eases out (c|c|: flat at the middle,
- *  slope 2 at the joins); before and after the stretch it keeps turning at that slope as the section scrolls in and out. */
+ *  picture is in the middle at i. Within a stretch the helix eases in to the picture, stands still there for the middle HOLD of it
+ *  and eases out (p|p|, slope K at the joins); before and after the stretch it keeps turning at that slope as the section scrolls in and out. */
+const K = 2 / (1 - HOLD);
 function stepAt(r: number, n: number): number {
-  if (r < 0) return -0.5 + 2 * r;
-  if (r > n) return n - 0.5 + 2 * (r - n);
+  if (r < 0) return -0.5 + K * r;
+  if (r > n) return n - 0.5 + K * (r - n);
   const i = Math.min(n - 1, Math.floor(r));
   const c = 2 * (r - i) - 1;
-  return i + 0.5 * c * Math.abs(c);
+  const p = Math.sign(c) * Math.max(0, (Math.abs(c) - HOLD) / (1 - HOLD));
+  return i + 0.5 * p * Math.abs(p);
 }
 
 // The motion-template engine's "Helix" (spiral-stream, lib/helix/template.ts) for the landing's three stories: their three pictures,
@@ -66,10 +69,13 @@ export function HelixShowcase({ stories, label }: { stories: HelixStory[]; label
     let TEMPLATE: HelixTemplate | null = null, cards: (HTMLImageElement | HTMLCanvasElement | undefined)[] | null = null;
     const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let dirty = true;
+    const phone = window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
-      canvas.width = Math.round(box.clientWidth * dpr);
-      canvas.height = Math.round(box.clientHeight * dpr);
+      const dpr = Math.min(window.devicePixelRatio || 1, phone ? 1.5 : DPR_CAP); // a phone redraws a third fewer pixels per frame
+      const w = Math.round(box.clientWidth * dpr), h = Math.round(box.clientHeight * dpr);
+      if (w === canvas.width && h === canvas.height) return; // setting the size wipes and reallocates the canvas: only when it changed
+      canvas.width = w;
+      canvas.height = h;
       dirty = true;
     };
     resize();
@@ -143,8 +149,33 @@ export function HelixShowcase({ stories, label }: { stories: HelixStory[]; label
     );
     near.observe(section);
 
+    // Each story is a resting point: when a scroll stops between two of them, the page glides on to the nearer one, so one full
+    // scroll shows one picture with its paragraph. (CSS proximity snapping was tried: browsers left the page between stories.)
+    const anchors = () => Array.from(section.querySelectorAll<HTMLElement>('.landing-showcase-anchor'), (a) => a.getBoundingClientRect().top + window.scrollY);
+    let idle = 0, rest = NaN; // rest: the story the page last settled on
+    const settle = () => {
+      const tops = anchors();
+      const y = window.scrollY, gap = tops[1] - tops[0] || window.innerHeight;
+      if (y < tops[0] - gap / 2 || y > tops[tops.length - 1] + gap / 2) {
+        rest = NaN; // above or below the stories: scroll freely
+        return;
+      }
+      // a quarter of a screen away from the story it rested on is enough to go on to the next one that way; otherwise the nearest
+      let to = tops.reduce((a, b) => (Math.abs(b - y) < Math.abs(a - y) ? b : a));
+      if (!Number.isNaN(rest) && to === rest && Math.abs(y - rest) > gap / 4) to = tops.find((a) => (y > rest ? a > rest : a < rest) && Math.abs(a - rest) <= gap + 2) ?? to;
+      rest = to;
+      if (Math.abs(to - y) > 2) window.scrollTo({ top: to, behavior: still ? 'auto' : 'smooth' });
+    };
+    const onScroll = () => {
+      clearTimeout(idle);
+      idle = window.setTimeout(settle, 160);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+
     return () => {
       cancelled = true;
+      clearTimeout(idle);
+      window.removeEventListener('scroll', onScroll);
       near.disconnect();
       cancelAnimationFrame(raf);
       ro.disconnect();

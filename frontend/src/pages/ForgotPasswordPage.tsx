@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { toLatinDigits } from '../lib/bidi';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
@@ -125,7 +126,7 @@ export function ForgotPasswordPage() {
             <input
               id="reset-code"
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onChange={(e) => setCode(toLatinDigits(e.target.value).replace(/\D/g, '').slice(0, 6))}
               inputMode="numeric"
               autoComplete="one-time-code"
               maxLength={6}

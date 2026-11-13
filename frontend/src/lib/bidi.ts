@@ -14,3 +14,7 @@ export function textDir(text: string): 'rtl' | 'ltr' {
 export function choiceLabel(i: number, lang: string): string {
   return (lang === 'ar' ? ['أ', 'ب', 'ج', 'د', 'هـ', 'و'] : ['A', 'B', 'C', 'D', 'E', 'F'])[i] ?? String(i + 1);
 }
+
+/** Arabic-Indic (٠-٩) and Persian (۰-۹) digits as 0-9: an Arabic keyboard types those, and every number we check is 0-9.
+ * Both ranges start at a code point divisible by 16, so the digit is the code point mod 16. */
+export const toLatinDigits = (s: string) => s.replace(/[٠-٩۰-۹]/g, (d) => String(d.charCodeAt(0) % 16));
