@@ -1,0 +1,270 @@
+{
+  "site": "https://anees-qa.site",
+  "startedAt": "2026-11-13T15:56:23.615Z",
+  "baseline": {
+    "byKind": {
+      "html": {
+        "requests": 8,
+        "ok": 8,
+        "unauthorized_expected": 0,
+        "rate_limited_429": 0,
+        "failed_5xx_or_timeout": 0,
+        "p50_ms": 128,
+        "p95_ms": 201,
+        "p99_ms": 201,
+        "max_ms": 201
+      },
+      "asset": {
+        "requests": 0,
+        "ok": 0,
+        "unauthorized_expected": 0,
+        "rate_limited_429": 0,
+        "failed_5xx_or_timeout": 0,
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "max_ms": 0
+      },
+      "api": {
+        "requests": 16,
+        "ok": 8,
+        "unauthorized_expected": 8,
+        "rate_limited_429": 0,
+        "failed_5xx_or_timeout": 0,
+        "p50_ms": 372,
+        "p95_ms": 721,
+        "p99_ms": 721,
+        "max_ms": 721
+      }
+    },
+    "requests": 24,
+    "failed": 0,
+    "errorRate": 0,
+    "bytes": 62856
+  },
+  "stages": [
+    {
+      "visitors": 10,
+      "seconds": 17,
+      "requestsPerSecond": 16.9,
+      "megabytes": 32.8,
+      "byKind": {
+        "html": {
+          "requests": 42,
+          "ok": 42,
+          "unauthorized_expected": 0,
+          "rate_limited_429": 0,
+          "failed_5xx_or_timeout": 0,
+          "p50_ms": 117,
+          "p95_ms": 215,
+          "p99_ms": 798,
+          "max_ms": 798
+        },
+        "asset": {
+          "requests": 168,
+          "ok": 168,
+          "unauthorized_expected": 0,
+          "rate_limited_429": 0,
+          "failed_5xx_or_timeout": 0,
+          "p50_ms": 28,
+          "p95_ms": 149,
+          "p99_ms": 960,
+          "max_ms": 960
+        },
+        "api": {
+          "requests": 84,
+          "ok": 42,
+          "unauthorized_expected": 42,
+          "rate_limited_429": 0,
+          "failed_5xx_or_timeout": 0,
+          "p50_ms": 315,
+          "p95_ms": 496,
+          "p99_ms": 863,
+          "max_ms": 863
+        }
+      },
+      "requests": 294,
+      "failed": 0,
+      "errorRate": 0,
+      "bytes": 32845722
+    },
+    {
+      "visitors": 50,
+      "seconds": 24,
+      "requestsPerSecond": 84.4,
+      "megabytes": 226.8,
+      "byKind": {
+        "html": {
+          "requests": 290,
+          "ok": 290,
+          "unauthorized_expected": 0,
+          "rate_limited_429": 0,
+          "failed_5xx_or_timeout": 0,
+          "p50_ms": 74,
+          "p95_ms": 245,
+          "p99_ms": 625,
+          "max_ms": 930
+        },
+        "asset": {
+          "requests": 1160,
+          "ok": 1160,
+          "unauthorized_expected": 0,
+          "rate_limited_429": 0,
+          "failed_5xx_or_timeout": 0,
+          "p50_ms": 25,
+          "p95_ms": 63,
+          "p99_ms": 200,
+          "max_ms": 954
+        },
+        "api": {
+          "requests": 580,
+          "ok": 290,
+          "unauthorized_expected": 290,
+          "rate_limited_429": 0,
+          "failed_5xx_or_timeout": 0,
+          "p50_ms": 286,
+          "p95_ms": 376,
+          "p99_ms": 955,
+          "max_ms": 1076
+        }
+      },
+      "requests": 2030,
+      "failed": 0,
+      "errorRate": 0,
+      "bytes": 226791890
+    },
+    {
+      "visitors": 100,
+      "seconds": 25,
+      "requestsPerSecond": 161,
+      "megabytes": 443.4,
+      "byKind": {
+        "html": {
+          "requests": 567,
+          "ok": 567,
+          "unauthorized_expected": 0,
+          "rate_limited_429": 0,
+          "failed_5xx_or_timeout": 0,
+          "p50_ms": 73,
+          "p95_ms": 432,
+          "p99_ms": 729,
+          "max_ms": 1124
+        },
+        "asset": {
+          "requests": 2268,
+          "ok": 2268,
+          "unauthorized_expected": 0,
+          "rate_limited_429": 0,
+          "failed_5xx_or_timeout": 0,
+          "p50_ms": 27,
+          "p95_ms": 248,
+          "p99_ms": 629,
+          "max_ms": 3096
+        },
+        "api": {
+          "requests": 1134,
+          "ok": 555,
+          "unauthorized_expected": 560,
+          "rate_limited_429": 19,
+          "failed_5xx_or_timeout": 0,
+          "p50_ms": 286,
+          "p95_ms": 483,
+          "p99_ms": 934,
+          "max_ms": 1252
+        }
+      },
+      "requests": 3969,
+      "failed": 0,
+      "errorRate": 0,
+      "bytes": 443417647
+    },
+    {
+      "visitors": 250,
+      "seconds": 35,
+      "requestsPerSecond": 440.7,
+      "megabytes": 1699.4,
+      "byKind": {
+        "html": {
+          "requests": 2173,
+          "ok": 2173,
+          "unauthorized_expected": 0,
+          "rate_limited_429": 0,
+          "failed_5xx_or_timeout": 0,
+          "p50_ms": 68,
+          "p95_ms": 232,
+          "p99_ms": 418,
+          "max_ms": 549
+        },
+        "asset": {
+          "requests": 8692,
+          "ok": 8692,
+          "unauthorized_expected": 0,
+          "rate_limited_429": 0,
+          "failed_5xx_or_timeout": 0,
+          "p50_ms": 23,
+          "p95_ms": 187,
+          "p99_ms": 511,
+          "max_ms": 781
+        },
+        "api": {
+          "requests": 4346,
+          "ok": 1588,
+          "unauthorized_expected": 1607,
+          "rate_limited_429": 1151,
+          "failed_5xx_or_timeout": 0,
+          "p50_ms": 279,
+          "p95_ms": 394,
+          "p99_ms": 474,
+          "max_ms": 891
+        }
+      },
+      "requests": 15211,
+      "failed": 0,
+      "errorRate": 0,
+      "bytes": 1699395492
+    }
+  ],
+  "aborted": null,
+  "afterPeak": {
+    "byKind": {
+      "html": {
+        "requests": 6,
+        "ok": 6,
+        "unauthorized_expected": 0,
+        "rate_limited_429": 0,
+        "failed_5xx_or_timeout": 0,
+        "p50_ms": 81,
+        "p95_ms": 122,
+        "p99_ms": 122,
+        "max_ms": 122
+      },
+      "asset": {
+        "requests": 0,
+        "ok": 0,
+        "unauthorized_expected": 0,
+        "rate_limited_429": 0,
+        "failed_5xx_or_timeout": 0,
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "max_ms": 0
+      },
+      "api": {
+        "requests": 6,
+        "ok": 6,
+        "unauthorized_expected": 0,
+        "rate_limited_429": 0,
+        "failed_5xx_or_timeout": 0,
+        "p50_ms": 333,
+        "p95_ms": 355,
+        "p99_ms": 355,
+        "max_ms": 355
+      }
+    },
+    "requests": 12,
+    "failed": 0,
+    "errorRate": 0,
+    "bytes": 46914
+  },
+  "finishedAt": "2026-11-13T15:58:30.162Z"
+}

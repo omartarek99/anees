@@ -5,6 +5,8 @@ export const authLimiter = rateLimit({
   limit: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  // load tests only (same switch as apiLimiter below; never honoured in production): 250 test accounts logging in from one machine
+  skip: () => process.env.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMITS === '1',
   message: { error: 'Too many attempts. Wait a few minutes, then try again.' },
 });
 

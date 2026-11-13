@@ -85,3 +85,27 @@ That is the protection working. What matters is that `app_failures` stays low, r
 quickly, and the site is normal again after the ramp-down. Run it when few real students are online.
 
 Never load-test signup, OTP or the AI worksheet endpoints: they send real emails and spend Gemini quota.
+
+## 250 users on the real site (200 students + 50 teachers) — full-250.js with shared logins
+
+One computer cannot make 250 different real logins: login is limited to 20 per 15 minutes per address and sign-up needs real e-mails.
+So `SHARED=1` logs in ONE test student and ONE test teacher, and all 250 virtual users use those two sessions. It measures the server under
+the real load of every call (login is the only thing it does not repeat 250 times). Use test accounts (for example `dev_student` and
+`dev_teacher`), never the admin and never a real student. Type the passwords into your own terminal (Read-Host), not into chat or a file.
+
+1. Render > the backend service > Environment > add `API_RATE_LIMIT_PER_MIN` = `20000` > Save (it restarts, wait for "Live").
+   Check `TRUST_PROXY_HOPS` too (2 behind Vercel). Do the test at night, when students are not using the site.
+2. First look (60 s, 10 students + 2 teachers):
+   ```powershell
+   cd C:\Mahmoud_Emad\TFQ_Project_v1\anees
+   $sp = Read-Host "Test STUDENT password"; $tp = Read-Host "Test TEACHER password"
+   & "C:\Program Files\k6\k6.exe" run -e PROFILE=live-smoke -e SHARED=1 -e ALLOW_REMOTE=1 -e BASE_URL=https://anees-01h6.onrender.com -e TEST_STUDENT=dev_student -e TEST_STUDENT_PASS=$sp -e TEST_TEACHER=dev_teacher -e TEST_TEACHER_PASS=$tp loadtest/full-250.js
+   ```
+3. The real run (about 5.5 minutes, 250 at full strength for 3 minutes; stops by itself after 300 server errors):
+   ```powershell
+   & "C:\Program Files\k6\k6.exe" run -e PROFILE=live250 -e SHARED=1 -e ALLOW_REMOTE=1 -e BASE_URL=https://anees-01h6.onrender.com -e TEST_STUDENT=dev_student -e TEST_STUDENT_PASS=$sp -e TEST_TEACHER=dev_teacher -e TEST_TEACHER_PASS=$tp --summary-export loadtest/live250-summary.json loadtest/full-250.js
+   ```
+   Keep Render > Metrics open (CPU and memory) while it runs.
+4. Afterwards: remove `API_RATE_LIMIT_PER_MIN` on Render (the limit is the protection), and in the admin Users page take the extra points back from the
+   test student (Manage > remove points), because the test earns a lot of them.
+5. Send the file `loadtest/live250-summary.json` (no passwords are in it) and the numbers get turned into a report like the local one.

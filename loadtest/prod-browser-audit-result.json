@@ -1,0 +1,6 @@
+[
+ {"profile":"desktop (app browser, files already cached)","path":"/welcome (landing page)","fcp":null,"lcp":null,"load":1372,"transferKB":401,"resources":19,"cls":null,"failed":[],"errors":[]},
+ {"profile":"desktop (app browser, files already cached)","path":"/privacy","fcp":null,"lcp":null,"load":111,"transferKB":15,"resources":27,"cls":null,"failed":[],"errors":[]},
+ {"profile":"desktop (app browser, files already cached)","path":"/terms","fcp":null,"lcp":null,"load":92,"transferKB":15,"resources":30,"cls":null,"failed":[],"errors":[]},
+ {"profile":"desktop (app browser, signed in as admin)","path":"/admin/dashboard (7 API calls at start: 291-404 ms each)","fcp":null,"lcp":null,"load":95,"transferKB":null,"resources":39,"cls":null,"failed":[],"errors":[]}
+]
