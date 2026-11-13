@@ -79,6 +79,58 @@
     <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png?v=2" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Set the language, direction and colour theme BEFORE the first draw, exactly as the app does it later (lib/language-context.tsx and
+         lib/theme-context.tsx: the saved choice, else Arabic and the system's light/dark). Without this the first draw is English / left-to-right / no theme,
+         and about 100 ms later the app switches to Arabic / right-to-left / dark, so the heading font, the direction and every line of text change and the
+         whole page jumps (layout shift 0.2-0.3 on a computer). -->
+    <script>
+      (function () {
+        var d = document.documentElement;
+        var lang = 'ar';
+        var theme = '';
+        try {
+          var l = localStorage.getItem('anees_lang');
+          if (l === 'en' || l === 'ar') lang = l;
+          var t = localStorage.getItem('anees_theme');
+          if (t === 'light' || t === 'dark') theme = t;
+        } catch (e) {}
+        if (!theme) theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        d.lang = lang;
+        d.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        d.dataset.theme = theme;
+      })();
+    </script>
+    <!-- Start downloading the font files of the person's language now, in parallel with the app, so they have arrived by the time the first text is drawn
+         (otherwise the headline is drawn in a fallback font and re-wraps when the real font arrives). These are the files Google's stylesheet below points to for
+         the Latin / Arabic ranges; if Google ever renames them the preloads simply do nothing and the page behaves as before. -->
+    <script>
+      (function () {
+        var g = 'https://fonts.gstatic.com/s/';
+        var files =
+          document.documentElement.lang === 'ar'
+            ? [
+                'notosansarabic/v33/nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj4wv4r4xA.woff2',
+                'notosansarabic/v33/nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj41v4o.woff2',
+                'almarai/v19/tssoApxBaigK_hnnS-agtnqWo572.woff2',
+                'almarai/v19/tssoApxBaigK_hnnS_qjtnqWo572.woff2',
+              ]
+            : [
+                'playfairdisplay/v40/nuFiD-vYSZviVYUb_rj3ij__anPXDTzYgA.woff2',
+                'poppins/v24/pxiEyp8kv8JHgFVrJJfecg.woff2',
+                'poppins/v24/pxiByp8kv8JHgFVrLEj6Z1xlFQ.woff2',
+                'poppins/v24/pxiByp8kv8JHgFVrLCz7Z1xlFQ.woff2',
+              ];
+        for (var i = 0; i < files.length; i++) {
+          var l = document.createElement('link');
+          l.rel = 'preload';
+          l.as = 'font';
+          l.type = 'font/woff2';
+          l.crossOrigin = 'anonymous';
+          l.href = g + files[i];
+          document.head.appendChild(l);
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Noto+Sans+Arabic:wght@100..900&family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" />
     <style>
       .boot-splash { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; font-family: 'Almarai', 'Poppins', system-ui, sans-serif; background: #1d0a14; color: #f6e9ee; }

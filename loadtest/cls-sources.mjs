@@ -7,10 +7,10 @@ const paths = process.argv.slice(2).length ? process.argv.slice(2) : ['/privacy'
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ['--no-sandbox'] });
 for (const path of paths) {
   const page = await browser.newPage();
-  await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
+  await page.setViewport(process.env.DESKTOP ? { width: 1366, height: 800 } : { width: 390, height: 844, isMobile: true, hasTouch: true });
   const client = await page.createCDPSession();
-  await client.send('Network.emulateNetworkConditions', { offline: false, downloadThroughput: (9 * 1024 * 1024) / 8, uploadThroughput: (1.5 * 1024 * 1024) / 8, latency: 170 });
-  await client.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  if (!process.env.DESKTOP) await client.send('Network.emulateNetworkConditions', { offline: false, downloadThroughput: (9 * 1024 * 1024) / 8, uploadThroughput: (1.5 * 1024 * 1024) / 8, latency: 170 });
+  if (!process.env.DESKTOP) await client.send('Emulation.setCPUThrottlingRate', { rate: 4 });
   await page.evaluateOnNewDocument(() => {
     sessionStorage.setItem('anees_intro_seen', '1');
     localStorage.setItem('anees_cookie', 'x');

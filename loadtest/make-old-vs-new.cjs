@@ -115,7 +115,7 @@ const checks = [
   [42, 'New today', 'Console errors when logged out', 'PROBLEM: one 401 /api/auth/me on every page (6 pages, desktop and phone)', `PASS: ${audit.reduce((a, x) => a + x.errors.length, 0)} errors and ${audit.reduce((a, x) => a + x.failed.length, 0)} failed requests on all ${audit.length} page runs (fixed by /api/auth/session)`, 'FIXED'],
   [43, 'New today', 'Console errors when logged in', '-', 'PASS: home, map, worksheets, leaderboard load with no failed calls; one 502 seen once during the deploy window', 'NEW'],
   [45, 'New today', '1,000 students logged in on the real server (shared login)', '-', 'PASS with a warning: no crash; 166 of 217,722 calls (0.08%) got no answer or a server error; of the calls really served, p95 21.6 s. 80% were fast 429 answers from the shared rate limit (see N10).', 'NEW'],
-  [44, 'New today', 'Page layout jumps (CLS)', 'PROBLEM: /privacy 0.32, /welcome 0.07 on the phone', `PROBLEM (varies): this audit shows /welcome ${A('desktop', '/welcome').cls} and /privacy ${A('desktop', '/privacy').cls} on desktop, /privacy ${A('phone', '/privacy').cls} on the phone; single probes show only 0.015-0.07 (good is under 0.1). Looks like the web-font swap (Google Fonts, display=swap).`, 'SAME'],
+  [44, 'New today', 'Page layout jumps (CLS)', 'PROBLEM: /welcome 0.287, /privacy 0.202 on desktop; /privacy 0.217 on the phone (good is under 0.1)', `PASS: all ${audit.length} page runs are now ${Math.max(...audit.map((a) => a.cls)).toFixed(3)} or less (good is under 0.1). Cause found and fixed: the page was first drawn in English, left-to-right and without a theme, then switched to Arabic, right-to-left and dark about 100 ms later, so every line moved.`, 'FIXED'],
 ];
 
 // ---------------------------------------------------------------- bugs: [#, severity, problem, old status, new status, what changed]
@@ -150,7 +150,7 @@ const issues = [
   ['N6', 'Info', 'Real student (Firebase) login speed was unknown', `${avgStu} s alone, ${avg4} s with 4 at once.`, 'INFO', 'Fine. Only 4 at once were measured; a bigger rush cannot be tested with one account (10 logins per 15 minutes per username).'],
   ['N7', 'Medium', 'At 1,000 simultaneous users on the API the slowest 5% wait 12 s', `0 failures of ${num(crashRow(1000).requests)} calls, then back to normal in 5 s.`, 'NEEDS YOU', 'Capacity: a paid Render plan. At 500 users it is fine (p95 ' + ms(crashRow(500).p95) + ').'],
   ['N8', 'Info', 'At 1,000 visitors the website files take longer (p95 ' + ms(V(1000).byKind.asset.p95_ms) + ')', 'Pages p95 ' + ms(pageP(V(1000)).p95_ms) + '. 0 failures. One test computer making about 960 calls per second is itself a limit.', 'INFO', 'No action. The website host is not the weak point.'],
-  ['N9', 'Low', 'Page layout jumps vary between runs (0.015 to 0.29)', 'Audit: /welcome 0.287 and /privacy 0.202 (desktop), /privacy 0.217 (phone). Probes: 0.015-0.071. Moving parts: the headline and header text reflow when the web fonts arrive.', 'NEEDS YOU', 'Fix proposed, not done: load the fonts so they never swap (self-host them, or display=optional). It changes how the first visit looks on a slow connection, so it needs your OK.'],
+  ['N9', 'Medium', 'Page layout jumps on a computer (0.2-0.3): the page was drawn in English / left-to-right / no theme, then switched to Arabic / right-to-left / dark', 'Frame-by-frame trace of /privacy: heading font Playfair, no dir, no theme at 535 ms; Almarai, rtl, dark at 659 ms; fonts at 888 ms. Font tricks alone (preload, display=optional, stable scrollbar) did not change the 0.28 / 0.20, which proved the cause was not the fonts.', 'FIXED', 'A small script in index.html sets the language, direction and theme before the first draw (same rules as the app). VERIFIED live: /privacy 0.201 to 0.004, /welcome 0.287 to 0.000; all 12 audit page runs are 0.009 or less. A font preload was added on top for the headline re-wrap that still showed once in a while on /welcome (0.158 in 2 of 6 runs); it tested 0.001 / 0 / 0.001 and goes live with the next deploy.'],
 ];
 
 (async () => {
@@ -210,7 +210,7 @@ const issues = [
   sheet(wb, 'Bugs old vs new', 'Bugs: old vs new', 'The 15 findings of the first bug report, with their status today.', ['#', 'Severity', 'Problem', 'Old status', 'New status', 'What changed / what is left'], [5, 10, 48, 14, 14, 78], bugs, [3, 4]);
   sheet(wb, 'New issues', 'New issues found today and what was done', 'FIXED = changed, deployed and verified on the real site. NEEDS YOU = an action only you can do. INFO = no action.', ['#', 'Severity', 'Issue', 'Evidence', 'Status', 'What was done / what to do'], [5, 10, 50, 56, 16, 66], issues, 4);
 
-  const out = path.join(__dirname, '..', 'docs', 'old-vs-new-report.xlsx');
+  const out = path.join(__dirname, '..', 'docs', 'stress_test', 'old-vs-new-report.xlsx');
   await wb.xlsx.writeFile(out);
   console.log('saved', out);
 
@@ -287,7 +287,7 @@ const issues = [
   put(19, 'How to read the numbers', 'Median = the middle request: half were faster. p95 = 95 of every 100 requests were faster. "Server errors" = no answer or a 5xx. A 429 ("slow down") is the rate limit working, not an error.');
   sheet(wc, 'All checks', 'All checks (new)', 'One row for each thing that was checked today. Result: PASS = fine, PROBLEM = something to fix, NOTE = worth knowing, NOT CHECKED = needs the admin login or would write data. "First report" shows what the same check said before.', ['#', 'Area', 'What was checked', 'Result', 'What we saw today', 'First report said', 'Change'], [5, 14, 36, 14, 70, 44, 16], newChecks, [3, 6]);
   sheet(wc, 'Load and stress', 'Load and stress numbers (first report vs today)', 'The new run goes up to 1,000 users. "Failed" = a server error or no answer.', ['Test', 'First report', 'Today'], [46, 54, 84], stress);
-  const outC = path.join(__dirname, '..', 'docs', 'checks-report-new.xlsx');
+  const outC = path.join(__dirname, '..', 'docs', 'stress_test', 'checks-report-new.xlsx');
   await wc.xlsx.writeFile(outC);
   console.log('saved', outC);
 
@@ -310,7 +310,8 @@ const issues = [
     [4, 'Red 401 error in the console for every logged-out visitor', 'New /api/auth/session answers 200 {"user":null} when nobody is logged in; the app asks it first and falls back to /api/auth/me on an older server.', 'backend: routes/auth.ts, middleware/auth.ts; frontend: lib/auth-context.tsx', 'Local: anonymous 200 {"user":null}, /me still 401, logged in returns the user. Live: the session call answers 200; the browser audit shows 0 errors on all 12 page runs (it was 1 on each).', 'LIVE'],
     [5, 'Slow local-password logins (cost 12 = 2.3 s)', 'Tried cost 10 (4 times faster) with a re-save of old passwords on login; you chose to keep 12, so it was put back. The re-save step stays in the code and does nothing at 12.', 'backend: lib/password.ts, routes/auth.ts', 'Local test of the re-save step passed (wrong password kept the old hash; the first correct login saved the new one). Live cost is 12 again.', 'CHANGED BACK'],
     [6, 'Test tooling for the real site', 'New: live-login-rush.mjs (made-up usernames), live-student-login.mjs (one real student), live300 and live1000 profiles, status codes listed in the k6 summary, cls-sources.mjs (what shifts on a phone), visitor test to 1,000.', 'loadtest/', 'All were run on the real site today; results are in loadtest/*-result.json and *-summary.json.', 'DONE'],
-    [7, 'From the first round: points once a day, API/login limits, login queue, lessons without a video, security headers, real 404', 'Deployed earlier (commit fd4f25e).', 'backend + vercel.json', 'Verified live today: the 11th failed login for one username is refused (429), security headers are sent on the pages, a missing file answers 404, 60 logins at once did not freeze the site.', 'LIVE'],
+    [7, 'Layout jumps on a computer (0.2-0.3 on /welcome and /privacy)', 'The page was drawn in English, left-to-right and without a theme, then switched to Arabic, right-to-left and dark ~100 ms later. A script in index.html now sets language, direction and theme before the first draw; font files of the saved language are preloaded.', 'frontend: index.html', 'Frame-by-frame trace found the cause (fonts alone did not help in the before/after test). Live audit after the deploy: all 12 page runs 0.009 or less (before 0.287 / 0.202 / 0.217). The preload part is tested before/after (0.158 to 0.001) and goes live with the next deploy.', 'LIVE'],
+    [8, 'From the first round: points once a day, API/login limits, login queue, lessons without a video, security headers, real 404', 'Deployed earlier (commit fd4f25e).', 'backend + vercel.json', 'Verified live today: the 11th failed login for one username is refused (429), security headers are sent on the pages, a missing file answers 404, 60 logins at once did not freeze the site.', 'LIVE'],
   ];
   sheet(wbg, 'Fix log', 'Fix log: what was fixed and how it was verified', 'Each row is a fix made after the first report, with the proof. LIVE = running on the real site.', ['#', 'What was fixed', 'What was changed', 'Files', 'How it was verified', 'State'], [5, 40, 80, 40, 70, 14], fixes.map((f) => f), 5);
 
@@ -321,11 +322,11 @@ const issues = [
     [4, 'Close the PowerShell window that held the test password; change the Test_Student password (it was typed in the chat once)', 'So the password does not stay around.', 'Today'],
     [5, 'Render: change the instance type to Starter (about $7 a month)', 'The fix for the slowness with 300+ busy students and for the slow local-password logins. Repeat the 300-student test afterwards to see the difference.', 'This week'],
     [6, 'Render: check the region of the server (near Qatar)', 'Every call takes about 255 ms before it does any work.', 'This week'],
-    [7, 'Decide about the layout jumps (loading the fonts so they never swap)', 'Varies between 0.015 and 0.29. The fix changes how the first visit looks on a slow connection, so it needs your OK.', 'When you like'],
+    [7, 'Deploy once more: npx vercel --prod from the frontend folder', 'Puts the font preload (a small extra for the /welcome headline) live. The main layout fix is already live: your last deploy took it with it.', 'When you like'],
     [8, 'Admin: duplicate lesson (ids 89 and 90), dev_student and dev_teacher accounts', 'Content clean-up from the first report.', 'When you like'],
   ];
   sheet(wbg, 'Your to-do list', 'Your to-do list', 'Only you can do these (they need Render, the admin login or a decision).', ['#', 'What to do', 'Why', 'When'], [5, 80, 90, 14], todo);
-  const outB = path.join(__dirname, '..', 'docs', 'bug-report-new.xlsx');
+  const outB = path.join(__dirname, '..', 'docs', 'stress_test', 'bug-report-new.xlsx');
   await wbg.xlsx.writeFile(outB);
   console.log('saved', outB);
 })();
