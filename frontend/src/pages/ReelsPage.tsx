@@ -10,17 +10,29 @@ import { setReelsMuted as setMuted, useReelsMuted } from '../lib/reelSound';
 // flick skipped two or three reels. Here a gesture is a run of wheel events with gaps under WHEEL_QUIET ms: its first real
 // movement turns one reel and the rest of the run is swallowed. The quiz and results sheets (swiper-no-mousewheel) scroll themselves.
 const WHEEL_QUIET = 140;
+// A trackpad's momentum tail keeps the run going for a second, so a second deliberate flick right after the first used to be swallowed until the
+// tail died out (it felt stuck). A momentum tail only ever fades, so a clear jump in strength once the last turn has finished and a moment has
+// passed is a new flick: it turns the next reel at once.
+const NEW_FLICK_AFTER = 450; // ms since the last turn
+const NEW_FLICK_RISE = 2.2; // times stronger than the event before it
+const NEW_FLICK_MIN = 24; // and at least this strong (px)
 function oneReelPerWheelGesture(el: HTMLElement, getSwiper: () => SwiperClass | null) {
   let last = -Infinity;
+  let lastTurn = -Infinity;
+  let lastAbs = 0;
   let used = false;
   const onWheel = (e: WheelEvent) => {
     const swiper = getSwiper();
     if (!swiper || (e.target as Element).closest?.('.swiper-no-mousewheel') || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
     e.preventDefault();
+    const abs = Math.abs(e.deltaY) * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
     if (e.timeStamp - last > WHEEL_QUIET) used = false;
+    else if (used && !swiper.animating && e.timeStamp - lastTurn > NEW_FLICK_AFTER && abs >= NEW_FLICK_MIN && abs > lastAbs * NEW_FLICK_RISE) used = false;
     last = e.timeStamp;
+    lastAbs = abs;
     if (used || swiper.animating || !e.deltaY || (e.deltaMode === 0 && Math.abs(e.deltaY) < 4)) return;
     used = true;
+    lastTurn = e.timeStamp;
     if (e.deltaY > 0) swiper.slideNext();
     else swiper.slidePrev();
   };
@@ -334,7 +346,7 @@ export function ReelsPage() {
         <Swiper
           key={slides.length}
           direction="vertical"
-          speed={260}
+          speed={380}
           threshold={4}
           longSwipesRatio={0.2}
           loop={loopEnabled}
@@ -350,7 +362,9 @@ export function ReelsPage() {
             height: '100%',
             width: '100%',
             background: '#0b0b0f',
-          }}
+            // a soft landing (fast start, long gentle stop) instead of the default ease, which reads as a jerk with a wheel or trackpad
+            '--swiper-wrapper-transition-timing-function': 'cubic-bezier(0.22, 1, 0.36, 1)',
+          } as React.CSSProperties}
         >
           {slides.map((slide, i) => (
             <SwiperSlide key={slide.reelId}>
