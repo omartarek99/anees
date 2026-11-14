@@ -5,7 +5,7 @@ import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
-import { QuizCard, type QuizAnswer, type QuizQuestion } from './QuizCard';
+import { ReelQuiz, type ReelQuizAnswer, type ReelQuizQuestion } from './ReelQuiz';
 import { QuizResults, type ResultItem } from './QuizResults';
 import { LevelUpToast } from './LevelUpToast';
 import { Avatar } from './Avatar';
@@ -23,7 +23,8 @@ export type ReelSlideData = {
   // Only set for teacher-authored reels (null for seeded curriculum content, which has
   // no single author to credit).
   author: { username: string; displayName: string; avatarKey: string; avatarUrl: string | null; rankKey?: string } | null;
-  questions: QuizQuestion[];
+  questions: ReelQuizQuestion[];
+  matchPool: string[];
   completed: boolean;
   stars: number;
 };
@@ -270,7 +271,7 @@ export const ReelSlide = memo(function ReelSlide({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive]);
 
-  async function handleSubmit(answers: QuizAnswer[]) {
+  async function handleSubmit(answers: ReelQuizAnswer[]) {
     setSubmitting(true);
     setError(null);
     try {
@@ -316,7 +317,7 @@ export const ReelSlide = memo(function ReelSlide({
       </div>
 
       {/* level badge */}
-      <div style={{ position: 'absolute', top: 14, insetInlineStart: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ position: 'absolute', top: 'var(--reel-badge-top, 14px)', insetInlineStart: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
         <span className="badge badge-gold">
           {data.levelNumber < 0 ? t('reels.bonusLesson') : t('reels.level', { n: data.levelNumber })}
         </span>
@@ -570,7 +571,7 @@ export const ReelSlide = memo(function ReelSlide({
             ×
           </button>
           {error && <div className="form-error-banner">{error}</div>}
-          <QuizCard questions={data.questions} onSubmit={handleSubmit} submitting={submitting} submitLabel={t('quiz.submit')} />
+          <ReelQuiz questions={data.questions} matchPool={data.matchPool} onSubmit={handleSubmit} submitting={submitting} />
         </div>
       )}
 

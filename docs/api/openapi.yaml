@@ -987,7 +987,7 @@ paths:
     post:
       tags: ["Auth"]
       summary: "The step after a Google sign-up: a student gives name, school and grade; a teacher name, school, subject and a"
-      description: "The step after a Google sign-up: a student gives name, school and grade; a teacher name, school, subject and a Qatar ID photo (checked and stored exactly as at an ordinary teacher signup). Until it is done every other call is refused (middleware/auth.ts). Access: Signed-in users. Requires header X-Requested-With: anees."
+      description: "The step after a Google sign-up: a student gives name, school and grade; a teacher name, school and subject. Until it is done every other call is refused (middleware/auth.ts). Access: Signed-in users. Requires header X-Requested-With: anees."
       operationId: "postapi_auth_complete_profile"
       x-roles: "Signed-in users."
       requestBody:

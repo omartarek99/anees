@@ -49,7 +49,6 @@ type AuthContextValue = {
     schoolName: string;
     /** Teachers only -- a key from the signup subject list. */
     teacherSubject?: string;
-    idDocument?: File;
     /** Honeypot -- see SignupPage.tsx. Always '' from a real submission. */
     website?: string;
     /** Language for the verification email. */
@@ -58,8 +57,8 @@ type AuthContextValue = {
   login: (input: { username: string; password: string }) => Promise<void>;
   /** Signs in (or, with a `role`, signs up) with a Firebase ID token from the Google popup. `needsRole` = a new Google account that still has to pick student / teacher. */
   loginWithGoogle: (idToken: string, role?: 'student' | 'teacher') => Promise<{ needsRole: boolean; created: boolean }>;
-  /** The step after a Google sign-up: name, school and grade (student) or subject + ID photo (teacher). */
-  completeProfile: (input: { displayName: string; schoolName: string; grade?: number; teacherSubject?: string; idDocument?: File }) => Promise<void>;
+  /** The step after a Google sign-up: name, school and grade (student) or subject (teacher). */
+  completeProfile: (input: { displayName: string; schoolName: string; grade?: number; teacherSubject?: string }) => Promise<void>;
   logout: () => Promise<void>;
   /** Switches to another of the person's linked accounts (components/AccountSwitcher.tsx) and reloads the app as that account. */
   switchAccount: (userId: number) => Promise<void>;
@@ -138,7 +137,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     formData.append('avatarKey', input.avatarKey);
     formData.append('role', input.role);
     if (input.grade !== undefined) formData.append('grade', String(input.grade));
-    if (input.idDocument) formData.append('idDocument', input.idDocument);
     formData.append('website', input.website ?? '');
     if (input.lang) formData.append('lang', input.lang);
 
@@ -169,7 +167,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     formData.append('schoolName', input.schoolName);
     if (input.grade !== undefined) formData.append('grade', String(input.grade));
     if (input.teacherSubject) formData.append('teacherSubject', input.teacherSubject);
-    if (input.idDocument) formData.append('idDocument', input.idDocument);
     const data = await api.postForm<{ user: User }>('/auth/complete-profile', formData);
     setUser(data.user);
   };

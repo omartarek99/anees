@@ -45,7 +45,6 @@ export function SignupPage() {
   const [grade, setGrade] = useState('');
   const [schoolName, setSchoolName] = useState('');
   const [teacherSubject, setTeacherSubject] = useState('');
-  const [idDocument, setIdDocument] = useState<File | null>(null);
   // Honeypot -- real students never see or fill this (positioned off-screen below), so a
   // non-empty value here means a bot filled every field it found. See schemas.ts's
   // matching `website` check for what happens if it isn't blank.
@@ -88,7 +87,6 @@ export function SignupPage() {
         grade: role === 'student' ? Number(grade) : undefined,
         schoolName: schoolName.trim(),
         teacherSubject: role === 'teacher' ? teacherSubject : undefined,
-        idDocument: role === 'teacher' ? idDocument ?? undefined : undefined,
         website,
         lang: lang === 'ar' ? 'ar' : 'en',
       });
@@ -306,27 +304,6 @@ export function SignupPage() {
                     </option>
                   ))}
                 </select>
-              </m.div>
-            )}
-            {role === 'teacher' && (
-              <m.div
-                key="teacher-id"
-                className="field field-full"
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.2 }}
-              >
-                <label htmlFor="idDocument">{t('auth.teacherIdLabel')}</label>
-                <input
-                  id="idDocument"
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  onChange={(e) => setIdDocument(e.target.files?.[0] ?? null)}
-                  required
-                  title={t('auth.teacherIdHint')}
-                />
-                <small className="muted">{t('auth.teacherIdHint')}</small>
               </m.div>
             )}
           </AnimatePresence>

@@ -10,6 +10,11 @@ export type ResultItem = {
   isCorrect: boolean;
   explanation: string;
   explanationAr?: string | null;
+  // the answers as text (reels send them: a matching question has no choices on the page)
+  chosenText?: string | null;
+  chosenTextAr?: string | null;
+  correctText?: string;
+  correctTextAr?: string;
 };
 
 export function QuizResults({ questions, results }: { questions: QuizQuestion[]; results: ResultItem[] }) {
@@ -28,13 +33,13 @@ export function QuizResults({ questions, results }: { questions: QuizQuestion[];
             <p className="quiz-q" style={{ marginBottom: 8 }}>
               {r.isCorrect ? '✅' : '❌'} <QText text={q.text} />
             </p>
-            {!r.isCorrect && r.chosenIndex >= 0 && (
+            {!r.isCorrect && (r.chosenText || r.chosenIndex >= 0) && (
               <p style={{ color: 'var(--danger)', fontSize: 14, margin: '4px 0' }}>
-                {t('common.yourAnswer')} <QText text={q.choices[r.chosenIndex]} />
+                {t('common.yourAnswer')} <QText text={r.chosenText ? pickText(lang, r.chosenText, r.chosenTextAr) : q.choices[r.chosenIndex]} />
               </p>
             )}
             <p style={{ color: 'var(--success)', fontSize: 14, margin: '4px 0', fontWeight: 700 }}>
-              {t('common.correctAnswer')} <QText text={q.choices[r.correctIndex]} />
+              {t('common.correctAnswer')} <QText text={r.correctText ? pickText(lang, r.correctText, r.correctTextAr) : q.choices[r.correctIndex]} />
             </p>
             <p className="muted quiz-q" style={{ fontSize: 14, marginTop: 6, fontWeight: 400 }}>
               💡 <QText text={pickText(lang, r.explanation, r.explanationAr)} />

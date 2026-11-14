@@ -31,6 +31,22 @@ function visibleReel(userId: number, reelId: number): any | null {
 // Every lesson the caller can watch, in one response: each reel with its subject, its author (`rankKey` is the rank the uploader's picture is
 // framed with -- the frame files are named after it), its quiz and its likes. Three queries in all, however many lessons there are -- the reels
 // (subject, author and like counts joined in), then every one of their questions, grouped here.
+// A reel quiz mixes two kinds of question: the first is multiple choice, and with three or more the rest are a matching set -- each of
+// those questions is paired with one answer from a shared pool of their right answers (sent instead of their choices, so the answers are
+// never in the page). The pool's order is the same every time (sorted by the English text), so /submit can rebuild it from the index sent.
+type QuizRow = { id: number; choices_json: string; choices_json_ar: string; correct_index: number; order_in_reel: number };
+function matchSet(rows: QuizRow[]) {
+  const ordered = [...rows].sort((a, b) => a.order_in_reel - b.order_in_reel || a.id - b.id);
+  const matched = ordered.length >= 3 ? ordered.slice(1) : [];
+  const pool = matched
+    .map((q) => {
+      const en = JSON.parse(q.choices_json)[q.correct_index] as string;
+      return { en, ar: (JSON.parse(q.choices_json_ar)[q.correct_index] as string | undefined) || en };
+    })
+    .sort((a, b) => a.en.localeCompare(b.en));
+  return { ids: new Set(matched.map((q) => q.id)), pool };
+}
+
 reelsRouter.get('/feed', (req, res) => {
   // Only teachers' grade-based videos live in Reels. The adventure-map levels are plain question rounds (routes/mapQuiz.ts), with no
   // video behind them. The lessons are always available (nothing to unlock, no lock state). A student gets every lesson tagged with their own grade.
@@ -53,27 +69,37 @@ reelsRouter.get('/feed', (req, res) => {
        FROM reels r
        JOIN subjects s ON s.id = r.subject_id
        LEFT JOIN users u ON u.id = r.author_user_id
-       WHERE ${scope.where}`
+       WHERE ${scope.where}
+       ORDER BY r.id DESC`
     )
     .all(req.userId!, ...scope.params) as any[];
   const questionsByReel = new Map<number, any[]>();
   for (const q of db
     .prepare(
-      `SELECT q.id, q.reel_id, q.question_text, q.question_text_ar, q.choices_json, q.choices_json_ar, q.order_in_reel
+      `SELECT q.id, q.reel_id, q.question_text, q.question_text_ar, q.choices_json, q.choices_json_ar, q.correct_index, q.order_in_reel
        FROM reel_questions q JOIN reels r ON r.id = q.reel_id
        WHERE ${scope.where} ORDER BY q.reel_id, q.order_in_reel`
     )
     .all(...scope.params) as any[]) {
     const list = questionsByReel.get(q.reel_id) ?? [];
-    list.push({ id: q.id, text: q.question_text, textAr: q.question_text_ar, choices: JSON.parse(q.choices_json), choicesAr: JSON.parse(q.choices_json_ar), order: q.order_in_reel });
+    list.push(q);
     questionsByReel.set(q.reel_id, list);
   }
-  // Random order, new every time Reels is opened (not newest or oldest first): the lessons are shuffled here, and the page keeps that order for the
-  // whole visit (ReelsPage's handleCompleted refreshes the lessons in place without moving any).
-  for (let i = reels.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [reels[i], reels[j]] = [reels[j], reels[i]];
-  }
+  const quizFor = (reelId: number) => {
+    const rows = questionsByReel.get(reelId) ?? [];
+    const { ids, pool } = matchSet(rows);
+    return {
+      // a matching question goes without its choices (its answer is in the pool)
+      questions: rows.map((q) =>
+        ids.has(q.id)
+          ? { id: q.id, text: q.question_text, textAr: q.question_text_ar, choices: [], choicesAr: [], order: q.order_in_reel, format: 'match' }
+          : { id: q.id, text: q.question_text, textAr: q.question_text_ar, choices: JSON.parse(q.choices_json), choicesAr: JSON.parse(q.choices_json_ar), order: q.order_in_reel, format: 'choice' }
+      ),
+      matchPool: pool.map((p) => p.en),
+      matchPoolAr: pool.map((p) => p.ar),
+    };
+  };
+  // Newest upload first (ids only grow); the page keeps this order for the whole visit (ReelsPage's handleCompleted refreshes in place).
   res.json(
     reels.map((reel) => ({
       comingSoon: false,
@@ -97,7 +123,7 @@ reelsRouter.get('/feed', (req, res) => {
                 reel.author_role === 'teacher' ? getTeacherRankTier(reel.author_teacher_points ?? 0).key : getRankTier(reel.author_total_xp ?? 0).key,
             }
           : null,
-        questions: questionsByReel.get(reel.id) ?? [],
+        ...quizFor(reel.id),
         likeCount: reel.like_count,
         likedByMe: !!reel.liked_by_me,
       },
@@ -219,8 +245,11 @@ reelsRouter.post('/:reelId/watch', requireCsrfHeader, validateBody(watchSchema),
   res.json({ watchedSeconds: newTotalWatched, xpEarned: pointsDelta, totalWatchXp: priorPoints + pointsDelta });
 });
 
+// a multiple-choice answer names a choice, a matching one a place in the reel's match pool (see matchSet)
 const submitSchema = z.object({
-  answers: z.array(z.object({ questionId: z.number(), choiceIndex: z.number().min(0).max(3) })),
+  answers: z.array(
+    z.union([z.object({ questionId: z.number(), choiceIndex: z.number().int().min(0).max(3) }), z.object({ questionId: z.number(), matchIndex: z.number().int().min(0).max(19) })])
+  ),
 });
 
 reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema), (req, res) => {
@@ -232,9 +261,30 @@ reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema
   }
 
   const questions = db.prepare(`SELECT * FROM reel_questions WHERE reel_id = ?`).all(reelId) as any[];
-  const { answers } = req.body as { answers: { questionId: number; choiceIndex: number }[] };
+  const sent = req.body.answers as ({ questionId: number; choiceIndex: number } | { questionId: number; matchIndex: number })[];
+  const { ids: matchIds, pool } = matchSet(questions);
+  const picked = new Map<number, { en: string; ar: string }>(); // the pool answer given to each matching question
+  const answers = sent.flatMap((a) => {
+    const q = questions.find((x) => x.id === a.questionId);
+    if (!q) return [];
+    if ('choiceIndex' in a) return matchIds.has(q.id) ? [] : [a];
+    const p = pool[a.matchIndex];
+    if (!matchIds.has(q.id) || !p) return [];
+    picked.set(q.id, p);
+    // the right answer's text is the right answer; anything else is no choice at all (wrong)
+    return [{ questionId: q.id, choiceIndex: p.en === JSON.parse(q.choices_json)[q.correct_index] ? q.correct_index : -1 }];
+  });
 
-  const { results, correctCount, wrongCount } = gradeAnswers(questions, answers);
+  const graded = gradeAnswers(questions, answers);
+  const { correctCount, wrongCount } = graded;
+  // the answers as text too: a matching question's choices are not on the page to look them up in
+  const results = graded.results.map((r) => {
+    const q = questions.find((x) => x.id === r.questionId)!;
+    const en = JSON.parse(q.choices_json) as string[];
+    const ar = JSON.parse(q.choices_json_ar) as string[];
+    const chosen = picked.get(q.id) ?? (r.chosenIndex >= 0 ? { en: en[r.chosenIndex], ar: ar[r.chosenIndex] || en[r.chosenIndex] } : null);
+    return { ...r, chosenText: chosen?.en ?? null, chosenTextAr: chosen?.ar ?? null, correctText: en[r.correctIndex], correctTextAr: ar[r.correctIndex] || en[r.correctIndex] };
+  });
 
   const total = questions.length;
   const scoreRatio = total > 0 ? correctCount / total : 0;

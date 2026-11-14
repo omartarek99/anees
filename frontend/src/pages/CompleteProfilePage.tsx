@@ -9,7 +9,7 @@ import { TEACHER_SUBJECTS } from '../lib/teacherSubjects';
 /**
  * The one step after "Sign up with Google": the account exists but has no name, school or grade yet, so the app shows only this until it is filled.
  *  - a student gives their name, school and grade;
- *  - a teacher gives their ID photo (checked like at an ordinary teacher sign-up), name, school and the subject they teach.
+ *  - a teacher gives their name, school and the subject they teach.
  */
 export function CompleteProfilePage() {
   const { user, completeProfile, logout } = useAuth();
@@ -19,7 +19,6 @@ export function CompleteProfilePage() {
   const [schoolName, setSchoolName] = useState('');
   const [grade, setGrade] = useState('');
   const [teacherSubject, setTeacherSubject] = useState('');
-  const [idDocument, setIdDocument] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -37,7 +36,6 @@ export function CompleteProfilePage() {
         schoolName: schoolName.trim(),
         grade: teacher ? undefined : Number(grade),
         teacherSubject: teacher ? teacherSubject : undefined,
-        idDocument: teacher ? idDocument ?? undefined : undefined,
       });
       // the user is updated: the protected layout now lets them into the app
     } catch (err) {
@@ -53,14 +51,6 @@ export function CompleteProfilePage() {
         {error && (
           <div className="form-error-banner" role="alert">
             {error}
-          </div>
-        )}
-
-        {teacher && (
-          <div className="field">
-            <label htmlFor="idDocument">{t('auth.teacherIdLabel')}</label>
-            <input id="idDocument" type="file" accept="image/jpeg,image/png" onChange={(e) => setIdDocument(e.target.files?.[0] ?? null)} required title={t('auth.teacherIdHint')} />
-            <small className="muted">{t('auth.teacherIdHint')}</small>
           </div>
         )}
 

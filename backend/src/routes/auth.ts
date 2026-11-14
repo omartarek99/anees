@@ -22,7 +22,6 @@ import {
   firebaseUpdatePassword,
   firebaseDeleteUser,
 } from '../lib/firebase.js';
-import { verifyQatarIdPhoto, type IdVerificationFailureReason } from '../lib/idVerification.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
 import { sendVerificationEmail, sendOtpEmail, sendResetOtpEmail, otpDeliveryAvailable, type SendResult } from '../lib/mailer.js';
 import { createOtp, verifyOtp, clearOtp } from '../lib/otp.js';
@@ -34,33 +33,14 @@ import { createGoogleUser, findGoogleUser, verifyGoogleToken } from '../lib/goog
 
 export const authRouter = asyncRouter();
 
-const ID_DOCUMENT_BUCKET = 'teacher-id-documents';
-// JPEG/PNG only -- the automated ID check below runs OCR on the raw photo, which needs
-// a rasterized image (no PDF-to-image step) and reliable decode support (no WebP).
-const ID_DOCUMENT_MIME_TO_EXT: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-};
-
-const ID_VERIFICATION_MESSAGES: Record<IdVerificationFailureReason, string> = {
-  NOT_QATAR_ID: "We couldn't see a Qatar ID in this photo. Upload a clear, straight photo of the whole ID.",
-  UNDERAGE: 'Teacher accounts are for people aged 23 or older.',
-  UNREADABLE: "We couldn't read the date of birth on the ID. Upload a clearer photo without glare.",
-};
-
-const idDocumentUpload = multer({
-  storage: multer.memoryStorage(),
+// The sign-up forms are sent as multipart form data: text fields only (teachers no longer upload an ID photo).
+const formFields = multer({
   // Signup is unauthenticated and multipart bodies skip express.json's 100kb cap, so bound the
   // number and size of text fields too -- otherwise a flood of big fields is buffered in memory
   // before validation ever rejects it.
-  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 20, fieldSize: 10 * 1024, parts: 25 },
-  fileFilter: (_req, file, cb) => {
-    if (file.mimetype in ID_DOCUMENT_MIME_TO_EXT) cb(null, true);
-    else cb(new Error('INVALID_ID_DOCUMENT_TYPE'));
-  },
-}).single('idDocument');
-
-const handleIdDocumentUpload = handleUpload(idDocumentUpload, 'The ID photo must be a JPG or PNG file smaller than 5MB. Choose another photo.');
+  limits: { fields: 20, fieldSize: 10 * 1024, parts: 25 },
+}).none();
+const handleFormFields = handleUpload(formFields, 'Something in the form is not right. Check it and try again.');
 
 const isProd = process.env.NODE_ENV === 'production';
 const cookieOptions = {
@@ -102,26 +82,21 @@ function publicUser(user: any) {
     createdAt: user.created_at,
     warningMessage: user.warning_message ?? null,
     warningNumber: user.warning_number ?? null,
-    // false for a Google sign-up that has not given its name / school / grade (or ID) yet: the app shows the profile step until then
+    // false for a Google sign-up that has not given its name / school / grade yet: the app shows the profile step until then
     profileComplete: user.profile_complete !== 0,
   };
 }
-
-// Tesseract is CPU-heavy and signup is public: cap concurrent ID checks so a burst can't pin the server.
-const MAX_CONCURRENT_ID_CHECKS = 2;
-let idChecksRunning = 0;
 
 authRouter.post(
   '/signup',
   authLimiter,
   requireCsrfHeader,
-  handleIdDocumentUpload,
+  handleFormFields,
   validateBody(signupSchema),
   async (req, res) => {
     const { username, email, password, avatarKey, role, grade, schoolName, teacherSubject, lang } = req.body;
     // Falls back to the username if the client did not send a name.
     const displayName: string = req.body.displayName ?? username;
-    const idDocument = req.file;
 
     const usernameCheck = moderateText(username);
     if (!usernameCheck.allowed) {
@@ -137,28 +112,6 @@ authRouter.post(
       res.status(400).json({ error: 'This school name is not allowed. Write the real name of your school.' });
       return;
     }
-    if (role === 'teacher' && !idDocument) {
-      res.status(400).json({ error: 'Upload a photo of your ID to confirm your account.' });
-      return;
-    }
-    if (role === 'teacher' && idDocument) {
-      if (idChecksRunning >= MAX_CONCURRENT_ID_CHECKS) {
-        res.status(503).json({ error: 'The site is busy right now. Wait one minute and try again.' });
-        return;
-      }
-      idChecksRunning++;
-      let verification: Awaited<ReturnType<typeof verifyQatarIdPhoto>>;
-      try {
-        verification = await verifyQatarIdPhoto(idDocument.buffer);
-      } finally {
-        idChecksRunning--;
-      }
-      if (!verification.ok) {
-        res.status(400).json({ error: ID_VERIFICATION_MESSAGES[verification.reason] });
-        return;
-      }
-    }
-
     const existing = db
       .prepare(`SELECT id FROM users WHERE lower(username) = lower(?) OR email_hash = ?`)
       .get(username, hashForLookup(email));
@@ -228,26 +181,6 @@ authRouter.post(
       await firebaseDeleteUser(idToken);
     }
 
-    let idDocumentPath: string | null = null;
-    if (role === 'teacher' && idDocument) {
-      if (!supabaseAdmin) {
-        await rollback();
-        res.status(500).json({ error: "We couldn't upload your ID photo. Please try again." });
-        return;
-      }
-      const ext = ID_DOCUMENT_MIME_TO_EXT[idDocument.mimetype];
-      idDocumentPath = `teacher-ids/${userId}-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabaseAdmin.storage
-        .from(ID_DOCUMENT_BUCKET)
-        .upload(idDocumentPath, idDocument.buffer, { contentType: idDocument.mimetype });
-      if (uploadError) {
-        await rollback();
-        console.error('Supabase ID upload failed:', uploadError.message);
-        res.status(500).json({ error: "We couldn't upload your ID photo. Please try again." });
-        return;
-      }
-    }
-
     // A typed 6-digit code when Resend + the Firebase service account are set up, otherwise the
     // verification link (see lib/mailer.ts).
     const method: 'otp' | 'link' = (await otpDeliveryAvailable()) ? 'otp' : 'link';
@@ -260,18 +193,12 @@ authRouter.post(
     }
     if (!sendResult.ok) {
       // Roll back so the username/email is free to retry with instead of being stuck
-      // on an account that never got its verification email (and never leave an
-      // orphaned ID photo sitting in storage either).
-      if (idDocumentPath) await supabaseAdmin!.storage.from(ID_DOCUMENT_BUCKET).remove([idDocumentPath]);
+      // on an account that never got its verification email.
       await rollback();
       console.error('Sending the verification email failed:', sendResult.error);
       recordIssue('verification-email', sendResult.error);
       res.status(500).json({ error: "We couldn't send the confirmation email. Wait a little and try again." });
       return;
-    }
-
-    if (idDocumentPath) {
-      db.prepare(`UPDATE users SET id_document_path = ? WHERE id = ?`).run(idDocumentPath, userId);
     }
 
     res.status(201).json({ pendingVerification: true, email, idToken, method });
@@ -515,9 +442,8 @@ authRouter.post('/google', authLimiter, requireCsrfHeader, validateBody(googleAu
   res.status(created ? 201 : 200).json({ user: publicUser(user), created });
 });
 
-// The step after a Google sign-up: a student gives name, school and grade; a teacher name, school, subject and a Qatar ID photo (checked and stored
-// exactly as at an ordinary teacher signup). Until it is done every other call is refused (middleware/auth.ts).
-authRouter.post('/complete-profile', authLimiter, requireCsrfHeader, requireAuth, handleIdDocumentUpload, async (req, res) => {
+// The step after a Google sign-up: a student gives name, school and grade; a teacher name, school and subject. Until it is done every other call is refused (middleware/auth.ts).
+authRouter.post('/complete-profile', authLimiter, requireCsrfHeader, requireAuth, handleFormFields, async (req, res) => {
   const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!) as any;
   if (!user || user.profile_complete !== 0) {
     res.status(409).json({ error: 'Your profile is already complete. No more steps are needed.' });
@@ -538,49 +464,13 @@ authRouter.post('/complete-profile', authLimiter, requireCsrfHeader, requireAuth
     return;
   }
 
-  let idDocumentPath: string | null = null;
-  if (user.role === 'teacher') {
-    const idDocument = req.file;
-    if (!idDocument) {
-      res.status(400).json({ error: 'Upload a photo of your ID to confirm your account.' });
-      return;
-    }
-    if (idChecksRunning >= MAX_CONCURRENT_ID_CHECKS) {
-      res.status(503).json({ error: 'The site is busy right now. Wait one minute and try again.' });
-      return;
-    }
-    idChecksRunning++;
-    let verification: Awaited<ReturnType<typeof verifyQatarIdPhoto>>;
-    try {
-      verification = await verifyQatarIdPhoto(idDocument.buffer);
-    } finally {
-      idChecksRunning--;
-    }
-    if (!verification.ok) {
-      res.status(400).json({ error: ID_VERIFICATION_MESSAGES[verification.reason] });
-      return;
-    }
-    if (!supabaseAdmin) {
-      res.status(500).json({ error: "We couldn't upload your ID photo. Please try again." });
-      return;
-    }
-    idDocumentPath = `teacher-ids/${user.id}-${Date.now()}.${ID_DOCUMENT_MIME_TO_EXT[idDocument.mimetype]}`;
-    const { error: uploadError } = await supabaseAdmin.storage.from(ID_DOCUMENT_BUCKET).upload(idDocumentPath, idDocument.buffer, { contentType: idDocument.mimetype });
-    if (uploadError) {
-      console.error('Supabase ID upload failed:', uploadError.message);
-      res.status(500).json({ error: "We couldn't upload your ID photo. Please try again." });
-      return;
-    }
-  }
-
   db.prepare(
-    `UPDATE users SET display_name = ?, school_name = ?, grade = ?, teacher_subject = ?, id_document_path = COALESCE(?, id_document_path), profile_complete = 1 WHERE id = ?`
+    `UPDATE users SET display_name = ?, school_name = ?, grade = ?, teacher_subject = ?, profile_complete = 1 WHERE id = ?`
   ).run(
     data.displayName,
     data.schoolName,
     user.role === 'student' ? data.grade ?? null : null,
     user.role === 'teacher' ? data.teacherSubject ?? null : null,
-    idDocumentPath,
     user.id
   );
   res.json({ user: publicUser(db.prepare(`SELECT * FROM users WHERE id = ?`).get(user.id)) });

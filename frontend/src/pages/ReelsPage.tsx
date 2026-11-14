@@ -63,7 +63,9 @@ type FlatReelEntry = {
     scriptTextAr?: string | null;
     videoUrl: string | null;
     author: { username: string; displayName: string; avatarKey: string; avatarUrl: string | null; rankKey?: string } | null;
-    questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null; order: number }[];
+    questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null; order: number; format?: 'choice' | 'match' }[];
+    matchPool?: string[];
+    matchPoolAr?: string[];
     // every like on the lesson (its teacher's own included), and whether this viewer is one of them
     likeCount: number;
     likedByMe: boolean;
@@ -78,6 +80,15 @@ function isNearActive(i: number, active: number, total: number): boolean {
 }
 
 type Like = { likeCount: number; likedByMe: boolean };
+
+// The Playlists tab: one playlist per subject, in this order (subject keys from backend/src/lib/ensureSubjects.ts).
+const PLAYLISTS = [
+  { key: 'math', label: 'reels.playlistMath' },
+  { key: 'science', label: 'reels.playlistScience' },
+  { key: 'english', label: 'reels.playlistEnglish' },
+  { key: 'arabic', label: 'reels.playlistArabic' },
+] as const;
+type Tab = 'forYou' | (typeof PLAYLISTS)[number]['key'];
 
 export function ReelsPage() {
   const { user, refreshUser } = useAuth();
@@ -187,7 +198,17 @@ export function ReelsPage() {
   const [brokenIds, setBrokenIds] = useState<number[]>([]);
   const handleVideoFailed = useCallback((reelId: number) => setBrokenIds((b) => (b.includes(reelId) ? b : [...b, reelId])), []);
 
-  const slides: ReelSlideData[] = useMemo(
+  // For you: every lesson, newest first (the server's order). A playlist: that subject's lessons only.
+  const [tab, setTab] = useState<Tab>('forYou');
+  const [lastPlaylist, setLastPlaylist] = useState<Tab>('math');
+  const pickTab = (next: Tab) => {
+    if (next === tab) return;
+    if (next !== 'forYou') setLastPlaylist(next);
+    setTab(next);
+    setActiveIndex(0);
+  };
+
+  const allSlides: ReelSlideData[] = useMemo(
     () =>
       rawDetails.filter((detail) => !!detail.reel.videoUrl && !brokenIds.includes(detail.reel.id)).map((detail) => ({
         levelNumber: detail.level.levelNumber,
@@ -204,13 +225,16 @@ export function ReelsPage() {
           .map((q) => ({
             id: q.id,
             text: pickText(lang, q.text, q.textAr),
-            choices: lang === 'ar' && q.choicesAr ? q.choicesAr : q.choices,
+            choices: lang === 'ar' && q.choicesAr?.length ? q.choicesAr : q.choices,
+            format: q.format,
           })),
+        matchPool: (lang === 'ar' && detail.reel.matchPoolAr?.length ? detail.reel.matchPoolAr : detail.reel.matchPool) ?? [],
         completed: detail.progress.status === 'completed',
         stars: detail.progress.stars,
       })),
     [rawDetails, lang, brokenIds]
   );
+  const slides = useMemo(() => (tab === 'forYou' ? allSlides : allSlides.filter((s) => s.subjectKey === tab)), [allSlides, tab]);
 
   // Swiper's own `loop` mode gives us the endless-feed behavior for free (it clones slides
   // internally for seamless wraparound) — no need to manually duplicate laps of data.
@@ -286,7 +310,7 @@ export function ReelsPage() {
   }
 
   // Nothing to watch yet (lessons come from teachers' uploads): say so and point at what is there, rather than showing a blank frame.
-  if (slides.length === 0) {
+  if (allSlides.length === 0) {
     return (
       <div className="empty-state card stack" style={{ maxWidth: 520, margin: '40px auto' }}>
         <h2>{t('reels.emptyTitle')}</h2>
@@ -324,27 +348,33 @@ export function ReelsPage() {
           wrapper resets back to the real page direction so the reel's own caption/badge/exit-
           button logical-property layout still mirrors correctly for Arabic. */}
       <div className="reels-frame-row flex-center gap-md" style={{ direction: 'ltr' }}>
-        <div ref={wheelFrame} style={{ direction: dir, width: 'min(100%, 560px)', height: '100%', position: 'relative' }}>
+        <div ref={wheelFrame} className="reels-stage" style={{ direction: dir, width: 'min(100%, 560px)', height: '100%', position: 'relative' }}>
         {/* Floating overlay instead of a block above the frame -- doesn't eat into the
             frame's own height budget. */}
-        <div
-          className="text-center reels-swipe-hint"
-          style={{
-            position: 'absolute',
-            top: 10,
-            insetInlineStart: 0,
-            insetInlineEnd: 0,
-            zIndex: 2,
-            fontSize: 12.5,
-            color: 'rgba(255,255,255,0.75)',
-            textShadow: '0 1px 4px rgba(0,0,0,0.5)',
-            pointerEvents: 'none',
-          }}
-        >
-          {t('reels.swipeHint')}
+        <div className="reels-tabs" role="tablist">
+          {(['forYou', 'playlists'] as const).map((k) => {
+            const on = k === 'forYou' ? tab === 'forYou' : tab !== 'forYou';
+            return (
+              <button key={k} type="button" role="tab" aria-selected={on} className={`reels-tab${on ? ' is-on' : ''}`} onClick={() => pickTab(k === 'forYou' ? 'forYou' : lastPlaylist)}>
+                {t(k === 'forYou' ? 'reels.tabForYou' : 'reels.tabPlaylists')}
+              </button>
+            );
+          })}
         </div>
+        {tab !== 'forYou' && (
+          <div className="reels-playlists">
+            {PLAYLISTS.map((p) => (
+              <button key={p.key} type="button" aria-pressed={tab === p.key} className={`reels-playlist${tab === p.key ? ' is-on' : ''}`} onClick={() => pickTab(p.key)}>
+                {t(p.label)}
+              </button>
+            ))}
+          </div>
+        )}
+        {slides.length === 0 ? (
+          <div className="reels-playlist-empty">{t('reels.playlistEmpty')}</div>
+        ) : (
         <Swiper
-          key={slides.length}
+          key={`${tab}-${slides.length}`}
           direction="vertical"
           speed={380}
           threshold={4}
@@ -384,6 +414,7 @@ export function ReelsPage() {
             </SwiperSlide>
           ))}
         </Swiper>
+        )}
         </div>
 
         {/* Action rail lives outside the reel frame (TikTok-desktop style), always reflecting
