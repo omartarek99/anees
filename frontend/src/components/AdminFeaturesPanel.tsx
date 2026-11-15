@@ -1,53 +1,45 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import {
-  RiMapFill,
-  RiGamepadLine,
-  RiSwordLine,
-  RiVideoFill,
-  RiFilePaper2Line,
-  RiRobot2Line,
-  RiBarChartBoxFill,
-  RiGroupFill,
-  RiMovie2Line,
-  RiUserAddLine,
-  RiToolsLine,
-} from '@remixicon/react';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { usePinned } from '../lib/use-pinned';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { Switch } from './Switch';
+import { AdminFeatureAccounts } from './AdminFeatureAccounts';
+import { RiLock2Fill, RiTeamFill, RiUserSearchFill } from '@remixicon/react';
+import { FeatureArt, GROUPS, type Role } from './featureMeta';
 
-type Role = 'student' | 'teacher';
 type State = { enabled: boolean; message: string | null; updatedAt: string | null; updatedBy: string | null };
 type Feature = { key: string; roles: Partial<Record<Role, State>> };
-
-// The order and grouping of the switches. The keys are the ones in the backend lib/features.ts.
-const GROUPS: { title: string; keys: string[] }[] = [
-  { title: 'features.groupSite', keys: ['site'] },
-  { title: 'features.groupGames', keys: ['map', 'craft', 'challenges'] },
-  { title: 'features.groupLearning', keys: ['reels', 'worksheets', 'ai_worksheets'] },
-  { title: 'features.groupCommunity', keys: ['leaderboard', 'friends'] },
-  { title: 'features.groupTeachers', keys: ['teacher_upload'] },
-  { title: 'features.groupAccounts', keys: ['signup'] },
-];
-
-const ICONS: Record<string, ReactNode> = {
-  site: <RiToolsLine size={22} />,
-  map: <RiMapFill size={22} />,
-  craft: <RiGamepadLine size={22} />,
-  challenges: <RiSwordLine size={22} />,
-  reels: <RiVideoFill size={22} />,
-  worksheets: <RiFilePaper2Line size={22} />,
-  ai_worksheets: <RiRobot2Line size={22} />,
-  leaderboard: <RiBarChartBoxFill size={22} />,
-  friends: <RiGroupFill size={22} />,
-  teacher_upload: <RiMovie2Line size={22} />,
-  signup: <RiUserAddLine size={22} />,
-};
+const ROLES: Role[] = ['student', 'teacher'];
 
 /** Admin only: one on/off switch per part of the site and per kind of account (students, teachers). Takes effect for everyone on the site within a minute
  *  (the app asks again about once a minute, and straight away when the server answers "closed"). The admin account itself is never switched off. */
 export function AdminFeaturesPanel() {
+  const { t } = useLanguage();
+  const [tab, setTab] = useState<'groups' | 'account'>('groups');
+  // the tab strip stays fixed at the top of the window while the page scrolls (see lib/use-pinned.ts)
+  const pin = usePinned(8);
+  return (
+    <div className="stack feature-page" style={{ gap: 18 }}>
+      <div ref={pin.slotRef} className="fa-tabs-slot" style={{ minHeight: pin.height || undefined }}>
+      <div ref={pin.elRef} className={`fa-tabs${pin.pinned ? ' is-pinned' : ''}`} style={pin.pinStyle} role="tablist">
+        {(['groups', 'account'] as const).map((id) => (
+          <button key={id} type="button" role="tab" aria-selected={tab === id} className={`fa-tab${tab === id ? ' is-active' : ''}`} onClick={() => setTab(id)}>
+            <span className="fa-tab-ico" aria-hidden="true">{id === 'groups' ? <RiTeamFill size={22} /> : <RiUserSearchFill size={22} />}</span>
+            <span className="fa-tab-text">
+              <strong>{t(id === 'groups' ? 'features.tabGroups' : 'features.tabAccount')}</strong>
+              <span>{t(id === 'groups' ? 'features.tabGroupsHelp' : 'features.tabAccountHelp')}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+      </div>
+      {tab === 'groups' ? <AdminFeatureGroups /> : <AdminFeatureAccounts pinTop={8 + pin.height + 8} />}
+    </div>
+  );
+}
+
+function AdminFeatureGroups() {
   const { t, lang } = useLanguage();
   const [features, setFeatures] = useState<Feature[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -93,11 +85,7 @@ export function AdminFeaturesPanel() {
   function toggle(f: Feature, role: Role) {
     const cur = f.roles[role];
     if (!cur) return;
-    if (cur.enabled) {
-      // switching OFF is the one that locks people out: ask first
-      const msg = t(f.key === 'site' ? 'features.confirmSiteOff' : 'features.confirmOff', { name: t(`features.${f.key}`), role: roleLabel(role) });
-      if (!window.confirm(msg)) return;
-    }
+    // no "are you sure" window: a switch acts at once, and switching it back on is one click
     void save(f.key, role, !cur.enabled);
   }
 
@@ -118,98 +106,113 @@ export function AdminFeaturesPanel() {
   }
 
   return (
-    <div className="stack" style={{ gap: 16 }}>
-      <p className="muted" style={{ margin: 0 }}>{t('features.adminIntro')}</p>
+    <div className="stack" style={{ gap: 18 }}>
       {error && <div className="form-error-banner" role="alert">{error}</div>}
 
-      {GROUPS.map((g) => {
-        const rows = g.keys.map((k) => features.find((f) => f.key === k)).filter((f): f is Feature => !!f);
-        if (rows.length === 0) return null;
-        return (
-          <section key={g.title} className="card feature-card">
-            <div className="feature-row feature-head">
-              <h2 style={{ margin: 0, fontSize: 18 }}>{t(g.title)}</h2>
-              <span>{t('features.students')}</span>
-              <span>{t('features.teachers')}</span>
-            </div>
-            {rows.map((f) => (
-              <div key={f.key}>
-                <div className="feature-row">
-                  <div className="feature-name">
-                    <span className="feature-icon" aria-hidden="true">{ICONS[f.key]}</span>
-                    <div>
-                      <strong>{t(`features.${f.key}`)}</strong>
-                      <div className="muted" style={{ fontSize: 13, lineHeight: 1.5 }}>{t(`features.${f.key}Help`)}</div>
-                    </div>
-                  </div>
-                  {(['student', 'teacher'] as Role[]).map((role) => {
-                    const st = f.roles[role];
-                    if (!st) {
-                      return (
-                        <span key={role} className="feature-na" title={t('features.notForRole')} aria-label={t('features.notForRole')}>
-                          —
+      <div className="feature-groups">
+        {GROUPS.map((g) => {
+          const rows = g.keys.map((k) => features.find((f) => f.key === k)).filter((f): f is Feature => !!f);
+          if (rows.length === 0) return null;
+          return (
+            <section key={g.title} className="feature-group" style={{ '--n': g.keys[0] === 'site' ? 4 : rows.length } as CSSProperties}>
+              <h2 className="feature-group-title">
+                <span className="feature-group-ico" aria-hidden="true">{g.icon}</span>
+                {t(g.title)}
+              </h2>
+              <div className="feature-grid">
+                {rows.map((f) => {
+                  const states = ROLES.map((r) => f.roles[r]).filter((x): x is State => !!x);
+                  const allOff = states.length > 0 && states.every((x) => !x.enabled);
+                  return (
+                    <article key={f.key} className={`card feature-tile${allOff ? ' is-off' : ''}${f.key === 'site' ? ' feature-tile--wide' : ''}`}>
+                      <div className="feature-tile-top">
+                        <span className="feature-art-wrap">
+                          <FeatureArt k={f.key} size={f.key === 'site' ? 64 : 52} />
+                          {allOff && (
+                            <span className="feature-ribbon">
+                              <RiLock2Fill size={12} aria-hidden="true" />
+                              {t('features.closedTag')}
+                            </span>
+                          )}
                         </span>
-                      );
-                    }
-                    const busy = saving === `${f.key}|${role}`;
-                    return (
-                      <button
-                        key={role}
-                        type="button"
-                        role="switch"
-                        aria-checked={st.enabled}
-                        aria-label={`${t(`features.${f.key}`)} · ${roleLabel(role)}`}
-                        className="feature-switch"
-                        disabled={busy}
-                        onClick={() => toggle(f, role)}
-                        title={st.updatedBy ? t('features.changedBy', { name: st.updatedBy, when: when(st.updatedAt) }) : t('features.neverChanged')}
-                      >
-                        <Switch kind="flat" on={st.enabled} />
-                        <span className={st.enabled ? 'feature-state is-on' : 'feature-state'}>{t(st.enabled ? 'features.on' : 'features.off')}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {f.key === 'site' && (
-                  <div className="feature-notes">
-                    {(['student', 'teacher'] as Role[]).map((role) => {
-                      const id = `site|${role}`;
-                      return (
-                        <div key={role} className="field">
-                          <label htmlFor={`note-${role}`}>
-                            {t('features.noticeLabel')} · {roleLabel(role)}
-                          </label>
-                          <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
-                            <input
-                              id={`note-${role}`}
-                              type="text"
-                              maxLength={300}
-                              style={{ flex: 1, minWidth: 220 }}
-                              value={notes[role]}
-                              placeholder={t('features.noticePlaceholder')}
-                              onChange={(e) => setNotes((n) => ({ ...n, [role]: e.target.value }))}
-                            />
-                            <button
-                              type="button"
-                              className="btn btn-secondary"
-                              disabled={saving === id}
-                              onClick={() => void save('site', role, f.roles[role]?.enabled ?? true, notes[role])}
-                            >
-                              {savedNote === id ? `✓ ${t('features.saved')}` : t('features.saveNotice')}
-                            </button>
-                          </div>
+                        <div className="feature-tile-text">
+                          <h3>{t(`features.${f.key}`)}</h3>
+                          <p>{t(`features.${f.key}Help`)}</p>
                         </div>
-                      );
-                    })}
-                    <p className="muted" style={{ margin: 0, fontSize: 13 }}>{t('features.noticeHelp')}</p>
-                  </div>
-                )}
+                      </div>
+
+                      <div className="feature-roles">
+                        {ROLES.map((role) => {
+                          const st = f.roles[role];
+                          if (!st) {
+                            return (
+                              <span key={role} className="feature-switch feature-na" title={t('features.notForRole')}>
+                                <span className="feature-role-name">{roleLabel(role)}</span>
+                                <span className="feature-na-dash" aria-hidden="true">—</span>
+                              </span>
+                            );
+                          }
+                          const busy = saving === `${f.key}|${role}`;
+                          return (
+                            <button
+                              key={role}
+                              type="button"
+                              role="switch"
+                              aria-checked={st.enabled}
+                              aria-label={`${t(`features.${f.key}`)} · ${roleLabel(role)}`}
+                              className={`feature-switch${st.enabled ? ' is-on' : ''}`}
+                              disabled={busy}
+                              onClick={() => toggle(f, role)}
+                              title={st.updatedBy ? t('features.changedBy', { name: st.updatedBy, when: when(st.updatedAt) }) : t('features.neverChanged')}
+                            >
+                              <span className="feature-role-name">{roleLabel(role)}</span>
+                              <Switch kind="flat" on={st.enabled} />
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {f.key === 'site' && (
+                        <div className="feature-notes">
+                          {ROLES.map((role) => {
+                            const id = `site|${role}`;
+                            return (
+                              <div key={role} className="field">
+                                <label htmlFor={`note-${role}`}>
+                                  {t('features.noticeLabel')} · {roleLabel(role)}
+                                </label>
+                                <div className="feature-note-row">
+                                  <input
+                                    id={`note-${role}`}
+                                    type="text"
+                                    maxLength={300}
+                                    value={notes[role]}
+                                    placeholder={t('features.noticePlaceholder')}
+                                    onChange={(e) => setNotes((n) => ({ ...n, [role]: e.target.value }))}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    disabled={saving === id}
+                                    onClick={() => void save('site', role, f.roles[role]?.enabled ?? true, notes[role])}
+                                  >
+                                    {savedNote === id ? `✓ ${t('features.saved')}` : t('features.saveNotice')}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          <p className="muted feature-notes-help">{t('features.noticeHelp')}</p>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
-            ))}
-          </section>
-        );
-      })}
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

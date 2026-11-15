@@ -267,3 +267,9 @@ export const adminSetFeatureSchema = z.object({
   enabled: z.boolean(),
   message: z.string().trim().max(300, 'The notice is too long. Use at most 300 letters.').nullable().optional(),
 });
+
+// One account's own switch: true = open for them, false = closed for them, null = follow the group again.
+export const adminSetAccountFeatureSchema = z.object({
+  feature: z.string().trim().min(1).max(40),
+  enabled: z.boolean().nullable(),
+});

@@ -41,7 +41,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     res.status(403).json({ error: 'Complete your profile first, then try again.', profileIncomplete: true });
     return;
   }
-  if (user.role !== 'admin' && !isFeatureOn('site', user.role) && !ALLOWED_WHILE_SITE_CLOSED.has(req.originalUrl.split('?')[0])) {
+  if (user.role !== 'admin' && !isFeatureOn('site', user.role, userId) && !ALLOWED_WHILE_SITE_CLOSED.has(req.originalUrl.split('?')[0])) {
     const message = featureMessage('site', user.role);
     res.status(503).json({ error: message || 'The site is closed for a short while. Please come back soon.', maintenance: true, message });
     return;
@@ -59,7 +59,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 /** Gates a route (or a whole router) behind one of the admin's switches (lib/features.ts). Must run after requireAuth. The admin is never switched off. */
 export function requireFeature(key: FeatureKey) {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (isFeatureOn(key, req.userRole)) {
+    if (isFeatureOn(key, req.userRole, req.userId)) {
       next();
       return;
     }

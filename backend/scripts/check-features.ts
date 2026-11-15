@@ -90,6 +90,52 @@ check('student: /features says the site is closed, with the message', f.status =
 check('teacher: the site is still open for teachers', (await teacher.call('GET', '/api/reels/feed')).status === 200);
 check('admin: not affected', (await admin.call('GET', '/api/admin/features')).status === 200);
 
+// ---------- switches for ONE account (they beat the group's)
+for (const [k, r0] of [['map', 'student'], ['craft', 'student'], ['challenges', 'student'], ['leaderboard', 'student'], ['teacher_upload', 'teacher'], ['ai_worksheets', 'student'], ['signup', 'teacher'], ['site', 'student']] as const) await set(k, r0, true); // start from a clean slate
+const student2 = new Client();
+await student2.call('POST', '/api/auth/login', { username: 'lt_s002', password: 'LoadTest#2026' });
+const id1 = (await student.call('GET', '/api/auth/me')).json.user.id as number;
+const putOwn = (id: number, feature: string, enabled: boolean | null) => admin.call('PUT', `/api/admin/features/accounts/${id}`, { feature, enabled });
+
+check('account: closing the map for ONE student (group is on) works', (await putOwn(id1, 'map', false)).status === 200);
+check('account: that student is refused the map', (await student.call('GET', '/api/map')).status === 403);
+check('account: another student still has the map', (await student2.call('GET', '/api/map')).status === 200);
+const mine = await student.call('GET', '/api/features');
+check('account: /features for that student says map off, for the other on', mine.json.features.map === false && (await student2.call('GET', '/api/features')).json.features.map === true);
+const detail = await admin.call('GET', `/api/admin/features/accounts/${id1}`);
+const mapRow = detail.json.features?.find((x: any) => x.key === 'map');
+check('account: the detail shows group on, own off, result off', detail.status === 200 && mapRow?.group === true && mapRow?.own === false && mapRow?.effective === false, JSON.stringify(mapRow));
+check('account: a student has no teacher_upload switch', !detail.json.features.some((x: any) => x.key === 'teacher_upload'));
+const list = await admin.call('GET', '/api/admin/features/accounts');
+check('account: the list of accounts with their own switches includes it', list.json.accounts.some((a: any) => a.userId === id1 && a.changes.some((c: any) => c.feature === 'map' && c.enabled === false)));
+check('account: resetting it makes the student follow the group again', (await putOwn(id1, 'map', null)).status === 200 && (await student.call('GET', '/api/map')).status === 200);
+
+// the group is closed, but ONE account is let in
+await set('craft', 'student', false);
+check('account: group closed, craft refused', (await student.call('GET', '/api/craft/save')).status === 403);
+await putOwn(id1, 'craft', true);
+check('account: ... but this ONE student is let in (own switch on)', (await student.call('GET', '/api/craft/save')).status !== 403);
+check('account: ... and the other student is still refused', (await student2.call('GET', '/api/craft/save')).status === 403);
+await putOwn(id1, 'craft', null);
+await set('craft', 'student', true);
+
+// the whole site closed for the group, but ONE account (a tester) can still get in
+await set('site', 'student', false, 'Closed');
+check('account: site closed, student refused', (await student.call('GET', '/api/reels/feed')).status === 503);
+await putOwn(id1, 'site', true);
+check('account: site closed, but this tester gets in', (await student.call('GET', '/api/reels/feed')).status === 200);
+check('account: and /features tells that tester the site is open', (await student.call('GET', '/api/features')).json.site.on === true);
+check('account: the other student still sees it closed', (await student2.call('GET', '/api/reels/feed')).status === 503);
+await putOwn(id1, 'site', null);
+await set('site', 'student', true);
+
+const adminId = (await admin.call('GET', '/api/auth/me')).json.user.id as number;
+check('account: an admin account has no switches (400)', (await admin.call('GET', `/api/admin/features/accounts/${adminId}`)).status === 400);
+check('account: a made-up switch is refused', (await putOwn(id1, 'nothing', false)).status === 400);
+check('account: sign-up cannot be set for one account', (await putOwn(id1, 'signup', false)).status === 400);
+check('account: a teacher-only switch is refused for a student', (await putOwn(id1, 'teacher_upload', false)).status === 400);
+check('account: a student cannot change switches (403)', (await student.call('PUT', `/api/admin/features/accounts/${id1}`, { feature: 'map', enabled: false })).status === 403);
+
 // back to normal
 for (const [k, r2] of [['map', 'student'], ['craft', 'student'], ['challenges', 'student'], ['leaderboard', 'student'], ['teacher_upload', 'teacher'], ['ai_worksheets', 'student'], ['signup', 'teacher'], ['site', 'student']] as const) await set(k, r2, true);
 check('student: everything works again', (await student.call('GET', '/api/map')).status === 200 && (await student.call('GET', '/api/reels/feed')).status === 200);

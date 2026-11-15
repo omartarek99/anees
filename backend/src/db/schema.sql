@@ -487,3 +487,14 @@ CREATE TABLE IF NOT EXISTS feature_flags (
   updated_by TEXT,
   PRIMARY KEY (feature, role)
 );
+
+-- Switches for ONE account (lib/features.ts, admin panel > Features > One account). A row beats the group switch above it: enabled = 0 closes the feature
+-- for that account only, enabled = 1 opens it for that account even while it is closed for the whole group (a tester, a pilot class). No row = follow the group.
+CREATE TABLE IF NOT EXISTS user_feature_overrides (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  feature TEXT NOT NULL,
+  enabled INTEGER NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_by TEXT,
+  PRIMARY KEY (user_id, feature)
+);

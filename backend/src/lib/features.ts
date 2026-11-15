@@ -37,10 +37,22 @@ type Row = { enabled: boolean; message: string | null; updatedAt: string | null;
 const cache = new Map<string, Row>();
 let loaded = false;
 
+// Switches for one account (table user_feature_overrides): they beat the group switch. Kept in memory like the group switches.
+type Override = { enabled: boolean; updatedAt: string | null; updatedBy: string | null };
+const overrides = new Map<string, Override>(); // `${userId}|${feature}`
+const ovSlot = (userId: number, key: string) => `${userId}|${key}`;
+
+/** Every switch except new sign-ups can be set for one account (a sign-up has no account yet). */
+export const PER_ACCOUNT = FEATURES.filter((f) => f.key !== 'signup').map((f) => f.key);
+
 const slot = (key: string, role: string) => `${key}|${role}`;
 
 function load() {
   cache.clear();
+  overrides.clear();
+  for (const o of db.prepare(`SELECT user_id, feature, enabled, updated_at, updated_by FROM user_feature_overrides`).all() as { user_id: number; feature: string; enabled: number; updated_at: string; updated_by: string | null }[]) {
+    overrides.set(ovSlot(o.user_id, o.feature), { enabled: o.enabled === 1, updatedAt: o.updated_at, updatedBy: o.updated_by });
+  }
   const rows = db.prepare(`SELECT feature, role, enabled, message, updated_at, updated_by FROM feature_flags`).all() as {
     feature: string; role: string; enabled: number; message: string | null; updated_at: string; updated_by: string | null;
   }[];
@@ -54,10 +66,15 @@ export function featureApplies(key: string, role: string): boolean {
 }
 
 /** Is this feature on for this kind of account? An admin, or a role the feature does not concern, always gets true. */
-export function isFeatureOn(key: FeatureKey, role: string | undefined | null): boolean {
+export function isFeatureOn(key: FeatureKey, role: string | undefined | null, userId?: number | null): boolean {
   if (role !== 'student' && role !== 'teacher') return true;
   if (!featureApplies(key, role)) return true;
   if (!loaded) load();
+  // this account's own switch (if the admin set one) beats the group's
+  if (userId) {
+    const own = overrides.get(ovSlot(userId, key));
+    if (own) return own.enabled;
+  }
   return cache.get(slot(key, role))?.enabled ?? true;
 }
 
@@ -80,10 +97,52 @@ export function listFeatureStates() {
 }
 
 /** What one account type can use right now: every feature that concerns it, true or false. */
-export function stateFor(role: string | null) {
+export function stateFor(role: string | null, userId?: number | null) {
   const out: Record<string, boolean> = {};
-  for (const f of FEATURES) if (role && (f.roles as readonly string[]).includes(role)) out[f.key] = isFeatureOn(f.key, role);
+  for (const f of FEATURES) if (role && (f.roles as readonly string[]).includes(role)) out[f.key] = isFeatureOn(f.key, role, userId);
   return out;
+}
+
+/** One account's switches: for each feature that concerns its role, the group's state, the account's own switch (true / false / null = follows the group) and the result. */
+export function accountFeatureStates(userId: number, role: string) {
+  if (!loaded) load();
+  return FEATURES.filter((f) => f.key !== 'signup' && (f.roles as readonly string[]).includes(role)).map((f) => {
+    const own = overrides.get(ovSlot(userId, f.key));
+    const group = cache.get(slot(f.key, role))?.enabled ?? true;
+    return { key: f.key, group, own: own ? own.enabled : null, effective: own ? own.enabled : group, updatedAt: own?.updatedAt ?? null, updatedBy: own?.updatedBy ?? null };
+  });
+}
+
+/** Sets (enabled = true / false) or clears (enabled = null) one account's own switch. */
+export function setAccountFeature(userId: number, role: string, key: string, enabled: boolean | null, by: string): boolean {
+  if (role !== 'student' && role !== 'teacher') return false;
+  if (key === 'signup' || !featureApplies(key, role)) return false;
+  if (enabled === null) db.prepare(`DELETE FROM user_feature_overrides WHERE user_id = ? AND feature = ?`).run(userId, key);
+  else
+    db.prepare(
+      `INSERT INTO user_feature_overrides (user_id, feature, enabled, updated_at, updated_by) VALUES (?,?,?,datetime('now'),?)
+       ON CONFLICT(user_id, feature) DO UPDATE SET enabled = excluded.enabled, updated_at = excluded.updated_at, updated_by = excluded.updated_by`
+    ).run(userId, key, enabled ? 1 : 0, by);
+  load();
+  console.log(`[features] ${by} set ${key} for account ${userId}: ${enabled === null ? 'follows the group' : enabled ? 'ON' : 'OFF'}`);
+  return true;
+}
+
+/** The accounts that have at least one switch of their own, newest change first. */
+export function accountsWithOverrides(limit = 200) {
+  if (!loaded) load();
+  const rows = db
+    .prepare(
+      `SELECT o.user_id, o.feature, o.enabled, o.updated_at, o.updated_by, u.username, u.display_name, u.role, u.grade
+       FROM user_feature_overrides o JOIN users u ON u.id = o.user_id ORDER BY o.updated_at DESC, o.user_id`
+    )
+    .all() as { user_id: number; feature: string; enabled: number; updated_at: string; updated_by: string | null; username: string; display_name: string; role: string; grade: number | null }[];
+  const byUser = new Map<number, { userId: number; username: string; displayName: string; role: string; grade: number | null; changes: { feature: string; enabled: boolean; updatedAt: string; updatedBy: string | null }[] }>();
+  for (const r of rows) {
+    if (!byUser.has(r.user_id)) byUser.set(r.user_id, { userId: r.user_id, username: r.username, displayName: r.display_name, role: r.role, grade: r.grade, changes: [] });
+    byUser.get(r.user_id)!.changes.push({ feature: r.feature, enabled: r.enabled === 1, updatedAt: r.updated_at, updatedBy: r.updated_by });
+  }
+  return [...byUser.values()].slice(0, limit);
 }
 
 export function setFeature(key: string, role: string, enabled: boolean, by: string, message?: string | null): boolean {

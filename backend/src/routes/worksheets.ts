@@ -319,7 +319,7 @@ function trimPool(scope: AiScope, difficulty: Difficulty) {
 function limitAiWhenAi(req: Request, res: Response, next: NextFunction) {
   if (req.body?.reelId || req.body?.topic) {
     // the admin can switch the AI worksheets off (they cost money per use) while the ordinary question-bank worksheets keep working
-    if (!isFeatureOn('ai_worksheets', req.userRole)) {
+    if (!isFeatureOn('ai_worksheets', req.userRole, req.userId)) {
       res.status(403).json({ error: 'Worksheets made by the AI are closed for now. Please try again later.', featureOff: 'ai_worksheets' });
       return;
     }

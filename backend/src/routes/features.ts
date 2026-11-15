@@ -14,9 +14,9 @@ featuresRouter.get('/', (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.json({
     role,
-    site: { on: isFeatureOn('site', role), message: featureMessage('site', role) },
+    site: { on: isFeatureOn('site', role, userId), message: featureMessage('site', role) },
     // the admin has no switches of its own: everything is on for it
-    features: role === 'admin' ? {} : stateFor(role),
+    features: role === 'admin' ? {} : stateFor(role, userId),
     signup: { student: isFeatureOn('signup', 'student'), teacher: isFeatureOn('signup', 'teacher') },
   });
 });

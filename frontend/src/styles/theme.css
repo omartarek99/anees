@@ -4843,81 +4843,801 @@ label,
   outline-offset: 2px;
 }
 
-/* ---------------- Admin > Features: one row per part of the site, a switch for students and one for teachers ---------------- */
-.feature-card {
-  padding-block: 8px;
-}
-.feature-row {
+/* ---------------- Admin > Features: two tabs, and one card per part of the site with a switch for students and one for teachers ---------------- */
+/* Tabs: one pill track, the chosen tab is the gold one. */
+.fa-tabs {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px 120px;
-  gap: 12px;
-  align-items: center;
-  padding: 14px 4px;
-  border-top: 1px solid rgba(127, 127, 127, 0.22);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  background: var(--surface-row);
+  box-shadow: inset 0 0 0 1px var(--glass-border);
 }
-.feature-card > .feature-head {
-  border-top: 0;
-  font-weight: 700;
-}
-.feature-head > span {
-  text-align: center;
-}
-.feature-name {
+.fa-tab {
   display: flex;
+  align-items: center;
   gap: 12px;
-  align-items: flex-start;
-  min-width: 0;
+  min-inline-size: 0;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
-.feature-icon {
+.fa-tab:hover:not(.is-active) {
+  background: var(--surface-hover);
+}
+.fa-tab-ico {
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  inline-size: 40px;
-  block-size: 40px;
-  border-radius: 12px;
-  background: rgba(127, 127, 127, 0.14);
+  inline-size: 42px;
+  block-size: 42px;
+  border-radius: 14px;
+  background: rgba(127, 127, 127, 0.18);
+}
+.fa-tab-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+.fa-tab-text span {
+  font-size: 12.5px;
+  opacity: 0.78;
+}
+.fa-tab.is-active {
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  color: #3b2305;
+  box-shadow: 0 12px 22px -14px rgba(240, 168, 58, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+.fa-tab.is-active .fa-tab-ico {
+  background: rgba(255, 255, 255, 0.5);
+}
+.fa-tab.is-active .fa-tab-text span {
+  opacity: 0.9;
+}
+
+/* Groups: each group is a heading and a row of cards; small groups share a line on a wide screen. */
+.feature-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px 18px;
+}
+.feature-group {
+  flex: var(--n, 1) 1 calc(var(--n, 1) * 250px);
+  min-inline-size: 0;
+  max-inline-size: min(100%, calc(var(--n, 1) * 460px));
+}
+.feature-group-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+.feature-group-ico {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(135deg, #7a5cf0, #c22954);
+  box-shadow: 0 6px 14px -6px rgba(122, 92, 240, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+/* the cards of a group go one under another, each as wide as the page */
+.feature-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+/* One card. */
+.feature-tile {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  align-items: center;
+  gap: 14px 24px;
+  min-inline-size: 0;
+  padding: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.feature-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: inset 0 1px 0 var(--sg-rim), inset 0 0 0 1px var(--sg-inner), 0 0 0 1px rgba(240, 168, 58, 0.6), 0 20px 36px -18px rgba(122, 92, 240, 0.7);
+}
+.feature-tile-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.feature-tile-text {
+  min-inline-size: 0;
+}
+.feature-tile-text h3 {
+  margin: 0 0 4px;
+  font-size: 16.5px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.feature-tile-text p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.feature-art-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.feature-art {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #5b2a9d, #2a1250);
+  box-shadow: 0 10px 20px -10px rgba(122, 60, 220, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+.feature-art img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+.feature-tile:hover .feature-art {
+  transform: rotate(-3deg) scale(1.05);
+}
+/* Closed for every group that uses it: the picture goes grey and wears a "Closed" tag. */
+.feature-tile.is-off {
+  outline: 2px dashed color-mix(in srgb, var(--danger) 55%, transparent);
+  outline-offset: -2px;
+}
+.feature-tile.is-off .feature-art {
+  filter: grayscale(1) brightness(0.8);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+.feature-tile.is-off .feature-tile-text h3 {
+  opacity: 0.75;
+}
+.feature-ribbon {
+  position: absolute;
+  inset-block-end: -8px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-6deg);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #fff;
+  background: #b3243a;
+  box-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* The two switches of a card, side by side: group name, switch, state. Green box = on, red box = off. */
+.feature-roles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 .feature-switch {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  background: none;
-  border: 0;
-  padding: 4px;
+  gap: 6px;
+  min-inline-size: 0;
+  padding: 10px 6px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
   color: inherit;
   font: inherit;
   cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.15s;
+}
+.feature-switch.is-on {
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+}
+button.feature-switch:hover:not(:disabled) {
+  border-color: var(--gold);
+}
+button.feature-switch:active:not(:disabled) {
+  transform: scale(0.97);
 }
 .feature-switch:disabled {
   opacity: 0.5;
   cursor: progress;
 }
-.feature-switch:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 2px;
-  border-radius: 12px;
+.feature-role-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  opacity: 0.85;
 }
 .feature-state {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--danger);
 }
-.feature-state.is-on {
+.feature-switch.is-on .feature-state {
   color: var(--success);
 }
 .feature-na {
+  cursor: default;
+  border-style: dashed;
+  border-color: rgba(127, 127, 127, 0.4);
+  background: transparent;
+  opacity: 0.65;
+}
+.feature-na-dash {
+  block-size: 36px;
+  line-height: 36px;
+}
+.feature-na .feature-state {
+  color: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
   text-align: center;
-  opacity: 0.4;
+  line-height: 1.35;
+}
+
+/* "Whole site" is the big one: picture and text beside its switches, the closed-notice boxes underneath. */
+.feature-tile--wide {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  align-items: center;
+  gap: 16px 24px;
+  background-image: linear-gradient(120deg, rgba(122, 92, 240, 0.16), rgba(240, 168, 58, 0.12));
+}
+.feature-tile--wide .feature-tile-text h3 {
+  font-size: 19px;
 }
 .feature-notes {
+  grid-column: 1 / -1;
   display: grid;
-  gap: 12px;
-  padding: 4px 4px 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  padding-block-start: 14px;
+  border-block-start: 1px dashed rgba(127, 127, 127, 0.35);
+}
+.feature-notes .field {
+  margin: 0;
+  min-inline-size: 0;
+}
+.feature-note-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.feature-note-row input {
+  flex: 1 1 180px;
+  min-inline-size: 0;
+}
+.feature-notes-help {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+}
+
+:is(.fa-tab, .feature-switch, .fa-hit, .fa-seg-btn):focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .feature-tile,
+  .feature-tile--wide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .feature-notes {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 @media (max-width: 640px) {
-  .feature-row {
-    grid-template-columns: minmax(0, 1fr) 72px 72px;
+  
+  /* on a phone the picture goes behind the text, dimmed */
+  
+  
+  
+  .fa-tab {
     gap: 8px;
+    padding: 8px;
   }
+  .fa-tab-ico {
+    inline-size: 34px;
+    block-size: 34px;
+    border-radius: 12px;
+  }
+  .fa-tab-text span {
+    display: none;
+  }
+}
+
+/* ---------------- Admin > Features > One account ---------------- */
+.fa-search {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+.fa-search-box {
+  position: relative;
+}
+.fa-search-ico {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 16px;
+  transform: translateY(-50%);
+  color: var(--gold-ink);
+  pointer-events: none;
+}
+.fa-search-box input {
+  inline-size: 100%;
+  block-size: 52px;
+  padding-inline: 48px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-input);
+  color: inherit;
+  font: inherit;
+  font-size: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.fa-search-box input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px rgba(240, 168, 58, 0.25);
+}
+.fa-search-hint {
+  padding-inline-start: 18px;
+  font-size: 13px;
+}
+.fa-hits {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: 8px;
+}
+.fa-none {
+  margin: 0;
+  padding: 8px 4px;
+}
+.fa-hit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(127, 127, 127, 0.24);
+  background: var(--surface-row);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.fa-hit:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px -14px rgba(122, 92, 240, 0.8);
+}
+.fa-hit-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-inline-size: 0;
+}
+.fa-hit-text > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* the @username is always left-to-right; keep it on the reading side in Arabic too */
+:is(.fa-hit-text, .fa-head-text) > bdi {
+  align-self: flex-start;
+  max-inline-size: 100%;
+}
+.fa-avatar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  inline-size: 40px;
+  block-size: 40px;
+  border-radius: 50%;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #7a5cf0, #c22954);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 6px 12px -6px rgba(122, 92, 240, 0.8);
+}
+.fa-avatar--teacher {
+  color: #3b2305;
+  background: linear-gradient(135deg, #fbdb9e, #f0a83a);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 6px 12px -6px rgba(240, 168, 58, 0.9);
+}
+.fa-avatar--big {
+  inline-size: 60px;
+  block-size: 60px;
+  font-size: 24px;
+  outline: 3px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 2px;
+}
+.fa-role {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(122, 92, 240, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(122, 92, 240, 0.4);
+}
+.fa-role--teacher {
+  background: rgba(240, 168, 58, 0.24);
+  box-shadow: inset 0 0 0 1px rgba(240, 168, 58, 0.55);
+}
+.fa-detail {
+  display: grid;
+  gap: 14px;
+}
+.fa-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 16px;
+  background-image: linear-gradient(120deg, rgba(122, 92, 240, 0.2), rgba(240, 168, 58, 0.14));
+}
+.fa-head-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-inline-size: min(160px, 100%);
+}
+.fa-head-text small {
+  font-weight: 700;
+  color: var(--gold-ink);
+}
+.fa-head-text h2 {
+  margin: 0;
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+.fa-head .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.fa-rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr));
+  gap: 14px;
+}
+/* a card whose setting is the account's own (not the group's) gets a gold ring */
+.fa-row.is-own {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+.fa-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.fa-pill,
+.fa-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.fa-pill.is-open,
+.fa-chip.is-open {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+}
+.fa-pill.is-closed,
+.fa-chip.is-closed {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+}
+.fa-why {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.fa-why.is-own {
+  font-weight: 700;
+  color: var(--gold-ink);
+}
+/* Like the group | Open | Close */
+.fa-seg {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1fr;
+  gap: 4px;
+  margin-block-start: auto;
+  padding: 4px;
+  border-radius: 16px;
+  background: rgba(127, 127, 127, 0.16);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+.fa-seg-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-inline-size: 0;
+  padding: 7px 4px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.fa-seg-btn:hover:not(.is-active):not(:disabled) {
+  background: var(--surface-hover);
+}
+.fa-seg-btn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+.fa-seg-btn.is-active {
+  box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.fa-seg-btn.is-active.fa-seg-btn--group {
+  background: linear-gradient(135deg, #8a6df5, #6548d8);
+  color: #fff;
+}
+.fa-seg-btn.is-active.fa-seg-btn--on {
+  background: linear-gradient(135deg, #9af582, #5fd944);
+  color: #12331a;
+}
+.fa-seg-btn.is-active.fa-seg-btn--off {
+  background: linear-gradient(135deg, #d9485c, #b3243a);
+  color: #fff;
+}
+.fa-overrides {
+  padding: 16px;
+}
+.fa-ov-list {
+  display: grid;
+  gap: 8px;
+}
+.fa-ov {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(127, 127, 127, 0.22);
+  background: var(--surface-row);
+}
+.fa-ov-main {
+  flex: 1;
+  min-inline-size: min(200px, 100%);
+}
+.fa-ov-who {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.fa-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-block-start: 6px;
+}
+.fa-ov-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-tile,
+  .feature-art,
+  .feature-switch,
+  .fa-tab,
+  .fa-hit,
+  .fa-seg-btn {
+    transition: none;
+  }
+  .feature-tile:hover,
+  .feature-tile:hover .feature-art,
+  .fa-hit:hover,
+  button.feature-switch:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ---------------- Admin > Features: smaller, glassy cards, every group full width (one card under another) ---------------- */
+.feature-groups {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+.feature-group {
+  flex: none;
+  max-inline-size: none;
+}
+.feature-grid {
+  gap: 10px;
+}
+.feature-tile {
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 250px);
+  gap: 10px 18px;
+  padding: 10px 14px;
+  border-radius: 20px;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(255, 255, 255, 0.06), 0 10px 24px -16px rgba(0, 0, 0, 0.7);
+}
+.feature-tile:hover {
+  transform: translateY(-2px);
+}
+.feature-tile-top {
+  align-items: center;
+  gap: 12px;
+}
+.feature-tile-text h3 {
+  font-size: 15px;
+  margin-block-end: 2px;
+}
+.feature-tile-text p {
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.feature-art {
+  border-radius: 16px;
+}
+.feature-roles {
+  gap: 8px;
+}
+.feature-switch {
+  padding: 6px 4px;
+  gap: 3px;
+  border-radius: 14px;
+  background-color: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.feature-switch .switch {
+  --u: 0.3px;
+}
+.feature-role-name {
+  font-size: 12px;
+}
+.feature-state {
+  font-size: 12px;
+}
+.feature-na-dash {
+  line-height: 1.4;
+}
+@media (max-width: 760px) {
+  .feature-tile,
+  .feature-tile--wide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------------- Admin > Features > One account: one glassy card per row, like the Everyone tab ---------------- */
+.fa-rows {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+.fa-row.feature-tile {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'top seg'
+    'status seg';
+  align-items: center;
+  gap: 8px 18px;
+}
+.fa-row .feature-tile-top {
+  grid-area: top;
+}
+.fa-row .fa-status {
+  grid-area: status;
+}
+.fa-row .fa-seg {
+  grid-area: seg;
+  justify-self: end;
+}
+@media (max-width: 760px) {
+  .fa-row.feature-tile {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'top'
+      'status'
+      'seg';
+  }
+  .fa-row .fa-seg {
+    justify-self: stretch;
+  }
+}
+
+/* ---------------- Admin > Features: the tab strip and the chosen account's header stay pinned while the cards scroll ---------------- */
+.fa-tabs {
+  position: sticky;
+  top: 8px;
+  z-index: 30;
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  background-color: color-mix(in srgb, var(--surface-row) 55%, rgba(18, 10, 32, 0.92));
+  box-shadow: inset 0 0 0 1px var(--glass-border), 0 14px 26px -18px rgba(0, 0, 0, 0.8);
+}
+.fa-detail > .fa-head {
+  position: sticky;
+  top: calc(8px + var(--fa-tabs-h, 72px) + 8px);
+  z-index: 25;
+  border-radius: 20px;
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  background-color: color-mix(in srgb, var(--surface-row) 55%, rgba(18, 10, 32, 0.92));
+  box-shadow: inset 0 0 0 1px var(--glass-border), 0 14px 26px -18px rgba(0, 0, 0, 0.8);
+}
+
+/* One account: the switch box (same look as the Everyone tab) replaces the three-way pill */
+.fa-row .fa-switch {
+  grid-area: seg;
+  justify-self: end;
+  min-inline-size: 140px;
+}
+@media (max-width: 760px) {
+  .fa-row .fa-switch {
+    justify-self: stretch;
+  }
+}
+
+/* ---------------- pinned strips: held in place by lib/use-pinned.ts (works whatever surrounds them), not by position: sticky ---------------- */
+.fa-tabs,
+.fa-detail > .fa-head-slot > .fa-head {
+  position: relative;
+}
+.fa-tabs {
+  top: auto;
+  z-index: 30;
+}
+.fa-tabs.is-pinned {
+  position: fixed;
+  top: 8px;
+}
+.fa-head {
+  z-index: 25;
+}
+.fa-detail > .fa-head-slot > .fa-head.is-pinned,
+.fa-head.is-pinned {
+  position: fixed;
+}
+.fa-head.is-pinned {
+  border-radius: 20px;
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  background-color: color-mix(in srgb, var(--surface-row) 55%, rgba(18, 10, 32, 0.92));
+  box-shadow: inset 0 0 0 1px var(--glass-border), 0 14px 26px -18px rgba(0, 0, 0, 0.8);
 }
