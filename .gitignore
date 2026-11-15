@@ -13,6 +13,8 @@ backend/data/*.db
 backend/data/*.db-shm
 backend/data/*.db-wal
 backend/data/*.bak
+# teachers' certificates when no Supabase storage is set up (local development)
+backend/data/teacher-certificates/
 
 # Generated reel videos — recreated on demand by POST /reels/generate
 fastapi-backend/assets/*.mp4

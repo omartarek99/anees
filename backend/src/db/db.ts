@@ -500,3 +500,13 @@ const pointsNoticeCols = db.prepare(`PRAGMA table_info(points_notices)`).all() a
 if (!pointsNoticeCols.some((c) => c.name === 'violation')) {
   db.exec(`ALTER TABLE points_notices ADD COLUMN violation TEXT`);
 }
+
+// A teacher's proof that they are a teacher (routes/teacherCertificate.ts): the file's place in storage and where its review stands. A teacher
+// can post lessons and send worksheets only once an admin has approved it ('approved'); until then ('none', 'pending', 'rejected') they browse.
+const userColsForCert = db.prepare(`PRAGMA table_info(users)`).all() as { name: string }[];
+if (!userColsForCert.some((c) => c.name === 'teacher_cert_path')) {
+  db.exec(`ALTER TABLE users ADD COLUMN teacher_cert_path TEXT`);
+  db.exec(`ALTER TABLE users ADD COLUMN teacher_cert_status TEXT NOT NULL DEFAULT 'none'`);
+  db.exec(`ALTER TABLE users ADD COLUMN teacher_cert_note TEXT`); // the admin's reason for a rejection
+  db.exec(`ALTER TABLE users ADD COLUMN teacher_cert_at TEXT`); // when it was sent
+}

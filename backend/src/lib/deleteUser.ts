@@ -1,3 +1,4 @@
+import { remove as removeTeacherCertificate } from '../routes/teacherCertificate.js';
 import { db } from '../db/db.js';
 import { supabaseAdmin } from './supabase.js';
 import { decrypt, hashForLookup } from './encryption.js';
@@ -42,6 +43,8 @@ async function deleteUserRow(user: any): Promise<DeleteUserResult> {
       storage = 'skipped (SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY not configured)';
     }
   }
+
+  await removeTeacherCertificate(user.teacher_cert_path ?? null).catch(() => {});
 
   // The photo, certificate images and lesson videos sit in a public bucket, and an authored reel would
   // otherwise stay live with nobody left to take it down (the admin tools only reach reels with an author).

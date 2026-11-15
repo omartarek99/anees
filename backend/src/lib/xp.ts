@@ -1,6 +1,7 @@
 import { db } from '../db/db.js';
 import { issueRankCertificates } from './rankCertificates.js';
 import { getRankTier, DIVISION_COUNT } from './ranks.js';
+import { levelForXp } from './levels.js';
 
 export const WORKSHEET_XP_PER_CORRECT: Record<'easy' | 'medium' | 'hard', number> = {
   easy: 5,
@@ -168,21 +169,19 @@ export function getMapLevel(userId: number): number {
   return Math.min(completedMax + 1, 50);
 }
 
-// A user's level grows with their points: everyone starts at level 1 and gains a level every 100 points (students, by total XP) or every
-// 20 points (teachers, by teacher points, a smaller scale like their rank ladder in lib/ranks.ts). A rank division is 250 points wide
-// (100 for teachers), so a division is two and a half levels.
-export const POINTS_PER_LEVEL = 100;
+// A user's level grows with their points. A student climbs the curve in lib/levels.ts (each level a little more work, level 70 the top); a teacher
+// gains a level every TEACHER_POINTS_PER_LEVEL teacher points, with no cap.
 export const TEACHER_POINTS_PER_LEVEL = 20;
 
-export function getLevelInfo(userId: number): { level: number; progress: number } {
+export function getLevelInfo(userId: number): { level: number; progress: number; xpIntoLevel: number; xpForNext: number | null } {
   const u = db.prepare(`SELECT role, total_xp, teacher_points FROM users WHERE id = ?`).get(userId) as
     | { role: string; total_xp: number; teacher_points: number }
     | undefined;
-  if (!u) return { level: 1, progress: 0 };
-  const teacher = u.role === 'teacher';
-  const points = Math.max(0, teacher ? u.teacher_points : u.total_xp);
-  const per = teacher ? TEACHER_POINTS_PER_LEVEL : POINTS_PER_LEVEL;
-  return { level: 1 + Math.floor(points / per), progress: (points % per) / per };
+  if (!u) return { level: 1, progress: 0, xpIntoLevel: 0, xpForNext: levelForXp(0).xpForNext };
+  if (u.role !== 'teacher') return levelForXp(u.total_xp);
+  const points = Math.max(0, u.teacher_points);
+  const per = TEACHER_POINTS_PER_LEVEL;
+  return { level: 1 + Math.floor(points / per), progress: (points % per) / per, xpIntoLevel: points % per, xpForNext: per };
 }
 
 /** The user's level, from their points (see above). */

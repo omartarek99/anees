@@ -3,7 +3,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { wordsText } from '../lib/textRules.js';
 import { db } from '../db/db.js';
-import { forbidRole, requireRole } from '../middleware/auth.js';
+import { forbidRole, requireRole, requireApprovedTeacher } from '../middleware/auth.js';
 import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { worksheetAiLimiter } from '../middleware/rateLimit.js';
 import { awardXp, penalizeWrongAnswers, syncTeacherPoints, WORKSHEET_XP_PER_CORRECT } from '../lib/xp.js';
@@ -511,7 +511,7 @@ worksheetsRouter.post('/:id/submit', requireRole('student'), requireCsrfHeader, 
 
 const sentVideo = (r: any) => (r.reel_id ? { id: r.reel_id, title: r.reel_title, titleAr: r.reel_title_ar } : null);
 
-worksheetsRouter.post('/:id/send', requireRole('teacher'), requireCsrfHeader, (req, res) => {
+worksheetsRouter.post('/:id/send', requireRole('teacher'), requireApprovedTeacher, requireCsrfHeader, (req, res) => {
   const attempt = db.prepare(`SELECT * FROM worksheet_attempts WHERE id = ? AND user_id = ?`).get(Number(req.params.id), req.userId!) as any;
   if (!attempt) {
     res.status(404).json({ error: 'Worksheet not found.' });

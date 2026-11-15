@@ -416,6 +416,23 @@ svg {
   background: var(--surface-hover);
   color: var(--maroon);
 }
+/* a page the student's level has not opened yet (lib/levels.ts): dimmed, with a small lock on its corner */
+.sidebar-icon-btn.is-locked {
+  position: relative;
+  opacity: 0.55;
+}
+.nav-lock {
+  position: absolute;
+  inset-block-end: 4px;
+  inset-inline-end: 4px;
+  display: grid;
+  place-items: center;
+  inline-size: 16px;
+  block-size: 16px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+  color: #fff;
+}
 .sidebar-icon-btn.active {
   --neu-s: 0.4;
   background: var(--neu-bg-pressed);
@@ -4841,4 +4858,88 @@ label,
 :is(.rq-tile, .rq-match-q, .rq-chip):focus-visible {
   outline: 3px solid var(--gold);
   outline-offset: 2px;
+}
+
+/* ---------------- A page still locked by the student's level (LevelGate) ---------------- */
+.level-gate {
+  max-width: 520px;
+  margin: 40px auto;
+  text-align: center;
+}
+.level-gate-icon {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 56px;
+  block-size: 56px;
+  margin-inline: auto;
+  border-radius: 50%;
+  background: var(--sand-light);
+  color: var(--maroon);
+}
+
+/* ---------------- Level progress on the profile ---------------- */
+.level-next {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.level-bar {
+  block-size: 8px;
+  inline-size: min(220px, 100%);
+  border-radius: 999px;
+  background: var(--sand-dark);
+  overflow: hidden;
+}
+.level-bar > span {
+  display: block;
+  block-size: 100%;
+  background: var(--maroon);
+  border-radius: inherit;
+}
+
+/* ---------------- Teacher certificate (TeacherCertificateCard, AdminTeacherProofsPanel) ---------------- */
+.cert-card {
+  max-width: 640px;
+}
+.cert-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  inline-size: fit-content;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  background: var(--sand-light);
+  color: var(--ink);
+}
+.cert-status.is-pending {
+  background: color-mix(in srgb, var(--gold) 22%, var(--sand-light));
+}
+.cert-status.is-approved {
+  background: color-mix(in srgb, var(--success) 18%, var(--sand-light));
+  color: var(--success);
+}
+.cert-status.is-rejected {
+  background: color-mix(in srgb, var(--danger) 14%, var(--sand-light));
+  color: var(--danger);
+}
+.cert-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* a student with no rank yet (below level 10): a plain dashed disc where the rank artwork goes */
+.rank-unranked {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px dashed var(--ink-soft);
+  color: var(--ink-soft);
+  font-weight: 900;
+  line-height: 1;
 }

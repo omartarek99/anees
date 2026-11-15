@@ -26,6 +26,11 @@ CREATE TABLE IF NOT EXISTS users (
   teacher_subject TEXT,
   email_verified INTEGER NOT NULL DEFAULT 0,
   id_document_path TEXT,
+  -- a teacher's certificate (storage path) and its review: none / pending / approved / rejected (db.ts adds these to older databases)
+  teacher_cert_path TEXT,
+  teacher_cert_status TEXT NOT NULL DEFAULT 'none',
+  teacher_cert_note TEXT,
+  teacher_cert_at TEXT,
   firebase_uid TEXT,
   is_active INTEGER NOT NULL DEFAULT 1,
   -- Admin-issued warning shown once to the account, then cleared when they dismiss it (or

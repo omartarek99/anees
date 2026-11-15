@@ -15,6 +15,8 @@ export type RankTier = {
   progress: number;
   /** 1-3, or null for the single-division tiers (Diamond, Warrior, Champion) */
   division: number | null;
+  /** a student below level 10: no rank yet (the server still sends Iron's key, so the bar and perks work) */
+  unranked?: boolean;
 };
 
 /** Rank badge: the tier's artwork (public/images/ranks/<key>.webp, transparent, square) and a small chip with the division number
@@ -33,7 +35,13 @@ export function RankBadge({ tier, size = 28, showName = true, showIcon = true }:
           className={shine ? 'rank-shine' : undefined}
           style={{ position: 'relative', display: 'inline-flex', flexShrink: 0, ...(shine ? ({ '--shine-img': `url(${src})`, '--shine-glow': tier.color } as CSSProperties) : null) }}
         >
-          <img src={src} width={size} height={size} alt="" decoding="async" />
+          {tier.unranked ? (
+            <span className="rank-unranked" style={{ width: size, height: size, fontSize: Math.max(10, Math.round(size * 0.42)) }}>
+              ?
+            </span>
+          ) : (
+            <img src={src} width={size} height={size} alt="" decoding="async" />
+          )}
           {tier.division && size >= 24 && <DivisionChip tier={tier} size={size} />}
         </span>
       )}

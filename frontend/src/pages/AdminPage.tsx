@@ -1,3 +1,4 @@
+import { AdminTeacherProofsPanel } from '../components/AdminTeacherProofsPanel';
 import { useEffect, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
@@ -14,7 +15,7 @@ import { Pagination } from '../components/Pagination';
 import { GradeFilterSelect, type GradeFilter } from '../components/GradeFilterSelect';
 
 type RoleFilter = 'all' | Role;
-type Tab = 'dashboard' | 'users' | 'accounts' | 'videos' | 'reports' | 'certificates';
+type Tab = 'dashboard' | 'users' | 'accounts' | 'videos' | 'reports' | 'certificates' | 'teachers';
 
 function AdminUsersPanel() {
   const { user: me } = useAuth();
@@ -109,7 +110,7 @@ function AdminUsersPanel() {
   );
 }
 
-const TABS: Tab[] = ['dashboard', 'users', 'accounts', 'videos', 'reports', 'certificates'];
+const TABS: Tab[] = ['dashboard', 'users', 'accounts', 'videos', 'reports', 'certificates', 'teachers'];
 
 const TITLES: Record<Tab, { title: string; subtitle: string }> = {
   dashboard: { title: 'admin.tabDashboard', subtitle: 'admin.subtitleDashboard' },
@@ -118,6 +119,7 @@ const TITLES: Record<Tab, { title: string; subtitle: string }> = {
   videos: { title: 'admin.tabVideos', subtitle: 'admin.subtitleVideos' },
   reports: { title: 'admin.tabReports', subtitle: 'admin.subtitleReports' },
   certificates: { title: 'admin.tabCertificates', subtitle: 'admin.subtitleCertificates' },
+  teachers: { title: 'admin.tabTeacherProofs', subtitle: 'admin.subtitleTeacherProofs' },
 };
 
 // Each section used to be an in-page tab switcher; it's now its own icon-bar entry
@@ -145,6 +147,7 @@ export function AdminPage() {
       {tab === 'videos' && <AdminVideosPanel />}
       {tab === 'reports' && <AdminReportsPanel gradeFilter={reportGrade} onGradeChange={setReportGrade} />}
       {tab === 'certificates' && <AdminCertificatesPanel />}
+      {tab === 'teachers' && <AdminTeacherProofsPanel />}
     </div>
   );
 }

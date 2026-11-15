@@ -1,40 +1,48 @@
 // The rank ladder shown as a bar on a student's profile: Iron 1-3, Bronze 1-3, Silver 1-3, Gold 1-3, Platinum 1-3, Diamond, Warrior,
-// Champion -- eighteen divisions, each the same number of points wide. Mirrors backend/src/lib/ranks.ts (the server decides the rank
-// everywhere else; keep the two in step). The Bronze, Silver and Gold tiers start where the tier certificates are sent
-// (backend/src/lib/rankCertificates.ts).
-
-export const POINTS_PER_DIVISION = 250;
+// Champion -- eighteen divisions, each tier's wider than the one below. A student is unranked until level 10 (RANK_START_XP), where
+// Iron 1 starts. Mirrors backend/src/lib/ranks.ts (the server decides the rank everywhere else; keep the two in step).
+import { RANK_START_XP } from './levels';
 
 export type RankKey = 'iron' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'warrior' | 'champion';
 
-export const RANK_LADDER: { key: RankKey; name: string; nameAr: string; color: string; colorDark: string; divisions: 1 | 3 }[] = [
-  { key: 'iron', name: 'Iron', nameAr: 'حديدي', color: '#9aa3b0', colorDark: '#5f6875', divisions: 3 },
-  { key: 'bronze', name: 'Bronze', nameAr: 'برونزي', color: '#c88355', colorDark: '#8a5a35', divisions: 3 },
-  { key: 'silver', name: 'Silver', nameAr: 'فضي', color: '#c8ccd4', colorDark: '#8b9099', divisions: 3 },
-  { key: 'gold', name: 'Gold', nameAr: 'ذهبي', color: '#f0c96a', colorDark: '#c9971f', divisions: 3 },
-  { key: 'platinum', name: 'Platinum', nameAr: 'بلاتيني', color: '#7fd6d0', colorDark: '#2f8f8b', divisions: 3 },
-  { key: 'diamond', name: 'Diamond', nameAr: 'ألماسي', color: '#6ec6ff', colorDark: '#2a77c9', divisions: 1 },
-  { key: 'warrior', name: 'Warrior', nameAr: 'محارب', color: '#ee6a5a', colorDark: '#a02a22', divisions: 1 },
-  { key: 'champion', name: 'Champion', nameAr: 'بطل', color: '#b97bf2', colorDark: '#6a2fb0', divisions: 1 },
+export const RANK_LADDER: { key: RankKey; name: string; nameAr: string; color: string; colorDark: string; divisions: 1 | 3; width: number }[] = [
+  { key: 'iron', name: 'Iron', nameAr: 'حديدي', color: '#9aa3b0', colorDark: '#5f6875', divisions: 3, width: 300 },
+  { key: 'bronze', name: 'Bronze', nameAr: 'برونزي', color: '#c88355', colorDark: '#8a5a35', divisions: 3, width: 400 },
+  { key: 'silver', name: 'Silver', nameAr: 'فضي', color: '#c8ccd4', colorDark: '#8b9099', divisions: 3, width: 500 },
+  { key: 'gold', name: 'Gold', nameAr: 'ذهبي', color: '#f0c96a', colorDark: '#c9971f', divisions: 3, width: 650 },
+  { key: 'platinum', name: 'Platinum', nameAr: 'بلاتيني', color: '#7fd6d0', colorDark: '#2f8f8b', divisions: 3, width: 800 },
+  { key: 'diamond', name: 'Diamond', nameAr: 'ألماسي', color: '#6ec6ff', colorDark: '#2a77c9', divisions: 1, width: 1200 },
+  { key: 'warrior', name: 'Warrior', nameAr: 'محارب', color: '#ee6a5a', colorDark: '#a02a22', divisions: 1, width: 1600 },
+  { key: 'champion', name: 'Champion', nameAr: 'بطل', color: '#b97bf2', colorDark: '#6a2fb0', divisions: 1, width: 2000 },
 ];
 
-type LadderTier = { key: string; name: string; nameAr: string; color: string; colorDark: string; divisions: 1 | 3 };
+type LadderTier = { key: string; name: string; nameAr: string; color: string; colorDark: string; divisions: 1 | 3; width?: number };
 
-/** A ladder of tiers whose divisions are all `per` points wide: its divisions (lowest first), and where a given number of points puts someone. */
-export function makeLadder<T extends LadderTier>(tiers: T[], per: number) {
-  /** Every division, lowest first: its tier, its number 1-3 (null for the single-division tiers) and where it starts. */
+/** A ladder of tiers (each division `width` points wide, or `per`) starting at `from` points: its divisions (lowest first), and where a given
+ *  number of points puts someone. Below `from` they are unranked. */
+export function makeLadder<T extends LadderTier>(tiers: T[], per: number, from = 0) {
+  /** Every division, lowest first: its tier, its number 1-3 (null for the single-division tiers), where it starts and how wide it is. */
+  let at = from;
   const divisions = tiers
     .flatMap((tier) => Array.from({ length: tier.divisions }, (_, i) => ({ tier, division: tier.divisions > 1 ? i + 1 : null })))
-    .map((d, index) => ({ ...d, index, start: index * per }));
+    .map((d, index) => {
+      const width = d.tier.width ?? per;
+      const out = { ...d, index, start: at, width };
+      at += width;
+      return out;
+    });
   /** The points at which each tier of the ladder starts (the number shown under its logo). */
   const tierStart = tiers.map((t) => divisions.find((d) => d.tier.key === t.key)!.start);
 
-  /** Where the points put someone: the division they are in, the next one (null at the top) and how far through this one they are, 0..1. */
+  /** Where the points put someone: the division they are in, the next one (null at the top), how far through this one they are, 0..1, and
+   *  whether they are still below the first division (unranked). */
   function standingFor(points: number) {
     const p = Math.max(0, points);
-    const current = divisions[Math.min(divisions.length - 1, Math.floor(p / per))];
-    const next = divisions[current.index + 1] ?? null;
-    return { current, next, progress: next ? (p - current.start) / per : 1 };
+    let i = 0;
+    while (i < divisions.length - 1 && p >= divisions[i + 1].start) i++;
+    const current = divisions[i];
+    const next = divisions[i + 1] ?? null;
+    return { current, next, progress: next ? Math.max(0, (p - current.start) / current.width) : 1, unranked: p < from };
   }
 
   /**
@@ -44,9 +52,10 @@ export function makeLadder<T extends LadderTier>(tiers: T[], per: number) {
   function lineFraction(points: number): number {
     const p = Math.max(0, points);
     const n = tiers.length;
+    if (p < from) return 0;
     let i = n - 1;
     while (i > 0 && p < tierStart[i]) i--;
-    const end = i < n - 1 ? tierStart[i + 1] : tierStart[n - 1] + per;
+    const end = i < n - 1 ? tierStart[i + 1] : tierStart[n - 1] + (tiers[n - 1].width ?? per);
     const within = Math.min(1, (p - tierStart[i]) / (end - tierStart[i]));
     return Math.min(1, (i + within) / (n - 1));
   }
@@ -54,7 +63,7 @@ export function makeLadder<T extends LadderTier>(tiers: T[], per: number) {
   return { tiers, per, divisions, tierStart, standingFor, lineFraction };
 }
 
-export const STUDENT_LADDER = makeLadder(RANK_LADDER, POINTS_PER_DIVISION);
+export const STUDENT_LADDER = makeLadder(RANK_LADDER, 0, RANK_START_XP);
 export const standingFor = STUDENT_LADDER.standingFor;
 export const lineFraction = STUDENT_LADDER.lineFraction;
 

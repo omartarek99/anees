@@ -79,6 +79,9 @@ function publicUser(user: any) {
     grade: user.grade,
     schoolName: user.school_name ?? null,
     teacherSubject: user.teacher_subject ?? null,
+    // a teacher's certificate review: 'approved' lets them post lessons and send worksheets (routes/teacherCertificate.ts)
+    teacherCertStatus: user.role === 'teacher' ? user.teacher_cert_status ?? 'none' : null,
+    teacherCertNote: user.role === 'teacher' ? user.teacher_cert_note ?? null : null,
     createdAt: user.created_at,
     warningMessage: user.warning_message ?? null,
     warningNumber: user.warning_number ?? null,

@@ -84,7 +84,7 @@ function playerStats(userId: number) {
 }
 
 function profileSummary(user: any) {
-  const { level: playerLevel, progress: levelProgress } = getLevelInfo(user.id);
+  const { level: playerLevel, progress: levelProgress, xpIntoLevel, xpForNext } = getLevelInfo(user.id);
 
   return {
     username: user.username,
@@ -103,8 +103,10 @@ function profileSummary(user: any) {
     // drives the teacher-only leaderboard, shown on their own profile instead of total XP.
     teacherPoints: user.teacher_points ?? 0,
     playerLevel,
-    // 0..1 toward the next level
+    // 0..1 toward the next level, and the points behind that: so far into this level, and the next level's whole size (null at level 70)
     levelProgress,
+    xpIntoLevel,
+    xpForNext,
     rankTier: user.role === 'teacher' ? getTeacherRankTier(user.teacher_points ?? 0) : getRankTier(user.total_xp),
     // A teacher makes the lessons instead of playing the map (index.ts): their profile shows what they made -- the same counts their teacher
     // points come from (lib/xp.ts) -- and their videos as a portfolio.

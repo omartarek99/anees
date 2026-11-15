@@ -26,6 +26,9 @@ export type User = {
   grade: number | null;
   schoolName: string | null;
   teacherSubject: string | null;
+  /** a teacher's certificate review (backend routes/teacherCertificate.ts): only 'approved' may post lessons and send worksheets */
+  teacherCertStatus?: 'none' | 'pending' | 'approved' | 'rejected' | null;
+  teacherCertNote?: string | null;
   createdAt: string;
   warningMessage: string | null;
   /** Which warning the one showing is (1st, 2nd ...). */

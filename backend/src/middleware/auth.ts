@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { SESSION_COOKIE, getUserIdForToken } from '../lib/session.js';
 import { db } from '../db/db.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
+import { levelForXp, UNLOCK_LEVEL, type Feature } from '../lib/levels.js';
 
 // Prepared once; requireAuth runs on every authenticated request.
 // "Last seen": written at most once a minute per account, so a busy person does not cause a database write on every click.
@@ -69,4 +70,32 @@ export function requireRole(...roles: ('student' | 'teacher' | 'admin')[]) {
     }
     next();
   };
+}
+
+const studentXp = db.prepare(`SELECT total_xp FROM users WHERE id = ?`);
+
+/** Keeps a student out of a feature until their level opens it (lib/levels.ts UNLOCK_LEVEL); other roles pass. */
+export function requireLevel(feature: Feature) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (req.userRole === 'student') {
+      const row = studentXp.get(req.userId!) as { total_xp: number } | undefined;
+      const needed = UNLOCK_LEVEL[feature];
+      if (levelForXp(row?.total_xp ?? 0).level < needed) {
+        res.status(403).json({ error: `This opens at level ${needed}. Keep learning to get there.`, lockedUntilLevel: needed });
+        return;
+      }
+    }
+    next();
+  };
+}
+
+const certStatus = db.prepare(`SELECT teacher_cert_status FROM users WHERE id = ?`);
+
+/** A teacher makes content (lessons, worksheets sent to students) only once an admin has approved their teaching certificate; admins pass. */
+export function requireApprovedTeacher(req: Request, res: Response, next: NextFunction) {
+  if (req.userRole === 'teacher' && (certStatus.get(req.userId!) as { teacher_cert_status: string } | undefined)?.teacher_cert_status !== 'approved') {
+    res.status(403).json({ error: 'Send your teaching certificate first. You can post lessons once an admin approves it.', needsCertificate: true });
+    return;
+  }
+  next();
 }

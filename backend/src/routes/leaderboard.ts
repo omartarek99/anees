@@ -2,6 +2,7 @@ import { asyncRouter } from '../lib/asyncRouter.js';
 import { db } from '../db/db.js';
 import { getRankTier, getTeacherRankTier } from '../lib/ranks.js';
 import { shieldSql } from '../lib/battle.js';
+import { RANK_START_XP } from '../lib/levels.js';
 
 export const leaderboardRouter = asyncRouter();
 
@@ -24,7 +25,8 @@ leaderboardRouter.get('/', (req, res) => {
   // also safe to interpolate.
   const pointsTable = isTeacher ? 'teacher_point_events' : 'xp_events';
   const pointsColumn = isTeacher ? 'teacher_points' : 'total_xp';
-  const roleFilter = isTeacher ? `u.role = 'teacher'` : `u.role = 'student'`;
+  // students below level 10 are unranked and stay off the board (RANK_START_XP is a constant number)
+  const roleFilter = isTeacher ? `u.role = 'teacher'` : `u.role = 'student' AND u.total_xp >= ${RANK_START_XP}`;
   const tierFor = (totalPoints: number) => (isTeacher ? getTeacherRankTier(totalPoints) : getRankTier(totalPoints));
 
   const rows = db

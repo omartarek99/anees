@@ -4,7 +4,7 @@ import multer from 'multer';
 import { open, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { db } from '../db/db.js';
-import { requireAuth, requireRole } from '../middleware/auth.js';
+import { requireAuth, requireRole, requireApprovedTeacher } from '../middleware/auth.js';
 import { requireCsrfHeader, validateBody, handleUpload } from '../middleware/validate.js';
 import { z } from 'zod';
 import { moderateContent } from '../lib/moderation.js';
@@ -144,6 +144,7 @@ teacherReelsRouter.post(
   '/generate-questions',
   requireAuth,
   requireRole('teacher', 'admin'),
+  requireApprovedTeacher,
   requireCsrfHeader,
   aiGenerationLimiter,
   validateBody(generateQuestionsSchema),
@@ -379,6 +380,7 @@ teacherReelsRouter.post(
   '/',
   requireAuth,
   requireRole('teacher', 'admin'),
+  requireApprovedTeacher,
   requireCsrfHeader,
   validateBody(teacherReelSchema),
   (req, res) => {
@@ -420,6 +422,7 @@ teacherReelsRouter.patch(
   '/:id',
   requireAuth,
   requireRole('teacher', 'admin'),
+  requireApprovedTeacher,
   requireCsrfHeader,
   validateBody(teacherReelSchema),
   (req, res) => {
@@ -455,7 +458,7 @@ teacherReelsRouter.patch(
 );
 
 // Step 1: a one-time link the browser uploads the video to. The size and type are checked here (before anything is sent) and again on the stored file.
-teacherReelsRouter.post('/:id/video/upload-url', requireAuth, requireRole('teacher', 'admin'), requireCsrfHeader, videoUploadLimiter, async (req, res) => {
+teacherReelsRouter.post('/:id/video/upload-url', requireAuth, requireRole('teacher', 'admin'), requireApprovedTeacher, requireCsrfHeader, videoUploadLimiter, async (req, res) => {
   const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
   if (!reel) {
     res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
@@ -501,7 +504,7 @@ teacherReelsRouter.post('/:id/video/upload-url', requireAuth, requireRole('teach
 });
 
 // Step 2: the browser has uploaded the file; check what was actually stored, and only then attach it to the lesson. A file that fails is removed.
-teacherReelsRouter.post('/:id/video/complete', requireAuth, requireRole('teacher', 'admin'), requireCsrfHeader, async (req, res) => {
+teacherReelsRouter.post('/:id/video/complete', requireAuth, requireRole('teacher', 'admin'), requireApprovedTeacher, requireCsrfHeader, async (req, res) => {
   const reel = getOwnReel(Number(req.params.id), req.userId!, req.userRole === 'admin');
   if (!reel) {
     res.status(404).json({ error: 'We couldn\'t find what you asked for.' });
@@ -581,6 +584,7 @@ teacherReelsRouter.post(
   '/:id/video',
   requireAuth,
   requireRole('teacher', 'admin'),
+  requireApprovedTeacher,
   requireCsrfHeader,
   videoUploadLimiter,
   limitConcurrentUploads,

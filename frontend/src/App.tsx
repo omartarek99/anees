@@ -1,3 +1,4 @@
+import { LevelGate } from './components/LevelGate';
 import { Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
 import { Navigate, Route, BrowserRouter, Routes, Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth-context';
@@ -337,11 +338,11 @@ export default function App() {
                 <Route element={<NoAdmin />}>
                   <Route path="/reels" element={<ReelsPage />} />
                   <Route element={<StudentOnly />}>
-                    <Route path="/map" element={<MapPage />} />
-                    <Route path="/craft" element={<CraftPage />} />
+                    <Route path="/map" element={<LevelGate feature="map"><MapPage /></LevelGate>} />
+                    <Route path="/craft" element={<LevelGate feature="quarry"><CraftPage /></LevelGate>} />
                   </Route>
                   <Route path="/worksheets" element={<WorksheetsPage />} />
-                  <Route path="/leaderboard" element={<LeaderboardPage />} />
+                  <Route path="/leaderboard" element={<LevelGate feature="leaderboard"><LeaderboardPage /></LevelGate>} />
                   <Route path="/friends" element={<FriendsPage />} />
                 </Route>
                 <Route element={<TeacherOnly />}>

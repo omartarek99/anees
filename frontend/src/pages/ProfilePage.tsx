@@ -54,6 +54,9 @@ type Profile = {
   playerLevel: number;
   // 0..1 toward the next level (every 100 points for a student)
   levelProgress: number;
+  // points into the current level and the size of the next one (null at level 70)
+  xpIntoLevel?: number;
+  xpForNext?: number | null;
   rankTier: RankTier;
   // Students only: a teacher makes the lessons instead of playing the map or solving worksheets.
   bossesDefeated?: number;
@@ -402,7 +405,26 @@ export function ProfilePage() {
                 {profile.teacherPoints} {t('profile.teacherPoints')}
               </span>
             )}
-            {profile.rankTier.nextMinXp !== null && (
+            {profile.role === 'student' && profile.xpForNext != null && profile.xpIntoLevel != null && (
+              <>
+                <p className="level-next">
+                  {t('levels.toNext', { xp: String(profile.xpForNext - profile.xpIntoLevel), n: String(profile.playerLevel + 1) })}
+                  <span className="muted" style={{ fontWeight: 600 }}>
+                    {' '}
+                    ({profile.xpIntoLevel} / {profile.xpForNext})
+                  </span>
+                </p>
+                <div className="level-bar" role="progressbar" aria-valuemin={0} aria-valuemax={profile.xpForNext} aria-valuenow={profile.xpIntoLevel} aria-label={t('common.level')}>
+                  <span style={{ width: `${Math.round(profile.levelProgress * 100)}%` }} />
+                </div>
+              </>
+            )}
+            {profile.role === 'student' && profile.xpForNext === null && <p className="level-next">{t('levels.maxLevel')}</p>}
+            {profile.rankTier.unranked ? (
+              <p className="muted" style={{ fontSize: 11, margin: 0 }}>
+                {t('levels.rankAt10')}
+              </p>
+            ) : profile.rankTier.nextMinXp !== null && (
               <p className="muted" style={{ fontSize: 11, margin: 0 }}>
                 {t(profile.role === 'teacher' ? 'profile.nextTierPoints' : 'profile.nextTierXp', {
                   xp: profile.rankTier.nextMinXp - (profile.role === 'teacher' ? profile.teacherPoints : profile.totalXp),

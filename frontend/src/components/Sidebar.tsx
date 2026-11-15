@@ -13,7 +13,10 @@ import {
   RiCertificateFill,
   RiMovie2Line,
   RiUserSettingsFill,
+  RiShieldCheckFill,
+  RiLockFill,
 } from '@remixicon/react';
+import { lockedUntil, type Feature } from '../lib/levels';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 
@@ -27,7 +30,7 @@ const PathIcon = ({ d }: { d: string }) => (
 // Emoji for most nav icons (unchanged), or a component for the ones swapped for a real
 // icon -- `currentColor` means it automatically follows .sidebar-icon-btn's own color,
 // including its .active state, with no extra wiring.
-type SidebarLink = { to: string; key: string; icon: string | ReactNode; end?: boolean; studentOnly?: boolean };
+type SidebarLink = { to: string; key: string; icon: string | ReactNode; end?: boolean; studentOnly?: boolean; feature?: Feature };
 
 const HOME_LINK: SidebarLink = { to: '/', key: 'nav.home', icon: <RiHome2Line size={20} />, end: true };
 
@@ -35,10 +38,10 @@ const HOME_LINK: SidebarLink = { to: '/', key: 'nav.home', icon: <RiHome2Line si
 // Adventure Map and the Quarry are students only (App.tsx's StudentOnly, and backend/src/index.ts).
 const GAME_LINKS: SidebarLink[] = [
   { to: '/reels', key: 'nav.reels', icon: <RiVideoFill size={20} /> },
-  { to: '/map', key: 'nav.map', icon: <RiMapFill size={20} />, studentOnly: true },
-  { to: '/craft', key: 'nav.craft', icon: <RiGamepadLine size={20} />, studentOnly: true },
+  { to: '/map', key: 'nav.map', icon: <RiMapFill size={20} />, studentOnly: true, feature: 'map' },
+  { to: '/craft', key: 'nav.craft', icon: <RiGamepadLine size={20} />, studentOnly: true, feature: 'quarry' },
   { to: '/worksheets', key: 'nav.worksheets', icon: <RiFilePaper2Line size={20} /> },
-  { to: '/leaderboard', key: 'nav.leaderboard', icon: <PathIcon d="M7.5 21H2V9h5.5zm7.25-18h-5.5v18h5.5zM22 11h-5.5v10H22z" /> },
+  { to: '/leaderboard', key: 'nav.leaderboard', feature: 'leaderboard', icon: <PathIcon d="M7.5 21H2V9h5.5zm7.25-18h-5.5v18h5.5zM22 11h-5.5v10H22z" /> },
   { to: '/friends', key: 'nav.friends', icon: <PathIcon d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3m-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3m0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5m8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5" /> },
 ];
 
@@ -55,6 +58,7 @@ const ADMIN_LINKS: SidebarLink[] = [
   { to: '/admin/accounts', key: 'nav.adminAccounts', icon: <RiUserSettingsFill size={20} /> },
   { to: '/admin/videos', key: 'nav.adminVideos', icon: <RiFilmFill size={20} /> },
   { to: '/admin/certificates', key: 'nav.adminCertificates', icon: <RiCertificateFill size={20} /> },
+  { to: '/admin/teachers', key: 'nav.adminTeacherProofs', icon: <RiShieldCheckFill size={20} /> },
 ];
 
 export function Sidebar() {
@@ -78,19 +82,29 @@ export function Sidebar() {
       </NavLink>
 
       <nav className="sidebar-nav">
-        {links.map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            end={link.end}
-            title={t(link.key)}
-            aria-label={t(link.key)}
-            data-tour={link.to}
-            className={({ isActive }) => `sidebar-icon-btn${isActive ? ' active' : ''}`}
-          >
-            <span aria-hidden>{link.icon}</span>
-          </NavLink>
-        ))}
+        {links.map((link) => {
+          // a page the student's level has not opened yet: still a link (the page says when it opens), with a lock on it
+          const lockedAt = link.feature ? lockedUntil(user, link.feature) : null;
+          const label = lockedAt ? `${t(link.key)} · ${t('levels.opensAt', { n: String(lockedAt) })}` : t(link.key);
+          return (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.end}
+              title={label}
+              aria-label={label}
+              data-tour={link.to}
+              className={({ isActive }) => `sidebar-icon-btn${isActive ? ' active' : ''}${lockedAt ? ' is-locked' : ''}`}
+            >
+              <span aria-hidden>{link.icon}</span>
+              {lockedAt && (
+                <span className="nav-lock" aria-hidden="true">
+                  <RiLockFill size={10} />
+                </span>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
     </aside>
   );

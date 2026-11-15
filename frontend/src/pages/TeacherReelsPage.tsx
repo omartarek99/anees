@@ -1,3 +1,5 @@
+import { useAuth } from '../lib/auth-context';
+import { TeacherCertificateCard } from '../components/TeacherCertificateCard';
 import { Ico } from '../components/Ico';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -75,6 +77,7 @@ type ReelSummary = {
 
 export function TeacherReelsPage() {
   const { t, lang } = useLanguage();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [reels, setReels] = useState<ReelSummary[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -126,14 +129,19 @@ export function TeacherReelsPage() {
     <div className="stack">
       <Topbar title={t('teacherReels.pageTitle')} subtitle={t('teacherReels.pageSubtitle')} />
 
-      <ReelComposer
-        editId={editingId}
-        onSaved={() => {
-          setEditingId(null);
-          loadReels();
-        }}
-        onCancel={editingId ? () => setEditingId(null) : undefined}
-      />
+      {/* posting needs an approved teaching certificate (an admin checks it); until then the certificate card takes the form's place */}
+      {user?.teacherCertStatus === 'approved' ? (
+        <ReelComposer
+          editId={editingId}
+          onSaved={() => {
+            setEditingId(null);
+            loadReels();
+          }}
+          onCancel={editingId ? () => setEditingId(null) : undefined}
+        />
+      ) : (
+        <TeacherCertificateCard />
+      )}
 
       <div className="card">
         <h3 style={{ fontSize: 16, marginBottom: 12 }}>{t('teacherReels.myReelsTitle')}</h3>
