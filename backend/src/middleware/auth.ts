@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { SESSION_COOKIE, getUserIdForToken } from '../lib/session.js';
 import { db } from '../db/db.js';
 import { isCurrentlyBanned } from '../lib/accountStatus.js';
+import { isFeatureOn, featureMessage, type FeatureKey } from '../lib/features.js';
 
 // Prepared once; requireAuth runs on every authenticated request.
 // "Last seen": written at most once a minute per account, so a busy person does not cause a database write on every click.
@@ -12,6 +13,10 @@ const findAuthUser = db.prepare(`SELECT role, is_active, banned_until, profile_c
 // A Google sign-up that has not finished its profile step (lib/googleAuth.ts) may only do these -- a teacher in particular must not reach anything
 // before their ID has been checked.
 const ALLOWED_WHILE_INCOMPLETE = new Set(['/api/auth/me', '/api/auth/session', '/api/auth/logout', '/api/auth/complete-profile', '/api/auth/dismiss-warning']);
+
+// While the admin has the whole site switched off for a role (lib/features.ts, "site"), that role can only do these: see who they are, sign out, and read the
+// switches (so the app can show the closed notice and notice when the site is open again).
+const ALLOWED_WHILE_SITE_CLOSED = new Set(['/api/auth/me', '/api/auth/session', '/api/auth/logout', '/api/features']);
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies?.[SESSION_COOKIE] as string | undefined;
@@ -36,6 +41,11 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     res.status(403).json({ error: 'Complete your profile first, then try again.', profileIncomplete: true });
     return;
   }
+  if (user.role !== 'admin' && !isFeatureOn('site', user.role) && !ALLOWED_WHILE_SITE_CLOSED.has(req.originalUrl.split('?')[0])) {
+    const message = featureMessage('site', user.role);
+    res.status(503).json({ error: message || 'The site is closed for a short while. Please come back soon.', maintenance: true, message });
+    return;
+  }
   const nowMs = Date.now();
   if (nowMs - (lastMarked.get(userId) ?? 0) > 60_000) {
     lastMarked.set(userId, nowMs);
@@ -44,6 +54,17 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   req.userId = userId;
   req.userRole = user.role;
   next();
+}
+
+/** Gates a route (or a whole router) behind one of the admin's switches (lib/features.ts). Must run after requireAuth. The admin is never switched off. */
+export function requireFeature(key: FeatureKey) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (isFeatureOn(key, req.userRole)) {
+      next();
+      return;
+    }
+    res.status(403).json({ error: 'This part of the site is closed for now. Please try again later.', featureOff: key });
+  };
 }
 
 /** Gates a route (or whole router) to one account type. Must run after requireAuth so

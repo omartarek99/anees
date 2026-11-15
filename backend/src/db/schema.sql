@@ -475,3 +475,15 @@ CREATE TABLE IF NOT EXISTS linked_accounts (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (user_id, linked_user_id)
 );
+
+-- Admin switches (lib/features.ts): a feature the admin has switched off for students or for teachers has a row with enabled = 0. No row means on.
+-- `message` is the text people see instead of the feature (used for the "site" switch, the maintenance notice).
+CREATE TABLE IF NOT EXISTS feature_flags (
+  feature TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('student','teacher')),
+  enabled INTEGER NOT NULL DEFAULT 1,
+  message TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_by TEXT,
+  PRIMARY KEY (feature, role)
+);

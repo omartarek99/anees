@@ -259,3 +259,11 @@ export const completeTeacherProfileSchema = z.object({
   schoolName: schoolNameSchema,
   teacherSubject: teacherSubjectSchema,
 });
+
+// One of the admin's on/off switches (lib/features.ts). `message` is the notice people see while the whole site is closed.
+export const adminSetFeatureSchema = z.object({
+  feature: z.string().trim().min(1).max(40),
+  role: z.enum(['student', 'teacher']),
+  enabled: z.boolean(),
+  message: z.string().trim().max(300, 'The notice is too long. Use at most 300 letters.').nullable().optional(),
+});

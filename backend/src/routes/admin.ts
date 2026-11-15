@@ -13,6 +13,7 @@ import {
   adminIssueCertificateSchema,
   adminRevokeCertificateSchema,
   adminApplyViolationSchema,
+  adminSetFeatureSchema,
 } from '../lib/schemas.js';
 import { deleteUserById } from '../lib/deleteUser.js';
 import { moderateText } from '../lib/moderation.js';
@@ -35,6 +36,7 @@ import { getRankTier } from '../lib/ranks.js';
 import { noteRankDrop, syncTeacherPoints } from '../lib/xp.js';
 import { r2SelfTest } from '../lib/r2.js';
 import { FRONTEND_ORIGIN } from '../lib/config.js';
+import { listFeatureStates, setFeature, featureApplies } from '../lib/features.js';
 
 import type { Response } from 'express';
 
@@ -58,6 +60,22 @@ adminRouter.get('/diagnostics', async (_req, res) => {
 adminRouter.post('/double-points/start', requireCsrfHeader, (_req, res) => {
   startDoublePointsNow();
   res.json(getDoublePointsStatus());
+});
+
+// The on/off switches for what students and teachers can use (lib/features.ts). GET lists them with who changed each last; PUT changes one.
+adminRouter.get('/features', (_req, res) => {
+  res.json({ features: listFeatureStates() });
+});
+
+adminRouter.put('/features', requireCsrfHeader, validateBody(adminSetFeatureSchema), (req, res) => {
+  const { feature, role, enabled, message } = req.body as { feature: string; role: 'student' | 'teacher'; enabled: boolean; message?: string | null };
+  if (!featureApplies(feature, role)) {
+    res.status(400).json({ error: 'That switch does not exist.' });
+    return;
+  }
+  const me = db.prepare(`SELECT username FROM users WHERE id = ?`).get(req.userId!) as { username: string } | undefined;
+  setFeature(feature, role, enabled, me?.username ?? 'admin', message);
+  res.json({ features: listFeatureStates() });
 });
 
 const PAGE_SIZE = 20;

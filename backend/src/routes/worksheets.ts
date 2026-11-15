@@ -13,6 +13,7 @@ import { verifyArithmetic } from '../lib/arithmeticCheck.js';
 import { findBankMatch } from '../lib/questionBank.js';
 import { moderateContent } from '../lib/moderation.js';
 import { teacherReelQuestionSchema } from '../lib/schemas.js';
+import { isFeatureOn } from '../lib/features.js';
 
 export const worksheetsRouter = asyncRouter();
 
@@ -317,6 +318,11 @@ function trimPool(scope: AiScope, difficulty: Difficulty) {
 // through the dedicated limiter -- plain bank worksheets stay unthrottled as before.
 function limitAiWhenAi(req: Request, res: Response, next: NextFunction) {
   if (req.body?.reelId || req.body?.topic) {
+    // the admin can switch the AI worksheets off (they cost money per use) while the ordinary question-bank worksheets keep working
+    if (!isFeatureOn('ai_worksheets', req.userRole)) {
+      res.status(403).json({ error: 'Worksheets made by the AI are closed for now. Please try again later.', featureOff: 'ai_worksheets' });
+      return;
+    }
     worksheetAiLimiter(req, res, next);
     return;
   }

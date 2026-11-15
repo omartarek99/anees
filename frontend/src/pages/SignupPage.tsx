@@ -9,6 +9,7 @@ import { AuthShell } from '../components/AuthShell';
 import { OtpVerifyForm } from '../components/OtpVerifyForm';
 import { PasswordRules } from '../components/PasswordRules';
 import { isStrongPassword } from '../lib/password';
+import { useFeatures } from '../lib/features-context';
 import { TEACHER_SUBJECTS } from '../lib/teacherSubjects';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
 
@@ -42,6 +43,14 @@ export function SignupPage() {
   const [password, setPassword] = useState('');
   const avatarKey = 'owl'; // no picture choice at signup: everyone starts as the owl and changes it later on the profile
   const [role, setRole] = useState<Role>('student');
+  // The admin can close new sign-ups for students and/or teachers (admin panel > Features): a closed kind is greyed out, and if both are closed the form is replaced by a notice.
+  const { signupOn } = useFeatures();
+  const studentOpen = signupOn('student');
+  const teacherOpen = signupOn('teacher');
+  useEffect(() => {
+    if (role === 'student' && !studentOpen && teacherOpen) setRole('teacher');
+    else if (role === 'teacher' && !teacherOpen && studentOpen) setRole('student');
+  }, [role, studentOpen, teacherOpen]);
   const [grade, setGrade] = useState('');
   const [schoolName, setSchoolName] = useState('');
   const [teacherSubject, setTeacherSubject] = useState('');
@@ -146,6 +155,16 @@ export function SignupPage() {
     );
   }
 
+  if (!studentOpen && !teacherOpen) {
+    return (
+      <AuthShell title={t('features.signupClosedTitle')} subtitle={t('features.signupClosedBody')}>
+        <p className="text-center muted" style={{ marginTop: 18 }}>
+          <Link to="/login">{t('auth.backToLogin')}</Link>
+        </p>
+      </AuthShell>
+    );
+  }
+
   return (
     <AuthShell wide title={t('auth.signupTitle')} subtitle={t(role === 'teacher' ? 'auth.signupSubtitleTeacher' : 'auth.signupSubtitle')}>
       <form onSubmit={handleSubmit}>
@@ -172,6 +191,7 @@ export function SignupPage() {
               type="button"
               className={`btn ${role === 'student' ? 'btn-primary' : 'btn-secondary'}`}
               style={{ flex: 1 }}
+              disabled={!studentOpen}
               onClick={() => setRole('student')}
             >
               {t('auth.roleStudent')}
@@ -180,6 +200,7 @@ export function SignupPage() {
               type="button"
               className={`btn ${role === 'teacher' ? 'btn-primary' : 'btn-secondary'}`}
               style={{ flex: 1 }}
+              disabled={!teacherOpen}
               onClick={() => setRole('teacher')}
             >
               {t('auth.roleTeacher')}

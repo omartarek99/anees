@@ -4842,3 +4842,82 @@ label,
   outline: 3px solid var(--gold);
   outline-offset: 2px;
 }
+
+/* ---------------- Admin > Features: one row per part of the site, a switch for students and one for teachers ---------------- */
+.feature-card {
+  padding-block: 8px;
+}
+.feature-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 120px;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 4px;
+  border-top: 1px solid rgba(127, 127, 127, 0.22);
+}
+.feature-card > .feature-head {
+  border-top: 0;
+  font-weight: 700;
+}
+.feature-head > span {
+  text-align: center;
+}
+.feature-name {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-width: 0;
+}
+.feature-icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  inline-size: 40px;
+  block-size: 40px;
+  border-radius: 12px;
+  background: rgba(127, 127, 127, 0.14);
+}
+.feature-switch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 0;
+  padding: 4px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.feature-switch:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+.feature-switch:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+.feature-state {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--danger);
+}
+.feature-state.is-on {
+  color: var(--success);
+}
+.feature-na {
+  text-align: center;
+  opacity: 0.4;
+}
+.feature-notes {
+  display: grid;
+  gap: 12px;
+  padding: 4px 4px 16px;
+}
+@media (max-width: 640px) {
+  .feature-row {
+    grid-template-columns: minmax(0, 1fr) 72px 72px;
+    gap: 8px;
+  }
+}

@@ -84,6 +84,7 @@ export const PAGE_IDS: Record<string, string> = {
   '/admin/accounts': 'adminAccounts',
   '/admin/videos': 'adminVideos',
   '/admin/certificates': 'adminCertificates',
+  '/admin/features': 'adminFeatures',
 };
 
 /** The stops and pages a teacher reads in their own words (guide.step_<id>_teacher / guide.page_<id>_teacher): a teacher earns points from
@@ -103,6 +104,7 @@ export function tourStops(role: Role): TourStop[] {
       { target: '/admin/accounts', id: 'adminAccounts' },
       { target: '/admin/videos', id: 'adminVideos' },
       { target: '/admin/certificates', id: 'adminCertificates' },
+      { target: '/admin/features', id: 'adminFeatures' },
       { target: 'menu', id: 'menu' },
     ];
   }
