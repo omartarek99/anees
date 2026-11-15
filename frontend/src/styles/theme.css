@@ -4942,6 +4942,8 @@ label,
   color: var(--ink-soft);
   font-weight: 900;
   line-height: 1;
+}
+
 /* ---------------- Admin > Features: two tabs, and one card per part of the site with a switch for students and one for teachers ---------------- */
 /* Tabs: one pill track, the chosen tab is the gold one. */
 .fa-tabs {
