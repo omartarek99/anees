@@ -6,6 +6,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
+import { useFeatures, type FeatureKey } from '../lib/features-context';
 import { Topbar } from '../components/Topbar';
 import { Avatar } from '../components/Avatar';
 import { RANK_FRAMES } from '../lib/frames';
@@ -47,10 +48,11 @@ function StudentProgress({ profile }: { profile: Profile | null }) {
   // the adventure-map level they are on (the user level above comes from points)
   const mapLevel = profile?.mapLevel ?? 1;
   const pct = (n: number) => `${Math.round((n / 50) * 100)}%`;
-  // One market card per stat: its picture, a corner chip, the value, and where to go with it.
+  const { isOn } = useFeatures();
+  // One market card per stat: its picture, a corner chip, the value, and where to go with it. A card whose part of the site the admin has switched off is left out.
   const cards = [
-    { tone: 'blue', src: '/icons/map-icon.webp', title: t('home.mapProgress'), value: `${mapLevel}/50`, chip: pct(mapLevel), to: '/map', cta: t('home.openMap') },
-    { tone: 'yellow', src: '/icons/levels-icon.webp', title: t('profile.levelsCompleted'), value: `${completed}/50`, chip: pct(completed), to: '/reels', cta: t('home.watchReel') },
+    { tone: 'blue', src: '/icons/map-icon.webp', title: t('home.mapProgress'), value: `${mapLevel}/50`, chip: pct(mapLevel), to: '/map', cta: t('home.openMap'), feature: 'map' as FeatureKey },
+    { tone: 'yellow', src: '/icons/levels-icon.webp', title: t('profile.levelsCompleted'), value: `${completed}/50`, chip: pct(completed), to: '/reels', cta: t('home.watchReel'), feature: 'reels' as FeatureKey },
     {
       tone: 'pink',
       src: '/icons/xp-icon.webp',
@@ -59,6 +61,7 @@ function StudentProgress({ profile }: { profile: Profile | null }) {
       chip: user ? pickText(lang, user.rankTier.name, user.rankTier.nameAr) : '',
       to: '/leaderboard',
       cta: t('nav.leaderboard'),
+      feature: 'leaderboard' as FeatureKey,
     },
     {
       tone: 'green',
@@ -68,8 +71,9 @@ function StudentProgress({ profile }: { profile: Profile | null }) {
       chip: 'VS',
       to: null as string | null,
       cta: t('challenge.homeCta'),
+      feature: 'challenges' as FeatureKey,
     },
-  ];
+  ].filter((c) => isOn(c.feature));
 
   return (
     <>

@@ -10,6 +10,7 @@ import { Topbar } from '../components/Topbar';
 import { VictoryShield } from '../components/VictoryShield';
 import { XpIcon } from '../components/XpIcon';
 import { ChallengeSetupModal } from '../components/ChallengeSetupModal';
+import { useFeatures } from '../lib/features-context';
 import '../styles/friends.css';
 
 type Friend = { username: string; displayName: string; avatarKey: string; totalXp: number; hasShield?: boolean; role: 'student' | 'teacher' };
@@ -22,6 +23,7 @@ const SUGGESTIONS_SHOWN = 6;
 
 export function FriendsPage() {
   const { user } = useAuth();
+  const { isOn } = useFeatures();
   const { t, lang } = useLanguage();
   const [tab, setTab] = useState<Tab>('friends');
   const [friends, setFriends] = useState<Friend[] | null>(null);
@@ -215,7 +217,7 @@ export function FriendsPage() {
                       ),
                       <>
                         {/* Challenges are between students: a teacher earns no XP, so neither sends nor receives one (the server refuses both). */}
-                        {user?.role === 'student' && f.role !== 'teacher' && (
+                        {user?.role === 'student' && f.role !== 'teacher' && isOn('challenges') && (
                           <button type="button" className="btn btn-gold btn-sm" onClick={() => setChallengeFor(f)}>
                             ⚔️ {t('challenge.button')}
                           </button>

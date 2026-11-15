@@ -10,6 +10,7 @@ import { validateBody, requireCsrfHeader, handleUpload } from '../middleware/val
 import { authLimiter, loginAccountLimiter, loginIpLimiter } from '../middleware/rateLimit.js';
 import { comparePassword, hashPassword, PasswordBusyError } from '../lib/passwordQueue.js';
 import { requireAuth } from '../middleware/auth.js';
+import { isFeatureOn } from '../lib/features.js';
 import { googleAuthSchema, completeStudentProfileSchema, completeTeacherProfileSchema, signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyOtpSchema, changePasswordSchema, changePasswordCodeSchema, forgotPasswordSchema, resetPasswordSchema } from '../lib/schemas.js';
 import { getPlayerLevel } from '../lib/xp.js';
 import { earnedAuraRank, getRankTier, getTeacherRankTier, rankDropOf } from '../lib/ranks.js';
@@ -100,6 +101,10 @@ authRouter.post(
     const { username, email, password, avatarKey, role, grade, schoolName, teacherSubject, lang } = req.body;
     // Falls back to the username if the client did not send a name.
     const displayName: string = req.body.displayName ?? username;
+    if (!isFeatureOn('signup', role)) {
+      res.status(403).json({ error: 'New accounts are closed for now. Please try again later.', featureOff: 'signup' });
+      return;
+    }
 
     const usernameCheck = moderateText(username);
     if (!usernameCheck.allowed) {
@@ -418,6 +423,10 @@ authRouter.post('/google', authLimiter, requireCsrfHeader, validateBody(googleAu
   if (!user) {
     if (!role) {
       res.json({ needsRole: true });
+      return;
+    }
+    if (!isFeatureOn('signup', role)) {
+      res.status(403).json({ error: 'New accounts are closed for now. Please try again later.', featureOff: 'signup' });
       return;
     }
     const id = createGoogleUser(verified.identity, role);

@@ -15,6 +15,7 @@ import {
   RiFilmFill,
   RiUserSettingsFill,
   RiCertificateFill,
+  RiToggleFill,
   RiMenu2Line,
 } from '@remixicon/react';
 import { useAuth, type Role } from '../lib/auth-context';
@@ -44,6 +45,7 @@ const ICONS: Record<string, (size: number) => ReactNode> = {
   adminAccounts: (s) => <RiUserSettingsFill size={s} />,
   adminVideos: (s) => <RiFilmFill size={s} />,
   adminCertificates: (s) => <RiCertificateFill size={s} />,
+  adminFeatures: (s) => <RiToggleFill size={s} />,
   menu: (s) => <RiMenu2Line size={s} />,
 };
 

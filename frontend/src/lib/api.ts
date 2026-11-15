@@ -1,3 +1,6 @@
+/** Fired when the server answers "this part is closed" (the admin's switches): the app then asks which switches changed (lib/features-context.tsx). */
+export const FEATURES_CHANGED_EVENT = 'anees:features-changed';
+
 export class ApiError extends Error {
   status: number;
   body: unknown;
@@ -14,6 +17,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
 
   if (!res.ok) {
     const message = (data && (data.error as string)) || `Request failed (${res.status})`;
+    if (data && (data.maintenance || data.featureOff)) window.dispatchEvent(new Event(FEATURES_CHANGED_EVENT));
     throw new ApiError(message, res.status, data);
   }
   return data as T;
@@ -51,5 +55,6 @@ export const api = {
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {}),
   postForm: <T>(path: string, formData: FormData) => requestForm<T>(path, formData),
   patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body ?? {}),
+  put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body ?? {}),
   delete: <T>(path: string) => request<T>('DELETE', path),
 };

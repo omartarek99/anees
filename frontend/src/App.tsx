@@ -2,6 +2,8 @@ import { LevelGate } from './components/LevelGate';
 import { Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
 import { Navigate, Route, BrowserRouter, Routes, Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth-context';
+import { FeaturesProvider, useFeatures, type FeatureKey } from './lib/features-context';
+import { FeatureClosed, SiteClosed } from './components/FeatureClosed';
 import { LanguageProvider, useLanguage } from './lib/language-context';
 import { ThemeProvider } from './lib/theme-context';
 import { RankAura } from './components/RankAura';
@@ -161,11 +163,14 @@ function ProtectedLayout() {
   const { user, loading } = useAuth();
   const { t } = useLanguage();
   const { pathname } = useLocation();
+  const { siteOn, isOn } = useFeatures();
   if (loading) return <FullScreenLoader />;
   // A visitor who isn't signed in lands on the public landing page at "/"; any other private URL still goes to login.
   if (!user) return pathname === '/' ? <LandingPage /> : <Navigate to="/login" replace />;
   // A Google sign-up has to give its name / school / grade (and a teacher's ID) before anything else.
   if (user.profileComplete === false) return <CompleteProfilePage />;
+  // The admin has closed the whole site for this kind of account (maintenance): only the notice. An admin is never shut out.
+  if (!siteOn && user.role !== 'admin') return <SiteClosed />;
   // Reels is a full-viewport, TikTok-style feed (see ReelsPage's own negative-margin/100vh
   // sizing) -- a footer peeking in below it would just reintroduce the page scroll that
   // sizing is specifically trying to avoid, and a persistent footer has no place in an
@@ -204,8 +209,8 @@ function ProtectedLayout() {
       <GuideHost />
       {/* Double points, friend challenges and the level pop-outs are all about student XP: a teacher earns none (backend lib/xp.ts) and the
           server refuses them the challenges, so these would only poll for nothing. */}
-      {user.role === 'student' && <DoublePointsNotification />}
-      {user.role === 'student' && <ChallengeHost />}
+      {user.role === 'student' && isOn('reels') && <DoublePointsNotification />}
+      {user.role === 'student' && isOn('challenges') && <ChallengeHost />}
       {user.role === 'student' && <RankMilestonePopup />}
       {/* Certificates are only ever issued to students/teachers (routes/admin.ts rejects
           admin recipients), so there's nothing for an admin account to ever be announced. */}
@@ -242,6 +247,13 @@ function TeacherOnly() {
 function StudentOnly() {
   const { user } = useAuth();
   if (user?.role !== 'student') return <Navigate to="/" replace />;
+  return <Outlet />;
+}
+
+/** A page the admin can switch off (admin panel > Features): while it is off for this kind of account the page shows a "closed for now" notice instead. */
+function FeatureGate({ feature }: { feature: FeatureKey }) {
+  const { isOn } = useFeatures();
+  if (!isOn(feature)) return <FeatureClosed />;
   return <Outlet />;
 }
 
@@ -294,6 +306,7 @@ export default function App() {
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
+           <FeaturesProvider>
             <RankAura />
             <IntroSplash />
             <PageviewTracker />
@@ -336,17 +349,31 @@ export default function App() {
               <Route element={<ProtectedLayout />}>
                 <Route path="/" element={<RoleHome />} />
                 <Route element={<NoAdmin />}>
-                  <Route path="/reels" element={<ReelsPage />} />
-                  <Route element={<StudentOnly />}>
-                    <Route path="/map" element={<LevelGate feature="map"><MapPage /></LevelGate>} />
-                    <Route path="/craft" element={<LevelGate feature="quarry"><CraftPage /></LevelGate>} />
+                  <Route element={<FeatureGate feature="reels" />}>
+                    <Route path="/reels" element={<ReelsPage />} />
                   </Route>
-                  <Route path="/worksheets" element={<WorksheetsPage />} />
-                  <Route path="/leaderboard" element={<LevelGate feature="leaderboard"><LeaderboardPage /></LevelGate>} />
-                  <Route path="/friends" element={<FriendsPage />} />
+                  <Route element={<StudentOnly />}>
+                    <Route element={<FeatureGate feature="map" />}>
+                      <Route path="/map" element={<LevelGate feature="map"><MapPage /></LevelGate>} />
+                    </Route>
+                    <Route element={<FeatureGate feature="craft" />}>
+                      <Route path="/craft" element={<LevelGate feature="quarry"><CraftPage /></LevelGate>} />
+                    </Route>
+                  </Route>
+                  <Route element={<FeatureGate feature="worksheets" />}>
+                    <Route path="/worksheets" element={<WorksheetsPage />} />
+                  </Route>
+                  <Route element={<FeatureGate feature="leaderboard" />}>
+                    <Route path="/leaderboard" element={<LevelGate feature="leaderboard"><LeaderboardPage /></LevelGate>} />
+                  </Route>
+                  <Route element={<FeatureGate feature="friends" />}>
+                    <Route path="/friends" element={<FriendsPage />} />
+                  </Route>
                 </Route>
                 <Route element={<TeacherOnly />}>
-                  <Route path="/teacher/reels" element={<TeacherReelsPage />} />
+                  <Route element={<FeatureGate feature="teacher_upload" />}>
+                    <Route path="/teacher/reels" element={<TeacherReelsPage />} />
+                  </Route>
                 </Route>
                 <Route element={<AdminOnly />}>
                   <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
@@ -360,6 +387,7 @@ export default function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
             <CookieConsentBanner />
+           </FeaturesProvider>
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>

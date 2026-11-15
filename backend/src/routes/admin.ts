@@ -13,6 +13,8 @@ import {
   adminIssueCertificateSchema,
   adminRevokeCertificateSchema,
   adminApplyViolationSchema,
+  adminSetFeatureSchema,
+  adminSetAccountFeatureSchema,
 } from '../lib/schemas.js';
 import { deleteUserById } from '../lib/deleteUser.js';
 import { moderateText } from '../lib/moderation.js';
@@ -35,6 +37,7 @@ import { getRankTier } from '../lib/ranks.js';
 import { noteRankDrop, syncTeacherPoints } from '../lib/xp.js';
 import { r2SelfTest } from '../lib/r2.js';
 import { FRONTEND_ORIGIN } from '../lib/config.js';
+import { listFeatureStates, setFeature, featureApplies, accountFeatureStates, setAccountFeature, accountsWithOverrides } from '../lib/features.js';
 
 import type { Response } from 'express';
 
@@ -58,6 +61,70 @@ adminRouter.get('/diagnostics', async (_req, res) => {
 adminRouter.post('/double-points/start', requireCsrfHeader, (_req, res) => {
   startDoublePointsNow();
   res.json(getDoublePointsStatus());
+});
+
+// The on/off switches for what students and teachers can use (lib/features.ts). GET lists them with who changed each last; PUT changes one.
+adminRouter.get('/features', (_req, res) => {
+  res.json({ features: listFeatureStates() });
+});
+
+adminRouter.put('/features', requireCsrfHeader, validateBody(adminSetFeatureSchema), (req, res) => {
+  const { feature, role, enabled, message } = req.body as { feature: string; role: 'student' | 'teacher'; enabled: boolean; message?: string | null };
+  if (!featureApplies(feature, role)) {
+    res.status(400).json({ error: 'That switch does not exist.' });
+    return;
+  }
+  const me = db.prepare(`SELECT username FROM users WHERE id = ?`).get(req.userId!) as { username: string } | undefined;
+  setFeature(feature, role, enabled, me?.username ?? 'admin', message);
+  res.json({ features: listFeatureStates() });
+});
+
+// Switches for ONE account: they beat the group's. The list first (accounts that have any), then one account's full set, then change one.
+adminRouter.get('/features/accounts', (_req, res) => {
+  res.json({ accounts: accountsWithOverrides() });
+});
+
+function featureAccount(idParam: string) {
+  const id = Number(idParam);
+  if (!Number.isInteger(id) || id <= 0) return undefined;
+  return db.prepare(`SELECT id, username, display_name, role, grade, school_name FROM users WHERE id = ? AND is_seed = 0`).get(id) as
+    | { id: number; username: string; display_name: string; role: string; grade: number | null; school_name: string | null }
+    | undefined;
+}
+
+function featureAccountReply(u: NonNullable<ReturnType<typeof featureAccount>>) {
+  return {
+    account: { id: u.id, username: u.username, displayName: u.display_name, role: u.role, grade: u.grade, schoolName: u.school_name },
+    features: accountFeatureStates(u.id, u.role),
+  };
+}
+
+adminRouter.get('/features/accounts/:id', (req, res) => {
+  const u = featureAccount(req.params.id);
+  if (!u) {
+    res.status(404).json({ error: "We couldn't find this user." });
+    return;
+  }
+  if (u.role !== 'student' && u.role !== 'teacher') {
+    res.status(400).json({ error: 'An admin account has no switches: it can always use everything.' });
+    return;
+  }
+  res.json(featureAccountReply(u));
+});
+
+adminRouter.put('/features/accounts/:id', requireCsrfHeader, validateBody(adminSetAccountFeatureSchema), (req, res) => {
+  const u = featureAccount(req.params.id);
+  if (!u) {
+    res.status(404).json({ error: "We couldn't find this user." });
+    return;
+  }
+  const { feature, enabled } = req.body as { feature: string; enabled: boolean | null };
+  const me = db.prepare(`SELECT username FROM users WHERE id = ?`).get(req.userId!) as { username: string } | undefined;
+  if (!setAccountFeature(u.id, u.role, feature, enabled, me?.username ?? 'admin')) {
+    res.status(400).json({ error: 'That switch does not exist for this account.' });
+    return;
+  }
+  res.json(featureAccountReply(u));
 });
 
 const PAGE_SIZE = 20;

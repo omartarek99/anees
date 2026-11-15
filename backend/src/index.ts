@@ -12,7 +12,7 @@ import { db } from './db/db.js';
 import { startDatabaseBackups } from './lib/dbBackup.js';
 import { apiLimiter } from './middleware/rateLimit.js';
 import { teacherCertRouter, adminCertRouter } from './routes/teacherCertificate.js';
-import { requireAuth, requireRole, requireLevel } from './middleware/auth.js';
+import { requireAuth, requireRole, requireFeature, requireLevel } from './middleware/auth.js';
 import { authRouter } from './routes/auth.js';
 import { usersRouter } from './routes/users.js';
 import { reelsRouter } from './routes/reels.js';
@@ -28,6 +28,7 @@ import { certificatesRouter } from './routes/certificates.js';
 import { guideRouter } from './routes/guide.js';
 import { challengesRouter } from './routes/challenges.js';
 import { violationsRouter } from './routes/violations.js';
+import { featuresRouter } from './routes/features.js';
 import { applyChallengePool } from './lib/challengePool.js';
 import { FRONTEND_ORIGIN } from './lib/config.js';
 
@@ -104,20 +105,21 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 // leaderboard, friends and worksheets, but never earn student XP (lib/xp.ts awardXp).
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
-app.use('/api/reels', requireAuth, reelsRouter);
-app.use('/api/map', requireAuth, requireRole('student'), requireLevel('map'), mapRouter);
-app.use('/api/worksheets', requireAuth, worksheetsRouter);
-app.use('/api/leaderboard', requireAuth, requireLevel('leaderboard'), leaderboardRouter);
-app.use('/api/friends', requireAuth, friendsRouter);
-app.use('/api/craft', requireAuth, requireRole('student'), requireLevel('quarry'), craftRouter);
-app.use('/api/teacher-reels', teacherReelsRouter);
+app.use('/api/reels', requireAuth, requireFeature('reels'), reelsRouter);
+app.use('/api/map', requireAuth, requireRole('student'), requireFeature('map'), requireLevel('map'), mapRouter);
+app.use('/api/worksheets', requireAuth, requireFeature('worksheets'), worksheetsRouter);
+app.use('/api/leaderboard', requireAuth, requireFeature('leaderboard'), requireLevel('leaderboard'), leaderboardRouter);
+app.use('/api/friends', requireAuth, requireFeature('friends'), friendsRouter);
+app.use('/api/craft', requireAuth, requireRole('student'), requireFeature('craft'), requireLevel('quarry'), craftRouter);
+app.use('/api/teacher-reels', requireAuth, requireFeature('teacher_upload'), teacherReelsRouter);
+app.use('/api/features', featuresRouter);
 app.use('/api/teacher-certificate', teacherCertRouter);
 app.use('/api/admin/teacher-certificates', adminCertRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/certificates', requireAuth, certificatesRouter);
 app.use('/api/guide', requireAuth, guideRouter);
-app.use('/api/challenges', requireAuth, requireRole('student'), challengesRouter);
+app.use('/api/challenges', requireAuth, requireRole('student'), requireFeature('challenges'), challengesRouter);
 app.use('/api/violations', violationsRouter);
 
 app.use((_req, res) => {

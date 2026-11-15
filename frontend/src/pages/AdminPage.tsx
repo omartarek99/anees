@@ -9,13 +9,14 @@ import { AdminUserRow, type AdminUser } from '../components/AdminUserRow';
 import { AdminVideosPanel } from '../components/AdminVideosPanel';
 import { AdminReportsPanel, ExportButton } from '../components/AdminReportsPanel';
 import { AdminCertificatesPanel } from '../components/AdminCertificatesPanel';
+import { AdminFeaturesPanel } from '../components/AdminFeaturesPanel';
 import { AdminAccountsPanel } from '../components/AdminAccountsPanel';
 import { AdminDashboardPanel, DashboardPeriodSelect, type DashboardPeriod } from '../components/AdminDashboardPanel';
 import { Pagination } from '../components/Pagination';
 import { GradeFilterSelect, type GradeFilter } from '../components/GradeFilterSelect';
 
 type RoleFilter = 'all' | Role;
-type Tab = 'dashboard' | 'users' | 'accounts' | 'videos' | 'reports' | 'certificates' | 'teachers';
+type Tab = 'dashboard' | 'users' | 'accounts' | 'videos' | 'reports' | 'certificates' | 'teachers' | 'features';
 
 function AdminUsersPanel() {
   const { user: me } = useAuth();
@@ -110,7 +111,7 @@ function AdminUsersPanel() {
   );
 }
 
-const TABS: Tab[] = ['dashboard', 'users', 'accounts', 'videos', 'reports', 'certificates', 'teachers'];
+const TABS: Tab[] = ['dashboard', 'users', 'accounts', 'videos', 'reports', 'certificates', 'teachers', 'features'];
 
 const TITLES: Record<Tab, { title: string; subtitle: string }> = {
   dashboard: { title: 'admin.tabDashboard', subtitle: 'admin.subtitleDashboard' },
@@ -120,6 +121,7 @@ const TITLES: Record<Tab, { title: string; subtitle: string }> = {
   reports: { title: 'admin.tabReports', subtitle: 'admin.subtitleReports' },
   certificates: { title: 'admin.tabCertificates', subtitle: 'admin.subtitleCertificates' },
   teachers: { title: 'admin.tabTeacherProofs', subtitle: 'admin.subtitleTeacherProofs' },
+  features: { title: 'admin.tabFeatures', subtitle: 'admin.subtitleFeatures' },
 };
 
 // Each section used to be an in-page tab switcher; it's now its own icon-bar entry
@@ -148,6 +150,7 @@ export function AdminPage() {
       {tab === 'reports' && <AdminReportsPanel gradeFilter={reportGrade} onGradeChange={setReportGrade} />}
       {tab === 'certificates' && <AdminCertificatesPanel />}
       {tab === 'teachers' && <AdminTeacherProofsPanel />}
+      {tab === 'features' && <AdminFeaturesPanel />}
     </div>
   );
 }
