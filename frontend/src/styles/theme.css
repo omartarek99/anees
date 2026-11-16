@@ -4900,7 +4900,9 @@ label,
 
 /* ---------------- Teacher certificate (TeacherCertificateCard, AdminTeacherProofsPanel) ---------------- */
 .cert-card {
-  max-width: 640px;
+  /* as wide as the other cards on the page */
+  max-width: none;
+  inline-size: 100%;
 }
 .cert-status {
   display: inline-flex;
