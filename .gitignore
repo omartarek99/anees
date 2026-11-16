@@ -61,3 +61,6 @@ backend/.env.resend
 
 # The Firebase admin key as base64, to paste into the hosting dashboard -- real secret
 backend/.firebase-key-base64.txt
+
+# Teacher-guide / book PDFs in Subject/ (hundreds of MB, Ministry use only) -- the question-bank .md files next to them are tracked
+Subject/**/*.pdf

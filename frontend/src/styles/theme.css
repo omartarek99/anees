@@ -5766,3 +5766,18 @@ button.feature-switch:active:not(:disabled) {
   background-color: color-mix(in srgb, var(--surface-row) 55%, rgba(18, 10, 32, 0.92));
   box-shadow: inset 0 0 0 1px var(--glass-border), 0 14px 26px -18px rgba(0, 0, 0, 0.8);
 }
+
+/* the teacher's one or two cards sit in the middle of the page (the four-column rule above would push them to one side) */
+.grid-cards.home-cards.home-cards-1 {
+  grid-template-columns: minmax(0, 300px);
+  justify-content: center;
+}
+.grid-cards.home-cards.home-cards-2 {
+  grid-template-columns: repeat(2, minmax(0, 300px));
+  justify-content: center;
+}
+@media (max-width: 520px) {
+  .grid-cards.home-cards.home-cards-2 {
+    grid-template-columns: minmax(0, 300px);
+  }
+}

@@ -10,7 +10,7 @@ import { awardXp, penalizeWrongAnswers, syncTeacherPoints, WORKSHEET_XP_PER_CORR
 import { gradeAnswers } from '../lib/grading.js';
 import { generateQuizQuestions } from '../lib/gemini.js';
 import { verifyArithmetic } from '../lib/arithmeticCheck.js';
-import { findBankMatch } from '../lib/questionBank.js';
+import { findBankMatch, isBankGrade } from '../lib/questionBank.js';
 import { moderateContent } from '../lib/moderation.js';
 import { teacherReelQuestionSchema } from '../lib/schemas.js';
 import { isFeatureOn } from '../lib/features.js';
@@ -44,7 +44,7 @@ const generateSchema = z
     // it each time. Without it, a general worksheet draws from the fixed seeded bank.
     topic: wordsText(z.string().trim().min(2, 'The lesson name is too short. Write at least 2 letters.').max(80, 'The lesson name is too long. Use at most 80 letters.'), 'lesson name').optional(),
     // The grade of the typed lesson (the school book it comes from) -- Math and Science grades 5 and 6.
-    grade: z.coerce.number().int().min(5).max(6).optional(),
+    grade: z.coerce.number().int().refine(isBankGrade, 'Unsupported grade').optional(),
     // How many questions the worksheet has.
     count: z.coerce.number().int().min(3).max(MAX_QUESTIONS).optional().default(QUESTIONS_PER_WORKSHEET),
   })
@@ -176,7 +176,7 @@ async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise
   // Math and Science for grades 5 and 6: the questions are written from the school question bank for this lesson.
   const subjectKey = scope.subjectName.toLowerCase().includes('math') ? 'math' : scope.subjectName.toLowerCase().includes('sci') ? 'science' : null;
   const bank =
-    subjectKey && (scope.grade === 5 || scope.grade === 6)
+    subjectKey && isBankGrade(scope.grade)
       ? await findBankMatch({ subject: subjectKey, grade: scope.grade, topic: scope.topic, topicAr: scope.topicAr, scriptText: scope.scriptText, scriptTextAr: scope.scriptTextAr })
       : null;
   const chunks: number[] = [];

@@ -3,13 +3,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { callGemini } from './gemini.js';
 
-// The school question bank for Math and Science, grades 5 and 6, terms 1 and 2 (backend/question-bank/<subject>-<grade>-<term>.md).
+// The school question bank for Math and Science, grades 5, 6 and 8 (grade 8: term 1 so far), terms 1 and 2 (backend/question-bank/<subject>-<grade>-<term>.md).
 // ~40 Arabic questions per lesson, with NO answer key: it is used as source material. For a given lesson (a video, or a lesson name
 // a teacher types) the matching bank lessons are found and handed to the AI, which writes new questions from them and works out the
 // correct answers itself.
 
 export type BankSubject = 'math' | 'science';
-export const BANK_GRADES = [5, 6] as const;
+export const BANK_GRADES = [5, 6, 8] as const;
+export const isBankGrade = (g: unknown): g is (typeof BANK_GRADES)[number] => BANK_GRADES.some((x) => x === g);
 
 type BankQuestion = { kind: 'mcq' | 'fill' | 'tf' | 'problem'; text: string };
 export type BankLesson = {
@@ -77,6 +78,7 @@ export function loadBank(): BankLesson[] {
         try {
           all.push(...parseFile(subject, grade, term, fs.readFileSync(file, 'utf8')));
         } catch (err) {
+          if ((err as NodeJS.ErrnoException).code === 'ENOENT') continue; // a grade / term that has no bank file yet
           console.warn(`[questionBank] could not read ${path.basename(file)}:`, err);
         }
       }

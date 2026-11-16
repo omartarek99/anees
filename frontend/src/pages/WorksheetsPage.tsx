@@ -120,7 +120,7 @@ export function WorksheetsPage() {
   // The name of the lesson (درس) or of a video -- the AI writes new questions about it.
   const [lessonName, setLessonName] = useState('');
   // The grade of the lesson (the school book it comes from) and how many questions the sheet has.
-  const [grade, setGrade] = useState<5 | 6>(user?.grade === 6 ? 6 : 5);
+  const [grade, setGrade] = useState<5 | 6 | 8>(user?.grade === 6 ? 6 : user?.grade === 8 ? 8 : 5);
   const [count, setCount] = useState(10);
   // The Generate button sits at the bottom of the form but the error banner at the top -- bring a
   // new error into view so a failed click doesn't look like nothing happened.
@@ -366,7 +366,7 @@ export function WorksheetsPage() {
                 const match = videos.find((v) => [v.title, v.titleAr].some((n) => n && n.trim().toLowerCase() === name));
                 if (match) {
                   setSubject(match.subject);
-                  if (match.grade === 5 || match.grade === 6) setGrade(match.grade);
+                  if (match.grade === 5 || match.grade === 6 || match.grade === 8) setGrade(match.grade);
                 }
               }}
               placeholder={t('worksheets.lessonPlaceholder')}
@@ -416,7 +416,7 @@ export function WorksheetsPage() {
           <div>
             <label style={{ fontWeight: 700, marginBottom: 8, display: 'block' }}>{t('worksheets.gradeLabel')}</label>
             <div className="pill-row">
-              {([5, 6] as const).map((g) => (
+              {([5, 6, 8] as const).map((g) => (
                 <button
                   key={g}
                   type="button"

@@ -9,6 +9,7 @@ import { pickText } from '../lib/i18n';
 import { useFeatures, type FeatureKey } from '../lib/features-context';
 import { Topbar } from '../components/Topbar';
 import { Avatar } from '../components/Avatar';
+import { Ico } from '../components/Ico';
 import { RANK_FRAMES } from '../lib/frames';
 import type { RankKey } from '../lib/medalLevels';
 import { ChallengePickerModal } from '../components/ChallengePickerModal';
@@ -131,8 +132,8 @@ function TeacherActions() {
   const { t } = useLanguage();
   const { isOn } = useFeatures();
   const cards = [
-    { tone: 'yellow', src: '/icons/teacher-worksheet.webp', title: t('home.teacherWorksheet'), value: '📝', to: '/worksheets', cta: t('home.teacherWorksheetCta'), feature: 'worksheets' as FeatureKey },
-    { tone: 'blue', src: '/icons/teacher-videos.webp', title: t('home.teacherVideo'), value: '🎬', to: '/teacher/reels', cta: t('home.teacherVideoCta'), feature: 'teacher_upload' as FeatureKey },
+    { tone: 'yellow', src: '/icons/teacher-worksheet.webp', title: t('home.teacherWorksheet'), value: <Ico name="worksheet" size={52} />, to: '/worksheets', cta: t('home.teacherWorksheetCta'), feature: 'worksheets' as FeatureKey },
+    { tone: 'blue', src: '/icons/teacher-videos.webp', title: t('home.teacherVideo'), value: <Ico name="addvideo" size={52} />, to: '/teacher/reels', cta: t('home.teacherVideoCta'), feature: 'teacher_upload' as FeatureKey },
   ].filter((c) => isOn(c.feature));
   if (cards.length === 0) return null;
   return (
@@ -140,7 +141,7 @@ function TeacherActions() {
       <h2 id="home-tools-title" className="home-section-title">
         {t('home.teacherTools')}
       </h2>
-      <div className="grid-cards home-cards">
+      <div className={`grid-cards home-cards home-cards-${cards.length}`}>
         {cards.map((c) => (
           <article key={c.tone} className={`market-card stat-card-${c.tone}`}>
             <div className="market-pic">
