@@ -5,11 +5,9 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
 
-const SEEN_KEY = 'anees_teacher_cert_popup';
-
 /** A pop-up on the teacher's lessons page for a teacher who has not sent a teaching certificate yet (or whose certificate was not approved): it asks them to
- *  send it. Shown once per visit to the site; "Later" closes it, "Send certificate" closes it and takes them to the form (TeacherCertificateCard). Nothing
- *  shows once the certificate is waiting for review or approved. */
+ *  send it. Shown EVERY time they open this page (each click on "Create video"); "Later" closes it, "Send certificate" closes it and takes them to the form
+ *  (TeacherCertificateCard). Nothing shows once the certificate is waiting for review or approved. */
 export function TeacherCertificatePopup() {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -22,11 +20,6 @@ export function TeacherCertificatePopup() {
     if (!needed) {
       setOpen(false);
       return;
-    }
-    try {
-      if (sessionStorage.getItem(SEEN_KEY)) return;
-    } catch {
-      // storage blocked: it shows each time the page opens
     }
     let cancelled = false;
     const tick = () => {
@@ -42,14 +35,7 @@ export function TeacherCertificatePopup() {
     };
   }, [needed]);
 
-  const close = () => {
-    setOpen(false);
-    try {
-      sessionStorage.setItem(SEEN_KEY, '1');
-    } catch {
-      // see above
-    }
-  };
+  const close = () => setOpen(false);
   useEscapeToClose(close, open);
 
   const goToForm = () => {
