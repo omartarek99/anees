@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 import { textDir } from '../lib/bidi';
 import { useLanguage } from '../lib/language-context';
 
-// A run of maths inside a sentence: numbers (Western or Arabic-Indic) with the operators, blanks and brackets between them, e.g.
+// A run of maths inside a sentence: numbers (Western or Arabic-Indic) and unknowns (x, y) with the operators, blanks and brackets between them, e.g.
 // "8 __ 5 = 13", "250 + 125", "3/4", "(2 + 3) × 4". It must start and end on a number, a blank or a bracket.
-const MATH_RUN = /[\d٠-٩_(][\d٠-٩\s+\-−×÷=_.,%/()^²³]*[\d٠-٩_)²³]|[\d٠-٩]/g;
+const MATH_RUN = /[\dA-Za-z٠-٩_(√∛][\dA-Za-z٠-٩\s+\-−×÷=≠≤≥<>_.,%/()^⁰¹²³⁴⁵⁶⁷⁸⁹⁻√∛π]*[\dA-Za-z٠-٩_)⁰¹²³⁴⁵⁶⁷⁸⁹√∛π]|[\d٠-٩]/g;
 const HAS_DIGIT = /[\d٠-٩]/;
 
 /** The text of a question, an answer or an explanation, laid out the way school books print it:

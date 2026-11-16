@@ -165,6 +165,7 @@ ${params.avoidQuestions.map((q) => `- ${q}`).join('\n')}
 - correctIndex is the 0-based index of the correct choice.
 - A short one-sentence explanation of why that answer is correct, written for a grade-${params.grade} student.
 - Provide both an English version AND an Arabic version of the question, its 4 choices, and the explanation (questionTextAr/choicesAr/explanationAr). Write natural, grade-appropriate Modern Standard Arabic, not a literal machine translation.
+- MATH NOTATION (both the English AND the Arabic version): write every number with the Western digits 0-9 (never Arabic-Indic digits like ٣ or ٤), and write every unknown / variable / symbol in Latin letters such as x, y, z, a, b, n (never Arabic letters like س or ص). Use × ÷ = + − √ and superscripts like x² in both languages; only the words around the maths are Arabic. Example (Arabic version): "حل المعادلة: 2x + 3 = 11".
 - Keep the language simple, encouraging, and age-appropriate. No content outside what a 5th-grade classroom would cover.
 
 Return ONLY the JSON array, matching the provided schema exactly.`;

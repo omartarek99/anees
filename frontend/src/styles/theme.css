@@ -4420,6 +4420,41 @@ label,
   flex-shrink: 0;
 }
 
+/* The teacher's view of a worksheet: the right answer is marked, and the editor (WorksheetEditor) has a radio, an English and an Arabic box per answer. */
+.ws-preview-choices li.is-correct {
+  background: color-mix(in srgb, var(--success) 14%, var(--sand-light));
+  box-shadow: inset 0 0 0 2px var(--success);
+}
+.ws-preview-choices .ws-correct-tag {
+  margin-inline-start: auto;
+}
+.ws-edit-choice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+}
+.ws-edit-choice.is-correct {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  box-shadow: inset 0 0 0 2px var(--success);
+}
+.ws-edit-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  .ws-edit-choice {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .ws-edit-choice input:not([type='radio']):last-child {
+    grid-column: 2;
+  }
+}
+
 /* ---------------- Opening scene (IntroSplash.tsx): the logo and 3D pieces spin in from the top-left behind a comet trail, land with a shockwave and sparks, the pieces circle the logo, then it zooms away into the page ---------------- */
 .intro-splash {
   --from: translate3d(-60vmax, -45vmax, 0); /* where the flight starts: far out at the top-left, on every screen size */

@@ -14,6 +14,7 @@ import { findBankMatch, isBankGrade } from '../lib/questionBank.js';
 import { moderateContent } from '../lib/moderation.js';
 import { teacherReelQuestionSchema } from '../lib/schemas.js';
 import { isFeatureOn } from '../lib/features.js';
+import { mathLatin, mathLatinAll } from '../lib/mathText.js';
 
 export const worksheetsRouter = asyncRouter();
 
@@ -116,13 +117,14 @@ function createAttempt(
   );
 }
 
+// Numbers and unknowns are shown as 0-9 / x y z in both languages (lib/mathText.ts), also for questions saved before that rule.
 function questionPayload(q: any) {
   return {
     id: q.id,
-    text: q.question_text,
-    textAr: q.question_text_ar,
-    choices: JSON.parse(q.choices_json),
-    choicesAr: JSON.parse(q.choices_json_ar),
+    text: mathLatin(q.question_text),
+    textAr: mathLatin(q.question_text_ar ?? ''),
+    choices: mathLatinAll(JSON.parse(q.choices_json)),
+    choicesAr: mathLatinAll(JSON.parse(q.choices_json_ar)),
   };
 }
 
@@ -173,7 +175,7 @@ async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise
   const known = new Set(existing.map((q) => q.question_text));
   const insertedIds: number[] = [];
 
-  // Math and Science for grades 5 and 6: the questions are written from the school question bank for this lesson.
+  // Math and Science for grades 5, 6 and 8: the questions are written from the school question bank for this lesson.
   const subjectKey = scope.subjectName.toLowerCase().includes('math') ? 'math' : scope.subjectName.toLowerCase().includes('sci') ? 'science' : null;
   const bank =
     subjectKey && isBankGrade(scope.grade)
@@ -228,18 +230,18 @@ async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise
         const info = insert.run(
           scope.subjectId,
           difficulty,
-          q.questionText,
-          q.questionTextAr || '',
-          JSON.stringify(q.choices),
-          JSON.stringify(q.choicesAr || ['', '', '', '']),
+          mathLatin(q.questionText),
+          mathLatin(q.questionTextAr || ''),
+          JSON.stringify(mathLatinAll(q.choices)),
+          JSON.stringify(mathLatinAll(q.choicesAr || ['', '', '', ''])),
           q.correctIndex,
-          q.explanation,
-          q.explanationAr || '',
+          mathLatin(q.explanation),
+          mathLatin(q.explanationAr || ''),
           scope.reelId,
           scope.topicKey
         );
         insertedIds.push(Number(info.lastInsertRowid));
-        known.add(q.questionText);
+        known.add(mathLatin(q.questionText));
       }
     }
   }
@@ -506,7 +508,13 @@ worksheetsRouter.post('/:id/submit', requireRole('student'), requireCsrfHeader, 
     syncTeacherPoints(sent?.teacher_id, 'worksheet_solved');
   }
 
-  res.json({ results, correctCount, total: questions.length, xpEarned, xpLost });
+  res.json({
+    results: results.map((r) => ({ ...r, explanation: mathLatin(r.explanation), explanationAr: mathLatin(r.explanationAr) })),
+    correctCount,
+    total: questions.length,
+    xpEarned,
+    xpLost,
+  });
 });
 
 // ---------------------------------------------------------------------------------------
@@ -536,6 +544,120 @@ worksheetsRouter.post('/:id/send', requireRole('teacher'), requireApprovedTeache
     ) > 0;
   const sent = db.prepare(`SELECT id, created_at FROM sent_worksheets WHERE source_attempt_id = ?`).get(attempt.id) as { id: number; created_at: string };
   res.status(inserted ? 201 : 200).json({ sentWorksheetId: sent.id, createdAt: sent.created_at, alreadySent: !inserted });
+});
+
+// ---------------------------------------------------------------------------------------
+// A teacher edits the worksheet before printing / sending it: the questions, the choices (English and Arabic) and which choice is right.
+// GET /:id/edit gives the questions WITH their right answers (a student never gets those before submitting); PUT /:id/questions saves the edits.
+// A changed question is saved as a NEW question of its own (kept out of the shared AI pool), so other worksheets that used the original are untouched.
+// Once the worksheet is sent the students hold that copy, so it can no longer be edited.
+// ---------------------------------------------------------------------------------------
+
+function editablePayload(q: any) {
+  return {
+    ...questionPayload(q),
+    correctIndex: q.correct_index as number,
+    explanation: mathLatin(q.explanation ?? ''),
+    explanationAr: mathLatin(q.explanation_ar ?? ''),
+  };
+}
+
+function loadTeacherAttempt(req: Request, res: Response) {
+  const attempt = db.prepare(`SELECT * FROM worksheet_attempts WHERE id = ? AND user_id = ?`).get(Number(req.params.id), req.userId!) as any;
+  if (!attempt) {
+    res.status(404).json({ error: 'Worksheet not found.' });
+    return null;
+  }
+  if (db.prepare(`SELECT 1 FROM sent_worksheets WHERE source_attempt_id = ?`).get(attempt.id)) {
+    res.status(409).json({ error: 'This worksheet was already sent to the students, so it can no longer be edited.' });
+    return null;
+  }
+  return attempt;
+}
+
+function attemptQuestions(attempt: any): any[] {
+  const ids: number[] = JSON.parse(attempt.question_ids_json);
+  if (ids.length === 0) return [];
+  const rows = db.prepare(`SELECT * FROM worksheet_questions WHERE id IN (${ids.map(() => '?').join(',')})`).all(...ids) as any[];
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  return ids.map((id) => byId.get(id)).filter((q): q is NonNullable<typeof q> => q !== undefined);
+}
+
+worksheetsRouter.get('/:id/edit', requireRole('teacher'), (req, res) => {
+  const attempt = loadTeacherAttempt(req, res);
+  if (!attempt) return;
+  res.json({ questions: attemptQuestions(attempt).map(editablePayload) });
+});
+
+const editChoice = z.string().trim().min(1, 'Write every answer: an answer is empty.').max(120, 'An answer is too long. Use at most 120 letters.');
+const editSchema = z.object({
+  questions: z
+    .array(
+      z.object({
+        id: z.number().int(),
+        text: z.string().trim().min(2, 'The question is too short. Write at least 3 letters.').max(300, 'The question is too long. Use at most 300 letters.'),
+        textAr: z.string().trim().max(300, 'The question is too long. Use at most 300 letters.').default(''),
+        choices: z.array(editChoice).length(4, 'Each question needs exactly 4 choices.'),
+        choicesAr: z.array(z.string().trim().max(120, 'An answer is too long. Use at most 120 letters.')).length(4).default(['', '', '', '']),
+        correctIndex: z.number().int().min(0).max(3),
+        explanation: z.string().trim().max(500, 'The explanation is too long. Use at most 500 letters.').default(''),
+        explanationAr: z.string().trim().max(500, 'The explanation is too long. Use at most 500 letters.').default(''),
+      })
+    )
+    .min(1)
+    .max(MAX_QUESTIONS),
+});
+
+worksheetsRouter.put('/:id/questions', requireRole('teacher'), requireCsrfHeader, validateBody(editSchema), (req, res) => {
+  const attempt = loadTeacherAttempt(req, res);
+  if (!attempt) return;
+  const current = attemptQuestions(attempt);
+  const byId = new Map(current.map((q) => [q.id, q]));
+  const { questions } = req.body as z.infer<typeof editSchema>;
+  if (questions.length !== current.length || questions.some((q) => !byId.has(q.id))) {
+    res.status(400).json({ error: 'These questions are not part of this worksheet.' });
+    return;
+  }
+  const distinct = (list: string[]) => new Set(list.map((c) => c.trim().toLowerCase())).size === list.length;
+  for (const q of questions) {
+    if (!distinct(q.choices) || (q.choicesAr.every(Boolean) && !distinct(q.choicesAr))) {
+      res.status(400).json({ error: 'Two answers of a question are the same. Make every answer different.' });
+      return;
+    }
+    if (![q.text, q.textAr, q.explanation, q.explanationAr, ...q.choices, ...q.choicesAr].every((t) => moderateContent(t).allowed)) {
+      res.status(400).json({ error: 'This text is not allowed. Write it differently.' });
+      return;
+    }
+  }
+
+  const insert = db.prepare(
+    `INSERT INTO worksheet_questions (subject_id, difficulty, question_text, question_text_ar, choices_json, choices_json_ar, correct_index, explanation, explanation_ar, reel_id, topic)
+     VALUES (?,?,?,?,?,?,?,?,?,NULL,NULL)`
+  );
+  const newIds = questions.map((q) => {
+    const old = byId.get(q.id);
+    const next = {
+      text: mathLatin(q.text), textAr: mathLatin(q.textAr), choices: mathLatinAll(q.choices), choicesAr: mathLatinAll(q.choicesAr),
+      correctIndex: q.correctIndex, explanation: mathLatin(q.explanation), explanationAr: mathLatin(q.explanationAr),
+    };
+    const same =
+      next.text === mathLatin(old.question_text) && next.textAr === mathLatin(old.question_text_ar ?? '') &&
+      JSON.stringify(next.choices) === JSON.stringify(mathLatinAll(JSON.parse(old.choices_json))) &&
+      JSON.stringify(next.choicesAr) === JSON.stringify(mathLatinAll(JSON.parse(old.choices_json_ar))) &&
+      next.correctIndex === old.correct_index &&
+      next.explanation === mathLatin(old.explanation ?? '') && next.explanationAr === mathLatin(old.explanation_ar ?? '');
+    if (same) return old.id as number;
+    return Number(
+      insert.run(
+        attempt.subject_id, attempt.difficulty, next.text, next.textAr, JSON.stringify(next.choices), JSON.stringify(next.choicesAr),
+        next.correctIndex,
+        // the explanation is only shown to a student after solving; keep the old one's meaning when the teacher left it empty
+        next.explanation || mathLatin(old.explanation ?? ''), next.explanationAr || mathLatin(old.explanation_ar ?? ''),
+      ).lastInsertRowid
+    );
+  });
+  db.prepare(`UPDATE worksheet_attempts SET question_ids_json = ? WHERE id = ?`).run(JSON.stringify(newIds), attempt.id);
+  res.json({ questions: attemptQuestions({ question_ids_json: JSON.stringify(newIds) }).map(editablePayload) });
 });
 
 // The teacher's own sent worksheets, newest first, with how many students have solved each.
