@@ -5742,3 +5742,25 @@ button.feature-switch:active:not(:disabled) {
   background-color: color-mix(in srgb, var(--surface-row) 55%, rgba(18, 10, 32, 0.92));
   box-shadow: inset 0 0 0 1px var(--glass-border), 0 14px 26px -18px rgba(0, 0, 0, 0.8);
 }
+
+/* ---------------- Admin > Features: the tab bar (and the chosen account's header under it) is fixed at the top; the page scrolls under it ---------------- */
+.fa-bar {
+  z-index: 30;
+  display: grid;
+  gap: 8px;
+}
+.fa-bar .fa-tabs {
+  position: relative;
+  top: auto;
+}
+.fa-dock:empty {
+  display: none;
+}
+.fa-bar .fa-head {
+  margin: 0;
+  border-radius: 20px;
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  background-color: color-mix(in srgb, var(--surface-row) 55%, rgba(18, 10, 32, 0.92));
+  box-shadow: inset 0 0 0 1px var(--glass-border), 0 14px 26px -18px rgba(0, 0, 0, 0.8);
+}

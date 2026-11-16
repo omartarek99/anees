@@ -1,47 +1,40 @@
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
-/** Keeps an element fixed at `top` px from the top of the window once the page has been scrolled past it, and in its place in the page before that.
- *  Unlike CSS `position: sticky` it does not depend on what surrounds the element (an ancestor with overflow, a different scroll container), so it
- *  holds in every browser and layout. Put `slotRef` on an empty wrapper around the element and `elRef` on the element itself, and give the element
- *  `pinStyle` plus the class `is-pinned` while `pinned` (the stylesheet makes that class `position: fixed`). The wrapper keeps the element's height so
- *  the page below does not jump. */
-export function usePinned(top: number | (() => number)) {
+/** A bar that never moves with the page: it is fixed `top` px from the top of the window from the first moment, and the page scrolls underneath it.
+ *  There is no scroll code at all (nothing to lag or to switch on late), and it does not depend on what surrounds it (CSS `position: sticky` does).
+ *  Put `slotRef` on an empty wrapper where the bar belongs in the page and `barRef` on the bar itself; the bar is given `barStyle` (fixed, with the
+ *  wrapper's left edge and width, so it lines up with the page) and the class `is-fixed`. The wrapper keeps the bar's height so nothing jumps. */
+export function useFixedBar(top: number) {
   const slotRef = useRef<HTMLDivElement>(null);
-  const elRef = useRef<HTMLDivElement>(null);
-  const [state, setState] = useState({ pinned: false, left: 0, width: 0, height: 0 });
-  const topRef = useRef(top);
-  topRef.current = top;
+  const barRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ left: 0, width: 0, height: 0, ready: false });
 
-  useEffect(() => {
+  // layout effect: measured before the first paint, so the bar never shows up in the wrong place for a frame
+  useLayoutEffect(() => {
     const slot = slotRef.current;
-    const el = elRef.current;
-    if (!slot || !el) return;
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const limit = typeof topRef.current === 'function' ? topRef.current() : topRef.current;
+    const bar = barRef.current;
+    if (!slot || !bar) return;
+    const measure = () => {
       const r = slot.getBoundingClientRect();
-      const pinned = r.top <= limit;
-      const next = { pinned, left: Math.round(r.left), width: Math.round(r.width), height: Math.round(el.offsetHeight) };
-      setState((s) => (s.pinned === next.pinned && s.left === next.left && s.width === next.width && s.height === next.height ? s : next));
+      const next = { left: Math.round(r.left), width: Math.round(r.width), height: Math.round(bar.offsetHeight), ready: true };
+      setBox((b) => (b.left === next.left && b.width === next.width && b.height === next.height && b.ready ? b : next));
     };
-    const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
-    const ro = new ResizeObserver(schedule);
+    measure();
+    window.addEventListener('resize', measure);
+    const ro = new ResizeObserver(measure);
     ro.observe(slot);
-    ro.observe(el);
+    ro.observe(bar);
+    // the page can shift sideways without the bar's size changing (a scrollbar appearing, the sidebar settling, fonts loading): measure again then too
+    ro.observe(document.documentElement);
+    void document.fonts?.ready.then(measure);
+    const timers = [120, 500, 1200].map((ms) => window.setTimeout(measure, ms));
     return () => {
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
+      window.removeEventListener('resize', measure);
       ro.disconnect();
-      if (raf) cancelAnimationFrame(raf);
+      timers.forEach((id) => window.clearTimeout(id));
     };
   }, []);
 
-  const pinStyle = state.pinned ? { left: state.left, width: state.width } : undefined;
-  return { slotRef, elRef, pinned: state.pinned, pinStyle, height: state.height };
+  const barStyle = { position: 'fixed' as const, top, left: box.left, width: box.width || undefined, visibility: box.ready ? ('visible' as const) : ('hidden' as const) };
+  return { slotRef, barRef, barStyle, height: box.height };
 }
