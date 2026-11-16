@@ -1,5 +1,6 @@
 import { useAuth } from '../lib/auth-context';
 import { TeacherCertificateCard } from '../components/TeacherCertificateCard';
+import { TeacherCertificatePopup } from '../components/TeacherCertificatePopup';
 import { Ico } from '../components/Ico';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -140,63 +141,71 @@ export function TeacherReelsPage() {
           onCancel={editingId ? () => setEditingId(null) : undefined}
         />
       ) : (
-        <TeacherCertificateCard />
+        <>
+          <TeacherCertificateCard />
+          <TeacherCertificatePopup />
+        </>
       )}
 
-      <div className="card">
-        <h3 style={{ fontSize: 16, marginBottom: 12 }}>{t('teacherReels.myReelsTitle')}</h3>
-        {loadError && <div className="form-error-banner">{loadError}</div>}
-        {!reels && !loadError && (
-          <div className="empty-state">
-            <div className="spinner" />
-          </div>
-        )}
-        {reels && reels.length === 0 && !loadError && <p className="muted">{t('teacherReels.noReels')}</p>}
-        {reels && reels.length > 0 && (
-          <p style={{ margin: '0 0 12px', fontWeight: 700 }}>
-            👁 {t('teacherReels.totalViews', { n: String(reels.reduce((sum, r) => sum + (r.viewCount ?? 0), 0)) })}
-          </p>
-        )}
-        <div className="stack" style={{ gap: 10 }}>
-          {reels?.map((reel) => (
-            <div key={reel.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-              <div style={{ minWidth: 0, flex: '1 1 180px' }}>
-                <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                  <strong>{pickText(lang, reel.title, reel.titleAr)}</strong>
-                  <span className="badge" title={t('teacherReels.viewsHint')}>
-                    👁 {t('teacherReels.reelViews', { n: String(reel.viewCount ?? 0) })}
-                  </span>
+      {/* "Your lessons" and the watch time appear once an admin has approved the certificate */}
+      {user?.teacherCertStatus === 'approved' && (
+        <>
+          <div className="card">
+            <h3 style={{ fontSize: 16, marginBottom: 12 }}>{t('teacherReels.myReelsTitle')}</h3>
+            {loadError && <div className="form-error-banner">{loadError}</div>}
+            {!reels && !loadError && (
+              <div className="empty-state">
+                <div className="spinner" />
+              </div>
+            )}
+            {reels && reels.length === 0 && !loadError && <p className="muted">{t('teacherReels.noReels')}</p>}
+            {reels && reels.length > 0 && (
+              <p style={{ margin: '0 0 12px', fontWeight: 700 }}>
+                👁 {t('teacherReels.totalViews', { n: String(reels.reduce((sum, r) => sum + (r.viewCount ?? 0), 0)) })}
+              </p>
+            )}
+            <div className="stack" style={{ gap: 10 }}>
+              {reels?.map((reel) => (
+                <div key={reel.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                  <div style={{ minWidth: 0, flex: '1 1 180px' }}>
+                    <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                      <strong>{pickText(lang, reel.title, reel.titleAr)}</strong>
+                      <span className="badge" title={t('teacherReels.viewsHint')}>
+                        👁 {t('teacherReels.reelViews', { n: String(reel.viewCount ?? 0) })}
+                      </span>
+                    </div>
+                    <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+                      {t('teacherReels.reelMeta', {
+                        grade: String(reel.grade),
+                        subject: pickText(lang, reel.subjectName, reel.subjectNameAr),
+                        questions: String(reel.questionCount),
+                      })}
+                      {' · '}
+                      {t('teacherReels.likeCount', { n: reel.likeCount })}
+                    </p>
+                    {reel.videoStatus === 'processing' && (
+                      <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--gold-dark, #b07a10)' }}>⏳ {t('teacherReels.videoProcessing')}</p>
+                    )}
+                    {reel.videoStatus === 'failed' && (
+                      <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--danger)' }}>⚠️ {t(`teacherReels.videoFailed_${reel.videoError && ['timeout', 'storage', 'unreadable', 'restart'].includes(reel.videoError) ? reel.videoError : 'other'}`)}</p>
+                    )}
+                  </div>
+                  <div className="flex gap-sm">
+                    <button type="button" className="btn btn-secondary" onClick={() => handleEdit(reel.id)}>
+                      {t('teacherReels.editButton')}
+                    </button>
+                    <button type="button" className="btn btn-secondary" onClick={() => handleDelete(reel.id)}>
+                      {t('teacherReels.deleteButton')}
+                    </button>
+                  </div>
                 </div>
-                <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-                  {t('teacherReels.reelMeta', {
-                    grade: String(reel.grade),
-                    subject: pickText(lang, reel.subjectName, reel.subjectNameAr),
-                    questions: String(reel.questionCount),
-                  })}
-                  {' · '}
-                  {t('teacherReels.likeCount', { n: reel.likeCount })}
-                </p>
-                {reel.videoStatus === 'processing' && (
-                  <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--gold-dark, #b07a10)' }}>⏳ {t('teacherReels.videoProcessing')}</p>
-                )}
-                {reel.videoStatus === 'failed' && (
-                  <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--danger)' }}>⚠️ {t(`teacherReels.videoFailed_${reel.videoError && ['timeout', 'storage', 'unreadable', 'restart'].includes(reel.videoError) ? reel.videoError : 'other'}`)}</p>
-                )}
-              </div>
-              <div className="flex gap-sm">
-                <button type="button" className="btn btn-secondary" onClick={() => handleEdit(reel.id)}>
-                  {t('teacherReels.editButton')}
-                </button>
-                <button type="button" className="btn btn-secondary" onClick={() => handleDelete(reel.id)}>
-                  {t('teacherReels.deleteButton')}
-                </button>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      <TeacherWatchReport />
+          <TeacherWatchReport />
+        </>
+      )}
     </div>
   );
 }
