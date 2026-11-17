@@ -1,9 +1,10 @@
+import { QFigure } from './QFigure';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../lib/language-context';
 import { choiceLabel } from '../lib/bidi';
 import { QText } from './QText';
 
-export type PrintableQuestion = { id: number; text: string; choices: string[] };
+export type PrintableQuestion = { id: number; text: string; choices: string[]; image?: string | null };
 
 /** Renders into a portal on document.body (a sibling of #root, not nested inside the app
  * shell) so `@media print` (theme.css) can hide #root entirely and show only this --
@@ -12,15 +13,9 @@ export type PrintableQuestion = { id: number; text: string; choices: string[] };
  * portal` is display:none outside of print) until the browser's print dialog opens. */
 export function PrintableWorksheet({
   subjectLabel,
-  subjectIcon,
-  difficultyLabel,
-  difficultyIcon,
   questions,
 }: {
   subjectLabel: string;
-  subjectIcon: string;
-  difficultyLabel: string;
-  difficultyIcon: string;
   questions: PrintableQuestion[];
 }) {
   const { t, dir, lang } = useLanguage();
@@ -47,13 +42,12 @@ export function PrintableWorksheet({
         <tbody><tr><td>
       <div className="printable-worksheet" style={watermarkStyle}>
         <header className="printable-worksheet-header">
-          <img src="/icons/logo-mark.png" alt="" className="printable-worksheet-logo" />
           <div>
             <h1>
               {t('brand')} <span aria-hidden>🦅</span>
             </h1>
             <p>
-              <img src={subjectIcon} alt="" className="printable-worksheet-icon" /> {subjectLabel} — <img src={difficultyIcon} alt="" className="printable-worksheet-icon" /> {difficultyLabel}
+              {subjectLabel}
             </p>
           </div>
         </header>
@@ -75,6 +69,7 @@ export function PrintableWorksheet({
               <p className="quiz-q">
                 <QText text={q.text} />
               </p>
+              <QFigure image={q.image} />
               <ul>
                 {q.choices.map((choice, ci) => (
                   <li key={ci}>

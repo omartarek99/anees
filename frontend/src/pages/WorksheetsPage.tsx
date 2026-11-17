@@ -1,3 +1,4 @@
+import { QFigure } from '../components/QFigure';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { RiVideoLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
@@ -32,7 +33,7 @@ type GenerateResponse = {
   topic?: string;
   // The AI couldn't write questions for the typed lesson, so this is a general bank worksheet.
   aiUnavailable?: boolean;
-  questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null }[];
+  questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null; image?: string | null }[];
   // Set when a student opened a worksheet a teacher sent (POST /worksheets/received/:id/start): who sent it.
   sentWorksheetId?: number;
   teacherName?: string;
@@ -79,6 +80,7 @@ function WorksheetPreview({ questions, correct }: { questions: QuizQuestion[]; c
           <p className="ws-preview-question quiz-q">
             {qi + 1}. <QText text={q.text} />
           </p>
+          <QFigure image={q.image} />
           <ul className="ws-preview-choices">
             {q.choices.map((choice, ci) => (
               <li key={ci} className={correct?.get(q.id) === ci ? 'is-correct' : undefined}>
@@ -106,6 +108,7 @@ type EditQuestion = {
   correctIndex: number;
   explanation: string;
   explanationAr: string;
+  image?: string | null;
 };
 
 /** The teacher's editor for a worksheet that has not been sent yet: every question and answer in English and Arabic, and the right answer. */
@@ -119,6 +122,7 @@ function WorksheetEditor({ draft, onChange }: { draft: EditQuestion[]; onChange:
       {draft.map((q, qi) => (
         <li key={q.id} className="card stack" style={{ gap: 10 }}>
           <strong>{qi + 1}.</strong>
+          <QFigure image={q.image} />
           <div className="field" style={{ margin: 0 }}>
             <label>{t('worksheets.editQuestionEn')}</label>
             <textarea dir="ltr" rows={2} maxLength={300} value={q.text} onChange={(e) => patch(qi, { text: e.target.value })} />
@@ -259,7 +263,7 @@ export function WorksheetsPage() {
     try {
       const d = await api.put<{ questions: EditQuestion[] }>(`/worksheets/${worksheet.worksheetId}/questions`, { questions: draft });
       setFull(d.questions);
-      setWorksheet({ ...worksheet, questions: d.questions.map(({ id, text, textAr, choices, choicesAr }) => ({ id, text, textAr, choices, choicesAr })) });
+      setWorksheet({ ...worksheet, questions: d.questions.map(({ id, text, textAr, choices, choicesAr, image }) => ({ id, text, textAr, choices, choicesAr, image })) });
       setDraft(null);
       setEditSaved(true);
     } catch (err) {
@@ -307,6 +311,7 @@ export function WorksheetsPage() {
       id: q.id,
       text: pickText(lang, q.text, q.textAr),
       choices: lang === 'ar' && q.choicesAr ? q.choicesAr : q.choices,
+      image: q.image,
     })) ?? [];
 
   async function generate() {
@@ -674,9 +679,6 @@ export function WorksheetsPage() {
                   (worksheet.video ? ` · ${pickText(lang, worksheet.video.title, worksheet.video.titleAr)}` : '') +
                   (worksheet.topic ? ` · ${worksheet.topic} · ${t('worksheets.gradeOption', { n: grade })}` : '')
                 }
-                subjectIcon={art(worksheet.subject)}
-                difficultyLabel={t(`worksheets.${worksheet.difficulty}`)}
-                difficultyIcon={art(worksheet.difficulty)}
                 questions={questions}
               />
             </>

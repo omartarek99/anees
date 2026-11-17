@@ -9,10 +9,11 @@ import { callGemini } from './gemini.js';
 // correct answers itself.
 
 export type BankSubject = 'math' | 'science';
+export const BANK_IMAGE_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../question-bank/images');
 export const BANK_GRADES = [5, 6, 8] as const;
 export const isBankGrade = (g: unknown): g is (typeof BANK_GRADES)[number] => BANK_GRADES.some((x) => x === g);
 
-type BankQuestion = { kind: 'mcq' | 'fill' | 'tf' | 'problem'; text: string };
+type BankQuestion = { kind: 'mcq' | 'fill' | 'tf' | 'problem'; text: string; image?: string };
 export type BankLesson = {
   subject: BankSubject;
   grade: number;
@@ -54,8 +55,11 @@ function parseFile(subject: BankSubject, grade: number, term: number, text: stri
       lesson = null;
       unit = line.replace(/^##\s*/, '').trim();
     } else if (lesson) {
+      const img = /^\s*!\[[^\]]*\]\(images\/([\w.-]+\.jpg)\)\s*$/.exec(line);
       const q = /^\d+\.\s+(.*)$/.exec(line);
-      if (q) {
+      if (img && current) {
+        current.image = img[1]; // the figure of the question above (a file in question-bank/images)
+      } else if (q) {
         flush();
         current = { kind, text: q[1].trim() };
       } else if (current && line.trim()) {

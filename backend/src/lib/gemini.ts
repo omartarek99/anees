@@ -165,7 +165,7 @@ ${params.avoidQuestions.map((q) => `- ${q}`).join('\n')}
 - correctIndex is the 0-based index of the correct choice.
 - A short one-sentence explanation of why that answer is correct, written for a grade-${params.grade} student.
 - Provide both an English version AND an Arabic version of the question, its 4 choices, and the explanation (questionTextAr/choicesAr/explanationAr). Write natural, grade-appropriate Modern Standard Arabic, not a literal machine translation.
-- MATH NOTATION (both the English AND the Arabic version): write every number with the Western digits 0-9 (never Arabic-Indic digits like ٣ or ٤), and write every unknown / variable / symbol in Latin letters such as x, y, z, a, b, n (never Arabic letters like س or ص). Use × ÷ = + − √ and superscripts like x² in both languages; only the words around the maths are Arabic. Example (Arabic version): "حل المعادلة: 2x + 3 = 11".
+- MATH NOTATION (both the English AND the Arabic version): write every number with the Western digits 0-9 (never Arabic-Indic digits like ٣ or ٤), and write every unknown / variable / symbol in Latin letters such as x, y, z, a, b, n (never Arabic letters like س or ص). Use × ÷ = + − √ and superscripts like x² in both languages; only the words around the maths are Arabic. Example (Arabic version): "حل المعادلة: 2x + 3 = 11". A question that is just a calculation is a real equation ending with the unknown: "5 2/5 + 1 1/10 = ?" (Arabic: "= ؟"); write fractions as 3/4 and mixed numbers as 5 2/5 (whole number, a space, then the fraction).
 - Keep the language simple, encouraging, and age-appropriate. No content outside what a 5th-grade classroom would cover.
 
 Return ONLY the JSON array, matching the provided schema exactly.`;
@@ -175,7 +175,10 @@ Return ONLY the JSON array, matching the provided schema exactly.`;
 }
 
 // One structured-output call down the model fallback chain; the caller validates what comes back.
-export async function callGemini(prompt: string, schema: unknown, temperature: number, budgetMs = 60_000, options: { thinking?: 'minimal' } = {}): Promise<GeminiResult<unknown>> {
+export type GeminiImage = { label: string; mime: string; base64: string };
+
+// `images` (the figures of bank questions) are sent after the prompt, each with its label, so the model can read them.
+export async function callGemini(prompt: string, schema: unknown, temperature: number, budgetMs = 60_000, options: { thinking?: 'minimal'; images?: GeminiImage[] } = {}): Promise<GeminiResult<unknown>> {
   if (!GEMINI_API_KEY) {
     return { ok: false, error: 'NOT_CONFIGURED' };
   }
@@ -206,7 +209,7 @@ export async function callGemini(prompt: string, schema: unknown, temperature: n
             // A hung upstream must not hang the user's request forever.
             signal: AbortSignal.timeout(Math.min(25_000, budget)), // a model that has not answered in 25s is not going to help: try the next one
             body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
+              contents: [{ parts: [{ text: prompt }, ...(options.images ?? []).flatMap((im) => [{ text: im.label }, { inline_data: { mime_type: im.mime, data: im.base64 } }])] }],
               generationConfig: {
                 responseMimeType: 'application/json',
                 responseSchema: schema,
