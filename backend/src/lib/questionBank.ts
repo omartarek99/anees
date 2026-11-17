@@ -158,6 +158,13 @@ export async function findBankMatch(params: { subject: BankSubject; grade: numbe
   const byTitle = scoreLessons(pool, `${params.topicAr ?? ''} ${params.topic}`);
   // a second lesson only when it is nearly as good a match as the first
   let chosen: BankLesson[] = byTitle.filter((s) => s.score >= 0.4 && s.score >= byTitle[0].score * 0.75).slice(0, 2).map((s) => s.lesson);
+  // A topic that is exactly a lesson's title ("جمع الأعداد الكسرية") means that lesson only: a close neighbour such as "جمع وطرح الأعداد الكسرية"
+  // would bring in questions of the other operation.
+  const wanted = [...new Set(tokens(params.topicAr ?? '').filter((t) => !STOP.has(t)))].sort().join(' ');
+  if (wanted) {
+    const exact = pool.filter((l) => [...new Set(tokens(l.title).filter((t) => !STOP.has(t)))].sort().join(' ') === wanted);
+    if (exact.length > 0) chosen = exact.slice(0, 1);
+  }
   if (chosen.length === 0) {
     chosen = await pickWithAi(pool, `${params.topicAr ? params.topicAr + ' / ' : ''}${params.topic}`);
   }
