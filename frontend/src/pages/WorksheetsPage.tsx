@@ -674,11 +674,9 @@ export function WorksheetsPage() {
                 </>
               )}
               <PrintableWorksheet
-                subjectLabel={
-                  subjectName(worksheet.subject) +
-                  (worksheet.video ? ` · ${pickText(lang, worksheet.video.title, worksheet.video.titleAr)}` : '') +
-                  (worksheet.topic ? ` · ${worksheet.topic} · ${t('worksheets.gradeOption', { n: grade })}` : '')
-                }
+                subjectName={subjectName(worksheet.subject)}
+                topic={worksheet.video ? pickText(lang, worksheet.video.title, worksheet.video.titleAr) : worksheet.topic ?? undefined}
+                gradeLabel={worksheet.topic && !worksheet.video ? t('worksheets.gradeOption', { n: grade }) : undefined}
                 questions={questions}
               />
             </>

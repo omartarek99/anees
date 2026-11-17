@@ -7,7 +7,11 @@ import { useLanguage } from '../lib/language-context';
 const MATH_RUN = /[\dA-Za-z٠-٩_(√∛][\dA-Za-z٠-٩\s+\-−×÷=≠≤≥<>_.,%/()^⁰¹²³⁴⁵⁶⁷⁸⁹⁻√∛π]*[\dA-Za-z٠-٩_)⁰¹²³⁴⁵⁶⁷⁸⁹√∛π]|[\d٠-٩]/g;
 const HAS_DIGIT = /[\d٠-٩]/;
 // 3/4 and the mixed number 5 2/5 (a whole number, a space, a fraction): drawn as school books draw them, one number over the other with a line between
-const FRACTION = /(?<![\d/.])(?:(\d{1,3})\s+(\d{1,3})\/(\d{1,3})|(\d{1,3})\/(\d{1,3}))(?![\d/])/g;
+// The top or bottom may also hold a letter (w/4, 3/x, 4x/5, a/b), as in algebra; letters on both sides are a fraction only for the usual algebra letters, so units
+// such as m/s and km/h stay on one line.
+const FRACTION = /(?<![\d/.A-Za-z])(?:(\d{1,3})\s+(\d{1,3})\/(\d{1,3})|(\d{0,3}[A-Za-z]?)\/(\d{0,3}[A-Za-z]?))(?![\d/A-Za-z])/g;
+const UNIT_DENOMINATOR = /^[smhLg]$/;
+const isFraction = (n: string, d: string) => n !== '' && d !== '' && (/\d/.test(n) || /\d/.test(d) || !UNIT_DENOMINATOR.test(d));
 
 const frac = (n: string, d: string) => (
   <span className="mfrac">
@@ -22,6 +26,7 @@ function withFractions(text: string, keyBase: number): ReactNode[] {
   const out: ReactNode[] = [];
   let last = 0;
   for (const m of text.matchAll(FRACTION)) {
+    if (m[1] === undefined && !isFraction(m[4], m[5])) continue;
     const at = m.index ?? 0;
     if (at > last) out.push(text.slice(last, at));
     out.push(
