@@ -141,7 +141,8 @@ export function AdminPage() {
 
   return (
     <div className="stack">
-      <Topbar title={t(TITLES[tab].title)} subtitle={t(TITLES[tab].subtitle)} actions={actions} />
+      {/* the Features page has no title card: its tab bar is fixed at the top of the window (AdminFeaturesPanel) and says where you are */}
+      {tab !== 'features' && <Topbar title={t(TITLES[tab].title)} subtitle={t(TITLES[tab].subtitle)} actions={actions} />}
 
       {tab === 'dashboard' && <AdminDashboardPanel days={period} />}
       {tab === 'users' && <AdminUsersPanel />}

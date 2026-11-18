@@ -1,9 +1,10 @@
+import { QFigure } from './QFigure';
 import { useState } from 'react';
 import { useLanguage } from '../lib/language-context';
 import { choiceLabel } from '../lib/bidi';
 import { QText } from './QText';
 
-export type QuizQuestion = { id: number; text: string; choices: string[] };
+export type QuizQuestion = { id: number; text: string; choices: string[]; image?: string | null };
 export type QuizAnswer = { questionId: number; choiceIndex: number };
 
 export function QuizCard({
@@ -39,6 +40,7 @@ export function QuizCard({
           <p className="quiz-q">
             {qi + 1}. <QText text={q.text} />
           </p>
+          <QFigure image={q.image} />
           <div className="stack" style={{ gap: 8 }}>
             {q.choices.map((choice, ci) => {
               const selected = answers[q.id] === ci;

@@ -4,7 +4,7 @@ import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
 import { RiCloseLine, RiGroupLine, RiLock2Fill, RiLockUnlockFill, RiSearchLine } from '@remixicon/react';
 import { Switch } from './Switch';
-import { usePinned } from '../lib/use-pinned';
+import { createPortal } from 'react-dom';
 import { FeatureArt, GROUPS, type Role } from './featureMeta';
 
 type Hit = { id: number; username: string; displayName: string; email: string; role: 'student' | 'teacher' | 'admin'; grade: number | null; schoolName: string | null; isActive: boolean };
@@ -14,22 +14,10 @@ type Detail = { account: { id: number; username: string; displayName: string; ro
 const ORDER = GROUPS.flatMap((g) => g.keys);
 const initial = (name: string) => name.trim().slice(0, 1).toUpperCase();
 
-/** The chosen account's header: fixed just under the tab strip while the cards scroll (lib/use-pinned.ts). Mounted together with the header, so it measures it. */
-function PinnedHead({ top, children }: { top: number; children: React.ReactNode }) {
-  const pin = usePinned(top);
-  return (
-    <div ref={pin.slotRef} className="fa-head-slot" style={{ minHeight: pin.height || undefined }}>
-      <header ref={pin.elRef as React.RefObject<HTMLElement>} className={`card fa-head${pin.pinned ? ' is-pinned' : ''}`} style={pin.pinned ? { ...pin.pinStyle, top } : undefined}>
-        {children}
-      </header>
-    </div>
-  );
-}
-
 /** Admin > Features > One account: find a student or teacher by name, username or e-mail and open or close parts of the site for that account alone.
  *  An account's own switch beats its group's: "Close" shuts it for them only, "Open" lets them in while it is closed for the group, "Like the group"
  *  removes the own switch. */
-export function AdminFeatureAccounts({ pinTop }: { pinTop: number }) {
+export function AdminFeatureAccounts({ dock }: { dock: HTMLElement | null }) {
   const { t, lang } = useLanguage();
   const [q, setQ] = useState('');
   const [hits, setHits] = useState<Hit[] | null>(null);
@@ -127,7 +115,8 @@ export function AdminFeatureAccounts({ pinTop }: { pinTop: number }) {
 
       {detail && (
         <section className="fa-detail">
-          <PinnedHead top={pinTop}>
+          {dock && createPortal(
+            <header className="card fa-head">
             <span className={`fa-avatar fa-avatar--big fa-avatar--${detail.account.role}`} aria-hidden="true">{initial(detail.account.displayName || detail.account.username)}</span>
             <div className="fa-head-text">
               <small>{t('features.pickedAccount')}</small>
@@ -140,7 +129,9 @@ export function AdminFeatureAccounts({ pinTop }: { pinTop: number }) {
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDetail(null)}>
               <RiCloseLine size={16} aria-hidden="true" /> {t('features.changeAccount')}
             </button>
-          </PinnedHead>
+            </header>,
+            dock
+          )}
 
           <div className="fa-rows">
             {rows.map((r) => {

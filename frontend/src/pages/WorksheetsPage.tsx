@@ -1,3 +1,4 @@
+import { QFigure } from '../components/QFigure';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { RiVideoLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
@@ -32,7 +33,7 @@ type GenerateResponse = {
   topic?: string;
   // The AI couldn't write questions for the typed lesson, so this is a general bank worksheet.
   aiUnavailable?: boolean;
-  questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null }[];
+  questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null; image?: string | null }[];
   // Set when a student opened a worksheet a teacher sent (POST /worksheets/received/:id/start): who sent it.
   sentWorksheetId?: number;
   teacherName?: string;
@@ -70,8 +71,8 @@ type SubmitResponse = {
 };
 
 /** A teacher's look at a worksheet before printing or sending it: the questions and their choices, with nothing to answer. */
-function WorksheetPreview({ questions }: { questions: QuizQuestion[] }) {
-  const { lang } = useLanguage();
+function WorksheetPreview({ questions, correct }: { questions: QuizQuestion[]; correct?: Map<number, number> }) {
+  const { t, lang } = useLanguage();
   return (
     <ol className="ws-preview">
       {questions.map((q, qi) => (
@@ -79,16 +80,91 @@ function WorksheetPreview({ questions }: { questions: QuizQuestion[] }) {
           <p className="ws-preview-question quiz-q">
             {qi + 1}. <QText text={q.text} />
           </p>
+          <QFigure image={q.image} />
           <ul className="ws-preview-choices">
             {q.choices.map((choice, ci) => (
-              <li key={ci}>
+              <li key={ci} className={correct?.get(q.id) === ci ? 'is-correct' : undefined}>
                 <span aria-hidden className="ws-choice-label">{choiceLabel(ci, lang)}</span>
                 <span className="quiz-choice-text">
-<QText text={choice} />
-</span>
+                  <QText text={choice} />
+                </span>
+                {correct?.get(q.id) === ci && <span className="badge badge-success ws-correct-tag">{t('worksheets.correctTag')}</span>}
               </li>
             ))}
           </ul>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** A question as the teacher edits it: both languages, and which choice is right. */
+type EditQuestion = {
+  id: number;
+  text: string;
+  textAr: string;
+  choices: string[];
+  choicesAr: string[];
+  correctIndex: number;
+  explanation: string;
+  explanationAr: string;
+  image?: string | null;
+};
+
+/** The teacher's editor for a worksheet that has not been sent yet: every question and answer in English and Arabic, and the right answer. */
+function WorksheetEditor({ draft, onChange }: { draft: EditQuestion[]; onChange: (next: EditQuestion[]) => void }) {
+  const { t, lang } = useLanguage();
+  const patch = (qi: number, p: Partial<EditQuestion>) => onChange(draft.map((q, i) => (i === qi ? { ...q, ...p } : q)));
+  const setChoice = (qi: number, ci: number, key: 'choices' | 'choicesAr', value: string) =>
+    patch(qi, { [key]: draft[qi][key].map((c, i) => (i === ci ? value : c)) });
+  return (
+    <ol className="ws-preview ws-editor">
+      {draft.map((q, qi) => (
+        <li key={q.id} className="card stack" style={{ gap: 10 }}>
+          <strong>{qi + 1}.</strong>
+          <QFigure image={q.image} />
+          <div className="field" style={{ margin: 0 }}>
+            <label>{t('worksheets.editQuestionEn')}</label>
+            <textarea dir="ltr" rows={2} maxLength={300} value={q.text} onChange={(e) => patch(qi, { text: e.target.value })} />
+          </div>
+          <div className="field" style={{ margin: 0 }}>
+            <label>{t('worksheets.editQuestionAr')}</label>
+            <textarea dir="rtl" rows={2} maxLength={300} value={q.textAr} onChange={(e) => patch(qi, { textAr: e.target.value })} />
+          </div>
+          <div className="stack" style={{ gap: 8 }}>
+            {q.choices.map((_, ci) => (
+              <div key={ci} className={`ws-edit-choice${q.correctIndex === ci ? ' is-correct' : ''}`}>
+                <label className="ws-edit-radio" title={t('worksheets.editMarkCorrect')}>
+                  <input type="radio" name={`correct-${q.id}`} checked={q.correctIndex === ci} onChange={() => patch(qi, { correctIndex: ci })} aria-label={t('worksheets.editMarkCorrect')} />
+                  <span aria-hidden className="ws-choice-label">{choiceLabel(ci, lang)}</span>
+                </label>
+                <input
+                  dir="ltr"
+                  maxLength={120}
+                  value={q.choices[ci]}
+                  placeholder={t('worksheets.editChoiceEn', { n: ci + 1 })}
+                  aria-label={t('worksheets.editChoiceEn', { n: ci + 1 })}
+                  onChange={(e) => setChoice(qi, ci, 'choices', e.target.value)}
+                />
+                <input
+                  dir="rtl"
+                  maxLength={120}
+                  value={q.choicesAr[ci]}
+                  placeholder={t('worksheets.editChoiceAr', { n: ci + 1 })}
+                  aria-label={t('worksheets.editChoiceAr', { n: ci + 1 })}
+                  onChange={(e) => setChoice(qi, ci, 'choicesAr', e.target.value)}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="field" style={{ margin: 0 }}>
+            <label>{t('worksheets.editExplanationEn')}</label>
+            <input dir="ltr" maxLength={500} value={q.explanation} onChange={(e) => patch(qi, { explanation: e.target.value })} />
+          </div>
+          <div className="field" style={{ margin: 0 }}>
+            <label>{t('worksheets.editExplanationAr')}</label>
+            <input dir="rtl" maxLength={500} value={q.explanationAr} onChange={(e) => patch(qi, { explanationAr: e.target.value })} />
+          </div>
         </li>
       ))}
     </ol>
@@ -111,6 +187,11 @@ export function WorksheetsPage() {
   const [sent, setSent] = useState<{ alreadySent: boolean } | null>(null);
   const [sending, setSending] = useState(false);
   const [sentList, setSentList] = useState<TeacherSentWorksheet[] | null>(null);
+  // Teacher: the questions with their right answers (to mark them, and to edit), the draft being edited, and the save in progress.
+  const [full, setFull] = useState<EditQuestion[] | null>(null);
+  const [draft, setDraft] = useState<EditQuestion[] | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editSaved, setEditSaved] = useState(false);
   // Student: the worksheets teachers sent, and the one being opened.
   const [received, setReceived] = useState<ReceivedWorksheet[] | null>(null);
   const [opening, setOpening] = useState<number | null>(null);
@@ -120,7 +201,7 @@ export function WorksheetsPage() {
   // The name of the lesson (درس) or of a video -- the AI writes new questions about it.
   const [lessonName, setLessonName] = useState('');
   // The grade of the lesson (the school book it comes from) and how many questions the sheet has.
-  const [grade, setGrade] = useState<5 | 6>(user?.grade === 6 ? 6 : 5);
+  const [grade, setGrade] = useState<5 | 6 | 8>(user?.grade === 6 ? 6 : user?.grade === 8 ? 8 : 5);
   const [count, setCount] = useState(10);
   // The Generate button sits at the bottom of the form but the error banner at the top -- bring a
   // new error into view so a failed click doesn't look like nothing happened.
@@ -141,6 +222,56 @@ export function WorksheetsPage() {
     loadSentWorksheets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A teacher's worksheet comes with its right answers (a student's never does): they are marked in the preview and can be edited.
+  const worksheetId = worksheet?.worksheetId;
+  useEffect(() => {
+    setFull(null);
+    setDraft(null);
+    setEditSaved(false);
+    if (!isTeacher || !worksheetId) return;
+    let live = true;
+    api
+      .get<{ questions: EditQuestion[] }>(`/worksheets/${worksheetId}/edit`)
+      .then((d) => live && setFull(d.questions))
+      .catch(() => live && setFull(null));
+    return () => {
+      live = false;
+    };
+  }, [isTeacher, worksheetId]);
+
+  async function openEditor() {
+    setError(null);
+    setEditSaved(false);
+    if (full) {
+      setDraft(full.map((q) => ({ ...q })));
+      return;
+    }
+    try {
+      const d = await api.get<{ questions: EditQuestion[] }>(`/worksheets/${worksheet!.worksheetId}/edit`);
+      setFull(d.questions);
+      setDraft(d.questions.map((q) => ({ ...q })));
+    } catch (err) {
+      setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('worksheets.editLoadError'));
+    }
+  }
+
+  async function saveEdit() {
+    if (!worksheet || !draft) return;
+    setError(null);
+    setSavingEdit(true);
+    try {
+      const d = await api.put<{ questions: EditQuestion[] }>(`/worksheets/${worksheet.worksheetId}/questions`, { questions: draft });
+      setFull(d.questions);
+      setWorksheet({ ...worksheet, questions: d.questions.map(({ id, text, textAr, choices, choicesAr, image }) => ({ id, text, textAr, choices, choicesAr, image })) });
+      setDraft(null);
+      setEditSaved(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? translateApiError(lang, err.message) : t('common.genericError'));
+    } finally {
+      setSavingEdit(false);
+    }
+  }
 
   // The teacher's sent worksheets, or the student's "From your teachers".
   function loadSentWorksheets() {
@@ -180,6 +311,7 @@ export function WorksheetsPage() {
       id: q.id,
       text: pickText(lang, q.text, q.textAr),
       choices: lang === 'ar' && q.choicesAr ? q.choicesAr : q.choices,
+      image: q.image,
     })) ?? [];
 
   async function generate() {
@@ -366,7 +498,7 @@ export function WorksheetsPage() {
                 const match = videos.find((v) => [v.title, v.titleAr].some((n) => n && n.trim().toLowerCase() === name));
                 if (match) {
                   setSubject(match.subject);
-                  if (match.grade === 5 || match.grade === 6) setGrade(match.grade);
+                  if (match.grade === 5 || match.grade === 6 || match.grade === 8) setGrade(match.grade);
                 }
               }}
               placeholder={t('worksheets.lessonPlaceholder')}
@@ -416,7 +548,7 @@ export function WorksheetsPage() {
           <div>
             <label style={{ fontWeight: 700, marginBottom: 8, display: 'block' }}>{t('worksheets.gradeLabel')}</label>
             <div className="pill-row">
-              {([5, 6] as const).map((g) => (
+              {([5, 6, 8] as const).map((g) => (
                 <button
                   key={g}
                   type="button"
@@ -495,11 +627,16 @@ export function WorksheetsPage() {
                   in the app instead, so these stay out of their view. */}
               {isTeacher && (
                 <>
-                  <button className="btn btn-secondary btn-sm" onClick={handlePrint} style={{ whiteSpace: 'nowrap' }}>
+                  {!sent && !draft && (
+                    <button className="btn btn-secondary btn-sm" onClick={openEditor} style={{ whiteSpace: 'nowrap' }}>
+                      {t('worksheets.editQuestions')}
+                    </button>
+                  )}
+                  <button className="btn btn-secondary btn-sm" onClick={handlePrint} disabled={!!draft} style={{ whiteSpace: 'nowrap' }}>
                     {t('worksheets.print')}
                   </button>
                   {!sent && (
-                    <button className="btn btn-primary btn-sm" onClick={send} disabled={sending} style={{ whiteSpace: 'nowrap' }}>
+                    <button className="btn btn-primary btn-sm" onClick={send} disabled={sending || !!draft} style={{ whiteSpace: 'nowrap' }}>
                       {sending ? t('worksheets.sending') : t('worksheets.sendAll')}
                     </button>
                   )}
@@ -512,17 +649,34 @@ export function WorksheetsPage() {
           </div>
           {isTeacher ? (
             <>
-              <p className="muted" style={{ margin: 0 }}>{t('worksheets.previewNote')}</p>
-              <WorksheetPreview questions={questions} />
+              {editSaved && !draft && (
+                <div className="form-success-banner" role="status">
+                  {t('worksheets.editSaved')}
+                </div>
+              )}
+              {draft ? (
+                <>
+                  <p className="muted" style={{ margin: 0 }}>{t('worksheets.editNote')}</p>
+                  <WorksheetEditor draft={draft} onChange={setDraft} />
+                  <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
+                    <button className="btn btn-primary" onClick={saveEdit} disabled={savingEdit}>
+                      {t(savingEdit ? 'worksheets.editSaving' : 'worksheets.editSave')}
+                    </button>
+                    <button className="btn btn-ghost" onClick={() => setDraft(null)} disabled={savingEdit}>
+                      {t('common.cancel')}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="muted" style={{ margin: 0 }}>{t('worksheets.previewNote')}</p>
+                  <WorksheetPreview questions={questions} correct={full ? new Map(full.map((q) => [q.id, q.correctIndex])) : undefined} />
+                </>
+              )}
               <PrintableWorksheet
-                subjectLabel={
-                  subjectName(worksheet.subject) +
-                  (worksheet.video ? ` · ${pickText(lang, worksheet.video.title, worksheet.video.titleAr)}` : '') +
-                  (worksheet.topic ? ` · ${worksheet.topic} · ${t('worksheets.gradeOption', { n: grade })}` : '')
-                }
-                subjectIcon={art(worksheet.subject)}
-                difficultyLabel={t(`worksheets.${worksheet.difficulty}`)}
-                difficultyIcon={art(worksheet.difficulty)}
+                subjectName={subjectName(worksheet.subject)}
+                topic={worksheet.video ? pickText(lang, worksheet.video.title, worksheet.video.titleAr) : worksheet.topic ?? undefined}
+                gradeLabel={worksheet.topic && !worksheet.video ? t('worksheets.gradeOption', { n: grade }) : undefined}
                 questions={questions}
               />
             </>

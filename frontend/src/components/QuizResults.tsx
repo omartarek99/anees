@@ -1,3 +1,4 @@
+import { QFigure } from './QFigure';
 import type { QuizQuestion } from './QuizCard';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
@@ -33,6 +34,7 @@ export function QuizResults({ questions, results }: { questions: QuizQuestion[];
             <p className="quiz-q" style={{ marginBottom: 8 }}>
               {r.isCorrect ? '✅' : '❌'} <QText text={q.text} />
             </p>
+            <QFigure image={q.image} />
             {!r.isCorrect && (r.chosenText || r.chosenIndex >= 0) && (
               <p style={{ color: 'var(--danger)', fontSize: 14, margin: '4px 0' }}>
                 {t('common.yourAnswer')} <QText text={r.chosenText ? pickText(lang, r.chosenText, r.chosenTextAr) : q.choices[r.chosenIndex]} />

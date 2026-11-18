@@ -9,6 +9,7 @@ import { pickText } from '../lib/i18n';
 import { useFeatures, type FeatureKey } from '../lib/features-context';
 import { Topbar } from '../components/Topbar';
 import { Avatar } from '../components/Avatar';
+import { Ico } from '../components/Ico';
 import { RANK_FRAMES } from '../lib/frames';
 import type { RankKey } from '../lib/medalLevels';
 import { ChallengePickerModal } from '../components/ChallengePickerModal';
@@ -121,6 +122,48 @@ function StudentProgress({ profile }: { profile: Profile | null }) {
       />
       <ChallengeSetupModal friend={challengeFor} onClose={() => setChallengeFor(null)} />
     </>
+  );
+}
+
+/** A teacher's two cards, in the same style as a student's progress cards: generate a worksheet, create a video. A card whose part of the site the admin has
+ *  switched off (admin panel > Features) is left out. */
+function TeacherActions() {
+  const { user } = useAuth();
+  const { t } = useLanguage();
+  const { isOn } = useFeatures();
+  const cards = [
+    { tone: 'yellow', src: '/icons/teacher-worksheet.webp', title: t('home.teacherWorksheet'), value: <Ico name="worksheet" size={52} />, to: '/worksheets', cta: t('home.teacherWorksheetCta'), feature: 'worksheets' as FeatureKey },
+    { tone: 'blue', src: '/icons/teacher-videos.webp', title: t('home.teacherVideo'), value: <Ico name="addvideo" size={52} />, to: '/teacher/reels', cta: t('home.teacherVideoCta'), feature: 'teacher_upload' as FeatureKey },
+  ].filter((c) => isOn(c.feature));
+  if (cards.length === 0) return null;
+  return (
+    <section className="home-progress" aria-labelledby="home-tools-title">
+      <h2 id="home-tools-title" className="home-section-title">
+        {t('home.teacherTools')}
+      </h2>
+      <div className={`grid-cards home-cards home-cards-${cards.length}`}>
+        {cards.map((c) => (
+          <article key={c.tone} className={`market-card stat-card-${c.tone}`}>
+            <div className="market-pic">
+              <img src={c.src} alt="" />
+              <span className="market-chip">{t('home.teacherNew')}</span>
+            </div>
+            <div className="market-owner">
+              <div>
+                <h3 className="market-title">{c.title}</h3>
+                <div className="market-by">
+                  <bdi>@{user?.username}</bdi>
+                </div>
+              </div>
+              <strong className="market-value">{c.value}</strong>
+            </div>
+            <Link to={c.to} className="btn btn-primary market-cta">
+              {c.cta}
+            </Link>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -265,6 +308,7 @@ export function HomePage() {
       </section>
 
       {isStudent && <StudentProgress profile={profile} />}
+      {user?.role === 'teacher' && <TeacherActions />}
     </div>
   );
 }

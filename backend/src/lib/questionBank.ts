@@ -3,15 +3,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { callGemini } from './gemini.js';
 
-// The school question bank for Math and Science, grades 5 and 6, terms 1 and 2 (backend/question-bank/<subject>-<grade>-<term>.md).
+// The school question bank for Math and Science, grades 5, 6 and 8 (grade 8: term 1 so far), terms 1 and 2 (backend/question-bank/<subject>-<grade>-<term>.md).
 // ~40 Arabic questions per lesson, with NO answer key: it is used as source material. For a given lesson (a video, or a lesson name
 // a teacher types) the matching bank lessons are found and handed to the AI, which writes new questions from them and works out the
 // correct answers itself.
 
 export type BankSubject = 'math' | 'science';
-export const BANK_GRADES = [5, 6] as const;
+export const BANK_IMAGE_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../question-bank/images');
+export const BANK_GRADES = [5, 6, 8] as const;
+export const isBankGrade = (g: unknown): g is (typeof BANK_GRADES)[number] => BANK_GRADES.some((x) => x === g);
 
-type BankQuestion = { kind: 'mcq' | 'fill' | 'tf' | 'problem'; text: string };
+type BankQuestion = { kind: 'mcq' | 'fill' | 'tf' | 'problem'; text: string; image?: string };
 export type BankLesson = {
   subject: BankSubject;
   grade: number;
@@ -53,8 +55,11 @@ function parseFile(subject: BankSubject, grade: number, term: number, text: stri
       lesson = null;
       unit = line.replace(/^##\s*/, '').trim();
     } else if (lesson) {
+      const img = /^\s*!\[[^\]]*\]\(images\/([\w.-]+\.jpg)\)\s*$/.exec(line);
       const q = /^\d+\.\s+(.*)$/.exec(line);
-      if (q) {
+      if (img && current) {
+        current.image = img[1]; // the figure of the question above (a file in question-bank/images)
+      } else if (q) {
         flush();
         current = { kind, text: q[1].trim() };
       } else if (current && line.trim()) {
@@ -77,6 +82,7 @@ export function loadBank(): BankLesson[] {
         try {
           all.push(...parseFile(subject, grade, term, fs.readFileSync(file, 'utf8')));
         } catch (err) {
+          if ((err as NodeJS.ErrnoException).code === 'ENOENT') continue; // a grade / term that has no bank file yet
           console.warn(`[questionBank] could not read ${path.basename(file)}:`, err);
         }
       }
@@ -152,6 +158,13 @@ export async function findBankMatch(params: { subject: BankSubject; grade: numbe
   const byTitle = scoreLessons(pool, `${params.topicAr ?? ''} ${params.topic}`);
   // a second lesson only when it is nearly as good a match as the first
   let chosen: BankLesson[] = byTitle.filter((s) => s.score >= 0.4 && s.score >= byTitle[0].score * 0.75).slice(0, 2).map((s) => s.lesson);
+  // A topic that is exactly a lesson's title ("جمع الأعداد الكسرية") means that lesson only: a close neighbour such as "جمع وطرح الأعداد الكسرية"
+  // would bring in questions of the other operation.
+  const wanted = [...new Set(tokens(params.topicAr ?? '').filter((t) => !STOP.has(t)))].sort().join(' ');
+  if (wanted) {
+    const exact = pool.filter((l) => [...new Set(tokens(l.title).filter((t) => !STOP.has(t)))].sort().join(' ') === wanted);
+    if (exact.length > 0) chosen = exact.slice(0, 1);
+  }
   if (chosen.length === 0) {
     chosen = await pickWithAi(pool, `${params.topicAr ? params.topicAr + ' / ' : ''}${params.topic}`);
   }

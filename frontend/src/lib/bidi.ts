@@ -10,9 +10,9 @@ export function textDir(text: string): 'rtl' | 'ltr' {
 // direction, so in Arabic it is right-aligned with its number on the right, and the text itself sits in a <bdi dir={textDir(text)}>:
 // a maths-only question or answer ("36 ÷ 6 = ؟", "56 cm") still reads left to right inside that right-aligned line.
 
-/** The label of choice i: أ ب ج د in Arabic (as Arabic school tests letter them), A B C D otherwise. */
-export function choiceLabel(i: number, lang: string): string {
-  return (lang === 'ar' ? ['أ', 'ب', 'ج', 'د', 'هـ', 'و'] : ['A', 'B', 'C', 'D', 'E', 'F'])[i] ?? String(i + 1);
+/** The label of choice i: A B C D in both languages (the Arabic site shows the Latin letters too, like the maths around them). */
+export function choiceLabel(i: number, _lang?: string): string {
+  return ['A', 'B', 'C', 'D', 'E', 'F'][i] ?? String(i + 1);
 }
 
 /** Arabic-Indic (٠-٩) and Persian (۰-۹) digits as 0-9: an Arabic keyboard types those, and every number we check is 0-9.

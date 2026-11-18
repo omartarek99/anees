@@ -17,7 +17,7 @@ import { queueVideoOptimise } from '../lib/videoOptimize.js';
 import { syncTeacherPoints } from '../lib/xp.js';
 import { VIDEO_BUCKET, VIDEO_PATH_PREFIX, deleteReelVideoIfAny } from '../lib/reelVideo.js';
 import { generateQuizQuestions } from '../lib/gemini.js';
-import { findBankMatch } from '../lib/questionBank.js';
+import { findBankMatch, isBankGrade } from '../lib/questionBank.js';
 import { aiGenerationLimiter, videoUploadLimiter } from '../middleware/rateLimit.js';
 
 export const teacherReelsRouter = asyncRouter();
@@ -160,7 +160,7 @@ teacherReelsRouter.post(
     // The questions are about the lesson name (the title) only. Math and Science for grades 5 and 6: they are written from the school
     // question bank ("بنك الأسئلة") for that lesson, starting easy and ending medium (never hard).
     const bank =
-      (subject.key === 'math' || subject.key === 'science') && (body.grade === 5 || body.grade === 6)
+      (subject.key === 'math' || subject.key === 'science') && isBankGrade(body.grade)
         ? await findBankMatch({
             subject: subject.key,
             grade: body.grade,

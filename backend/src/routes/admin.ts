@@ -1037,6 +1037,9 @@ adminRouter.get('/dashboard', (req, res) => {
       teachers: count(`SELECT COUNT(*) AS n FROM users WHERE is_seed = 0 AND role = 'teacher'`),
       videos: count(`SELECT COUNT(*) AS n FROM reels WHERE author_user_id IS NOT NULL`),
       certificates: count(`SELECT COUNT(*) AS n FROM certificates WHERE revoked_at IS NULL`),
+      // "Challenge your friends": how many challenges were sent, and how many different students sent or got one
+      challenges: count(`SELECT COUNT(*) AS n FROM friend_challenges`),
+      challengePlayers: count(`SELECT COUNT(*) AS n FROM (SELECT challenger_id AS u FROM friend_challenges UNION SELECT challenged_id FROM friend_challenges)`),
     },
     daily,
     xpByActivity: xpByActivitySince(since),

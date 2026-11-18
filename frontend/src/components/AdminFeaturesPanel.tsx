@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { usePinned } from '../lib/use-pinned';
+import { useFixedBar } from '../lib/use-pinned';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
@@ -17,12 +17,14 @@ const ROLES: Role[] = ['student', 'teacher'];
 export function AdminFeaturesPanel() {
   const { t } = useLanguage();
   const [tab, setTab] = useState<'groups' | 'account'>('groups');
-  // the tab strip stays fixed at the top of the window while the page scrolls (see lib/use-pinned.ts)
-  const pin = usePinned(8);
+  // the tab bar is fixed at the top of the window and the page scrolls under it (lib/use-pinned.ts); the chosen account's header docks into it
+  const bar = useFixedBar(12);
+  const [dock, setDock] = useState<HTMLElement | null>(null);
   return (
     <div className="stack feature-page" style={{ gap: 18 }}>
-      <div ref={pin.slotRef} className="fa-tabs-slot" style={{ minHeight: pin.height || undefined }}>
-      <div ref={pin.elRef} className={`fa-tabs${pin.pinned ? ' is-pinned' : ''}`} style={pin.pinStyle} role="tablist">
+      <div ref={bar.slotRef} className="fa-bar-slot" style={{ minHeight: bar.height || undefined }}>
+      <div ref={bar.barRef} className="fa-bar" style={bar.barStyle}>
+      <div className="fa-tabs" role="tablist">
         {(['groups', 'account'] as const).map((id) => (
           <button key={id} type="button" role="tab" aria-selected={tab === id} className={`fa-tab${tab === id ? ' is-active' : ''}`} onClick={() => setTab(id)}>
             <span className="fa-tab-ico" aria-hidden="true">{id === 'groups' ? <RiTeamFill size={22} /> : <RiUserSearchFill size={22} />}</span>
@@ -33,8 +35,10 @@ export function AdminFeaturesPanel() {
           </button>
         ))}
       </div>
+      <div ref={setDock} className="fa-dock" />
       </div>
-      {tab === 'groups' ? <AdminFeatureGroups /> : <AdminFeatureAccounts pinTop={8 + pin.height + 8} />}
+      </div>
+      {tab === 'groups' ? <AdminFeatureGroups /> : <AdminFeatureAccounts dock={dock} />}
     </div>
   );
 }

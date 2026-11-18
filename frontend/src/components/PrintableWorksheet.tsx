@@ -1,9 +1,13 @@
+import { QFigure } from './QFigure';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../lib/language-context';
 import { choiceLabel } from '../lib/bidi';
 import { QText } from './QText';
 
-export type PrintableQuestion = { id: number; text: string; choices: string[] };
+/** Every worksheet is marked out of 20, whatever the number of questions. */
+const WORKSHEET_TOTAL = 20;
+
+export type PrintableQuestion = { id: number; text: string; choices: string[]; image?: string | null };
 
 /** Renders into a portal on document.body (a sibling of #root, not nested inside the app
  * shell) so `@media print` (theme.css) can hide #root entirely and show only this --
@@ -11,16 +15,15 @@ export type PrintableQuestion = { id: number; text: string; choices: string[] };
  * Always mounted whenever a worksheet exists; invisible on screen (`.printable-worksheet-
  * portal` is display:none outside of print) until the browser's print dialog opens. */
 export function PrintableWorksheet({
-  subjectLabel,
-  subjectIcon,
-  difficultyLabel,
-  difficultyIcon,
+  subjectName,
+  topic,
+  gradeLabel,
   questions,
 }: {
-  subjectLabel: string;
-  subjectIcon: string;
-  difficultyLabel: string;
-  difficultyIcon: string;
+  subjectName: string;
+  /** The lesson / video the worksheet is about */
+  topic?: string;
+  gradeLabel?: string;
   questions: PrintableQuestion[];
 }) {
   const { t, dir, lang } = useLanguage();
@@ -41,33 +44,77 @@ export function PrintableWorksheet({
 
   return createPortal(
     <div className="printable-worksheet-portal" dir={dir}>
-      <table className="pw-frame">
+      <div className="pw-page-border" aria-hidden />
+      <div className="printable-worksheet" style={watermarkStyle}>
+      <table className="pw-frame pw-frame-cover">
         <thead><tr><td><div className="pw-spacer" /></td></tr></thead>
         <tfoot><tr><td><div className="pw-spacer" /></td></tr></tfoot>
         <tbody><tr><td>
-      <div className="printable-worksheet" style={watermarkStyle}>
-        <header className="printable-worksheet-header">
-          <img src="/icons/logo-mark.png" alt="" className="printable-worksheet-logo" />
-          <div>
-            <h1>
-              {t('brand')} <span aria-hidden>🦅</span>
-            </h1>
-            <p>
-              <img src={subjectIcon} alt="" className="printable-worksheet-icon" /> {subjectLabel} — <img src={difficultyIcon} alt="" className="printable-worksheet-icon" /> {difficultyLabel}
-            </p>
+        <section className="pw-cover">
+          <div className="pw-cover-brand">
+            <img src="/icons/logo-mark.png" alt="" className="pw-cover-logo" />
+            <h1>{t('brand')}</h1>
           </div>
-        </header>
+          <div className="pw-cover-main">
+            <p className="pw-cover-kind">{t('worksheets.printCoverTitle')}</p>
+            <h2 className="pw-cover-subject">{subjectName}</h2>
+            {topic && (
+              <p className="pw-cover-topic">
+                <span>{t('worksheets.printTopicLabel')}</span> {topic}
+              </p>
+            )}
+            {gradeLabel && <p className="pw-cover-grade">{gradeLabel}</p>}
+          </div>
+          <div className="pw-cover-mark-wrap">
+            <div className="pw-cover-mark">
+              <div className="pw-cover-mark-body" dir="ltr">
+                <span className="pw-cover-mark-blank" />
+                <span className="pw-cover-mark-total">{WORKSHEET_TOTAL}</span>
+              </div>
+            </div>
+          </div>
+          <div className="printable-worksheet-fields">
+            <span>
+              {t('worksheets.printName')}: <i />
+            </span>
+            <span>
+              {t('worksheets.printClass')}: <i />
+            </span>
+            <span>
+              {t('worksheets.printDate')}: <i />
+            </span>
+          </div>
+          <div className="pw-cover-instructions">
+            <h3>{t('worksheets.printInstructionsTitle')}</h3>
+            <ul>
+              <li>{t('worksheets.printInstr1')}</li>
+              <li>{t('worksheets.printInstr2')}</li>
+              <li>{t('worksheets.printInstr3')}</li>
+            </ul>
+          </div>
+        </section>
 
-        <p className="printable-worksheet-tagline">{t('worksheets.printTagline')}</p>
+        </td></tr></tbody>
+      </table>
 
-        <div className="printable-worksheet-fields">
-          <span>
-            {t('worksheets.printName')}: <i />
-          </span>
-          <span>
-            {t('worksheets.printDate')}: <i />
-          </span>
-        </div>
+      <table className="pw-frame">
+        <thead>
+          <tr><td>
+            <div className="pw-spacer" />
+            <header className="pw-running-header">
+              <span className="pw-running-brand">
+                <img src="/icons/logo-mark.png" alt="" />
+                {t('brand')}
+              </span>
+              <span>
+                {subjectName}
+                {topic ? ` · ${topic}` : ''}
+              </span>
+            </header>
+          </td></tr>
+        </thead>
+        <tfoot><tr><td><div className="pw-spacer" /></td></tr></tfoot>
+        <tbody><tr><td>
 
         <ol className="printable-worksheet-questions">
           {questions.map((q, i) => (
@@ -75,6 +122,7 @@ export function PrintableWorksheet({
               <p className="quiz-q">
                 <QText text={q.text} />
               </p>
+              <QFigure image={q.image} />
               <ul>
                 {q.choices.map((choice, ci) => (
                   <li key={ci}>
@@ -89,23 +137,10 @@ export function PrintableWorksheet({
           ))}
         </ol>
 
-        <div className="printable-worksheet-checkout">
-          <div className="printable-worksheet-score">
-            <span aria-hidden>⭐</span>
-            {t('worksheets.printScoreLabel')} <i />/ {questions.length}
-          </div>
-          <div className="printable-worksheet-mood">
-            <span>{t('worksheets.printMoodQuestion')}</span>
-            <span className="printable-worksheet-mood-faces" aria-hidden>
-              😄 😐 😕
-            </span>
-          </div>
-        </div>
-
         <footer className="printable-worksheet-footer">{t('brand')}</footer>
-      </div>
         </td></tr></tbody>
       </table>
+      </div>
     </div>,
     document.body
   );

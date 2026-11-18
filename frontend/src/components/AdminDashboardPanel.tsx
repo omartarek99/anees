@@ -31,6 +31,8 @@ type Dashboard = {
     teachers: number;
     videos: number;
     certificates: number;
+    challenges: number;
+    challengePlayers: number;
   };
   daily: { day: string; xp: number }[];
   xpByActivity: { activity: string; xp: number }[];
@@ -114,6 +116,11 @@ const STATS = [
     labelKey: "admin.dashCertificates",
     color: "var(--viz-5)",
   },
+  {
+    key: "challenges",
+    labelKey: "admin.dashChallenges",
+    color: "var(--viz-3)",
+  },
 ] as const;
 
 const ROLE_KEY = {
@@ -189,6 +196,9 @@ export function AdminDashboardPanel({ days }: { days: DashboardPeriod }) {
                   {number.format(data.totals[key])}
                 </div>
                 <div className="dash-stat-label">{t(labelKey)}</div>
+                {key === "challenges" && (
+                  <div className="dash-stat-sub">{t("admin.dashChallengePlayers", { n: number.format(data.totals.challengePlayers) })}</div>
+                )}
               </div>
             </div>
           ))}

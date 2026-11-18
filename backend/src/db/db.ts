@@ -60,6 +60,12 @@ if (!craftSaveCols.some((c) => c.name === 'food')) {
   db.exec(`ALTER TABLE craft_saves ADD COLUMN food INTEGER NOT NULL DEFAULT 20`);
 }
 
+// Worksheet questions taken from the school book can have a figure (a file in backend/question-bank/images/).
+const wsqCols = db.prepare(`PRAGMA table_info(worksheet_questions)`).all() as { name: string }[];
+if (!wsqCols.some((c) => c.name === 'image')) {
+  db.exec(`ALTER TABLE worksheet_questions ADD COLUMN image TEXT`);
+}
+
 // Student/teacher accounts + student grade level, added after the initial users table.
 const userCols = db.prepare(`PRAGMA table_info(users)`).all() as { name: string }[];
 if (!userCols.some((c) => c.name === 'role')) {

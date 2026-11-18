@@ -2300,15 +2300,37 @@ button.list-row.selected {
   @page {
     margin: 0;
   }
+  /* Every printed page gets a double maroon frame on all four sides: a position:fixed box is repeated on each page by the print engine,
+     so the frame closes on every sheet, including a half-empty last one. */
+  html,
+  body {
+    background: #fff !important;
+  }
+  .pw-page-border {
+    display: block !important;
+    position: fixed;
+    top: 8mm;
+    right: 8mm;
+    bottom: 8mm;
+    left: 8mm;
+    border: 3px double #8a1538;
+    pointer-events: none;
+  }
   .pw-frame {
     width: 100%;
     border-collapse: collapse;
   }
   .pw-frame td {
-    padding: 0 14mm;
+    padding: 0 16mm;
   }
   .pw-spacer {
-    height: 16mm;
+    height: 18mm;
+  }
+  .pw-running-header {
+    margin-top: -3mm;
+  }
+  .pw-frame-cover {
+    break-after: page;
   }
   /* Chrome's print dialog has its own "Background graphics" toggle, OFF by default -- with
      it off, every background-color/background-image on the page (the watermark tile, the
@@ -2341,15 +2363,189 @@ button.list-row.selected {
   background-size: 240px 240px;
 }
 
+.pw-page-border {
+  display: none;
+}
+.pw-cover {
+  min-height: 255mm;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 8mm;
+  text-align: center;
+}
+.pw-cover-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2.5px solid #8a1538;
+}
+.pw-cover-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+.pw-cover-brand h1 {
+  margin: 0;
+  font-size: 34px;
+  color: #8a1538;
+}
+.pw-cover-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.pw-cover-kind {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #6b5a60;
+}
+.pw-cover-subject {
+  margin: 0;
+  font-size: 44px;
+  color: #8a1538;
+}
+.pw-cover-topic {
+  margin: 6px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #201217;
+  max-width: 150mm;
+}
+.pw-cover-topic span {
+  color: #8a1538;
+}
+.pw-cover-grade {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #6b5a60;
+}
+.pw-cover-stats {
+  display: flex;
+  gap: 18mm;
+  margin-top: 14mm;
+}
+.pw-cover-stats div {
+  min-width: 42mm;
+  padding: 10px 14px;
+  border: 1.5px solid #8a1538;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pw-cover-stats b {
+  font-size: 32px;
+  color: #8a1538;
+}
+.pw-cover-stats span {
+  font-size: 14px;
+  font-weight: 700;
+  color: #4a0e24;
+}
+.pw-cover .printable-worksheet-fields {
+  margin: 0;
+}
+.pw-cover-instructions {
+  text-align: start;
+  padding: 10px 16px;
+  border: 1px solid #d9c6cc;
+  border-radius: 8px;
+}
+.pw-cover-instructions h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: #8a1538;
+}
+.pw-cover-instructions ul {
+  margin: 0;
+  padding-inline-start: 20px;
+  font-size: 13.5px;
+  line-height: 1.8;
+}
+/* The big box the teacher writes the mark in, in the middle of the cover: the mark goes over the line, 20 under it, like a fraction */
+.pw-cover-mark-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pw-cover-mark {
+  width: 60mm;
+  height: 46mm;
+  display: flex;
+  flex-direction: column;
+  border: 3px double #8a1538;
+  border-radius: 6px;
+  text-align: start;
+  overflow: hidden;
+}
+.pw-cover-mark-title {
+  padding: 5px 12px;
+  background: #8a1538;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+.pw-cover-mark-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.pw-cover-mark-blank {
+  display: block;
+  width: 34mm;
+  height: 14mm;
+  border-bottom: 3px solid #8a1538;
+}
+.pw-cover-mark-total {
+  padding-top: 2mm;
+  font-size: 40px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #8a1538;
+}
+.pw-running-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 6px;
+  margin-bottom: 14px;
+  border-bottom: 2px solid #8a1538;
+  font-size: 13px;
+  font-weight: 700;
+  color: #8a1538;
+}
+.pw-running-header span:last-child {
+  color: #4a0e24;
+}
+.pw-running-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pw-running-brand img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
 .printable-worksheet-header {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 18px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #8a1538, #c22954);
-  color: #fff;
-  margin-bottom: 18px;
+  padding: 4px 2px 10px;
+  border-bottom: 2.5px solid #8a1538;
+  color: #8a1538;
+  margin-bottom: 10px;
 }
 .printable-worksheet-logo {
   width: 52px;
@@ -2363,14 +2559,15 @@ button.list-row.selected {
   flex-shrink: 0;
 }
 .printable-worksheet-header h1 {
-  font-size: 22px;
+  font-size: 24px;
   margin: 0;
-  color: #fff;
+  color: #8a1538;
 }
 .printable-worksheet-header p {
   font-size: 14px;
+  font-weight: 700;
   margin: 2px 0 0;
-  opacity: 0.95;
+  color: #4a0e24;
 }
 .printable-worksheet-icon {
   width: 1.5em;
@@ -2383,8 +2580,8 @@ button.list-row.selected {
   text-align: center;
   font-size: 13px;
   font-weight: 700;
-  color: #c22954;
-  margin: -6px 0 16px;
+  color: #6b5a60;
+  margin: 0 0 12px;
 }
 
 .printable-worksheet-fields {
@@ -2393,7 +2590,10 @@ button.list-row.selected {
   gap: 24px;
   font-size: 13px;
   font-weight: 700;
-  margin: 4px 4px 20px;
+  margin: 0 0 16px;
+  padding: 8px 12px;
+  border: 1px solid #8a1538;
+  border-radius: 6px;
   color: #4a0e24;
 }
 .printable-worksheet-fields i {
@@ -2411,24 +2611,18 @@ button.list-row.selected {
 }
 .printable-worksheet-questions > li {
   counter-increment: pw-question;
-  margin-bottom: 12px;
-  padding: 12px 14px;
-  border-radius: 14px;
+  margin-bottom: 10px;
+  padding: 8px 4px 12px;
+  border-bottom: 1px solid #e3d6da;
   break-inside: avoid;
 }
 /* A handful of print-safe pastel tints, cycled per question purely for variety -- grade
    5/6 age group, so the page reads as a fun activity sheet rather than a plain exam. */
-.pw-tint-a {
-  background: rgba(240, 168, 58, 0.1);
-}
-.pw-tint-b {
-  background: rgba(194, 41, 84, 0.07);
-}
-.pw-tint-c {
-  background: rgba(61, 123, 217, 0.08);
-}
+.pw-tint-a,
+.pw-tint-b,
+.pw-tint-c,
 .pw-tint-d {
-  background: rgba(99, 153, 34, 0.08);
+  background: none;
 }
 .printable-worksheet-questions > li > p {
   font-weight: 700;
@@ -2446,7 +2640,7 @@ button.list-row.selected {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f0a83a, #8a1538);
+  background: #8a1538;
   color: #fff;
   font-size: 12px;
   flex-shrink: 0;
@@ -2486,10 +2680,10 @@ button.list-row.selected {
   flex-wrap: wrap;
   gap: 10px 20px;
   margin-top: 20px;
-  padding: 12px 16px;
-  border-radius: 14px;
-  background: rgba(240, 168, 58, 0.12);
-  border: 1.5px dashed #f0a83a;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: none;
+  border: 1px solid #8a1538;
 }
 .printable-worksheet-score {
   display: flex;
@@ -2524,7 +2718,7 @@ button.list-row.selected {
   font-size: 11px;
   color: #b8a8ae;
   letter-spacing: 1px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #e3d6da;
   padding-top: 8px;
 }
 
@@ -4388,6 +4582,47 @@ label,
   word-spacing: 0.06em;
 }
 /* a maths run inside an Arabic sentence (QText): left to right, kept on one line */
+/* The figure of a question taken from the school book (QFigure.tsx) */
+.q-figure {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 8px auto 12px;
+  border-radius: 8px;
+  background: #fff;
+  direction: ltr;
+}
+@media print {
+  .q-figure {
+    max-width: 85%;
+    max-height: 70mm;
+    object-fit: contain;
+    break-inside: avoid;
+  }
+}
+.mnum {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2em;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.mfrac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  line-height: 1.15;
+  font-size: 0.92em;
+  text-align: center;
+}
+.mfrac-n {
+  padding: 0 0.25em;
+  border-bottom: 0.09em solid currentColor;
+}
+.mfrac-d {
+  padding: 0 0.25em;
+}
 .quiz-math {
   white-space: nowrap;
 }
@@ -4418,6 +4653,41 @@ label,
   justify-content: center;
   font-size: 12px;
   flex-shrink: 0;
+}
+
+/* The teacher's view of a worksheet: the right answer is marked, and the editor (WorksheetEditor) has a radio, an English and an Arabic box per answer. */
+.ws-preview-choices li.is-correct {
+  background: color-mix(in srgb, var(--success) 14%, var(--sand-light));
+  box-shadow: inset 0 0 0 2px var(--success);
+}
+.ws-preview-choices .ws-correct-tag {
+  margin-inline-start: auto;
+}
+.ws-edit-choice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+}
+.ws-edit-choice.is-correct {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  box-shadow: inset 0 0 0 2px var(--success);
+}
+.ws-edit-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  .ws-edit-choice {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .ws-edit-choice input:not([type='radio']):last-child {
+    grid-column: 2;
+  }
 }
 
 /* ---------------- Opening scene (IntroSplash.tsx): the logo and 3D pieces spin in from the top-left behind a comet trail, land with a shockwave and sparks, the pieces circle the logo, then it zooms away into the page ---------------- */
@@ -4900,7 +5170,9 @@ label,
 
 /* ---------------- Teacher certificate (TeacherCertificateCard, AdminTeacherProofsPanel) ---------------- */
 .cert-card {
-  max-width: 640px;
+  /* as wide as the other cards on the page */
+  max-width: none;
+  inline-size: 100%;
 }
 .cert-status {
   display: inline-flex;
@@ -5741,4 +6013,41 @@ button.feature-switch:active:not(:disabled) {
   backdrop-filter: blur(18px) saturate(150%);
   background-color: color-mix(in srgb, var(--surface-row) 55%, rgba(18, 10, 32, 0.92));
   box-shadow: inset 0 0 0 1px var(--glass-border), 0 14px 26px -18px rgba(0, 0, 0, 0.8);
+}
+
+/* ---------------- Admin > Features: the tab bar (and the chosen account's header under it) is fixed at the top; the page scrolls under it ---------------- */
+.fa-bar {
+  z-index: 30;
+  display: grid;
+  gap: 8px;
+}
+.fa-bar .fa-tabs {
+  position: relative;
+  top: auto;
+}
+.fa-dock:empty {
+  display: none;
+}
+.fa-bar .fa-head {
+  margin: 0;
+  border-radius: 20px;
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  background-color: color-mix(in srgb, var(--surface-row) 55%, rgba(18, 10, 32, 0.92));
+  box-shadow: inset 0 0 0 1px var(--glass-border), 0 14px 26px -18px rgba(0, 0, 0, 0.8);
+}
+
+/* the teacher's one or two cards sit in the middle of the page (the four-column rule above would push them to one side) */
+.grid-cards.home-cards.home-cards-1 {
+  grid-template-columns: minmax(0, 300px);
+  justify-content: center;
+}
+.grid-cards.home-cards.home-cards-2 {
+  grid-template-columns: repeat(2, minmax(0, 300px));
+  justify-content: center;
+}
+@media (max-width: 520px) {
+  .grid-cards.home-cards.home-cards-2 {
+    grid-template-columns: minmax(0, 300px);
+  }
 }

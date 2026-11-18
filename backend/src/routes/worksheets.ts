@@ -8,19 +8,23 @@ import { validateBody, requireCsrfHeader } from '../middleware/validate.js';
 import { worksheetAiLimiter } from '../middleware/rateLimit.js';
 import { awardXp, penalizeWrongAnswers, syncTeacherPoints, WORKSHEET_XP_PER_CORRECT } from '../lib/xp.js';
 import { gradeAnswers } from '../lib/grading.js';
-import { generateQuizQuestions } from '../lib/gemini.js';
-import { verifyArithmetic } from '../lib/arithmeticCheck.js';
-import { findBankMatch } from '../lib/questionBank.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { bankItems, orderItems, solveItems, type BankItem } from '../lib/bankWorksheet.js';
+import { BANK_IMAGE_DIR } from '../lib/questionBank.js';
+import { extendPool } from '../lib/variants.js';
+import { bankAnswer, isRejected } from '../lib/bankAnswers.js';
+import { findBankMatch, isBankGrade } from '../lib/questionBank.js';
 import { moderateContent } from '../lib/moderation.js';
-import { teacherReelQuestionSchema } from '../lib/schemas.js';
 import { isFeatureOn } from '../lib/features.js';
+import { asEquation, mathLatin, mathLatinAll } from '../lib/mathText.js';
 
 export const worksheetsRouter = asyncRouter();
 
 const QUESTIONS_PER_WORKSHEET = 10;
 const MAX_QUESTIONS = 20;
-// One AI call writes at most this many questions; a bigger worksheet is several calls run side by side.
-const AI_CHUNK = 5;
+// One AI call solves at most this many bank questions; more are several calls run side by side.
+const BANK_SOLVE_CHUNK = 10;
 
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -44,7 +48,7 @@ const generateSchema = z
     // it each time. Without it, a general worksheet draws from the fixed seeded bank.
     topic: wordsText(z.string().trim().min(2, 'The lesson name is too short. Write at least 2 letters.').max(80, 'The lesson name is too long. Use at most 80 letters.'), 'lesson name').optional(),
     // The grade of the typed lesson (the school book it comes from) -- Math and Science grades 5 and 6.
-    grade: z.coerce.number().int().min(5).max(6).optional(),
+    grade: z.coerce.number().int().refine(isBankGrade, 'Unsupported grade').optional(),
     // How many questions the worksheet has.
     count: z.coerce.number().int().min(3).max(MAX_QUESTIONS).optional().default(QUESTIONS_PER_WORKSHEET),
   })
@@ -66,6 +70,22 @@ function loadVisibleVideo(reelId: number, userId: number) {
   if (reel.author_user_id === userId || (user?.grade && reel.grade === user.grade)) return reel;
   return null;
 }
+
+// The figures of the book's questions (question-bank/images). Only a plain file name is accepted.
+worksheetsRouter.get('/image/:name', (req, res) => {
+  const name = String(req.params.name);
+  if (!/^[\w.-]+\.jpg$/.test(name)) {
+    res.status(404).end();
+    return;
+  }
+  const file = path.join(BANK_IMAGE_DIR, name);
+  if (!fs.existsSync(file)) {
+    res.status(404).end();
+    return;
+  }
+  res.setHeader('Cache-Control', 'private, max-age=86400');
+  res.type('image/jpeg').send(fs.readFileSync(file));
+});
 
 worksheetsRouter.get('/videos', (req, res) => {
   const user = db.prepare(`SELECT grade FROM users WHERE id = ?`).get(req.userId!) as { grade: number | null } | undefined;
@@ -116,13 +136,15 @@ function createAttempt(
   );
 }
 
+// Numbers and unknowns are shown as 0-9 / x y z in both languages (lib/mathText.ts), also for questions saved before that rule.
 function questionPayload(q: any) {
   return {
     id: q.id,
-    text: q.question_text,
-    textAr: q.question_text_ar,
-    choices: JSON.parse(q.choices_json),
-    choicesAr: JSON.parse(q.choices_json_ar),
+    text: asEquation(mathLatin(q.question_text), false),
+    textAr: asEquation(mathLatin(q.question_text_ar ?? ''), true),
+    choices: mathLatinAll(JSON.parse(q.choices_json)),
+    choicesAr: mathLatinAll(JSON.parse(q.choices_json_ar)),
+    image: q.image ?? null, // a figure from the school book (GET /worksheets/image/:name)
   };
 }
 
@@ -142,177 +164,101 @@ type AiScope = {
   count: number;
 };
 
-function scopeFilter(scope: AiScope, difficulty: Difficulty) {
-  return scope.reelId
-    ? { where: `reel_id = ? AND difficulty = ?`, params: [scope.reelId, difficulty] as (string | number)[] }
-    : {
-        where: `reel_id IS NULL AND topic = ? COLLATE NOCASE AND subject_id = ? AND difficulty = ?`,
-        params: [scope.topicKey!, scope.subjectId, difficulty] as (string | number)[],
-      };
-}
-
-// Builds the question set for one AI-generated worksheet. Every call asks the AI for a NEW
-// set (it's told which questions were already used, so it writes different ones) about the
-// video's description or the typed lesson name -- so the questions follow the topic and
-// change each time. Older saved questions and (for videos) the teacher's own quiz questions
-// only top the worksheet up if the AI couldn't supply a full set.
-async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise<any[]> {
+// Builds the question set of one worksheet ONLY from the school question bank (lib/bankWorksheet.ts): the questions are the bank's own, word for word
+// and number for number, and nothing is taken from anywhere else. The AI only works out the answers (and the four answers of a gap / problem, which
+// the bank leaves open); each solved question is saved (topic 'bank:<id>') and reused, so a question always has the same answers. A video worksheet
+// that finds nothing in the bank is topped up with the teacher's own quiz questions for that video.
+async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise<{ picked: any[]; bankMatched: boolean; aiFailed: boolean }> {
   const wanted = scope.count;
-  const authored = scope.reelId
-    ? (db.prepare(`SELECT * FROM reel_questions WHERE reel_id = ? ORDER BY order_in_reel`).all(scope.reelId) as any[])
-    : [];
-  const authoredTexts = new Set(authored.map((q) => q.question_text));
+  const picked: any[] = [];
+  let aiFailed = false; // the AI could not give the answers (its limit is finished, or it is busy)
 
-  const filter = scopeFilter(scope, difficulty);
-  const existing = db
-    .prepare(`SELECT * FROM worksheet_questions WHERE ${filter.where} ORDER BY id DESC`)
-    .all(...filter.params) as any[];
-  const insert = db.prepare(
-    `INSERT INTO worksheet_questions (subject_id, difficulty, question_text, question_text_ar, choices_json, choices_json_ar, correct_index, explanation, explanation_ar, reel_id, topic) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
-  );
-  const known = new Set(existing.map((q) => q.question_text));
-  const insertedIds: number[] = [];
-
-  // Math and Science for grades 5 and 6: the questions are written from the school question bank for this lesson.
   const subjectKey = scope.subjectName.toLowerCase().includes('math') ? 'math' : scope.subjectName.toLowerCase().includes('sci') ? 'science' : null;
   const bank =
-    subjectKey && (scope.grade === 5 || scope.grade === 6)
+    subjectKey && isBankGrade(scope.grade)
       ? await findBankMatch({ subject: subjectKey, grade: scope.grade, topic: scope.topic, topicAr: scope.topicAr, scriptText: scope.scriptText, scriptTextAr: scope.scriptTextAr })
       : null;
-  const chunks: number[] = [];
-  for (let left = wanted; left > 0; left -= AI_CHUNK) chunks.push(Math.min(AI_CHUNK, left));
-  const results = await Promise.all(
-    chunks.map((count) =>
-      generateQuizQuestions({
-        scriptText: scope.scriptText,
-        scriptTextAr: scope.scriptTextAr,
-        subjectName: scope.subjectName,
-        grade: scope.grade,
-        count,
-        topic: scope.topic,
-        topicAr: scope.topicAr,
-        difficulty,
-        avoidQuestions: existing.slice(0, 40).map((q) => q.question_text),
-        style: 'worksheet',
-        bankReference: bank?.reference,
-      })
-    )
-  );
-  const okResults = results.filter((r): r is Extract<typeof r, { ok: true }> => r.ok);
-  const result: { ok: true; data: unknown[] } | { ok: false; error: string } = okResults.length
-    ? { ok: true, data: okResults.flatMap((r) => (Array.isArray(r.data) ? r.data : [])) }
-    : { ok: false, error: (results[0] as { error: string }).error };
-  if (!result.ok) {
-    // Not configured / API hiccup -- fall back to saved questions below.
-    if (result.error !== 'NOT_CONFIGURED') console.error('Gemini worksheet generation failed:', result.error);
-  } else {
-    // Validate item by item: one malformed question (3 choices, bad correctIndex) shouldn't throw
-    // away the other nine.
-    const items: unknown[] = Array.isArray(result.data) ? result.data : [];
-    const valid = items.flatMap((item) => {
-      const r = teacherReelQuestionSchema.safeParse(item);
-      return r.success ? [r.data] : [];
-    });
-    if (valid.length === 0) {
-      console.error('Gemini worksheet response had no valid questions.');
-    } else {
-      for (const asked of valid) {
-        // a question that is a plain sum gets its right answer from the arithmetic itself; one with no right choice is dropped
-        const q = verifyArithmetic(asked);
-        if (!q) continue;
-        if (q.correctIndex < 0 || q.correctIndex > 3 || known.has(q.questionText)) continue;
-        // Nobody reviews AI output before a student sees it here (unlike the teacher
-        // composer), so run the same content filter lesson text goes through.
-        const texts = [q.questionText, q.explanation, ...q.choices];
-        if (!texts.every((t) => moderateContent(t).allowed)) continue;
-        const info = insert.run(
-          scope.subjectId,
-          difficulty,
-          q.questionText,
-          q.questionTextAr || '',
-          JSON.stringify(q.choices),
-          JSON.stringify(q.choicesAr || ['', '', '', '']),
-          q.correctIndex,
-          q.explanation,
-          q.explanationAr || '',
-          scope.reelId,
-          scope.topicKey
-        );
-        insertedIds.push(Number(info.lastInsertRowid));
-        known.add(q.questionText);
+
+  if (bank) {
+    // a maths lesson with too few usable questions is topped up with its plain calculations written with other numbers (by code, not by the AI) -- lib/variants.ts
+    // a question the check found unusable (lib/bankAnswers.ts) never reaches a worksheet
+    const pooled = bank.lessons.flatMap((l) => extendPool(l, bankItems([l]))).filter((i) => !isRejected(i.key));
+    const candidates = orderItems(pooled, difficulty);
+    const saved = db.prepare(`SELECT * FROM worksheet_questions WHERE topic = ? AND subject_id = ?`);
+    const insert = db.prepare(
+      `INSERT INTO worksheet_questions (subject_id, difficulty, question_text, question_text_ar, choices_json, choices_json_ar, correct_index, explanation, explanation_ar, reel_id, topic, image)
+       VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?)`
+    );
+    const store = (item: BankItem, answer: { choices: string[]; correctIndex: number; explanation: string; explanationAr: string }) => {
+      const id = Number(
+        insert.run(
+          scope.subjectId, difficulty, item.text, item.text, JSON.stringify(answer.choices), JSON.stringify(answer.choices),
+          answer.correctIndex, answer.explanation, answer.explanationAr || answer.explanation, `bank:${item.key}`, item.image
+        ).lastInsertRowid
+      );
+      return db.prepare(`SELECT * FROM worksheet_questions WHERE id = ?`).get(id);
+    };
+    let cursor = 0;
+    for (let round = 0; round < 3 && picked.length < wanted && cursor < candidates.length; round++) {
+      // a few more than needed: some bank questions cannot be a multiple-choice question and are skipped
+      const batch = candidates.slice(cursor, cursor + Math.max(4, Math.ceil((wanted - picked.length) * 1.6)));
+      cursor += batch.length;
+      const toSolve: BankItem[] = [];
+      for (const item of batch) {
+        const row = saved.get(`bank:${item.key}`, scope.subjectId);
+        if (row) picked.push(row);
+        else {
+          // the answer kept in the bank: no AI call
+          const fixed = bankAnswer(item.key);
+          if (fixed) picked.push(store(item, fixed));
+          else toSolve.push(item);
+        }
       }
+      const chunks: BankItem[][] = [];
+      for (let i = 0; i < toSolve.length; i += BANK_SOLVE_CHUNK) chunks.push(toSolve.slice(i, i + BANK_SOLVE_CHUNK));
+      const solvedChunks = await Promise.all(chunks.map((chunk) => solveItems(chunk, scope.subjectName, scope.grade)));
+      solvedChunks.forEach((solved, ci) => {
+        if (!(solved instanceof Map)) {
+          aiFailed = true;
+          if (solved.error !== 'NOT_CONFIGURED') console.error('Bank worksheet answers failed:', solved.error);
+          return;
+        }
+        for (const item of chunks[ci]) {
+          const answer = solved.get(item.key);
+          if (!answer) continue;
+          picked.push(store(item, answer));
+        }
+      });
     }
   }
 
-  const fresh = insertedIds.length
-    ? (db.prepare(`SELECT * FROM worksheet_questions WHERE id IN (${insertedIds.map(() => '?').join(',')})`).all(...insertedIds) as any[])
-    : [];
-  const picked = shuffle(fresh).slice(0, wanted);
-
-  // Top up (AI down / returned too few): older AI questions on the same topic first, then
-  // (videos only) the teacher's own quiz questions.
-  if (picked.length < wanted) {
-    const pickedIds = new Set(picked.map((q) => q.id));
-    const older = shuffle(existing.filter((q) => !authoredTexts.has(q.question_text) && !pickedIds.has(q.id)));
-    for (const q of older) {
-      if (picked.length >= wanted) break;
-      picked.push(q);
-    }
-  }
-  if (picked.length < wanted) {
-    const pickedTexts = new Set(picked.map((q) => q.question_text));
+  // a video whose lesson is not in the bank: the teacher's own quiz questions for it
+  if (picked.length === 0 && scope.reelId) {
+    const authored = db.prepare(`SELECT * FROM reel_questions WHERE reel_id = ? ORDER BY order_in_reel`).all(scope.reelId) as any[];
+    const existing = db.prepare(`SELECT * FROM worksheet_questions WHERE reel_id = ? AND topic IS NULL`).all(scope.reelId) as any[];
+    const insert = db.prepare(
+      `INSERT INTO worksheet_questions (subject_id, difficulty, question_text, question_text_ar, choices_json, choices_json_ar, correct_index, explanation, explanation_ar, reel_id, topic) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+    );
     for (const q of shuffle(authored)) {
       if (picked.length >= wanted) break;
-      if (pickedTexts.has(q.question_text)) continue;
-      // Mirrored into worksheet_questions (once) so grading can look it up like any other.
+      // mirrored into worksheet_questions (once) so grading can look it up like any other
       const mirrored = existing.find((e) => e.question_text === q.question_text);
       if (mirrored) {
         picked.push(mirrored);
         continue;
       }
       const info = insert.run(
-        scope.subjectId, difficulty, q.question_text, q.question_text_ar, q.choices_json,
-        q.choices_json_ar, q.correct_index, q.explanation, q.explanation_ar, scope.reelId, null
+        scope.subjectId, difficulty, q.question_text, q.question_text_ar, q.choices_json, q.choices_json_ar, q.correct_index, q.explanation, q.explanation_ar, scope.reelId, null
       );
       picked.push({ ...q, id: Number(info.lastInsertRowid), reel_id: scope.reelId });
     }
   }
 
-  trimPool(scope, difficulty);
-  return picked;
+  return { picked: shuffle(picked).slice(0, wanted), bankMatched: !!bank, aiFailed };
 }
 
-// Every click adds a fresh set, so keep the saved pool bounded: only the newest few are
-// ever needed as "already used" hints / top-ups. Questions still referenced by an unsubmitted
-// worksheet, or by a worksheet a teacher sent (students start it any time later), are kept so
-// it can still be graded.
-const AI_POOL_KEEP = 100;
-function trimPool(scope: AiScope, difficulty: Difficulty) {
-  const filter = scopeFilter(scope, difficulty);
-  const rows = db
-    .prepare(`SELECT id FROM worksheet_questions WHERE ${filter.where} ORDER BY id DESC`)
-    .all(...filter.params) as { id: number }[];
-  if (rows.length <= AI_POOL_KEEP) return;
-  const inUse = new Set<number>();
-  const attempts = (
-    scope.reelId
-      ? db
-          .prepare(
-            `SELECT question_ids_json FROM worksheet_attempts WHERE reel_id = ? AND status = 'generated'
-             UNION ALL SELECT question_ids_json FROM sent_worksheets WHERE reel_id = ?`
-          )
-          .all(scope.reelId, scope.reelId)
-      : db
-          .prepare(
-            `SELECT question_ids_json FROM worksheet_attempts WHERE reel_id IS NULL AND subject_id = ? AND status = 'generated'
-             UNION ALL SELECT question_ids_json FROM sent_worksheets WHERE reel_id IS NULL AND subject_id = ?`
-          )
-          .all(scope.subjectId, scope.subjectId)
-  ) as { question_ids_json: string }[];
-  for (const a of attempts) for (const id of JSON.parse(a.question_ids_json) as number[]) inUse.add(id);
-  const del = db.prepare(`DELETE FROM worksheet_questions WHERE id = ?`);
-  for (const r of rows.slice(AI_POOL_KEEP)) if (!inUse.has(r.id)) del.run(r.id);
-}
+const MSG_NOT_IN_BANK = 'This lesson is not one of the lessons of this grade. Check the grade first, then try again.';
+const MSG_AI_LIMIT = 'The question helper has reached its limit for now. Please try again later.';
 
 // The AI call is paid + slow, so worksheets built from a video or a typed lesson name go
 // through the dedicated limiter -- plain bank worksheets stay unthrottled as before.
@@ -352,7 +298,7 @@ worksheetsRouter.post(
           res.status(404).json({ error: 'We couldn\'t find this video. It may have been deleted.' });
           return;
         }
-        const picked = await buildAiQuestions(
+        const built = await buildAiQuestions(
           {
             subjectId: reel.subject_id,
             subjectName: reel.subject_name,
@@ -367,6 +313,15 @@ worksheetsRouter.post(
           },
           difficulty
         );
+        const picked = built.picked;
+        if (picked.length === 0 && built.aiFailed) {
+          res.status(503).json({ error: MSG_AI_LIMIT });
+          return;
+        }
+        if (picked.length === 0 && !built.bankMatched) {
+          res.status(404).json({ error: MSG_NOT_IN_BANK });
+          return;
+        }
         if (picked.length === 0) {
           res.status(404).json({ error: 'We couldn\'t make questions for this video now. Try again later, or write them yourself.' });
           return;
@@ -402,7 +357,7 @@ worksheetsRouter.post(
           return;
         }
         const user = db.prepare(`SELECT grade FROM users WHERE id = ?`).get(req.userId!) as { grade: number | null } | undefined;
-        const picked = await buildAiQuestions(
+        const built = await buildAiQuestions(
           {
             subjectId: subjectRow.id,
             subjectName: subjectRow.name,
@@ -417,22 +372,25 @@ worksheetsRouter.post(
           },
           difficulty
         );
-        if (picked.length > 0) {
-          const attemptId = createAttempt(req.userId!, subjectRow.id, difficulty, null, picked.map((q) => q.id), topic);
-          res.status(201).json({
-            worksheetId: attemptId,
-            subject,
-            difficulty,
-            xpPerCorrect: WORKSHEET_XP_PER_CORRECT[difficulty],
-            topic,
-            questions: picked.map(questionPayload),
-          });
+        const picked = built.picked;
+        if (picked.length === 0) {
+          // only the school question bank is used: a lesson that is not in it (for this grade) is told to the teacher, and when the AI that works out the
+          // answers has reached its limit the teacher is asked to try again after a while
+          if (built.aiFailed) res.status(503).json({ error: MSG_AI_LIMIT });
+          else if (!built.bankMatched) res.status(404).json({ error: MSG_NOT_IN_BANK });
+          else res.status(404).json({ error: MSG_AI_LIMIT });
           return;
         }
-        // The AI is unavailable (no key, quota, outage) and nothing is saved for this lesson:
-        // hand back a general practice worksheet from the seeded bank instead of an error that
-        // can never succeed -- flagged so the page can say so.
-        aiUnavailable = true;
+        const attemptId = createAttempt(req.userId!, subjectRow.id, difficulty, null, picked.map((q) => q.id), topic);
+        res.status(201).json({
+          worksheetId: attemptId,
+          subject,
+          difficulty,
+          xpPerCorrect: WORKSHEET_XP_PER_CORRECT[difficulty],
+          topic,
+          questions: picked.map(questionPayload),
+        });
+        return;
       }
 
       // reel_id/topic IS NULL keeps video- and lesson-specific questions out of the bank.
@@ -506,7 +464,13 @@ worksheetsRouter.post('/:id/submit', requireRole('student'), requireCsrfHeader, 
     syncTeacherPoints(sent?.teacher_id, 'worksheet_solved');
   }
 
-  res.json({ results, correctCount, total: questions.length, xpEarned, xpLost });
+  res.json({
+    results: results.map((r) => ({ ...r, explanation: mathLatin(r.explanation), explanationAr: mathLatin(r.explanationAr) })),
+    correctCount,
+    total: questions.length,
+    xpEarned,
+    xpLost,
+  });
 });
 
 // ---------------------------------------------------------------------------------------
@@ -536,6 +500,125 @@ worksheetsRouter.post('/:id/send', requireRole('teacher'), requireApprovedTeache
     ) > 0;
   const sent = db.prepare(`SELECT id, created_at FROM sent_worksheets WHERE source_attempt_id = ?`).get(attempt.id) as { id: number; created_at: string };
   res.status(inserted ? 201 : 200).json({ sentWorksheetId: sent.id, createdAt: sent.created_at, alreadySent: !inserted });
+});
+
+// ---------------------------------------------------------------------------------------
+// A teacher edits the worksheet before printing / sending it: the questions, the choices (English and Arabic) and which choice is right.
+// GET /:id/edit gives the questions WITH their right answers (a student never gets those before submitting); PUT /:id/questions saves the edits.
+// A changed question is saved as a NEW question of its own (topic 'edited': kept out of every shared pool), so other worksheets that used the original are untouched.
+// Once the worksheet is sent the students hold that copy, so it can no longer be edited.
+// ---------------------------------------------------------------------------------------
+
+function editablePayload(q: any) {
+  return {
+    ...questionPayload(q),
+    correctIndex: q.correct_index as number,
+    explanation: mathLatin(q.explanation ?? ''),
+    explanationAr: mathLatin(q.explanation_ar ?? ''),
+  };
+}
+
+function loadTeacherAttempt(req: Request, res: Response) {
+  const attempt = db.prepare(`SELECT * FROM worksheet_attempts WHERE id = ? AND user_id = ?`).get(Number(req.params.id), req.userId!) as any;
+  if (!attempt) {
+    res.status(404).json({ error: 'Worksheet not found.' });
+    return null;
+  }
+  if (db.prepare(`SELECT 1 FROM sent_worksheets WHERE source_attempt_id = ?`).get(attempt.id)) {
+    res.status(409).json({ error: 'This worksheet was already sent to the students, so it can no longer be edited.' });
+    return null;
+  }
+  return attempt;
+}
+
+function attemptQuestions(attempt: any): any[] {
+  const ids: number[] = JSON.parse(attempt.question_ids_json);
+  if (ids.length === 0) return [];
+  const rows = db.prepare(`SELECT * FROM worksheet_questions WHERE id IN (${ids.map(() => '?').join(',')})`).all(...ids) as any[];
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  return ids.map((id) => byId.get(id)).filter((q): q is NonNullable<typeof q> => q !== undefined);
+}
+
+worksheetsRouter.get('/:id/edit', requireRole('teacher'), (req, res) => {
+  const attempt = loadTeacherAttempt(req, res);
+  if (!attempt) return;
+  res.json({ questions: attemptQuestions(attempt).map(editablePayload) });
+});
+
+const editChoice = z.string().trim().min(1, 'Write every answer: an answer is empty.').max(120, 'An answer is too long. Use at most 120 letters.');
+const editSchema = z.object({
+  questions: z
+    .array(
+      z.object({
+        id: z.number().int(),
+        text: z.string().trim().min(2, 'The question is too short. Write at least 3 letters.').max(300, 'The question is too long. Use at most 300 letters.'),
+        textAr: z.string().trim().max(300, 'The question is too long. Use at most 300 letters.').default(''),
+        choices: z.array(editChoice).min(2).max(4),
+        choicesAr: z.array(z.string().trim().max(120, 'An answer is too long. Use at most 120 letters.')).min(2).max(4).default(['', '', '', '']),
+        correctIndex: z.number().int().min(0).max(3),
+        explanation: z.string().trim().max(500, 'The explanation is too long. Use at most 500 letters.').default(''),
+        explanationAr: z.string().trim().max(500, 'The explanation is too long. Use at most 500 letters.').default(''),
+      })
+    )
+    .min(1)
+    .max(MAX_QUESTIONS),
+});
+
+worksheetsRouter.put('/:id/questions', requireRole('teacher'), requireCsrfHeader, validateBody(editSchema), (req, res) => {
+  const attempt = loadTeacherAttempt(req, res);
+  if (!attempt) return;
+  const current = attemptQuestions(attempt);
+  const byId = new Map(current.map((q) => [q.id, q]));
+  const { questions } = req.body as z.infer<typeof editSchema>;
+  if (questions.length !== current.length || questions.some((q) => !byId.has(q.id))) {
+    res.status(400).json({ error: 'These questions are not part of this worksheet.' });
+    return;
+  }
+  const distinct = (list: string[]) => new Set(list.map((c) => c.trim().toLowerCase())).size === list.length;
+  for (const q of questions) {
+    if (q.correctIndex >= q.choices.length || (q.choicesAr.length !== q.choices.length && q.choicesAr.some(Boolean))) {
+      res.status(400).json({ error: 'Choose the right answer of every question.' });
+      return;
+    }
+    if (!distinct(q.choices) || (q.choicesAr.every(Boolean) && !distinct(q.choicesAr))) {
+      res.status(400).json({ error: 'Two answers of a question are the same. Make every answer different.' });
+      return;
+    }
+    if (![q.text, q.textAr, q.explanation, q.explanationAr, ...q.choices, ...q.choicesAr].every((t) => moderateContent(t).allowed)) {
+      res.status(400).json({ error: 'This text is not allowed. Write it differently.' });
+      return;
+    }
+  }
+
+  const insert = db.prepare(
+    `INSERT INTO worksheet_questions (subject_id, difficulty, question_text, question_text_ar, choices_json, choices_json_ar, correct_index, explanation, explanation_ar, reel_id, topic, image)
+     VALUES (?,?,?,?,?,?,?,?,?,NULL,'edited',?)`
+  );
+  const newIds = questions.map((q) => {
+    const old = byId.get(q.id);
+    const next = {
+      text: mathLatin(q.text), textAr: mathLatin(q.textAr), choices: mathLatinAll(q.choices), choicesAr: mathLatinAll(q.choicesAr.some(Boolean) ? q.choicesAr : q.choices),
+      correctIndex: q.correctIndex, explanation: mathLatin(q.explanation), explanationAr: mathLatin(q.explanationAr),
+    };
+    const same =
+      next.text === mathLatin(old.question_text) && next.textAr === mathLatin(old.question_text_ar ?? '') &&
+      JSON.stringify(next.choices) === JSON.stringify(mathLatinAll(JSON.parse(old.choices_json))) &&
+      JSON.stringify(next.choicesAr) === JSON.stringify(mathLatinAll(JSON.parse(old.choices_json_ar))) &&
+      next.correctIndex === old.correct_index &&
+      next.explanation === mathLatin(old.explanation ?? '') && next.explanationAr === mathLatin(old.explanation_ar ?? '');
+    if (same) return old.id as number;
+    return Number(
+      insert.run(
+        attempt.subject_id, attempt.difficulty, next.text, next.textAr, JSON.stringify(next.choices), JSON.stringify(next.choicesAr),
+        next.correctIndex,
+        // the explanation is only shown to a student after solving; keep the old one's meaning when the teacher left it empty
+        next.explanation || mathLatin(old.explanation ?? ''), next.explanationAr || mathLatin(old.explanation_ar ?? ''),
+        old.image ?? null, // the figure stays with the question
+      ).lastInsertRowid
+    );
+  });
+  db.prepare(`UPDATE worksheet_attempts SET question_ids_json = ? WHERE id = ?`).run(JSON.stringify(newIds), attempt.id);
+  res.json({ questions: attemptQuestions({ question_ids_json: JSON.stringify(newIds) }).map(editablePayload) });
 });
 
 // The teacher's own sent worksheets, newest first, with how many students have solved each.
