@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Object3D, PerspectiveCamera, Quaternion } from 'three';
 import { VORTEX } from '../lib/particle-field/presets';
 import { afterIntro } from '../lib/intro-gate';
+import { deviceTier } from '../lib/deviceTier';
 
 type ParticleStudio = import('../lib/particle-field/engine').ParticleStudio;
 
@@ -161,6 +162,11 @@ export function ParticleForm({ children, intro }: { children: ReactNode; intro?:
     };
 
     const mount = async () => {
+      const phone = window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
+      const tier = deviceTier(phone);
+      container.dataset.pf = tier; // landing.css drops the canvas blur for 'lite'
+      if (tier === 'off') return; // the stage keeps its painted glow; three is never even loaded
+      const lite = tier === 'lite';
       const { ParticleStudio } = await import('../lib/particle-field/engine');
       if (cancelled) return;
       canvas = container.appendChild(document.createElement('canvas'));
@@ -168,14 +174,13 @@ export function ParticleForm({ children, intro }: { children: ReactNode; intro?:
       // Phones (a narrow screen or a touch screen) get a lighter form: a quarter of the particles, drawn larger so the funnel looks the same, with
       // a gentler bloom and a pixel ratio of at most 1.5. 250,000 particles with bloom at a pixel ratio of 2 is more than an iPhone's browser can
       // draw at a steady frame rate, and it was what made the landing page stutter there.
-      const phone = window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
-      const base = phone ? { ...VORTEX.settings, count: 60000, size: VORTEX.settings.size * 1.7, bloomStrength: VORTEX.settings.bloomStrength * 0.8 } : VORTEX.settings;
+      const base = lite ? { ...VORTEX.settings, count: 60000, size: VORTEX.settings.size * 1.7, bloomStrength: VORTEX.settings.bloomStrength * 0.8 } : VORTEX.settings;
       const s = new ParticleStudio(canvas, { ...base, speed: reduced ? Math.min(base.speed, 0.12) : base.speed });
       studio = s;
       // OrbitControls sets touch-action: none, which would stop the page scrolling under a finger on the canvas:
       // vertical swipes scroll the page and pinches zoom it, sideways drags still turn the form.
       canvas.style.touchAction = 'pan-y pinch-zoom';
-      let dpr = Math.min(window.devicePixelRatio, phone ? 1.5 : 2); // the export's cap (1.5 on a phone); lowered further on a slow device (SLOW_FRAME)
+      let dpr = Math.min(window.devicePixelRatio, lite ? 1.5 : 2); // the export's cap (1.5 on a phone); lowered further on a slow device (SLOW_FRAME)
       const resize = () => {
         const w = container.clientWidth, h = container.clientHeight;
         if (!w || !h) return;
@@ -213,7 +218,7 @@ export function ParticleForm({ children, intro }: { children: ReactNode; intro?:
       // scrolled past the entrance, so that starts where the scroll is.
       const side = () => (document.documentElement.dir === 'rtl' ? -1 : 1);
       let turnY = 0, turnX = 0, enter = enterGoal, sideNow = side(), lens = 1;
-      let playing = true, last = performance.now(), slowFor = 0, owed = 0, odd = false;
+      let playing = true, last = performance.now(), slowFor = 0, owed = 0, odd = false, halfRate = lite, step = 0;
       // Drawing pauses until the stage shows past its faded top edge (the canvas mask fades its top 16%), so the
       // sliver that peeks under the hero on tall screens does not cost a full 250k-particle render every frame.
       io = new IntersectionObserver((entries) => { playing = entries[entries.length - 1].isIntersecting; last = performance.now(); }, { threshold: 0.01, rootMargin: '0px 0px -16% 0px' });
@@ -223,12 +228,21 @@ export function ParticleForm({ children, intro }: { children: ReactNode; intro?:
         const dt = Math.min(0.05, frame);
         last = now;
         if (playing) {
-          if (dpr > 1 && frame > 0 && frame < 0.25) {
+          // Still slow: first a lower pixel ratio (2 -> 1.5 -> 1), then drawing every other frame, then the form stops where it is
+          // (one still frame) so the page itself scrolls smoothly. Never back up.
+          if (step < 3 && frame > 0 && frame < 3) { // a longer gap is the tab coming back from the background, not slowness
             slowFor = Math.max(0, slowFor + (frame > SLOW_FRAME ? frame : -frame));
             if (slowFor > SLOW_FOR) {
-              dpr = dpr > 1.5 ? 1.5 : 1;
               slowFor = 0;
-              resize();
+              if (dpr > 1) {
+                dpr = dpr > 1.5 ? 1.5 : 1;
+                resize();
+              } else if (!halfRate) halfRate = true;
+              else step = 3;
+              if (step === 3) {
+                container.dataset.pf = 'still';
+                return; // no more frames: the canvas keeps the last one
+              }
             }
           }
           if (!reduced) {
@@ -262,7 +276,7 @@ export function ParticleForm({ children, intro }: { children: ReactNode; intro?:
           // Phones draw the particles every other frame (30 a second: they drift slowly, the eye can't tell), which halves
           // the GPU work under the scroll; the helix and the page itself still move at the full rate.
           owed += dt;
-          if (!phone || (odd = !odd)) {
+          if (!halfRate || (odd = !odd)) {
             s.renderFrame(Math.min(0.05, owed));
             owed = 0;
           }

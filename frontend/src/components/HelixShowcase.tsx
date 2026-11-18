@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { deviceTier } from '../lib/deviceTier';
 
 type HelixTemplate = {
   render(frame: { ctx: CanvasRenderingContext2D; t: number; width: number; height: number; params: object; images: (HTMLImageElement | HTMLCanvasElement | undefined)[]; background: null }): void;
@@ -69,9 +70,13 @@ export function HelixShowcase({ stories, label }: { stories: HelixStory[]; label
     let TEMPLATE: HelixTemplate | null = null, cards: (HTMLImageElement | HTMLCanvasElement | undefined)[] | null = null;
     const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let dirty = true;
-    const phone = window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
+    // the canvas is redrawn on every scroll frame: a phone or modest computer draws it at 1.5x at most, one without a usable GPU at 1x
+    const tier = deviceTier();
+    const cap = tier === 'off' ? 1 : tier === 'lite' ? 1.5 : DPR_CAP;
+    // without a usable GPU the 3D bend (each card drawn in strips) is too much to redraw every frame: flat cards instead
+    const params = tier === 'off' ? { ...PARAMS, cardStyle: 'upright' } : PARAMS;
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, phone ? 1.5 : DPR_CAP); // a phone redraws a third fewer pixels per frame
+      const dpr = Math.min(window.devicePixelRatio || 1, cap);
       const w = Math.round(box.clientWidth * dpr), h = Math.round(box.clientHeight * dpr);
       if (w === canvas.width && h === canvas.height) return; // setting the size wipes and reallocates the canvas: only when it changed
       canvas.width = w;
@@ -102,7 +107,7 @@ export function HelixShowcase({ stories, label }: { stories: HelixStory[]; label
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const t = (((0.5 + step / CARDS) % 1) + 1) % 1;
-        TEMPLATE.render({ ctx, t, width: canvas.width, height: canvas.height, params: PARAMS, images: cards, background: null });
+        TEMPLATE.render({ ctx, t, width: canvas.width, height: canvas.height, params, images: cards, background: null });
       }
       const i = Math.round(step);
       const now2 = i >= 0 && i < n && Math.abs(step - i) < SHOW_WITHIN ? i : null;

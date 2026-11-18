@@ -308,6 +308,11 @@ html[lang='ar'] .landing-tag {
     opacity: calc(var(--pf-enter, 1) * (1 - var(--pf-blur, 0) * 0.4));
   }
 }
+/* a lighter device (ParticleForm deviceTier 'lite') or one the form stopped on: no blur filter over the full-screen canvas either */
+.landing-particles-stage:is([data-pf='lite'], [data-pf='still']) canvas {
+  filter: none;
+  opacity: calc(var(--pf-enter, 1) * (1 - var(--pf-blur, 0) * 0.4));
+}
 .landing-particles-stage canvas:active {
   cursor: grabbing;
 }
