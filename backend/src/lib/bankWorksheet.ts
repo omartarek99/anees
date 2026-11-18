@@ -29,7 +29,20 @@ export type SolvedItem = { choices: string[]; correctIndex: number; explanation:
 
 export const TF_CHOICES = ['صح', 'خطأ'];
 
-const keyOf = (subject: string, grade: number, text: string) => crypto.createHash('sha1').update(`${subject}|${grade}|${text}`).digest('hex').slice(0, 16);
+export const keyOf = (subject: string, grade: number, text: string) => crypto.createHash('sha1').update(`${subject}|${grade}|${text}`).digest('hex').slice(0, 16);
+
+// Questions that begin by asking to draw, plot, shade or fill in a table or chart (a label like "نمذج:" may come first)
+const DRAW_FIRST = /^(?:[^:؟]{0,40}:\s*)?(?:مثّل بيانيًّا|مثّل وسمّ|مثّل (?:المتباينة|النقطة|النقاط)|ارسم|أنشئ|أنشيء|ظلّل|حوّط|صِل|صل |أكمل (?:الجدول|المخطّط|المخطط|النموذج)|مثّل الأعداد)/;
+const DRAW_ANYWHERE = /(?:^|[\s:.؟،])(?:ارسم|ظلّل|مثّل بيانيًّا|أنشئ مخطّط|أنشئ مخطط|حوّط)(?=[\s.؟،]|$)/;
+const INLINE_OPTIONS = /^(.*?)\s*\(أ\)\s*(.+?)\s+\(ب\)\s*(.+?)\s+\(ج\)\s*(.+?)\s+\(د\)\s*(.+?)(?:\s+\(هـ\)\s*(.+))?$/s;
+const TRUE_FALSE_PREFIX = /^أحدّد إن كانت العبارة صحيحة أم خاطئة\s*:/;
+// Free-writing tasks: explain / describe / justify, give an example or reasons, write a sentence / problem / name, "how can you ...", discuss
+const OPEN_ENDED =
+  /(?:^|[\s.؟،:(])(?:وضّح|أوضّح|أوضح|فسّر|أفسّر|أفسر|اشرح|أشرح|صف|أصف|ناقش|برّر|أبرّر|أعطي|أعط|اعط|أقترح|اقترح|أدوّن|حلّل|أحلّل|قارن بين الطريقتين|بيّن (?:سبب|الخطأ|كيف|لماذا|السبب))[ً-ْ]*(?=[\s.؟،:]|$)|أوجه (?:الشبه|الاختلاف)|وجه(?:ا|ي)? (?:الشبه|الاختلاف)|(?:اكتب|أكتب) (?:قاعدةً?|مسألةً?|سؤالًا|سؤالا|جملةً?|فقرةً?|مثالًا|مثالا|أمثلة|سببين|سببًا|ثلاثة|ثلاث|اسم|تعريفًا|تعريف|استنتاجين|استنتاجًا|رأيك|ملاحظات|وصفًا)|(?:اذكر|أذكر) (?:وجهي|وجهين|مثالًا|مثالا|أمثلة|ثلاث|سببين|سببًا|اسم|خاصيتين|خاصيّتين|اختلافين|فرقين|مثال)|هل تتفق|ما رأيك|في رأيك/;
+// "الجزء A: ... الجزء B: ..." or "a. ... b. ...": several questions in one
+const HOW_OPEN = /كيف (?:يمكنك|يمكن|تستطيع|أستطيع|تساعدك|تعرف|عرفت|أعرف|يساعدك|يساعد)/;
+const MULTI_PART = /الجزء [AB]\s*:|(?:^|\s)a\.\s.*(?:\s)b\.\s/s;
+const MULTI_SELECT =/اختر (?:ممّا يلي )?كلّ|اختر كل|حدّد كلّ|كلّ (?:المقادير|الجمل|الأعداد)/;
 
 /** The bank's questions of these lessons as worksheet candidates. */
 export function bankItems(lessons: BankLesson[]): BankItem[] {
@@ -46,6 +59,7 @@ export function bankItems(lessons: BankLesson[]): BankItem[] {
       const lines = q.text.split('\n').map((l) => l.trim()).filter(Boolean);
       let text = lines[0];
       let choices: string[] | null = null;
+      let kind: BankItem['kind'] = q.kind;
       if (q.kind === 'mcq') {
         const picked = lines.slice(1).map((l) => /^[أبجدهـو]\)\s*(.*)$/.exec(l)?.[1]?.trim() ?? '');
         if (picked.length !== 4 || picked.some((c) => !c)) continue; // a question without exactly 4 clear choices is left out
@@ -58,7 +72,25 @@ export function bankItems(lessons: BankLesson[]): BankItem[] {
         }
       }
       if (text.length < 3) continue;
-      items.push({ key: keyOf(lesson.subject, lesson.grade, `${lesson.title}|${q.text}`), kind: q.kind, text, choices, position, image: q.image ?? null });
+      if (DRAW_FIRST.test(text) || DRAW_ANYWHERE.test(text)) continue; // asks to draw, plot, shade or fill in a table: cannot be a multiple-choice question
+      if (q.kind !== 'mcq' && q.kind !== 'tf') {
+        // a question with its options written in the text, "(أ) .. (ب) .. (ج) .. (د) ..": exactly four of them become the four choices (and leave the text);
+        // five options or "choose all" cannot be shown as one-of-four, so such a question is left out
+        const inline = INLINE_OPTIONS.exec(text);
+        if (inline) {
+          const opts = [inline[2], inline[3], inline[4], inline[5]].map((o) => o.trim());
+          if (inline[6] || MULTI_SELECT.test(text) || opts.some((o) => !o)) continue;
+          text = inline[1].trim();
+          choices = opts;
+          kind = 'mcq';
+        } else if (TRUE_FALSE_PREFIX.test(text)) {
+          kind = 'tf';
+          choices = TF_CHOICES;
+        }
+      }
+      // A worksheet is multiple choice only: a question that asks the student to write, explain, describe, give an example or answer in parts is left out
+      if (kind !== 'mcq' && kind !== 'tf' && (OPEN_ENDED.test(text) || MULTI_PART.test(text) || (lesson.subject === 'math' && HOW_OPEN.test(text)))) continue;
+      items.push({ key: keyOf(lesson.subject, lesson.grade, `${lesson.title}|${q.text}`), kind, text, choices, position, image: q.image ?? null });
     }
   }
   return items;
@@ -104,11 +136,15 @@ export async function solveItems(items: BankItem[], subjectName: string, grade: 
 
 For each question return an object:
 - n: its number.
-- usable: false if it cannot be a clear multiple-choice question with ONE certain answer (it asks to draw, to explain in words, to give an example, is ambiguous or incomplete, or -- for [mcq] -- none of the given choices is correct). Otherwise true.
+- usable: first CHECK the question, then decide. It is usable (true) only when ALL of these hold:
+  1. It stands completely on its own: a student who sees only this question (and its figure, when one is attached) has everything needed. It is NOT usable if it depends on another question or exercise, on "the example", "the table", "the picture", "the data" or "the text" that is not written in it or attached, or if it is one part (a, b, c ...) taken out of a longer question, or has an intro such as "for each of the following" with only one item left.
+  2. The Arabic is correct and clear: no spelling mistakes, broken or missing words, wrong grammar that changes the meaning, or garbled characters, and the question reads as a sensible school question.
+  3. The student only has to CHOOSE the answer from four options, and there is ONE certain answer that you can work out (it does not ask to draw, to shade, to complete a table or chart, to write a sentence, an example or an opinion, or to explain in words, and it is not several questions in one; and for [mcq] one of the given choices is correct; the figure, if any, really shows what the question talks about).
+  Otherwise usable = false -- when in doubt, false. Never try to repair a question; just reject it.
 - For [mcq] (4 choices 0-3 are given): return choices as an empty list; correctIndex = the number of the one correct choice.
 - For [tf] (true / false): return choices as an empty list; correctIndex = 0 if the statement is TRUE, 1 if it is FALSE.
 - For [fill] (a blank ____) and [problem] (a calculation or word problem): return exactly 4 SHORT possible final answers as choices (just the number / expression / word, with a unit if the question needs one; Western digits 0-9, x y z for unknowns, superscripts like x² for powers), exactly one correct, the others plausible mistakes a student could make, all different; correctIndex = 0-based index of the correct one.
-- explanation: one short English line showing the working or the reason. explanationAr: the same line in Arabic (Western digits 0-9).
+- explanation: one short English line showing the working or the reason. explanationAr: the same line in Arabic (Western digits 0-9). Check both lines yourself before you answer: correct English, correct Arabic, no spelling or grammar mistakes, and the working really leads to your answer. You only check the question and write the choices, the answer and the explanation; you never change a word of the question.
 Solve every question carefully and double-check all arithmetic before you answer. Return ONLY the JSON array.
 
 Questions:

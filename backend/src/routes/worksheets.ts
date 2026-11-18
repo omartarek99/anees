@@ -12,6 +12,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { bankItems, orderItems, solveItems, type BankItem } from '../lib/bankWorksheet.js';
 import { BANK_IMAGE_DIR } from '../lib/questionBank.js';
+import { extendPool } from '../lib/variants.js';
+import { bankAnswer, isRejected } from '../lib/bankAnswers.js';
 import { findBankMatch, isBankGrade } from '../lib/questionBank.js';
 import { moderateContent } from '../lib/moderation.js';
 import { isFeatureOn } from '../lib/features.js';
@@ -178,12 +180,24 @@ async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise
       : null;
 
   if (bank) {
-    const candidates = orderItems(bankItems(bank.lessons), difficulty);
+    // a maths lesson with too few usable questions is topped up with its plain calculations written with other numbers (by code, not by the AI) -- lib/variants.ts
+    // a question the check found unusable (lib/bankAnswers.ts) never reaches a worksheet
+    const pooled = bank.lessons.flatMap((l) => extendPool(l, bankItems([l]))).filter((i) => !isRejected(i.key));
+    const candidates = orderItems(pooled, difficulty);
     const saved = db.prepare(`SELECT * FROM worksheet_questions WHERE topic = ? AND subject_id = ?`);
     const insert = db.prepare(
       `INSERT INTO worksheet_questions (subject_id, difficulty, question_text, question_text_ar, choices_json, choices_json_ar, correct_index, explanation, explanation_ar, reel_id, topic, image)
        VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?)`
     );
+    const store = (item: BankItem, answer: { choices: string[]; correctIndex: number; explanation: string; explanationAr: string }) => {
+      const id = Number(
+        insert.run(
+          scope.subjectId, difficulty, item.text, item.text, JSON.stringify(answer.choices), JSON.stringify(answer.choices),
+          answer.correctIndex, answer.explanation, answer.explanationAr || answer.explanation, `bank:${item.key}`, item.image
+        ).lastInsertRowid
+      );
+      return db.prepare(`SELECT * FROM worksheet_questions WHERE id = ?`).get(id);
+    };
     let cursor = 0;
     for (let round = 0; round < 3 && picked.length < wanted && cursor < candidates.length; round++) {
       // a few more than needed: some bank questions cannot be a multiple-choice question and are skipped
@@ -193,7 +207,12 @@ async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise
       for (const item of batch) {
         const row = saved.get(`bank:${item.key}`, scope.subjectId);
         if (row) picked.push(row);
-        else toSolve.push(item);
+        else {
+          // the answer kept in the bank: no AI call
+          const fixed = bankAnswer(item.key);
+          if (fixed) picked.push(store(item, fixed));
+          else toSolve.push(item);
+        }
       }
       const chunks: BankItem[][] = [];
       for (let i = 0; i < toSolve.length; i += BANK_SOLVE_CHUNK) chunks.push(toSolve.slice(i, i + BANK_SOLVE_CHUNK));
@@ -207,13 +226,7 @@ async function buildAiQuestions(scope: AiScope, difficulty: Difficulty): Promise
         for (const item of chunks[ci]) {
           const answer = solved.get(item.key);
           if (!answer) continue;
-          const id = Number(
-            insert.run(
-              scope.subjectId, difficulty, item.text, item.text, JSON.stringify(answer.choices), JSON.stringify(answer.choices),
-              answer.correctIndex, answer.explanation, answer.explanationAr || answer.explanation, `bank:${item.key}`, item.image
-            ).lastInsertRowid
-          );
-          picked.push(db.prepare(`SELECT * FROM worksheet_questions WHERE id = ?`).get(id));
+          picked.push(store(item, answer));
         }
       });
     }
