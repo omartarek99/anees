@@ -11,7 +11,7 @@ import type { SolvedItem } from './bankWorksheet.js';
 
 export const ANSWERS_FILE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../question-bank/answers.json');
 
-export type StoredAnswer = { c: string[]; i: number; e: string; a: string; by: 'calc' | 'ai' };
+export type StoredAnswer = { c: string[]; i: number; e: string; a: string; by: 'calc' | 'ai' | 'hand' };
 export type AnswerFile = { answers: Record<string, StoredAnswer>; rejected: Record<string, string> };
 
 export function readAnswerFile(): AnswerFile {
