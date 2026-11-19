@@ -19,15 +19,29 @@ export function mathLatin(text: string): string {
     const isTime = TIME_WORDS.test(s); // "8 ص" is 8 a.m., not "8 y"
     s = s.replace(LONE_LETTER, (m, letter: string) => (letter === 'س' ? 'x' : letter === 'ع' ? 'z' : isTime ? m : 'y'));
   }
-  return s;
+  return mathSymbols(s);
+}
+
+// Symbols, brackets and the order of a pair are English in BOTH versions: an ordered pair is "(5, 3)" (x then y, an ordinary comma -- the Arabic comma "،" between two
+// numbers made the pair read backwards in Arabic) and a list of values "10, 20, 30"; the blank of an equation is "?" (not "؟").
+const ARABIC_COMMA_BETWEEN_MATH = /(?<=[\dA-Za-z)])\s*،\s*(?=[\dA-Za-z(−-])/g;
+const BLANK_QUESTION = /=\s*؟/g;
+const MATH_ONLY_BRACKET = /^[\dA-Za-z.,\s−+/-]+$/;
+export function mathSymbols(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(ARABIC_COMMA_BETWEEN_MATH, ', ')
+    .replace(BLANK_QUESTION, '= ?')
+    // "(5 ,3)" -> "(5, 3)": a bracket that holds only numbers / letters / signs is a pair or a list
+    .replace(/\(([^()]*)\)/g, (m, inner: string) => (MATH_ONLY_BRACKET.test(inner) ? `(${inner.trim().replace(/\s*,\s*/g, ', ')})` : m));
 }
 
 export const mathLatinAll = (items: string[]) => items.map(mathLatin);
 
 // A question that is only an expression ("5 2/5 + 1 1/10") is written as a real equation with the unknown at the end: "5 2/5 + 1 1/10 = ?" ("= ؟" in Arabic).
 const PURE_EXPRESSION = /^[\d\s+\-−×÷*/().^⁰¹²³⁴⁵⁶⁷⁸⁹]+$/;
-export function asEquation(text: string, arabic: boolean): string {
+export function asEquation(text: string, _arabic: boolean): string {
   const t = text.trim();
   if (!t || t.includes('=') || !/[+\-−×÷*]/.test(t.replace(/^-/, '')) || !PURE_EXPRESSION.test(t)) return text;
-  return `${t} = ${arabic ? '؟' : '?'}`;
+  return `${t} = ?`;
 }
