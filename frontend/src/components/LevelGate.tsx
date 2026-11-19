@@ -11,7 +11,7 @@ export function LevelGate({ feature, children }: { feature: Feature; children: R
   const { t } = useLanguage();
   const level = lockedUntil(user, feature);
   if (level === null) return <>{children}</>;
-  return (
+  const card = (
     <div className="empty-state card stack level-gate">
       <span className="level-gate-icon" aria-hidden="true">
         <RiLockFill size={28} />
@@ -29,4 +29,16 @@ export function LevelGate({ feature, children }: { feature: Feature; children: R
       </div>
     </div>
   );
+  // the map and the quarry stay visible behind the lock window, so a student sees what is waiting at the next level
+  if (feature === 'map' || feature === 'quarry') {
+    return (
+      <div className="level-gate-stage">
+        <div className="level-gate-under" aria-hidden="true" {...{ inert: '' }}>
+          {children}
+        </div>
+        <div className="level-gate-over">{card}</div>
+      </div>
+    );
+  }
+  return card;
 }

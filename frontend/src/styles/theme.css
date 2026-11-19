@@ -5136,6 +5136,30 @@ label,
   margin: 40px auto;
   text-align: center;
 }
+.level-gate-stage {
+  position: relative;
+  min-block-size: 100%;
+}
+.level-gate-under {
+  pointer-events: none;
+  user-select: none;
+  filter: blur(1.5px) saturate(0.95) brightness(0.85);
+}
+.level-gate-over {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh 16px 0;
+  background: rgba(20, 8, 14, 0.18);
+}
+.level-gate-over .level-gate {
+  position: sticky;
+  top: 12vh;
+  margin: 0;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
 .level-gate-icon {
   display: inline-grid;
   place-items: center;

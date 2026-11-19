@@ -452,32 +452,6 @@ export function WorksheetsPage() {
         </div>
       )}
 
-      {!isTeacher && !worksheet && received && received.length > 0 && (
-        <div className="card stack">
-          <h3 style={{ fontSize: 16, margin: 0 }}>{t('worksheets.receivedTitle')}</h3>
-          <ul className="stack" style={{ gap: 10, listStyle: 'none', margin: 0, padding: 0 }}>
-            {received.map((w) =>
-              sheetRow(
-                w,
-                t('worksheets.fromTeacher', { name: w.teacherName }),
-                w.status === 'solved' ? (
-                  <span className="badge badge-success">{t('worksheets.statusSolved', { score: w.score ?? 0, total: w.total })}</span>
-                ) : (
-                  <>
-                    <span className={`badge ${w.status === 'new' ? 'badge-gold' : 'badge-maroon'}`}>
-                      {t(w.status === 'new' ? 'worksheets.statusNew' : 'worksheets.statusStarted')}
-                    </span>
-                    <button type="button" className="btn btn-primary btn-sm" disabled={opening !== null} onClick={() => openReceived(w.id)}>
-                      {t(w.status === 'new' ? 'worksheets.start' : 'worksheets.continue')}
-                    </button>
-                  </>
-                )
-              )
-            )}
-          </ul>
-        </div>
-      )}
-
       {!worksheet && (
         <div className="card stack">
           <div className="field">
@@ -594,6 +568,32 @@ export function WorksheetsPage() {
               ? t('worksheets.generatingFromLesson')
               : t('worksheets.generate')}
           </button>
+        </div>
+      )}
+
+      {!isTeacher && !worksheet && received && received.length > 0 && (
+        <div className="card stack">
+          <h3 style={{ fontSize: 16, margin: 0 }}>{t('worksheets.receivedTitle')}</h3>
+          <ul className="stack" style={{ gap: 10, listStyle: 'none', margin: 0, padding: 0 }}>
+            {received.map((w) =>
+              sheetRow(
+                w,
+                t('worksheets.fromTeacher', { name: w.teacherName }),
+                w.status === 'solved' ? (
+                  <span className="badge badge-success">{t('worksheets.statusSolved', { score: w.score ?? 0, total: w.total })}</span>
+                ) : (
+                  <>
+                    <span className={`badge ${w.status === 'new' ? 'badge-gold' : 'badge-maroon'}`}>
+                      {t(w.status === 'new' ? 'worksheets.statusNew' : 'worksheets.statusStarted')}
+                    </span>
+                    <button type="button" className="btn btn-primary btn-sm" disabled={opening !== null} onClick={() => openReceived(w.id)}>
+                      {t(w.status === 'new' ? 'worksheets.start' : 'worksheets.continue')}
+                    </button>
+                  </>
+                )
+              )
+            )}
+          </ul>
         </div>
       )}
 

@@ -1,5 +1,5 @@
 // What a student's level opens. Mirrors UNLOCK_LEVEL in backend/src/lib/levels.ts (the server refuses the locked pages too).
-export const UNLOCK_LEVEL = { ranks: 10, leaderboard: 10, map: 10, quarry: 20 } as const;
+export const UNLOCK_LEVEL = { ranks: 10, leaderboard: 1, map: 10, quarry: 20 } as const;
 export type Feature = keyof typeof UNLOCK_LEVEL;
 export const MAX_LEVEL = 70;
 

@@ -96,8 +96,13 @@ export function requireRole(...roles: ('student' | 'teacher' | 'admin')[]) {
 const studentXp = db.prepare(`SELECT total_xp FROM users WHERE id = ?`);
 
 /** Keeps a student out of a feature until their level opens it (lib/levels.ts UNLOCK_LEVEL); other roles pass. */
-export function requireLevel(feature: Feature) {
+export function requireLevel(feature: Feature, opts: { viewOpen?: boolean } = {}) {
   return (req: Request, res: Response, next: NextFunction) => {
+    // the map and the quarry show through behind their lock window (LevelGate) to motivate students: loading the page data (GET /) is allowed, every action stays locked
+    if (opts.viewOpen && req.method === 'GET' && req.path === '/') {
+      next();
+      return;
+    }
     if (req.userRole === 'student') {
       const row = studentXp.get(req.userId!) as { total_xp: number } | undefined;
       const needed = UNLOCK_LEVEL[feature];
