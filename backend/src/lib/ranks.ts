@@ -64,6 +64,7 @@ export const TEACHER_POINTS_PER_DIVISION = 100;
 
 /** Every student division, lowest first: 18 of them. `division` is 1-3, or null for the single-division tiers. */
 const DIVISIONS = expandDivisions(RANK_TIERS, 0, RANK_START_XP);
+DIVISIONS[0].start = 0; // Iron 1 is every student's default rank: it covers 0 points up to Iron 2 (the later ranks keep their old thresholds)
 export const DIVISION_COUNT = DIVISIONS.length;
 const TEACHER_DIVISIONS = expandDivisions(TEACHER_RANK_TIERS, TEACHER_POINTS_PER_DIVISION);
 
@@ -89,11 +90,9 @@ function ladderFor(points: number, divisions: Division[]) {
   };
 }
 
-/** A student's rank from their total points. Below level 10 they are unranked: `unranked` is true and the bar runs to Iron 1. */
+/** A student's rank from their total points. Everyone starts as Iron 1 (0 points up to Iron 2); there is no unranked state. */
 export function getRankTier(totalXp: number) {
   const tier = ladderFor(totalXp, DIVISIONS);
-  if (totalXp < RANK_START_XP)
-    return { ...tier, key: 'iron' as RankTierKey, name: 'Unranked', nameAr: 'بلا رتبة', color: '#a7a9b0', colorDark: '#6b6e76', division: null, minXp: 0, nextMinXp: RANK_START_XP, progress: Math.max(0, totalXp) / RANK_START_XP, unranked: true };
   return { ...tier, key: tier.key as RankTierKey };
 }
 

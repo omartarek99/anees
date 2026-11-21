@@ -20,7 +20,7 @@ type LadderTier = { key: string; name: string; nameAr: string; color: string; co
 
 /** A ladder of tiers (each division `width` points wide, or `per`) starting at `from` points: its divisions (lowest first), and where a given
  *  number of points puts someone. Below `from` they are unranked. */
-export function makeLadder<T extends LadderTier>(tiers: T[], per: number, from = 0) {
+export function makeLadder<T extends LadderTier>(tiers: T[], per: number, from = 0, firstFromZero = false) {
   /** Every division, lowest first: its tier, its number 1-3 (null for the single-division tiers), where it starts and how wide it is. */
   let at = from;
   const divisions = tiers
@@ -31,6 +31,12 @@ export function makeLadder<T extends LadderTier>(tiers: T[], per: number, from =
       at += width;
       return out;
     });
+  // the first division (Iron 1) is everyone's default rank: it covers 0 points up to the second division, which keeps its place
+  if (firstFromZero) {
+    divisions[0].width += divisions[0].start;
+    divisions[0].start = 0;
+  }
+  const floor = firstFromZero ? 0 : from;
   /** The points at which each tier of the ladder starts (the number shown under its logo). */
   const tierStart = tiers.map((t) => divisions.find((d) => d.tier.key === t.key)!.start);
 
@@ -42,7 +48,7 @@ export function makeLadder<T extends LadderTier>(tiers: T[], per: number, from =
     while (i < divisions.length - 1 && p >= divisions[i + 1].start) i++;
     const current = divisions[i];
     const next = divisions[i + 1] ?? null;
-    return { current, next, progress: next ? Math.max(0, (p - current.start) / current.width) : 1, unranked: p < from };
+    return { current, next, progress: next ? Math.max(0, (p - current.start) / current.width) : 1, unranked: p < floor };
   }
 
   /**
@@ -52,7 +58,7 @@ export function makeLadder<T extends LadderTier>(tiers: T[], per: number, from =
   function lineFraction(points: number): number {
     const p = Math.max(0, points);
     const n = tiers.length;
-    if (p < from) return 0;
+    if (p < floor) return 0;
     let i = n - 1;
     while (i > 0 && p < tierStart[i]) i--;
     const end = i < n - 1 ? tierStart[i + 1] : tierStart[n - 1] + (tiers[n - 1].width ?? per);
@@ -63,7 +69,7 @@ export function makeLadder<T extends LadderTier>(tiers: T[], per: number, from =
   return { tiers, per, divisions, tierStart, standingFor, lineFraction };
 }
 
-export const STUDENT_LADDER = makeLadder(RANK_LADDER, 0, RANK_START_XP);
+export const STUDENT_LADDER = makeLadder(RANK_LADDER, 0, RANK_START_XP, true);
 export const standingFor = STUDENT_LADDER.standingFor;
 export const lineFraction = STUDENT_LADDER.lineFraction;
 

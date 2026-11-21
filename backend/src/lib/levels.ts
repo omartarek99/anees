@@ -24,8 +24,8 @@ export function levelForXp(totalXp: number) {
 
 // What a student's level opens. Before level 10 a new student has the lessons (reels), worksheets, friends and their profile;
 // level 10 brings ranks, the leaderboard and the adventure map, and level 20 the Builder's Quarry.
-export const UNLOCK_LEVEL = { ranks: 10, leaderboard: 1, map: 10, quarry: 20 } as const;
+export const UNLOCK_LEVEL = { ranks: 1, leaderboard: 1, map: 10, quarry: 20 } as const;
 export type Feature = keyof typeof UNLOCK_LEVEL;
 
 /** The points at which ranks start (Iron 1): reaching level 10. */
-export const RANK_START_XP = xpAtLevel(UNLOCK_LEVEL.ranks);
+export const RANK_START_XP = xpAtLevel(10);
