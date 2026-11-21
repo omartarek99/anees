@@ -294,24 +294,11 @@ html[lang='ar'] .landing-tag {
   cursor: grab;
   mix-blend-mode: screen;
   mix-blend-mode: plus-lighter;
-  /* Softened behind the page's text so it reads clearly (ParticleForm sets --pf-blur 0..1 from the scroll), and
-     faded in with its entrance as the hero scrolls away (--pf-enter 0..1). */
-  filter: blur(calc(var(--pf-blur, 0) * 3px));
-  opacity: var(--pf-enter, 1);
-  mask-image: linear-gradient(180deg, transparent 0%, rgb(0 0 0 / 0.35) 6%, rgb(0 0 0 / 0.75) 11%, #000 16%, #000 84%, rgb(0 0 0 / 0.75) 89%, rgb(0 0 0 / 0.35) 94%, transparent 100%);
-}
-/* Phones: a CSS blur over a full-screen WebGL canvas is redone every frame and was what made the end of the page stutter
-   (the blur stays on from the stories down). Dimming does the same job of keeping the text readable, for almost nothing. */
-@media (max-width: 900px), (pointer: coarse) {
-  .landing-particles-stage canvas {
-    filter: none;
-    opacity: calc(var(--pf-enter, 1) * (1 - var(--pf-blur, 0) * 0.4));
-  }
-}
-/* a lighter device (ParticleForm deviceTier 'lite') or one the form stopped on: no blur filter over the full-screen canvas either */
-.landing-particles-stage:is([data-pf='lite'], [data-pf='still']) canvas {
-  filter: none;
+  /* Dimmed behind the page's text so it reads clearly (ParticleForm sets --pf-blur 0..1 from the scroll), and faded in with its entrance
+     as the hero scrolls away (--pf-enter 0..1). Dimmed, not blurred: a blur filter over a full-screen canvas that redraws every frame
+     doubled the graphics work on laptops. */
   opacity: calc(var(--pf-enter, 1) * (1 - var(--pf-blur, 0) * 0.4));
+  mask-image: linear-gradient(180deg, transparent 0%, rgb(0 0 0 / 0.35) 6%, rgb(0 0 0 / 0.75) 11%, #000 16%, #000 84%, rgb(0 0 0 / 0.75) 89%, rgb(0 0 0 / 0.35) 94%, transparent 100%);
 }
 .landing-particles-stage canvas:active {
   cursor: grabbing;

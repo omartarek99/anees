@@ -7,7 +7,7 @@ type HelixTemplate = {
 
 export type HelixStory = { id: string; img: string; copy: ReactNode };
 
-const DPR_CAP = 2;
+const DPR_CAP = 1.5; // the canvas is redrawn on every scroll frame; past 1.5x the extra sharpness is not visible on moving pictures
 /** The export's parameters. */
 const EXPORT_PARAMS = {"cornerRadius":3,"padding":6,"shadowEnabled":false,"turns":3.75,"cardCount":24,"direction":"down","motion":"flow","pulse":60,"ringSize":62,"taper":0,"cardSize":33,"cardAspect":"1:1","cardStyle":"curved","backFade":55,"perspective":20,"tilt":0,"gap":28,"scalePulse":0,"offsetX":0,"offsetY":0,"backgroundType":"color","background":"rgba(0,0,0,0)"};
 // Three large pictures, each on the helix once: CARDS slots round the spiral, the stories' pictures on three neighbouring slots and the

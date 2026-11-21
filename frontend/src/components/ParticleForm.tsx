@@ -63,10 +63,10 @@ const ENTER_DEPTH = 30;
 const ENTER_SIDE = 0.45;
 const ENTER_YAW = 0.5;
 // Slow devices: if frames stay slower than SLOW_FRAME for SLOW_FOR seconds while the form is drawing, render it at a
-// lower pixel ratio (2 -> 1.5 -> 1, never back up). Fast devices never get here, so they keep the full look; on a
+// lower pixel ratio (1.5 -> 1.25 -> 1, never back up). Fast devices never get here, so they keep the full look; on a
 // slow one the bloom's glow gets a little wider (its blur is measured in render pixels), the price of a smooth page.
-const SLOW_FRAME = 1 / 40;
-const SLOW_FOR = 2;
+const SLOW_FRAME = 1 / 50;
+const SLOW_FOR = 1.5;
 
 /** screens: scrolled since the wrapper's top reached the screen's top; endScreens: the same at the bottom of the page. */
 function distanceAt(screens: number, endScreens: number): number {
@@ -164,7 +164,7 @@ export function ParticleForm({ children, intro }: { children: ReactNode; intro?:
     const mount = async () => {
       const phone = window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
       const tier = deviceTier(phone);
-      container.dataset.pf = tier; // landing.css drops the canvas blur for 'lite'
+      container.dataset.pf = tier; // which form this device got (also read by the performance tests)
       if (tier === 'off') return; // the stage keeps its painted glow; three is never even loaded
       const lite = tier === 'lite';
       const { ParticleStudio } = await import('../lib/particle-field/engine');
@@ -174,13 +174,17 @@ export function ParticleForm({ children, intro }: { children: ReactNode; intro?:
       // Phones (a narrow screen or a touch screen) get a lighter form: a quarter of the particles, drawn larger so the funnel looks the same, with
       // a gentler bloom and a pixel ratio of at most 1.5. 250,000 particles with bloom at a pixel ratio of 2 is more than an iPhone's browser can
       // draw at a steady frame rate, and it was what made the landing page stutter there.
-      const base = lite ? { ...VORTEX.settings, count: 60000, size: VORTEX.settings.size * 1.7, bloomStrength: VORTEX.settings.bloomStrength * 0.8 } : VORTEX.settings;
+      // Full: 160,000 particles drawn a little larger (the 250,000 of the export cost a third more for a look the eye cannot tell apart), at a pixel
+      // ratio of at most 1.5 -- the bloom's passes grow with the pixel count, and at 2 a laptop's built-in graphics fell to half the frame rate.
+      const base = lite
+        ? { ...VORTEX.settings, count: 60000, size: VORTEX.settings.size * 1.7, bloomStrength: VORTEX.settings.bloomStrength * 0.8 }
+        : { ...VORTEX.settings, count: 160000, size: VORTEX.settings.size * 1.2 };
       const s = new ParticleStudio(canvas, { ...base, speed: reduced ? Math.min(base.speed, 0.12) : base.speed });
       studio = s;
       // OrbitControls sets touch-action: none, which would stop the page scrolling under a finger on the canvas:
       // vertical swipes scroll the page and pinches zoom it, sideways drags still turn the form.
       canvas.style.touchAction = 'pan-y pinch-zoom';
-      let dpr = Math.min(window.devicePixelRatio, lite ? 1.5 : 2); // the export's cap (1.5 on a phone); lowered further on a slow device (SLOW_FRAME)
+      let dpr = Math.min(window.devicePixelRatio, 1.5); // the export's cap (1.5 on a phone); lowered further on a slow device (SLOW_FRAME)
       const resize = () => {
         const w = container.clientWidth, h = container.clientHeight;
         if (!w || !h) return;
@@ -228,14 +232,14 @@ export function ParticleForm({ children, intro }: { children: ReactNode; intro?:
         const dt = Math.min(0.05, frame);
         last = now;
         if (playing) {
-          // Still slow: first a lower pixel ratio (2 -> 1.5 -> 1), then drawing every other frame, then the form stops where it is
+          // Still slow: first a lower pixel ratio (1.5 -> 1.25 -> 1), then drawing every other frame, then the form stops where it is
           // (one still frame) so the page itself scrolls smoothly. Never back up.
           if (step < 3 && frame > 0 && frame < 3) { // a longer gap is the tab coming back from the background, not slowness
             slowFor = Math.max(0, slowFor + (frame > SLOW_FRAME ? frame : -frame));
             if (slowFor > SLOW_FOR) {
               slowFor = 0;
               if (dpr > 1) {
-                dpr = dpr > 1.5 ? 1.5 : 1;
+                dpr = dpr > 1.25 ? 1.25 : 1;
                 resize();
               } else if (!halfRate) halfRate = true;
               else step = 3;
