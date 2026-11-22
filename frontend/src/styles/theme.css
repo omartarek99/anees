@@ -2650,8 +2650,8 @@ button.list-row.selected {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px 16px;
+  grid-template-columns: 1fr;
+  gap: 6px;
 }
 .printable-worksheet-questions ul li {
   display: flex;
