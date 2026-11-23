@@ -118,7 +118,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://anees-01h6.onrender.com/api/:path*"
+      "destination": "https://anees-gpkt.onrender.com/api/:path*"
     },
     {
       "source": "/((?!api/|assets/|images/|icons/|downloads/).*)",
