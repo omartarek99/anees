@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { RiToolsLine } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -44,11 +44,6 @@ export function MaintenanceGate({ children }: { children: ReactNode }) {
           <button type="button" className="btn btn-secondary" onClick={() => void logout()}>
             {ar ? 'تسجيل الخروج' : 'Log out'}
           </button>
-        )}
-        {!user && (
-          <Link to="/login" className="muted" style={{ fontSize: 12, opacity: 0.55 }}>
-            {ar ? 'دخول المشرف' : 'Admin sign-in'}
-          </Link>
         )}
       </div>
     </div>
