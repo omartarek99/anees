@@ -1,4 +1,5 @@
 import { LevelGate } from './components/LevelGate';
+import { MaintenanceGate } from './components/MaintenanceGate';
 import { Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
 import { Navigate, Route, BrowserRouter, Routes, Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth-context';
@@ -312,6 +313,7 @@ export default function App() {
             <PageviewTracker />
             <PageMeta />
             <ScrollToTop />
+            <MaintenanceGate>
             <Routes>
               {/* Public regardless of auth state — a visitor should be able to read these before ever signing up. */}
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
@@ -386,6 +388,7 @@ export default function App() {
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </MaintenanceGate>
             <CookieConsentBanner />
            </FeaturesProvider>
           </AuthProvider>
