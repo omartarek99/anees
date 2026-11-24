@@ -1,3 +1,4 @@
+import { useDialog } from '../lib/dialog';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
@@ -106,6 +107,7 @@ function usePulseTransform(trigger: unknown, frames: string[], stepMs: number): 
 export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClose: () => void }) {
   const { refreshUser } = useAuth();
   const { t, lang } = useLanguage();
+  const { confirm } = useDialog();
   const cheers = lang === 'ar' ? ENCOURAGEMENT_AR : ENCOURAGEMENT_EN;
   const config = useMemo(() => getBossConfig(levelNumber), [levelNumber]);
 
@@ -130,8 +132,8 @@ export function BossArena({ levelNumber, onClose }: { levelNumber: number; onClo
 
   // Leave a fight that is under way. The fight itself is only won or lost when all the answers are sent at the end, so nothing of that is counted, but the
   // answers given so far are gone -- and the wrong ones have already cost their points -- so ask first once there are some.
-  function cancelFight() {
-    if (answers.length > 0 && !window.confirm(t('boss.cancelConfirm'))) return;
+  async function cancelFight() {
+    if (answers.length > 0 && !(await confirm({ message: t('boss.cancelConfirm') }))) return;
     if (xpLost > 0) void refreshUser();
     onClose();
   }

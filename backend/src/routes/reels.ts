@@ -1,3 +1,4 @@
+import { matchSet, resolveAnswers, type SentAnswer } from '../lib/matching.js';
 import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
 import { db } from '../db/db.js';
@@ -31,21 +32,8 @@ function visibleReel(userId: number, reelId: number): any | null {
 // Every lesson the caller can watch, in one response: each reel with its subject, its author (`rankKey` is the rank the uploader's picture is
 // framed with -- the frame files are named after it), its quiz and its likes. Three queries in all, however many lessons there are -- the reels
 // (subject, author and like counts joined in), then every one of their questions, grouped here.
-// A reel quiz mixes two kinds of question: the first is multiple choice, and with three or more the rest are a matching set -- each of
-// those questions is paired with one answer from a shared pool of their right answers (sent instead of their choices, so the answers are
-// never in the page). The pool's order is the same every time (sorted by the English text), so /submit can rebuild it from the index sent.
-type QuizRow = { id: number; choices_json: string; choices_json_ar: string; correct_index: number; order_in_reel: number };
-function matchSet(rows: QuizRow[]) {
-  const ordered = [...rows].sort((a, b) => a.order_in_reel - b.order_in_reel || a.id - b.id);
-  const matched = ordered.length >= 3 ? ordered.slice(1) : [];
-  const pool = matched
-    .map((q) => {
-      const en = JSON.parse(q.choices_json)[q.correct_index] as string;
-      return { en, ar: (JSON.parse(q.choices_json_ar)[q.correct_index] as string | undefined) || en };
-    })
-    .sort((a, b) => a.en.localeCompare(b.en));
-  return { ids: new Set(matched.map((q) => q.id)), pool };
-}
+// A reel quiz mixes multiple choice and a matching set (lib/matching.ts), in the questions' own order.
+const inOrder = <T extends { order_in_reel: number; id: number }>(rows: T[]) => [...rows].sort((a, b) => a.order_in_reel - b.order_in_reel || a.id - b.id);
 
 reelsRouter.get('/feed', (req, res) => {
   // Only teachers' grade-based videos live in Reels. The adventure-map levels are plain question rounds (routes/mapQuiz.ts), with no
@@ -80,7 +68,7 @@ reelsRouter.get('/feed', (req, res) => {
   }
   const quizFor = (reelId: number) => {
     const rows = questionsByReel.get(reelId) ?? [];
-    const { ids, pool } = matchSet(rows);
+    const { ids, pool } = matchSet(inOrder(rows));
     return {
       // a matching question goes without its choices (its answer is in the pool)
       questions: rows.map((q) =>
@@ -238,7 +226,7 @@ reelsRouter.post('/:reelId/watch', requireCsrfHeader, validateBody(watchSchema),
   res.json({ watchedSeconds: newTotalWatched, xpEarned: pointsDelta, totalWatchXp: priorPoints + pointsDelta });
 });
 
-// a multiple-choice answer names a choice, a matching one a place in the reel's match pool (see matchSet)
+// a multiple-choice answer names a choice, a matching one a place in the reel's match pool (lib/matching.ts)
 const submitSchema = z.object({
   answers: z.array(
     z.union([z.object({ questionId: z.number(), choiceIndex: z.number().int().min(0).max(3) }), z.object({ questionId: z.number(), matchIndex: z.number().int().min(0).max(19) })])
@@ -254,30 +242,10 @@ reelsRouter.post('/:reelId/submit', requireCsrfHeader, validateBody(submitSchema
   }
 
   const questions = db.prepare(`SELECT * FROM reel_questions WHERE reel_id = ?`).all(reelId) as any[];
-  const sent = req.body.answers as ({ questionId: number; choiceIndex: number } | { questionId: number; matchIndex: number })[];
-  const { ids: matchIds, pool } = matchSet(questions);
-  const picked = new Map<number, { en: string; ar: string }>(); // the pool answer given to each matching question
-  const answers = sent.flatMap((a) => {
-    const q = questions.find((x) => x.id === a.questionId);
-    if (!q) return [];
-    if ('choiceIndex' in a) return matchIds.has(q.id) ? [] : [a];
-    const p = pool[a.matchIndex];
-    if (!matchIds.has(q.id) || !p) return [];
-    picked.set(q.id, p);
-    // the right answer's text is the right answer; anything else is no choice at all (wrong)
-    return [{ questionId: q.id, choiceIndex: p.en === JSON.parse(q.choices_json)[q.correct_index] ? q.correct_index : -1 }];
-  });
-
+  const { answers, withText } = resolveAnswers(inOrder(questions), req.body.answers as SentAnswer[]);
   const graded = gradeAnswers(questions, answers);
   const { correctCount, wrongCount } = graded;
-  // the answers as text too: a matching question's choices are not on the page to look them up in
-  const results = graded.results.map((r) => {
-    const q = questions.find((x) => x.id === r.questionId)!;
-    const en = JSON.parse(q.choices_json) as string[];
-    const ar = JSON.parse(q.choices_json_ar) as string[];
-    const chosen = picked.get(q.id) ?? (r.chosenIndex >= 0 ? { en: en[r.chosenIndex], ar: ar[r.chosenIndex] || en[r.chosenIndex] } : null);
-    return { ...r, chosenText: chosen?.en ?? null, chosenTextAr: chosen?.ar ?? null, correctText: en[r.correctIndex], correctTextAr: ar[r.correctIndex] || en[r.correctIndex] };
-  });
+  const results = graded.results.map(withText);
 
   const total = questions.length;
   const scoreRatio = total > 0 ? correctCount / total : 0;

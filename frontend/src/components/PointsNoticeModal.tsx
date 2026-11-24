@@ -1,3 +1,4 @@
+import { RiStarFill, RiErrorWarningFill } from '@remixicon/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
@@ -85,7 +86,7 @@ export function PointsNoticeModal() {
             transition={{ type: 'spring', stiffness: 260, damping: 20 }}
             style={{ maxWidth: 400 }}
           >
-            <div style={{ fontSize: 46 }}>{added ? '⭐' : '⚠️'}</div>
+            <div aria-hidden="true">{added ? <RiStarFill size={46} color="var(--gold)" /> : <RiErrorWarningFill size={46} color="var(--danger)" />}</div>
             <h2 style={{ fontSize: 20, marginTop: 6, color: added ? 'var(--success, #2e7d4f)' : 'var(--danger)' }}>{t(ruleBroken ? 'pointsNotice.ruleBroken' : 'pointsNotice.title')}</h2>
             {ruleBroken && rule && (
               <p style={{ fontSize: 15, fontWeight: 700, margin: '6px 0 0' }} dir="auto">

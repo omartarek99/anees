@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { RiSearchLine } from '@remixicon/react';
+import { RiSearchLine, RiGroupLine, RiSwordLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -200,7 +200,7 @@ export function FriendsPage() {
             {tab === 'friends' &&
               (friends && friends.length === 0 ? (
                 <div className="empty-state">
-                  <div style={{ fontSize: 40 }}>🫂</div>
+                  <RiGroupLine size={40} aria-hidden="true" color="var(--maroon)" />
                   <p>{t('friends.empty')}</p>
                 </div>
               ) : (
@@ -219,7 +219,7 @@ export function FriendsPage() {
                         {/* Challenges are between students: a teacher earns no XP, so neither sends nor receives one (the server refuses both). */}
                         {user?.role === 'student' && f.role !== 'teacher' && isOn('challenges') && (
                           <button type="button" className="btn btn-gold btn-sm" onClick={() => setChallengeFor(f)}>
-                            ⚔️ {t('challenge.button')}
+                            <RiSwordLine size={16} aria-hidden="true" style={{ verticalAlign: '-3px' }} /> {t('challenge.button')}
                           </button>
                         )}
                         <Link to={`/profile/${f.username}`} className="btn btn-secondary btn-sm">

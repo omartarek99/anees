@@ -1,3 +1,4 @@
+import { useDialog } from '../lib/dialog';
 import { Ico } from './Ico';
 import { useState } from 'react';
 import { api, ApiError } from '../lib/api';
@@ -71,6 +72,7 @@ export function AdminUserRow({
   onDeleted: (id: number) => void;
 }) {
   const { t, lang } = useLanguage();
+  const { confirm } = useDialog();
   const [expanded, setExpanded] = useState(false);
   const [rowError, setRowError] = useState<string | null>(null);
   // a teacher's points are their teacher points, everyone else's their XP
@@ -115,7 +117,7 @@ export function AdminUserRow({
   }
 
   async function handleDelete() {
-    if (!window.confirm(t('admin.deleteConfirm', { name: u.displayName }))) return;
+    if (!(await confirm({ message: t('admin.deleteConfirm', { name: u.displayName }), danger: true }))) return;
     setRowError(null);
     try {
       await api.delete(`/admin/users/${u.id}`);

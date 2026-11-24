@@ -1,3 +1,4 @@
+import { RiCheckboxCircleFill, RiCloseCircleFill, RiLightbulbLine } from '@remixicon/react';
 import { QFigure } from './QFigure';
 import type { QuizQuestion } from './QuizCard';
 import { useLanguage } from '../lib/language-context';
@@ -32,7 +33,7 @@ export function QuizResults({ questions, results }: { questions: QuizQuestion[];
             style={{ borderInlineStart: `6px solid ${r.isCorrect ? 'var(--success)' : 'var(--danger)'}` }}
           >
             <p className="quiz-q" style={{ marginBottom: 8 }}>
-              {r.isCorrect ? '✅' : '❌'} <QText text={q.text} />
+              {r.isCorrect ? <RiCheckboxCircleFill size={18} aria-hidden="true" color="var(--success)" style={{ verticalAlign: '-3px' }} /> : <RiCloseCircleFill size={18} aria-hidden="true" color="var(--danger)" style={{ verticalAlign: '-3px' }} />} <QText text={q.text} />
             </p>
             <QFigure image={q.image} />
             {!r.isCorrect && (r.chosenText || r.chosenIndex >= 0) && (
@@ -44,7 +45,7 @@ export function QuizResults({ questions, results }: { questions: QuizQuestion[];
               {t('common.correctAnswer')} <QText text={r.correctText ? pickText(lang, r.correctText, r.correctTextAr) : q.choices[r.correctIndex]} />
             </p>
             <p className="muted quiz-q" style={{ fontSize: 14, marginTop: 6, fontWeight: 400 }}>
-              💡 <QText text={pickText(lang, r.explanation, r.explanationAr)} />
+              <RiLightbulbLine size={16} aria-hidden="true" style={{ verticalAlign: '-3px' }} /> <QText text={pickText(lang, r.explanation, r.explanationAr)} />
             </p>
           </div>
         );

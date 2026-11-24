@@ -1,8 +1,11 @@
+import { RiEyeLine, RiErrorWarningLine } from '@remixicon/react';
+import { Skeleton } from '../components/Skeleton';
+import { useDialog } from '../lib/dialog';
 import { useAuth } from '../lib/auth-context';
 import { TeacherCertificateCard } from '../components/TeacherCertificateCard';
 import { TeacherCertificatePopup } from '../components/TeacherCertificatePopup';
 import { Ico } from '../components/Ico';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
@@ -78,6 +81,7 @@ type ReelSummary = {
 
 export function TeacherReelsPage() {
   const { t, lang } = useLanguage();
+  const { confirm } = useDialog();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [reels, setReels] = useState<ReelSummary[] | null>(null);
@@ -88,10 +92,22 @@ export function TeacherReelsPage() {
     return Number.isInteger(n) && n > 0 ? n : null;
   });
 
+  // A lesson whose video was still processing and now is stored (or failed) gets a notice at the top of the page, so the teacher knows it is
+  // live without watching the list.
+  const [notice, setNotice] = useState<{ ok: boolean; title: string } | null>(null);
+  const processingIds = useRef(new Set<number>());
+
   function loadReels() {
     api
       .get<{ reels: ReelSummary[] }>('/teacher-reels')
-      .then((data) => setReels(data.reels))
+      .then((data) => {
+        for (const r of data.reels) {
+          if (processingIds.current.has(r.id) && r.videoStatus !== 'processing' && r.videoStatus)
+            setNotice({ ok: r.videoStatus === 'ready', title: pickText(lang, r.title, r.titleAr) });
+        }
+        processingIds.current = new Set(data.reels.filter((r) => r.videoStatus === 'processing').map((r) => r.id));
+        setReels(data.reels);
+      })
       .catch(() => setLoadError(t('teacherReels.loadError')));
   }
 
@@ -116,7 +132,7 @@ export function TeacherReelsPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!window.confirm(t('teacherReels.deleteLessonConfirm'))) return;
+    if (!(await confirm({ message: t('teacherReels.deleteLessonConfirm'), danger: true }))) return;
     try {
       await api.delete(`/teacher-reels/${id}`);
       setReels((prev) => (prev ? prev.filter((r) => r.id !== id) : prev));
@@ -129,6 +145,14 @@ export function TeacherReelsPage() {
   return (
     <div className="stack">
       <Topbar title={t('teacherReels.pageTitle')} subtitle={t('teacherReels.pageSubtitle')} />
+      {notice && (
+        <div className={`upload-notice ${notice.ok ? 'is-ok' : 'is-failed'}`} role="status">
+          <span>{t(notice.ok ? 'teacherReels.liveNotice' : 'teacherReels.failedNotice', { title: notice.title })}</span>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNotice(null)}>
+            {t('common.close')}
+          </button>
+        </div>
+      )}
 
       {/* posting needs an approved teaching certificate (an admin checks it); until then the certificate card takes the form's place */}
       {user?.teacherCertStatus === 'approved' ? (
@@ -154,14 +178,12 @@ export function TeacherReelsPage() {
             <h3 style={{ fontSize: 16, marginBottom: 12 }}>{t('teacherReels.myReelsTitle')}</h3>
             {loadError && <div className="form-error-banner">{loadError}</div>}
             {!reels && !loadError && (
-              <div className="empty-state">
-                <div className="spinner" />
-              </div>
+              <Skeleton rows={3} />
             )}
             {reels && reels.length === 0 && !loadError && <p className="muted">{t('teacherReels.noReels')}</p>}
             {reels && reels.length > 0 && (
               <p style={{ margin: '0 0 12px', fontWeight: 700 }}>
-                👁 {t('teacherReels.totalViews', { n: String(reels.reduce((sum, r) => sum + (r.viewCount ?? 0), 0)) })}
+                <RiEyeLine size={16} aria-hidden="true" style={{ verticalAlign: '-3px' }} /> {t('teacherReels.totalViews', { n: String(reels.reduce((sum, r) => sum + (r.viewCount ?? 0), 0)) })}
               </p>
             )}
             <div className="stack" style={{ gap: 10 }}>
@@ -171,7 +193,7 @@ export function TeacherReelsPage() {
                     <div className="flex gap-sm" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
                       <strong>{pickText(lang, reel.title, reel.titleAr)}</strong>
                       <span className="badge" title={t('teacherReels.viewsHint')}>
-                        👁 {t('teacherReels.reelViews', { n: String(reel.viewCount ?? 0) })}
+                        <RiEyeLine size={14} aria-hidden="true" style={{ verticalAlign: '-2px' }} /> {t('teacherReels.reelViews', { n: String(reel.viewCount ?? 0) })}
                       </span>
                     </div>
                     <p className="muted" style={{ margin: 0, fontSize: 13 }}>
@@ -187,7 +209,7 @@ export function TeacherReelsPage() {
                       <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--gold-dark, #b07a10)' }}>⏳ {t('teacherReels.videoProcessing')}</p>
                     )}
                     {reel.videoStatus === 'failed' && (
-                      <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--danger)' }}>⚠️ {t(`teacherReels.videoFailed_${reel.videoError && ['timeout', 'storage', 'unreadable', 'restart'].includes(reel.videoError) ? reel.videoError : 'other'}`)}</p>
+                      <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--danger)' }}><RiErrorWarningLine size={14} aria-hidden="true" style={{ verticalAlign: '-2px' }} /> {t(`teacherReels.videoFailed_${reel.videoError && ['timeout', 'storage', 'unreadable', 'restart'].includes(reel.videoError) ? reel.videoError : 'other'}`)}</p>
                     )}
                   </div>
                   <div className="flex gap-sm">

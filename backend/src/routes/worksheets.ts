@@ -1,3 +1,4 @@
+import { matchSet, resolveAnswers, MATCH_MAX_WORKSHEET, type SentAnswer } from '../lib/matching.js';
 import { asyncRouter } from '../lib/asyncRouter.js';
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
@@ -132,6 +133,18 @@ function createAttempt(
 }
 
 // Numbers and unknowns are shown as 0-9 / x y z in both languages (lib/mathText.ts), also for questions saved before that rule.
+/** What a worksheet's questions look like to the person: a student solving it gets the mixed styles (lib/matching.ts: multiple choice, and
+ *  up to four questions without a figure as a matching set); a teacher previewing or printing it gets every question as multiple choice. */
+function quizPayload(questions: any[], student: boolean) {
+  if (!student) return { questions: questions.map(questionPayload) };
+  const { ids, pool } = matchSet(questions, MATCH_MAX_WORKSHEET);
+  return {
+    questions: questions.map((q) => (ids.has(q.id) ? { ...questionPayload(q), choices: [], choicesAr: [], format: 'match' } : { ...questionPayload(q), format: 'choice' })),
+    matchPool: mathLatinAll(pool.map((p) => p.en)),
+    matchPoolAr: mathLatinAll(pool.map((p) => p.ar)),
+  };
+}
+
 function questionPayload(q: any) {
   return {
     id: q.id,
@@ -330,7 +343,7 @@ worksheetsRouter.post(
           difficulty,
           xpPerCorrect: WORKSHEET_XP_PER_CORRECT[difficulty],
           video: { id: reel.id, title: reel.title, titleAr: reel.title_ar, authorName: author?.display_name ?? '' },
-          questions: picked.map(questionPayload),
+          ...quizPayload(picked, req.userRole === 'student'),
         });
         return;
       }
@@ -383,7 +396,7 @@ worksheetsRouter.post(
           difficulty,
           xpPerCorrect: WORKSHEET_XP_PER_CORRECT[difficulty],
           topic,
-          questions: picked.map(questionPayload),
+          ...quizPayload(picked, req.userRole === 'student'),
         });
         return;
       }
@@ -405,7 +418,7 @@ worksheetsRouter.post(
         subject,
         difficulty,
         xpPerCorrect: WORKSHEET_XP_PER_CORRECT[difficulty],
-        questions: picked.map(questionPayload),
+        ...quizPayload(picked, req.userRole === 'student'),
         ...(aiUnavailable ? { aiUnavailable: true } : {}),
       });
     } catch (err) {
@@ -415,8 +428,11 @@ worksheetsRouter.post(
   }
 );
 
+// a multiple-choice answer names a choice, a matching one a place in the worksheet's match pool (lib/matching.ts)
 const submitSchema = z.object({
-  answers: z.array(z.object({ questionId: z.number(), choiceIndex: z.number().min(0).max(3) })),
+  answers: z.array(
+    z.union([z.object({ questionId: z.number(), choiceIndex: z.number().int().min(0).max(3) }), z.object({ questionId: z.number(), matchIndex: z.number().int().min(0).max(19) })])
+  ),
 });
 
 // Students only: a teacher builds a worksheet to preview, print and send to the students (below), not to solve it.
@@ -439,9 +455,10 @@ worksheetsRouter.post('/:id/submit', requireRole('student'), requireCsrfHeader, 
     .all(...questionIds) as any[];
   const rowById = new Map(rows.map((r) => [r.id, r]));
   const questions = questionIds.map((id) => rowById.get(id)).filter((q): q is NonNullable<typeof q> => q !== undefined);
-  const { answers } = req.body as { answers: { questionId: number; choiceIndex: number }[] };
-
-  const { results, correctCount, wrongCount } = gradeAnswers(questions, answers);
+  const { answers, withText } = resolveAnswers(questions, req.body.answers as SentAnswer[], MATCH_MAX_WORKSHEET);
+  const graded = gradeAnswers(questions, answers);
+  const { correctCount, wrongCount } = graded;
+  const results = graded.results.map(withText);
 
   const xpPerCorrect = WORKSHEET_XP_PER_CORRECT[attempt.difficulty as 'easy' | 'medium' | 'hard'];
   const xpOffered = correctCount * xpPerCorrect;
@@ -460,7 +477,15 @@ worksheetsRouter.post('/:id/submit', requireRole('student'), requireCsrfHeader, 
   }
 
   res.json({
-    results: results.map((r) => ({ ...r, explanation: mathLatin(r.explanation), explanationAr: mathLatin(r.explanationAr) })),
+    results: results.map((r) => ({
+      ...r,
+      explanation: mathLatin(r.explanation),
+      explanationAr: mathLatin(r.explanationAr),
+      chosenText: r.chosenText && mathLatin(r.chosenText),
+      chosenTextAr: r.chosenTextAr && mathLatin(r.chosenTextAr),
+      correctText: mathLatin(r.correctText),
+      correctTextAr: mathLatin(r.correctTextAr),
+    })),
     correctCount,
     total: questions.length,
     xpEarned,
@@ -717,7 +742,7 @@ worksheetsRouter.post('/received/:sentId/start', requireRole('student'), require
     xpPerCorrect: WORKSHEET_XP_PER_CORRECT[sent.difficulty as Difficulty],
     ...(sent.topic ? { topic: sent.topic } : {}),
     ...(sent.reel_id ? { video: { id: sent.reel_id, title: sent.reel_title, titleAr: sent.reel_title_ar, authorName: sent.reel_author ?? '' } } : {}),
-    questions: questions.map(questionPayload),
+    ...quizPayload(questions, true),
     sentWorksheetId: sent.id,
     teacherName: sent.teacher_name,
   });

@@ -1,3 +1,4 @@
+import { Skeleton } from '../components/Skeleton';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -299,9 +300,7 @@ export function ReelsPage() {
 
   if (loading) {
     return (
-      <div className="empty-state">
-        <div className="spinner" />
-      </div>
+      <Skeleton kind="reel" />
     );
   }
 

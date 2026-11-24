@@ -1,3 +1,4 @@
+import { Skeleton } from '../components/Skeleton';
 import { AdminTeacherProofsPanel } from '../components/AdminTeacherProofsPanel';
 import { useEffect, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
@@ -88,9 +89,7 @@ function AdminUsersPanel() {
 
       {loadError && <div className="form-error-banner">{loadError}</div>}
       {!users && !loadError && (
-        <div className="empty-state">
-          <div className="spinner" />
-        </div>
+        <Skeleton />
       )}
       {users && users.length === 0 && !loadError && <p className="muted">{t('admin.noUsers')}</p>}
 

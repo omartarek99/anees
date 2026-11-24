@@ -4,7 +4,7 @@ import { RiLockFill } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useFeatures } from '../lib/features-context';
-import type { Feature } from '../lib/levels';
+import { xpAtLevel, type Feature } from '../lib/levels';
 
 /** A page a student's level has not opened yet: says at which level it opens and points at what earns points meanwhile. */
 export function LevelGate({ feature, children }: { feature: Feature; children: ReactNode }) {
@@ -20,7 +20,20 @@ export function LevelGate({ feature, children }: { feature: Feature; children: R
       </span>
       <h2>{t('levels.lockedTitle', { n: String(level) })}</h2>
       <p>{t(`levels.locked_${feature}`)}</p>
-      <p className="muted">{t('levels.youAre', { n: String(user!.playerLevel) })}</p>
+      {/* how close the student is: points still to earn, and a bar from the start to the level that opens this */}
+      {(() => {
+        const from = 0, to = xpAtLevel(level), xp = Math.min(to, Math.max(from, user!.totalXp));
+        return (
+          <div className="level-gate-progress">
+            <p className="muted" style={{ margin: 0 }}>
+              {t('levels.youAre', { n: String(user!.playerLevel) })} {t('levels.toGo', { xp: String(to - xp) })}
+            </p>
+            <div className="level-bar" role="progressbar" aria-valuemin={0} aria-valuemax={to - from} aria-valuenow={xp - from} aria-label={t('levels.lockedTitle', { n: String(level) })}>
+              <span style={{ width: `${Math.round(((xp - from) / Math.max(1, to - from)) * 100)}%` }} />
+            </div>
+          </div>
+        );
+      })()}
       <div className="flex-center gap-md" style={{ flexWrap: 'wrap' }}>
         <Link to="/reels" className="btn btn-primary">
           {t('nav.reels')}

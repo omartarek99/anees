@@ -4,7 +4,7 @@ import { useAuth, type Role } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
 import { translateApiError } from '../lib/i18n';
-import { RiDeleteBinLine } from '@remixicon/react';
+import { RiDeleteBinLine, RiAddLine } from '@remixicon/react';
 import { Avatar } from './Avatar';
 
 type Linked = { id: number; username: string; displayName: string; avatarKey: string; role: Role };
@@ -153,7 +153,7 @@ export function AccountSwitcher({ onClose }: { onClose: () => void }) {
           </form>
         ) : (
           <button type="button" className="btn btn-primary" onClick={() => { setAdding(true); setError(null); }}>
-            ➕ {t('accounts.add')}
+            <RiAddLine size={16} aria-hidden="true" style={{ verticalAlign: '-3px' }} /> {t('accounts.add')}
           </button>
         )}
 

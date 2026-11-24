@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '../lib/language-context';
 import { choiceLabel } from '../lib/bidi';
 import { QText } from './QText';
+import { QFigure } from './QFigure';
 import type { QuizQuestion } from './QuizCard';
 
 export type ReelQuizQuestion = QuizQuestion & { format?: 'choice' | 'match' };
@@ -16,11 +17,14 @@ export function ReelQuiz({
   matchPool,
   onSubmit,
   submitting,
+  onDirty,
 }: {
   questions: ReelQuizQuestion[];
   matchPool: string[];
   onSubmit: (answers: ReelQuizAnswer[]) => void;
   submitting: boolean;
+  /** told whether any answer has been given yet, so leaving can ask first */
+  onDirty?: (dirty: boolean) => void;
 }) {
   const { t, lang } = useLanguage();
   const choice = questions.filter((q) => q.format !== 'match');
@@ -42,6 +46,17 @@ export function ReelQuiz({
   const tapAnswer = (ai: number) => (pickedQ !== null ? pair(pickedQ, ai) : setPickedA(pickedA === ai ? null : ai));
   const numberOf = (qid: number) => match.findIndex((q) => q.id === qid) + 1;
 
+  const dirty = Object.keys(chosen).length + Object.keys(paired).length > 0;
+  useEffect(() => {
+    onDirty?.(dirty);
+    if (!dirty) return;
+    // closing the tab or reloading with answers given: the browser's own "leave site?" check
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty]);
+
   const done = choice.every((q) => chosen[q.id] !== undefined) && match.every((q) => paired[q.id] !== undefined);
   const submit = () =>
     onSubmit([
@@ -57,6 +72,7 @@ export function ReelQuiz({
           <p className="quiz-q">
             <QText text={q.text} />
           </p>
+          <QFigure image={q.image} />
           <div className="rq-tiles">
             {q.choices.map((c, ci) => (
               <button

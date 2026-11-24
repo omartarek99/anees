@@ -1,3 +1,4 @@
+import { useDialog } from '../lib/dialog';
 import { useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
@@ -12,6 +13,7 @@ type Applied = { pointsRemoved: number; certificatesRevoked: number; suspendedUn
  * and their measures come from the server (lib/violations.ts), so what is shown here is exactly what is applied. */
 export function AdminViolationForm({ user: u, onUpdated }: { user: AdminUser; onUpdated: (user: AdminUser) => void }) {
   const { t, lang } = useLanguage();
+  const { confirm } = useDialog();
   const rules = useViolations();
   const [key, setKey] = useState('');
   const [points, setPoints] = useState('');
@@ -29,7 +31,7 @@ export function AdminViolationForm({ user: u, onUpdated }: { user: AdminUser; on
   const date = (iso: string) => new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar' : 'en-US');
 
   async function apply() {
-    if (!rule || !window.confirm(t('admin.violationConfirm', { name: u.displayName }))) return;
+    if (!rule || !(await confirm({ message: t('admin.violationConfirm', { name: u.displayName }), danger: true }))) return;
     setBusy(true);
     setMessage(null);
     try {

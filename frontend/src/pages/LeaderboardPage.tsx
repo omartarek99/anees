@@ -1,3 +1,4 @@
+import { Skeleton } from '../components/Skeleton';
 import { useEffect, useState } from 'react';
 import { RiArrowLeftSLine, RiArrowRightSLine } from '@remixicon/react';
 import { api } from '../lib/api';
@@ -177,9 +178,7 @@ export function LeaderboardPage() {
         </div>
 
         {!data && !error && (
-          <div className="empty-state">
-            <div className="spinner" />
-          </div>
+          <Skeleton rows={8} />
         )}
 
         {data && data.leaders.length === 0 && (

@@ -1,3 +1,4 @@
+import { useDialog } from '../lib/dialog';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
@@ -34,6 +35,7 @@ type Certificate = {
  * so issuing one only needs a recipient, a name, and a category. */
 export function AdminCertificatesPanel() {
   const { t, lang } = useLanguage();
+  const { ask } = useDialog();
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<AdminUserSummary[]>([]);
   const [recipient, setRecipient] = useState<AdminUserSummary | null>(null);
@@ -116,7 +118,7 @@ export function AdminCertificatesPanel() {
 
   async function handleRevoke(cert: Certificate) {
     // the reason is kept on record, so it is asked for (and cancelling the box cancels the revoke)
-    const reason = window.prompt(t('admin.certRevokePrompt', { name: cert.recipientDisplayName }))?.trim();
+    const reason = (await ask({ message: t('admin.certRevokePrompt', { name: cert.recipientDisplayName }) }))?.trim();
     if (!reason) return;
     try {
       await api.post(`/admin/certificates/${cert.id}/revoke`, { reason });

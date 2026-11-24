@@ -1,3 +1,4 @@
+import { useDialog } from '../lib/dialog';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
@@ -22,6 +23,7 @@ type Row = {
  *  WITHOUT a certificate ("Allow without certificate") and take that back. */
 export function AdminTeacherProofsPanel() {
   const { t, lang } = useLanguage();
+  const { ask } = useDialog();
   const [q, setQ] = useState('');
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,8 +61,8 @@ export function AdminTeacherProofsPanel() {
     }
   }
 
-  function review(row: Row, approve: boolean) {
-    const note = approve ? undefined : window.prompt(t('teacherCert.adminRejectPrompt')) ?? undefined;
+  async function review(row: Row, approve: boolean) {
+    const note = approve ? undefined : (await ask({ message: t('teacherCert.adminRejectPrompt'), required: false })) ?? undefined;
     if (!approve && note === undefined) return; // cancelled
     return run(row, () => api.post(`/admin/teacher-certificates/${row.userId}/review`, { approve, note: note || undefined }));
   }

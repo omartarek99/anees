@@ -1,3 +1,4 @@
+import { RiFlashlightFill } from '@remixicon/react';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api';
 import { useLanguage } from '../lib/language-context';
@@ -88,9 +89,7 @@ export function DoublePointsNotification() {
         maxWidth: 'min(92vw, 420px)',
       }}
     >
-      <span style={{ fontSize: 26, flexShrink: 0 }} aria-hidden>
-        🎉
-      </span>
+      <RiFlashlightFill size={26} aria-hidden="true" color="var(--gold)" style={{ flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <strong style={{ fontSize: 14.5 }}>{t('doublePoints.title')}</strong>
         <p style={{ margin: '2px 0 0', fontSize: 12.5, fontWeight: 600 }}>

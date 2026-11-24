@@ -1,5 +1,5 @@
 import { QFigure } from './QFigure';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '../lib/language-context';
 import { choiceLabel } from '../lib/bidi';
 import { QText } from './QText';
@@ -22,6 +22,14 @@ export function QuizCard({
   const [answers, setAnswers] = useState<Record<number, number>>({});
 
   const allAnswered = questions.every((q) => answers[q.id] !== undefined);
+  // answers given and not sent: closing the tab or reloading asks first (the browser's own "leave site?" check)
+  const dirty = Object.keys(answers).length > 0;
+  useEffect(() => {
+    if (!dirty || submitting) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty, submitting]);
 
   function choose(questionId: number, choiceIndex: number) {
     setAnswers((prev) => ({ ...prev, [questionId]: choiceIndex }));

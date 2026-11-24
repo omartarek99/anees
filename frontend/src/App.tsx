@@ -1,3 +1,5 @@
+import { OfflineBar } from './components/OfflineBar';
+import { DialogProvider } from './lib/dialog';
 import { LevelGate } from './components/LevelGate';
 import { Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
 import { Navigate, Route, BrowserRouter, Routes, Outlet, useLocation, useNavigationType } from 'react-router-dom';
@@ -305,6 +307,8 @@ export default function App() {
     <BrowserRouter>
       <ThemeProvider>
         <LanguageProvider>
+          <DialogProvider>
+          <OfflineBar />
           <AuthProvider>
            <FeaturesProvider>
             <RankAura />
@@ -389,6 +393,7 @@ export default function App() {
             <CookieConsentBanner />
            </FeaturesProvider>
           </AuthProvider>
+          </DialogProvider>
         </LanguageProvider>
       </ThemeProvider>
     </BrowserRouter>

@@ -1,3 +1,4 @@
+import { Skeleton } from '../components/Skeleton';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
 import { api } from '../lib/api';
@@ -134,9 +135,7 @@ export function MapPage() {
 
       {error && <div className="form-error-banner">{error}</div>}
       {!levels && !error && (
-        <div className="empty-state">
-          <div className="spinner" />
-        </div>
+        <Skeleton kind="block" />
       )}
 
       {levels && <StoryPanel levels={levels} />}

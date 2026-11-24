@@ -6075,3 +6075,109 @@ button.feature-switch:active:not(:disabled) {
     grid-template-columns: minmax(0, 300px);
   }
 }
+
+/* ---------------- Phones: a slimmer cookie banner that covers less of the page ---------------- */
+@media (max-width: 700px) {
+  .cookie-consent-banner {
+    inset-inline: 8px;
+    bottom: 8px;
+    gap: 8px 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+  }
+  .cookie-consent-banner p {
+    min-width: 0;
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+  .cookie-consent-banner .btn {
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+}
+
+/* ---------------- No connection (OfflineBar) ---------------- */
+.offline-bar {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 120;
+  padding: 8px 16px;
+  background: var(--ink);
+  color: #fff;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+/* ---------------- A lesson's video finished processing (TeacherReelsPage) ---------------- */
+.upload-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+}
+.upload-notice.is-ok {
+  background: color-mix(in srgb, var(--success) 14%, var(--sand-light));
+  color: var(--success);
+}
+.upload-notice.is-failed {
+  background: color-mix(in srgb, var(--danger) 12%, var(--sand-light));
+  color: var(--danger);
+}
+
+/* ---------------- The site's own confirm / ask dialog (lib/dialog.tsx) ---------------- */
+.site-dialog {
+  max-width: 420px;
+  text-align: start;
+}
+.site-dialog textarea {
+  inline-size: 100%;
+  resize: vertical;
+}
+
+/* ---------------- Loading placeholders (Skeleton) ---------------- */
+.skeleton {
+  display: block;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--sand-light) 0%, var(--sand-dark) 50%, var(--sand-light) 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shine 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+.skeleton-page {
+  display: grid;
+  gap: 14px;
+}
+.skeleton-reel {
+  margin-inline: auto;
+  inline-size: min(100%, 560px);
+  block-size: 100%;
+  border-radius: 0;
+}
+
+/* ---------------- Progress toward a level unlock (LevelGate) ---------------- */
+.level-gate-progress {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+.level-gate-progress .level-bar {
+  inline-size: min(260px, 100%);
+}

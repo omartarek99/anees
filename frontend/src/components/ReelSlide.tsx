@@ -1,6 +1,7 @@
+import { useDialog } from '../lib/dialog';
 import { memo, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { RiCalculatorLine, RiAtomLine } from '@remixicon/react';
+import { RiCalculatorLine, RiAtomLine, RiEyeLine } from '@remixicon/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
@@ -94,6 +95,14 @@ export const ReelSlide = memo(function ReelSlide({
   registerActiveControls: (controls: ReelSlideControls | null) => void;
 }) {
   const { t, lang } = useLanguage();
+  const { confirm } = useDialog();
+  // answers given in the open quiz: closing it then asks first, so they are not lost by accident
+  const quizDirty = useRef(false);
+  const leaveQuiz = async () => {
+    if (quizDirty.current && !(await confirm({ message: t('quiz.leaveConfirm'), confirmLabel: t('quiz.leave') }))) return;
+    quizDirty.current = false;
+    setMode('watch');
+  };
   const { user, refreshUser } = useAuth();
   const [mode, setMode] = useState<'watch' | 'quiz' | 'results'>('watch');
   const [playing, setPlaying] = useState(false);
@@ -281,7 +290,7 @@ export const ReelSlide = memo(function ReelSlide({
       onCompleted(res);
       if (res.leveledUp) setLevelUpValue(res.newPlayerLevel);
     } catch (err) {
-      setError(err instanceof ApiError ? translateApiError(lang, err.message) : 'Error');
+      setError(translateApiError(lang, err instanceof ApiError ? err.message : 'Something went wrong. Please try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -511,7 +520,7 @@ export const ReelSlide = memo(function ReelSlide({
                 gap: 14,
               }}
             >
-              <span style={{ fontSize: 40 }}>👀</span>
+              <RiEyeLine size={40} aria-hidden="true" />
               <h3 style={{ color: 'white', fontSize: 19, margin: 0 }}>{t('reels.stillWatchingTitle')}</h3>
               <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13.5, maxWidth: 260, margin: 0 }}>
                 {t('reels.stillWatchingBody')}
@@ -566,12 +575,12 @@ export const ReelSlide = memo(function ReelSlide({
               justifyContent: 'center',
               cursor: 'pointer',
             }}
-            onClick={() => setMode('watch')}
+            onClick={leaveQuiz}
           >
             ×
           </button>
           {error && <div className="form-error-banner">{error}</div>}
-          <ReelQuiz questions={data.questions} matchPool={data.matchPool} onSubmit={handleSubmit} submitting={submitting} />
+          <ReelQuiz questions={data.questions} matchPool={data.matchPool} onSubmit={handleSubmit} submitting={submitting} onDirty={(d) => (quizDirty.current = d)} />
         </div>
       )}
 

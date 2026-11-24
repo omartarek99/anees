@@ -3,6 +3,9 @@ export const UNLOCK_LEVEL = { ranks: 1, leaderboard: 1, map: 10, quarry: 20 } as
 export type Feature = keyof typeof UNLOCK_LEVEL;
 export const MAX_LEVEL = 70;
 
+/** Total points at which a level starts (backend lib/levels.ts xpAtLevel): level 10 at 810, level 20 at 2660. */
+export const xpAtLevel = (level: number) => 50 * (level - 1) + 5 * (level - 1) * (level - 2);
+
 /** Points at which ranks start: reaching level 10 (backend lib/levels.ts xpAtLevel(10)). */
 export const RANK_START_XP = 810;
 

@@ -1,3 +1,4 @@
+import { RiMovie2Line, RiCloseCircleLine } from '@remixicon/react';
 import { m, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
@@ -40,9 +41,7 @@ export function PointsInfoModal({ open, onClose }: { open: boolean; onClose: () 
             <h2 style={{ color: 'var(--maroon-dark)', fontSize: 20, marginTop: 8 }}>{t('pointsInfo.title')}</h2>
             <ul style={{ textAlign: 'start', margin: '16px 0', padding: 0, listStyle: 'none' }}>
               <li style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10, fontWeight: 700, fontSize: 14.5, color: 'var(--maroon-dark)' }}>
-                <span style={{ fontSize: 20 }} aria-hidden>
-                  🎬
-                </span>
+                <RiMovie2Line size={20} aria-hidden="true" />
                 {t('pointsInfo.video')}
               </li>
               <li style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10, fontWeight: 700, fontSize: 14.5, color: 'var(--maroon-dark)' }}>
@@ -52,9 +51,7 @@ export function PointsInfoModal({ open, onClose }: { open: boolean; onClose: () 
                 {t('pointsInfo.quiz')}
               </li>
               <li style={{ display: 'flex', gap: 10, alignItems: 'center', fontWeight: 700, fontSize: 14.5, color: 'var(--maroon-dark)' }}>
-                <span style={{ fontSize: 20 }} aria-hidden>
-                  ❌
-                </span>
+                <RiCloseCircleLine size={20} aria-hidden="true" />
                 {t('pointsInfo.wrong')}
               </li>
             </ul>

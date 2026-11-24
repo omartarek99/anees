@@ -1,3 +1,4 @@
+import { Skeleton } from '../components/Skeleton';
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { RiCalculatorLine, RiAtomLine, RiPencilLine } from '@remixicon/react';
@@ -229,9 +230,7 @@ export function ProfilePage() {
   if (error) return <div className="form-error-banner">{error}</div>;
   if (!profile) {
     return (
-      <div className="empty-state">
-        <div className="spinner" />
-      </div>
+      <Skeleton kind="profile" rows={3} />
     );
   }
 
@@ -304,12 +303,12 @@ export function ProfilePage() {
           <div className="flex gap-sm" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
             {profile.teacherSubject && (
               <span className="badge badge-gold">
-                🧑‍🏫 {t('profile.teachesSubject')} {t(`auth.subject_${profile.teacherSubject}` as 'auth.subject_math')}
+                {t('profile.teachesSubject')} {t(`auth.subject_${profile.teacherSubject}` as 'auth.subject_math')}
               </span>
             )}
             {profile.schoolName && (
               <span className="badge badge-gold">
-                🏫 {t('profile.school')}: {profile.schoolName}
+                {t('profile.school')}: {profile.schoolName}
               </span>
             )}
             {isOwnProfile && profile.role === 'student' && profile.grade ? (

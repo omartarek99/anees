@@ -1,3 +1,4 @@
+import { RiArrowUpCircleFill } from '@remixicon/react';
 import { m, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/language-context';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
@@ -34,7 +35,7 @@ export function LevelUpToast({ newLevel, onDismiss }: { newLevel: number | null;
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ fontSize: 54 }}>🎉🦅🎉</div>
+            <RiArrowUpCircleFill size={54} aria-hidden="true" color="var(--gold)" style={{ marginInline: 'auto' }} />
             <h2 style={{ color: 'var(--maroon-dark)', fontSize: 24, marginTop: 8 }}>{t('levelUp.title')}</h2>
             <p style={{ color: 'var(--maroon-dark)', fontWeight: 700, fontSize: 18 }}>{t('levelUp.body', { n: newLevel })}</p>
             <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={onDismiss}>

@@ -1,3 +1,4 @@
+import { useDialog } from '../lib/dialog';
 import { Ico } from './Ico';
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -119,6 +120,7 @@ function MessageWindow({ reel, onClose }: { reel: AdminReel; onClose: () => void
 
 export function AdminVideosPanel() {
   const { t, lang } = useLanguage();
+  const { confirm } = useDialog();
   const [reels, setReels] = useState<AdminReel[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -147,7 +149,7 @@ export function AdminVideosPanel() {
   }, [search]);
 
   async function handleDelete(reel: AdminReel) {
-    if (!window.confirm(t('admin.deleteVideoConfirm', { title: pickText(lang, reel.title, reel.titleAr) }))) return;
+    if (!(await confirm({ message: t('admin.deleteVideoConfirm', { title: pickText(lang, reel.title, reel.titleAr) }), danger: true }))) return;
     setRowErrors((prev) => {
       const next = { ...prev };
       delete next[reel.id];

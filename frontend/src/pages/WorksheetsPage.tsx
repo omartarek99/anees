@@ -8,7 +8,8 @@ import { textProblem } from '../lib/textRules';
 import { pickText, translateApiError } from '../lib/i18n';
 import { choiceLabel } from '../lib/bidi';
 import { QText } from '../components/QText';
-import { QuizCard, type QuizAnswer, type QuizQuestion } from '../components/QuizCard';
+import { ReelQuiz, type ReelQuizAnswer, type ReelQuizQuestion } from '../components/ReelQuiz';
+import type { QuizQuestion } from '../components/QuizCard';
 import { QuizResults, type ResultItem } from '../components/QuizResults';
 import { Topbar } from '../components/Topbar';
 import { DifficultyDial, type DialOption } from '../components/DifficultyDial';
@@ -33,7 +34,10 @@ type GenerateResponse = {
   topic?: string;
   // The AI couldn't write questions for the typed lesson, so this is a general bank worksheet.
   aiUnavailable?: boolean;
-  questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null; image?: string | null }[];
+  questions: { id: number; text: string; textAr?: string | null; choices: string[]; choicesAr?: string[] | null; image?: string | null; format?: 'choice' | 'match' }[];
+  // a student's worksheet: the answers of its matching questions (backend lib/matching.ts)
+  matchPool?: string[];
+  matchPoolAr?: string[];
   // Set when a student opened a worksheet a teacher sent (POST /worksheets/received/:id/start): who sent it.
   sentWorksheetId?: number;
   teacherName?: string;
@@ -306,13 +310,15 @@ export function WorksheetsPage() {
   const subjectName = (key: string) => t(key === 'math' || key === 'science' ? `worksheets.${key}` : `worksheets.subject_${key}`);
   const dateOf = (sqlite: string) => new Date(sqlite.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US');
 
-  const questions: QuizQuestion[] =
+  const questions: ReelQuizQuestion[] =
     worksheet?.questions.map((q) => ({
       id: q.id,
       text: pickText(lang, q.text, q.textAr),
-      choices: lang === 'ar' && q.choicesAr ? q.choicesAr : q.choices,
+      choices: lang === 'ar' && q.choicesAr?.length ? q.choicesAr : q.choices,
       image: q.image,
+      format: q.format,
     })) ?? [];
+  const matchPool = (lang === 'ar' && worksheet?.matchPoolAr?.length ? worksheet.matchPoolAr : worksheet?.matchPool) ?? [];
 
   async function generate() {
     const topicProblem = selectedVideo ? null : textProblem(typedName, 'words');
@@ -368,7 +374,7 @@ export function WorksheetsPage() {
     }
   }
 
-  async function submit(answers: QuizAnswer[]) {
+  async function submit(answers: ReelQuizAnswer[]) {
     if (!worksheet) return;
     setSubmitting(true);
     try {
@@ -681,7 +687,7 @@ export function WorksheetsPage() {
               />
             </>
           ) : (
-            <QuizCard questions={questions} onSubmit={submit} submitting={submitting} />
+            <ReelQuiz questions={questions} matchPool={matchPool} onSubmit={submit} submitting={submitting} />
           )}
         </div>
       )}

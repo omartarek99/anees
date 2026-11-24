@@ -1,3 +1,4 @@
+import { useDialog } from '../lib/dialog';
 import { useEffect, useState, type ReactNode } from 'react';
 import { api, ApiError } from '../lib/api';
 import { translateApiError } from '../lib/i18n';
@@ -78,6 +79,7 @@ function AccountLine({ a, children, note }: { a: Account; children: ReactNode; n
 
 function FindAccount() {
   const { t, lang } = useLanguage();
+  const { confirm } = useDialog();
   const [q, setQ] = useState('');
   const [found, setFound] = useState<Account[] | null>(null);
   const [notes, setNotes] = useState<Record<number, { ok: boolean; text: string }>>({});
@@ -112,7 +114,7 @@ function FindAccount() {
   }
 
   async function signOut(a: Account) {
-    if (!window.confirm(t('admin.accSignOutConfirm', { name: a.displayName }))) return;
+    if (!(await confirm({ message: t('admin.accSignOutConfirm', { name: a.displayName }), danger: true }))) return;
     setBusy(a.id);
     try {
       const r = await api.post<{ devices: number }>(`/admin/users/${a.id}/sign-out`, {});
@@ -152,6 +154,7 @@ function FindAccount() {
 
 function InactiveAccounts() {
   const { t, lang } = useLanguage();
+  const { confirm } = useDialog();
   const [days, setDays] = useState(60);
   const [list, setList] = useState<Account[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -171,7 +174,7 @@ function InactiveAccounts() {
   }, [days]);
 
   async function stop(a: Account) {
-    if (!window.confirm(t('admin.accStopConfirm', { name: a.displayName }))) return;
+    if (!(await confirm({ message: t('admin.accStopConfirm', { name: a.displayName }), danger: true }))) return;
     try {
       await api.patch(`/admin/users/${a.id}/active`, { isActive: false });
       setList((prev) => (prev ? prev.filter((x) => x.id !== a.id) : prev));
