@@ -17,6 +17,7 @@ import {
   RiTeamFill,
   RiPresentationFill,
   RiUserStarFill,
+  RiLockUnlockFill,
 } from '@remixicon/react';
 
 // What the admin's Features page knows about each switch (the keys are the ones in the backend lib/features.ts): the order and grouping, a small
@@ -26,7 +27,7 @@ export type Role = 'student' | 'teacher';
 
 export const GROUPS: { title: string; keys: string[]; icon: ReactNode }[] = [
   { title: 'features.groupSite', keys: ['site'], icon: <RiGlobalLine size={18} /> },
-  { title: 'features.groupGames', keys: ['map', 'craft', 'challenges'], icon: <RiGamepadFill size={18} /> },
+  { title: 'features.groupGames', keys: ['map', 'map_open', 'craft', 'craft_open', 'challenges'], icon: <RiGamepadFill size={18} /> },
   { title: 'features.groupLearning', keys: ['reels', 'worksheets', 'ai_worksheets'], icon: <RiBookOpenFill size={18} /> },
   { title: 'features.groupCommunity', keys: ['leaderboard', 'friends'], icon: <RiTeamFill size={18} /> },
   { title: 'features.groupTeachers', keys: ['teacher_upload'], icon: <RiPresentationFill size={18} /> },
@@ -46,6 +47,8 @@ export const ICONS: Record<string, ReactNode> = {
   site: <RiToolsLine size={22} />,
   map: <RiMapFill size={22} />,
   craft: <RiGamepadLine size={22} />,
+  map_open: <RiLockUnlockFill size={22} />,
+  craft_open: <RiLockUnlockFill size={22} />,
   challenges: <RiSwordLine size={22} />,
   reels: <RiVideoFill size={22} />,
   worksheets: <RiFilePaper2Line size={22} />,
@@ -57,7 +60,12 @@ export const ICONS: Record<string, ReactNode> = {
 };
 
 /** The picture on each switch's card (public/icons/features). A key without one falls back to its line icon. */
-export const ART: Record<string, string> = Object.fromEntries(
-  ['site', 'map', 'craft', 'challenges', 'reels', 'worksheets', 'ai_worksheets', 'leaderboard', 'friends', 'teacher_upload', 'signup'].map((k) => [k, `/icons/features/${k}.webp`])
-);
+export const ART: Record<string, string> = {
+  ...Object.fromEntries(
+    ['site', 'map', 'craft', 'challenges', 'reels', 'worksheets', 'ai_worksheets', 'leaderboard', 'friends', 'teacher_upload', 'signup'].map((k) => [k, `/icons/features/${k}.webp`])
+  ),
+  // "open without a level" wears the picture of the page it opens
+  map_open: '/icons/features/map.webp',
+  craft_open: '/icons/features/craft.webp',
+};
 

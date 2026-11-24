@@ -17,7 +17,7 @@ import {
   RiLockFill,
   RiToggleFill,
 } from '@remixicon/react';
-import { lockedUntil, type Feature as LevelFeature } from '../lib/levels';
+import type { Feature as LevelFeature } from '../lib/levels';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { useFeatures, type FeatureKey } from '../lib/features-context';
@@ -69,7 +69,7 @@ const ADMIN_LINKS: SidebarLink[] = [
 export function Sidebar() {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const { isOn } = useFeatures();
+  const { isOn, levelLock } = useFeatures();
   if (!user) return null;
 
   // Teacher's "create video" link sits right after Reels, not at the end of the list --
@@ -92,7 +92,7 @@ export function Sidebar() {
       <nav className="sidebar-nav">
         {visible.map((link) => {
           // a page the student's level has not opened yet: still a link (the page says when it opens), with a lock on it
-          const lockedAt = link.level ? lockedUntil(user, link.level) : null;
+          const lockedAt = link.level ? levelLock(link.level) : null;
           const label = lockedAt ? `${t(link.key)} · ${t('levels.opensAt', { n: String(lockedAt) })}` : t(link.key);
           return (
             <NavLink

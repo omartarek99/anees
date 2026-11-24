@@ -126,7 +126,8 @@ function AdminFeatureGroups() {
               <div className="feature-grid">
                 {rows.map((f) => {
                   const states = ROLES.map((r) => f.roles[r]).filter((x): x is State => !!x);
-                  const allOff = states.length > 0 && states.every((x) => !x.enabled);
+                  // the "open without a level" switches are off by default: off is not "closed", so they get no ribbon
+                  const allOff = !f.key.endsWith('_open') && states.length > 0 && states.every((x) => !x.enabled);
                   return (
                     <article key={f.key} className={`card feature-tile${allOff ? ' is-off' : ''}${f.key === 'site' ? ' feature-tile--wide' : ''}`}>
                       <div className="feature-tile-top">

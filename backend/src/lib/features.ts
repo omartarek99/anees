@@ -7,6 +7,8 @@ import { db } from '../db/db.js';
 //   reels           watching the lesson videos (and their quizzes)
 //   map             the adventure map                      (students)
 //   craft           the Builder's Quarry game              (students)
+//   map_open        ON = the map is open without the level it needs (students) -- these two are OFF until the admin switches them on, the opposite of
+//   craft_open      ON = the quarry is open without the level it needs           the others; routes/middleware requireLevel and the app's LevelGate read them
 //   challenges      "challenge your friends"               (students)
 //   worksheets      worksheets: make, solve, send
 //   ai_worksheets   worksheets made by the AI (from a video or a typed lesson name): they cost money per use
@@ -21,7 +23,9 @@ export const FEATURES = [
   { key: 'site', roles: ['student', 'teacher'] },
   { key: 'reels', roles: ['student', 'teacher'] },
   { key: 'map', roles: ['student'] },
+  { key: 'map_open', roles: ['student'] },
   { key: 'craft', roles: ['student'] },
+  { key: 'craft_open', roles: ['student'] },
   { key: 'challenges', roles: ['student'] },
   { key: 'worksheets', roles: ['student', 'teacher'] },
   { key: 'ai_worksheets', roles: ['student', 'teacher'] },
@@ -46,6 +50,10 @@ const ovSlot = (userId: number, key: string) => `${userId}|${key}`;
 export const PER_ACCOUNT = FEATURES.filter((f) => f.key !== 'signup').map((f) => f.key);
 
 const slot = (key: string, role: string) => `${key}|${role}`;
+
+/** Switches that are OFF until the admin turns them on (all the others are ON until switched off). */
+const DEFAULT_OFF = new Set<string>(['map_open', 'craft_open']);
+const defaultOn = (key: string) => !DEFAULT_OFF.has(key);
 
 function load() {
   cache.clear();
@@ -75,7 +83,7 @@ export function isFeatureOn(key: FeatureKey, role: string | undefined | null, us
     const own = overrides.get(ovSlot(userId, key));
     if (own) return own.enabled;
   }
-  return cache.get(slot(key, role))?.enabled ?? true;
+  return cache.get(slot(key, role))?.enabled ?? defaultOn(key);
 }
 
 export function featureMessage(key: FeatureKey, role: string | undefined | null): string | null {
@@ -90,7 +98,7 @@ export function listFeatureStates() {
     roles: Object.fromEntries(
       f.roles.map((role) => {
         const r = cache.get(slot(f.key, role));
-        return [role, { enabled: r?.enabled ?? true, message: r?.message ?? null, updatedAt: r?.updatedAt ?? null, updatedBy: r?.updatedBy ?? null }];
+        return [role, { enabled: r?.enabled ?? defaultOn(f.key), message: r?.message ?? null, updatedAt: r?.updatedAt ?? null, updatedBy: r?.updatedBy ?? null }];
       })
     ) as Record<FeatureRole, { enabled: boolean; message: string | null; updatedAt: string | null; updatedBy: string | null }>,
   }));
@@ -108,7 +116,7 @@ export function accountFeatureStates(userId: number, role: string) {
   if (!loaded) load();
   return FEATURES.filter((f) => f.key !== 'signup' && (f.roles as readonly string[]).includes(role)).map((f) => {
     const own = overrides.get(ovSlot(userId, f.key));
-    const group = cache.get(slot(f.key, role))?.enabled ?? true;
+    const group = cache.get(slot(f.key, role))?.enabled ?? defaultOn(f.key);
     return { key: f.key, group, own: own ? own.enabled : null, effective: own ? own.enabled : group, updatedAt: own?.updatedAt ?? null, updatedBy: own?.updatedBy ?? null };
   });
 }

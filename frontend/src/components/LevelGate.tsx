@@ -3,13 +3,15 @@ import { Link } from 'react-router-dom';
 import { RiLockFill } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
-import { lockedUntil, type Feature } from '../lib/levels';
+import { useFeatures } from '../lib/features-context';
+import type { Feature } from '../lib/levels';
 
 /** A page a student's level has not opened yet: says at which level it opens and points at what earns points meanwhile. */
 export function LevelGate({ feature, children }: { feature: Feature; children: ReactNode }) {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const level = lockedUntil(user, feature);
+  const { levelLock } = useFeatures();
+  const level = levelLock(feature);
   if (level === null) return <>{children}</>;
   const card = (
     <div className="empty-state card stack level-gate">
