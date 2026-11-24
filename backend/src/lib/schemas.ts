@@ -6,7 +6,7 @@ import { DUPLICATE_CHOICES, USERNAME_CHARS, arabicText, distinctChoices, nameTex
 
 // 'anonymous' = the plain person silhouette that teachers get by default (not a student hero choice).
 // The pictures in frontend/src/components/Avatar.tsx (AVATAR_OPTIONS), plus teachers' plain 'anonymous'.
-export const AVATAR_KEYS = ['owl', 'astronaut', 'qatariBoy', 'qatariGirl', 'scientist', 'pilot', 'wizard', 'robot', 'anonymous'] as const;
+const AVATAR_KEYS = ['owl', 'astronaut', 'qatariBoy', 'qatariGirl', 'scientist', 'pilot', 'wizard', 'robot', 'anonymous'] as const;
 
 export const usernameSchema = z
   .string()
@@ -16,27 +16,27 @@ export const usernameSchema = z
   .regex(USERNAME_CHARS, 'The username can only have letters (Arabic or English), numbers and _ (underscore). Remove spaces and other symbols.')
   .refine((s) => /\p{L}/u.test(s), 'The username needs at least one letter, not only numbers.');
 
-export const displayNameSchema = nameText(
+const displayNameSchema = nameText(
   z.string().trim().min(2, 'The display name is too short. Write at least 2 letters.').max(40, 'The display name is too long. Use at most 40 letters.'),
   'name'
 );
 
 // What a teacher teaches -- shown as a dropdown at signup. Keys are stored; the Arabic/English
 // labels live in frontend/src/lib/i18n.ts (auth.subject*).
-export const TEACHER_SUBJECT_KEYS = ['math', 'science', 'islamic', 'english', 'arabic', 'ict', 'social', 'art'] as const;
-export const teacherSubjectSchema = z.enum(TEACHER_SUBJECT_KEYS);
+const TEACHER_SUBJECT_KEYS = ['math', 'science', 'islamic', 'english', 'arabic', 'ict', 'social', 'art'] as const;
+const teacherSubjectSchema = z.enum(TEACHER_SUBJECT_KEYS);
 
-export const schoolNameSchema = nameText(
+const schoolNameSchema = nameText(
   z.string().trim().min(2, 'The school name is too short. Write at least 2 letters.').max(80, 'The school name is too long. Use at most 80 letters.'),
   'school name'
 );
 
-export const emailSchema = z.string().trim().email('Write your email like this: name@example.com').max(120);
+const emailSchema = z.string().trim().email('Write your email like this: name@example.com').max(120);
 
 // Allowed to be blank (clears the bio) -- only max-length is enforced.
-export const bioSchema = wordsText(z.string().trim().max(300, 'The bio is too long. Use at most 300 letters.'), 'bio');
+const bioSchema = wordsText(z.string().trim().max(300, 'The bio is too long. Use at most 300 letters.'), 'bio');
 
-export const avatarKeySchema = z.enum(AVATAR_KEYS);
+const avatarKeySchema = z.enum(AVATAR_KEYS);
 
 export const roleSchema = z.enum(['student', 'teacher']);
 // Wider than roleSchema on purpose -- that one gates public signup (nobody can sign
@@ -44,7 +44,7 @@ export const roleSchema = z.enum(['student', 'teacher']);
 export const adminRoleSchema = z.enum(['student', 'teacher', 'admin']);
 // z.coerce because signup now arrives as multipart/form-data (for the teacher ID file),
 // where every field -- including this one -- comes across as a string.
-export const gradeSchema = z.coerce.number().int().min(1).max(12);
+const gradeSchema = z.coerce.number().int().min(1).max(12);
 
 export const signupSchema = z
   .object({

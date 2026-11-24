@@ -17,7 +17,7 @@ const BUCKET = process.env.DB_BACKUP_BUCKET ?? 'db-backups';
 const OBJECT = process.env.DB_BACKUP_OBJECT ?? 'app.db';
 const INTERVAL_MS = Math.max(5, Number(process.env.DB_BACKUP_INTERVAL_SEC ?? 60)) * 1000;
 
-export function backupEnabled(): boolean {
+function backupEnabled(): boolean {
   if (!supabaseAdmin) return false;
   const flag = process.env.DB_BACKUP;
   if (flag === 'off') return false;
@@ -64,7 +64,7 @@ export async function restoreDatabaseIfMissing(dbPath: string): Promise<void> {
 }
 
 /** Uploads a consistent snapshot (VACUUM INTO folds the WAL in). Never throws. */
-export async function backupNow(db: DatabaseSync, reason: string): Promise<boolean> {
+async function backupNow(db: DatabaseSync, reason: string): Promise<boolean> {
   if (!backupEnabled() || !uploadsAllowed || uploading) return false;
   uploading = true;
   const tmp = path.join(os.tmpdir(), `anees-backup-${process.pid}-${Date.now()}.db`);

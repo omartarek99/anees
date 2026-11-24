@@ -10,9 +10,9 @@ const config = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined,
 };
 
-export const googleConfigured = !!(config.apiKey && config.authDomain && config.projectId);
+const googleConfigured = !!(config.apiKey && config.authDomain && config.projectId);
 
-export type GoogleSignInErrorCode = 'not-configured' | 'cancelled' | 'blocked' | 'domain' | 'failed';
+type GoogleSignInErrorCode = 'not-configured' | 'cancelled' | 'blocked' | 'domain' | 'failed';
 export class GoogleSignInError extends Error {
   constructor(public code: GoogleSignInErrorCode) {
     super(code);

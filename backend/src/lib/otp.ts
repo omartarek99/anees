@@ -4,7 +4,7 @@ import { db } from '../db/db.js';
 // Emailed 6-digit codes. Only an HMAC of the code is stored, never the code itself. Two separate
 // uses, each with its own table so a code for one can never be used for the other:
 //   'verify' = confirm a new account's email,  'reset' = reset a forgotten password.
-export type OtpKind = 'verify' | 'reset';
+type OtpKind = 'verify' | 'reset';
 const TABLE: Record<OtpKind, string> = { verify: 'email_otps', reset: 'password_reset_otps' };
 
 const OTP_TTL_MS = 10 * 60 * 1000;
@@ -27,7 +27,7 @@ function hashCode(kind: OtpKind, userId: number, code: string): string {
   return crypto.createHmac('sha256', process.env.ENCRYPTION_KEY ?? '').update(`${kind}:${userId}:${code}`).digest('hex');
 }
 
-export type CreateOtpResult = { ok: true; code: string } | { ok: false; reason: 'cooldown' | 'too_many' };
+type CreateOtpResult = { ok: true; code: string } | { ok: false; reason: 'cooldown' | 'too_many' };
 
 /** Creates (or replaces) the user's code. Refuses if one was sent less than a minute ago, or
  * if too many were requested within the hour -- so the endpoint can't be used to spam an
@@ -65,7 +65,7 @@ export function createOtp(userId: number, kind: OtpKind = 'verify'): CreateOtpRe
   return { ok: true, code };
 }
 
-export type VerifyOtpResult = 'ok' | 'invalid' | 'expired' | 'locked';
+type VerifyOtpResult = 'ok' | 'invalid' | 'expired' | 'locked';
 
 /** Checks a submitted code. Does NOT consume it -- call clearOtp() once everything that has to
  * happen after a correct code has succeeded, so a failure in between doesn't burn the code. */

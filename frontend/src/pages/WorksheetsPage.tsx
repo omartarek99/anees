@@ -8,8 +8,7 @@ import { textProblem } from '../lib/textRules';
 import { pickText, translateApiError } from '../lib/i18n';
 import { choiceLabel } from '../lib/bidi';
 import { QText } from '../components/QText';
-import { ReelQuiz, type ReelQuizAnswer, type ReelQuizQuestion } from '../components/ReelQuiz';
-import type { QuizQuestion } from '../components/QuizCard';
+import { Quiz, type QuizAnswer, type QuizQuestion } from '../components/Quiz';
 import { QuizResults, type ResultItem } from '../components/QuizResults';
 import { Topbar } from '../components/Topbar';
 import { DifficultyDial, type DialOption } from '../components/DifficultyDial';
@@ -310,7 +309,7 @@ export function WorksheetsPage() {
   const subjectName = (key: string) => t(key === 'math' || key === 'science' ? `worksheets.${key}` : `worksheets.subject_${key}`);
   const dateOf = (sqlite: string) => new Date(sqlite.replace(' ', 'T') + 'Z').toLocaleDateString(lang === 'ar' ? 'ar-QA' : 'en-US');
 
-  const questions: ReelQuizQuestion[] =
+  const questions: QuizQuestion[] =
     worksheet?.questions.map((q) => ({
       id: q.id,
       text: pickText(lang, q.text, q.textAr),
@@ -374,7 +373,7 @@ export function WorksheetsPage() {
     }
   }
 
-  async function submit(answers: ReelQuizAnswer[]) {
+  async function submit(answers: QuizAnswer[]) {
     if (!worksheet) return;
     setSubmitting(true);
     try {
@@ -687,7 +686,7 @@ export function WorksheetsPage() {
               />
             </>
           ) : (
-            <ReelQuiz questions={questions} matchPool={matchPool} onSubmit={submit} submitting={submitting} />
+            <Quiz questions={questions} matchPool={matchPool} onSubmit={submit} submitting={submitting} />
           )}
         </div>
       )}

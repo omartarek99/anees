@@ -10,7 +10,7 @@ import type { MapZone } from './schema';
 /** A spot standing on the terrain at (x, z), turned `ry` radians about the vertical and scaled by `s`. */
 export const spotAt = (x: number, z: number, ry = 0, s = 1): Spot => ({ x, y: groundHeight(x, z), z, ry, s });
 
-export interface ScatterOptions {
+interface ScatterOptions {
   count: number;
   seed: number;
   /** Stay at least this far from the road's centre line (default 5: past the corridor and the road's rim). */
@@ -28,7 +28,7 @@ export interface ScatterOptions {
   accept?: (x: number, z: number, y: number) => boolean;
 }
 
-export interface Placed extends Spot {
+interface Placed extends Spot {
   /** A random 0..1 for the caller's own variation (a colour pick, a size). */
   r: number;
 }

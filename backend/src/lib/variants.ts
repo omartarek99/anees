@@ -5,8 +5,8 @@ import type { BankLesson } from './questionBank.js';
 // the plain calculations of the lesson written again with OTHER NUMBERS -- made by code, never by the AI: the wording stays the book's own. The AI is only
 // asked to work out the answers and the four choices, and to check the question (lib/bankWorksheet.ts).
 // Any other extra question (a word problem, a science question) has to be written into the question bank itself, by a person.
-export const MATH_MIN = 8;
-export const MATH_POOL = 30;
+const MATH_MIN = 8;
+const MATH_POOL = 30;
 const PER_TEMPLATE = 4; // one calculation is renumbered at most this many times: thirty copies of one sum is not a worksheet
 
 function rng(seed: string) {
@@ -114,7 +114,7 @@ function isPlainCalculation(text: string): boolean {
 }
 
 /** More questions made from the plain calculations among these bank questions, with their numbers changed. */
-export function numberVariants(base: BankItem[], need: number, subject: string, grade: number, lessonTitle: string): BankItem[] {
+function numberVariants(base: BankItem[], need: number, subject: string, grade: number, lessonTitle: string): BankItem[] {
   const usable = base.filter((b) => !b.image && b.kind !== 'mcq' && isPlainCalculation(b.text));
   const out: BankItem[] = [];
   const seen = new Set(base.map((b) => b.text));

@@ -40,7 +40,7 @@ export function craftPuzzleTierForXp(totalXp: number): 1 | 2 | 3 | 4 {
 // A student loses this much for every question they answer wrong (one left blank costs nothing), anywhere on the site: level quizzes, lesson
 // quizzes, worksheets, boss fights, the Quarry rune puzzles and friend challenges. Small next to what a right answer pays (a quiz gives 1-3
 // flat, a worksheet 5-20 per right answer), and never takes anyone below 0.
-export const WRONG_ANSWER_XP = 1;
+const WRONG_ANSWER_XP = 1;
 
 // Failing a map level's quiz (fewer than half right: under 2 of 4) is not worth +1 any more: it costs this much, on top of the wrong answers.
 export const LEVEL_QUIZ_FAIL_LOSS = 1;
@@ -115,9 +115,9 @@ export function awardXp(userId: number, amount: number, reason: string): number 
 // plus whatever an admin added or took away (the 'admin_adjust' rows, routes/admin.ts). syncTeacherPoints recounts after anything that moves one of
 // those numbers and logs the difference in teacher_point_events, which is what the monthly teacher leaderboard adds up (routes/leaderboard.ts) -- so a
 // like taken back or a lesson deleted takes its points back with it.
-export const TEACHER_POINTS_PER_REEL = 20;
-export const TEACHER_POINTS_PER_LIKE = 2;
-export const TEACHER_POINTS_PER_SOLVE = 5;
+const TEACHER_POINTS_PER_REEL = 20;
+const TEACHER_POINTS_PER_LIKE = 2;
+const TEACHER_POINTS_PER_SOLVE = 5;
 
 const countTeacherReels = db.prepare(`SELECT COUNT(*) AS n FROM reels WHERE author_user_id = ? AND video_url IS NOT NULL`);
 const countTeacherLikes = db.prepare(

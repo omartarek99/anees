@@ -308,7 +308,7 @@ const drawWater: Draw = (ctx, rand) => {
   grains(ctx, rand, ['#2a5aa8'], 14);
 };
 
-export type BlockMaterials = {
+type BlockMaterials = {
   materials: Record<number, THREE.Material | THREE.Material[]>;
   dispose: () => void;
 };

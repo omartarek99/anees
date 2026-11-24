@@ -64,3 +64,7 @@ backend/.firebase-key-base64.txt
 
 # Teacher-guide / book PDFs in Subject/ (hundreds of MB, Ministry use only) -- the question-bank .md files next to them are tracked
 Subject/**/*.pdf
+
+# load-test results: written by each run (the reports in docs/stress_test are built from them)
+loadtest/*.json
+loadtest/*.csv

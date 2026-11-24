@@ -11,7 +11,7 @@ import { createAnimalMesh, getAssets } from './craftAnimals/model';
 import type { Pose } from './craftAnimals/rig';
 import type { SpeciesSpec } from './craftAnimals/types';
 
-export type AnimalKind = string;
+type AnimalKind = string;
 
 export type Animal = {
   kind: AnimalKind;
@@ -469,7 +469,7 @@ export function rayHitsAnimal(a: Animal, origin: THREE.Vector3, dir: THREE.Vecto
 }
 
 // ---- choosing what to spawn ------------------------------------------------------------------------
-export type SpawnSpot = { kind: 'land' | 'water' | 'air'; biome: Biome; waterDepth?: number };
+type SpawnSpot = { kind: 'land' | 'water' | 'air'; biome: Biome; waterDepth?: number };
 
 /** A weighted random species that lives at this kind of spot, in this biome. */
 export function pickSpecies(spot: SpawnSpot): SpeciesSpec | null {

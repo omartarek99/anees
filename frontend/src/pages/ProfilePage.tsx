@@ -55,6 +55,8 @@ type Profile = {
   playerLevel: number;
   // 0..1 toward the next level (every 100 points for a student)
   levelProgress: number;
+  // where each rank division starts (the server's ladder), for the rank bar
+  rankLadder: number[];
   // points into the current level and the size of the next one (null at level 70)
   xpIntoLevel?: number;
   xpForNext?: number | null;
@@ -419,11 +421,7 @@ export function ProfilePage() {
               </>
             )}
             {profile.role === 'student' && profile.xpForNext === null && <p className="level-next">{t('levels.maxLevel')}</p>}
-            {profile.rankTier.unranked ? (
-              <p className="muted" style={{ fontSize: 11, margin: 0 }}>
-                {t('levels.rankAt10')}
-              </p>
-            ) : profile.rankTier.nextMinXp !== null && (
+            {profile.rankTier.nextMinXp !== null && (
               <p className="muted" style={{ fontSize: 11, margin: 0 }}>
                 {t(profile.role === 'teacher' ? 'profile.nextTierPoints' : 'profile.nextTierXp', {
                   xp: profile.rankTier.nextMinXp - (profile.role === 'teacher' ? profile.teacherPoints : profile.totalXp),
@@ -486,8 +484,8 @@ export function ProfilePage() {
       </div>
       )}
 
-      {profile.role === 'student' && <MedalLevelBar points={profile.totalXp} />}
-      {profile.role === 'teacher' && <MedalLevelBar points={profile.teacherPoints} teacher />}
+      {profile.role === 'student' && <MedalLevelBar points={profile.totalXp} starts={profile.rankLadder} />}
+      {profile.role === 'teacher' && <MedalLevelBar points={profile.teacherPoints} starts={profile.rankLadder} teacher />}
       {profile.role === 'student' && isOwnProfile && <AuraPicker />}
 
       {profile.certificates.length > 0 && (

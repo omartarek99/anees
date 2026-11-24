@@ -5,7 +5,7 @@ import { api } from './api';
 // "record a rule" button really applies); this is the same list, fetched once, for the Terms page and the admin panel.
 export type Measure = { deductPoints?: boolean; revoke?: 'unearned' | 'all'; suspendDays?: number; deactivate?: boolean };
 
-export type Violation = {
+type Violation = {
   key: string;
   title: string;
   titleAr: string;

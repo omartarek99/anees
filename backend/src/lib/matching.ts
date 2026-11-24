@@ -3,7 +3,7 @@
 // is paired with one answer from a shared pool of their right answers. A matching question is sent without its choices (the answers are
 // never in the page), and the pool's order is the same every time (sorted by the English text), so the submit can rebuild it from the
 // index sent.
-export type MatchRow = { id: number; choices_json: string; choices_json_ar?: string | null; correct_index: number; image?: string | null };
+type MatchRow = { id: number; choices_json: string; choices_json_ar?: string | null; correct_index: number; image?: string | null };
 type Pick = { en: string; ar: string };
 
 const rightAnswer = (q: MatchRow): Pick => {

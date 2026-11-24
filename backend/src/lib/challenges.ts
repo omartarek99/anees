@@ -9,13 +9,13 @@ import { awardXp, penalizeWrongAnswers } from './xp.js';
 export const CHALLENGE_COUNTS = [5, 10, 15, 20] as const;
 export const CHALLENGE_SUBJECTS = ['math', 'science'] as const;
 export const CHALLENGE_DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
-export type ChallengeDifficulty = (typeof CHALLENGE_DIFFICULTIES)[number];
-export const CHALLENGE_POINTS: Record<ChallengeDifficulty, number> = { easy: 10, medium: 15, hard: 20 };
+type ChallengeDifficulty = (typeof CHALLENGE_DIFFICULTIES)[number];
+const CHALLENGE_POINTS: Record<ChallengeDifficulty, number> = { easy: 10, medium: 15, hard: 20 };
 export const GAME_MS = 5 * 60 * 1000;
 // An invitation nobody answers lapses after this long, so it never blocks either friend from starting another game.
-export const INVITE_MS = 3 * 60 * 1000;
+const INVITE_MS = 3 * 60 * 1000;
 // Two accounts could trade wins to farm points, so a player is paid for at most this many wins a day (further wins still count as wins).
-export const DAILY_PAID_WINS = 5;
+const DAILY_PAID_WINS = 5;
 
 type Answers = Record<string, number>;
 

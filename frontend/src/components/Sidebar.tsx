@@ -17,10 +17,9 @@ import {
   RiLockFill,
   RiToggleFill,
 } from '@remixicon/react';
-import type { Feature as LevelFeature } from '../lib/levels';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
-import { useFeatures, type FeatureKey } from '../lib/features-context';
+import { useFeatures, type LevelFeature, type FeatureKey } from '../lib/features-context';
 
 // The two Material icons (Leaderboard, People) as bare paths, rather than bundling @mui for them.
 const PathIcon = ({ d }: { d: string }) => (

@@ -10,7 +10,7 @@ import * as THREE from 'three';
 //   uPh = (walk phase, flap phase, idle phase, tail phase)   radians, advanced by the AI
 //   uK  = (walk gain, flap gain, graze 0..1, hurt flash 0..1)
 
-export interface RigUniforms {
+interface RigUniforms {
   uPh: { value: THREE.Vector4 };
   uK: { value: THREE.Vector4 };
 }

@@ -25,7 +25,7 @@ import '../styles/map3d.css';
 // It is built to be light: no shadow maps, a capped pixel ratio, a cheap diffuse-only material, and a render loop that only
 // draws when something changes (camera, hover) plus a gentle ambient tick for the few things that move by themselves.
 
-export interface AdventureMap3DProps {
+interface AdventureMap3DProps {
   /** The levels from /api/map: their progress is what the world's states come from. */
   levels: readonly ApiLevel[];
   /** A playable level was clicked. */

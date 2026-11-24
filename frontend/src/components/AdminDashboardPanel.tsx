@@ -14,7 +14,7 @@ import { ACTIVITIES, dayLabel } from "./AdminReportsPanel";
 import "../styles/admin-dashboard.css";
 
 export type DashboardPeriod = 7 | 30 | 90;
-export const DASHBOARD_PERIODS: DashboardPeriod[] = [7, 30, 90];
+const DASHBOARD_PERIODS: DashboardPeriod[] = [7, 30, 90];
 
 type Person = {
   id: number;

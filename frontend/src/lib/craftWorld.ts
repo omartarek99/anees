@@ -44,7 +44,7 @@ export const WATER = 28; // ponds and lakes: see-through, swim-through, never mi
 /** Blocks a placement/mesh treats as see-through for neighbour face culling. */
 export const TRANSPARENT = new Set<number>([AIR, GLASS, TORCH, WHEAT_CROP, WATER]);
 /** Blocks the player can walk through. */
-export const NON_SOLID = new Set<number>([AIR, TORCH, WHEAT_CROP, WATER]);
+const NON_SOLID = new Set<number>([AIR, TORCH, WHEAT_CROP, WATER]);
 
 // ---- integer hash noise -------------------------------------------------------------------
 function hash2(seed: number, x: number, y: number): number {
@@ -114,7 +114,7 @@ export function biomeAt(seed: number, x: number, z: number): Biome {
 
 const BASE_HEIGHT = 30;
 
-export function surfaceHeight(seed: number, x: number, z: number): number {
+function surfaceHeight(seed: number, x: number, z: number): number {
   const rolling = (fbm2(seed, x, z, 4, 0.018) - 0.5) * 18;
   const hills = Math.pow(Math.max(0, fbm2(seed + 5, x, z, 2, 0.05) - 0.5), 1.5) * 26;
   const h = Math.round(BASE_HEIGHT + rolling + hills);
@@ -238,7 +238,7 @@ function pondAt(seed: number, x: number, z: number): Pond | null {
 }
 
 /** The one source of truth for base terrain. Pure — no world state. */
-export function baseTileAt(seed: number, x: number, y: number, z: number): number {
+function baseTileAt(seed: number, x: number, y: number, z: number): number {
   if (y < 0 || y >= WORLD_Y) return AIR;
   if (y === 0) return BEDROCK;
   if (y <= 2 && hash3(seed + 1, x, y, z) < 0.55 - y * 0.18) return BEDROCK;

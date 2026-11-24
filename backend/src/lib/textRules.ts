@@ -17,7 +17,7 @@ const isRepeatedLetter = (s: string) => {
 const wordCount = (s: string) => s.split(/\s+/).filter((w) => LETTER.test(w)).length;
 const blankOr = (test: (s: string) => boolean) => (s: string) => !s.trim() || test(s.trim());
 
-export const REPEATED = 'This looks like one letter typed again and again. Write real words.';
+const REPEATED = 'This looks like one letter typed again and again. Write real words.';
 
 /** A name (a person's, a school's): needs letters. */
 export const nameText = (schema: z.ZodString, what: string) =>

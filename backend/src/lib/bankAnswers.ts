@@ -9,10 +9,10 @@ import type { SolvedItem } from './bankWorksheet.js';
 // solved by the AI when it is asked for, as before. A question the check found unusable (unclear, wrong Arabic, no single answer) is listed as rejected and
 // is never put on a worksheet.
 
-export const ANSWERS_FILE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../question-bank/answers.json');
+const ANSWERS_FILE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../question-bank/answers.json');
 
-export type StoredAnswer = { c: string[]; i: number; e: string; a: string; by: 'calc' | 'ai' | 'hand' };
-export type AnswerFile = { answers: Record<string, StoredAnswer>; rejected: Record<string, string> };
+type StoredAnswer = { c: string[]; i: number; e: string; a: string; by: 'calc' | 'ai' | 'hand' };
+type AnswerFile = { answers: Record<string, StoredAnswer>; rejected: Record<string, string> };
 
 export function readAnswerFile(): AnswerFile {
   try {

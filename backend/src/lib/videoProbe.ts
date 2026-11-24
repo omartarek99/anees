@@ -7,7 +7,7 @@ import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { path as ffmpegPath } from '@ffmpeg-installer/ffmpeg';
 
-export type VideoProbe = {
+type VideoProbe = {
   /** The video's real length, from the file itself (null when ffmpeg couldn't tell). */
   durationSeconds: number | null;
   /** The codec of the first video stream ("h264", "hevc", "vp9" ...), or null when the file has no video stream at all. */
@@ -22,7 +22,7 @@ const DOWNLOAD_TIMEOUT_MS = 90_000;
  * video gives a duration and a video codec; anything else (a web page, a broken file) gives neither.
  * ffmpeg exits with an error when it is given no output, which is expected here -- only what it prints matters.
  */
-export function probeVideoFile(path: string): Promise<VideoProbe> {
+function probeVideoFile(path: string): Promise<VideoProbe> {
   return new Promise((resolve, reject) => {
     const proc = spawn(ffmpegPath, ['-hide_banner', '-nostdin', '-i', path]);
     let stderr = '';

@@ -13,7 +13,7 @@ const AXIS = { x: 0, y: 1, z: 2 } as const;
 /** THREE.BoxGeometry builds its faces in this order, 4 vertices each. */
 const BOX_FACES: readonly Face[] = ['px', 'nx', 'top', 'bottom', 'front', 'back'];
 
-export interface SpeciesAssets {
+interface SpeciesAssets {
   spec: SpeciesSpec;
   geometry: THREE.BufferGeometry;
   /** one atlas per skin variant */
@@ -125,7 +125,7 @@ function paintAtlas(spec: SpeciesSpec, variant: number): THREE.CanvasTexture {
   return tex;
 }
 
-export function buildSpecies(spec: SpeciesSpec): SpeciesAssets {
+function buildSpecies(spec: SpeciesSpec): SpeciesAssets {
   const { geometry, radius, height } = buildGeometry(spec);
   const textures: THREE.Texture[] = [];
   const variants = Math.max(1, spec.variants ?? 1);

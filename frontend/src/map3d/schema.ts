@@ -11,7 +11,7 @@ export type ZoneKey = 'desert' | 'souq' | 'corniche' | 'observatory' | 'falcon';
 export type NodeState = 'locked' | 'unlocked' | 'completed';
 
 /** How a node is built: an everyday level pad, or a boss arena (every 5th level). */
-export type NodeMeshType = 'pad' | 'arena';
+type NodeMeshType = 'pad' | 'arena';
 
 /** World space. 1 unit = 1 block. x grows to the right, y up, z away from level 1 (down the old page). */
 export type Vec3 = readonly [x: number, y: number, z: number];

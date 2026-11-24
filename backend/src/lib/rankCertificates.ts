@@ -23,7 +23,7 @@ const LEVELS = [
   { tier: 'warrior', at: tierStartXp('warrior') },
   { tier: 'champion', at: tierStartXp('champion') },
 ] as const;
-export type CertificateTier = (typeof LEVELS)[number]['tier'];
+type CertificateTier = (typeof LEVELS)[number]['tier'];
 
 // The tier plaque pictures are shipped with the website (frontend/public/images/certificates).
 export const PLAQUE_PATH: Record<CertificateTier, string> = {

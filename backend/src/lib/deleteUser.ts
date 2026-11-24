@@ -9,7 +9,7 @@ import { deleteCertificateImageIfAny } from './certificateImage.js';
 import { deleteReelVideoIfAny } from './reelVideo.js';
 import { syncTeacherPoints } from './xp.js';
 
-export type DeleteUserResult =
+type DeleteUserResult =
   | { found: false }
   | { found: true; username: string; storage?: string; firebase: string };
 

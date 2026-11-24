@@ -25,7 +25,7 @@ function terrace(h: number, step: number, ramp = 0.4) {
 // ---- landforms ----------------------------------------------------------------------------------------------------------------
 
 /** The foot of a big mountain: a flat crown (the mountain prop stands on it) and stepped slopes down to the meadow. */
-export interface Massif {
+interface Massif {
   x: number;
   v: number;
   crown: number;

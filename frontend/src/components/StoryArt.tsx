@@ -288,7 +288,7 @@ export function KeyGiftArt() {
 }
 
 /** What comes out of the treasure chest: half of the map (two halves) or the ring of power. */
-export type ChestReward = 'mapA' | 'mapB' | 'ring';
+type ChestReward = 'mapA' | 'mapB' | 'ring';
 
 /** A small ring drawn around (0, 0), about 56 wide, with a faceted red stone. */
 function MiniRing({ u }: { u: string }) {

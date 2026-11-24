@@ -1,16 +1,16 @@
 // Shared multiple-choice grading: reels, boss fights, and worksheets all score a batch of
 // { questionId, choiceIndex } answers against a set of questions the same way.
 
-export type GradableQuestion = {
+type GradableQuestion = {
   id: number;
   correct_index: number;
   explanation: string;
   explanation_ar: string;
 };
 
-export type SubmittedAnswer = { questionId: number; choiceIndex: number };
+type SubmittedAnswer = { questionId: number; choiceIndex: number };
 
-export type GradedResult = {
+type GradedResult = {
   questionId: number;
   chosenIndex: number;
   correctIndex: number;

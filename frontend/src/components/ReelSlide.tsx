@@ -6,7 +6,7 @@ import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { translateApiError } from '../lib/i18n';
-import { ReelQuiz, type ReelQuizAnswer, type ReelQuizQuestion } from './ReelQuiz';
+import { Quiz, type QuizAnswer, type QuizQuestion } from './Quiz';
 import { QuizResults, type ResultItem } from './QuizResults';
 import { LevelUpToast } from './LevelUpToast';
 import { Avatar } from './Avatar';
@@ -24,7 +24,7 @@ export type ReelSlideData = {
   // Only set for teacher-authored reels (null for seeded curriculum content, which has
   // no single author to credit).
   author: { username: string; displayName: string; avatarKey: string; avatarUrl: string | null; rankKey?: string } | null;
-  questions: ReelQuizQuestion[];
+  questions: QuizQuestion[];
   matchPool: string[];
   completed: boolean;
   stars: number;
@@ -280,7 +280,7 @@ export const ReelSlide = memo(function ReelSlide({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive]);
 
-  async function handleSubmit(answers: ReelQuizAnswer[]) {
+  async function handleSubmit(answers: QuizAnswer[]) {
     setSubmitting(true);
     setError(null);
     try {
@@ -580,7 +580,7 @@ export const ReelSlide = memo(function ReelSlide({
             ×
           </button>
           {error && <div className="form-error-banner">{error}</div>}
-          <ReelQuiz questions={data.questions} matchPool={data.matchPool} onSubmit={handleSubmit} submitting={submitting} onDirty={(d) => (quizDirty.current = d)} />
+          <Quiz questions={data.questions} matchPool={data.matchPool} onSubmit={handleSubmit} submitting={submitting} onDirty={(d) => (quizDirty.current = d)} />
         </div>
       )}
 

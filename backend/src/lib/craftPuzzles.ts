@@ -5,7 +5,7 @@ function choice<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export type CraftPuzzle = { question: string; answer: number; choices: number[] };
+type CraftPuzzle = { question: string; answer: number; choices: number[] };
 
 /** Pure arithmetic notation (digits/operators), so no Arabic variant is needed. */
 export function generateCraftPuzzle(tier: 1 | 2 | 3 | 4): CraftPuzzle {

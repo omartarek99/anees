@@ -7,7 +7,7 @@ import { db } from '../db/db.js';
 // same tables the app itself writes (reel_watch_progress, reel_watch_seconds_events, worksheet_attempts,
 // sent_worksheets, reel_likes, reels) -- no separate log to trust.
 
-export type RoleFilter = 'all' | 'student' | 'teacher';
+type RoleFilter = 'all' | 'student' | 'teacher';
 
 export function parseRoleFilter(value: unknown): RoleFilter {
   return value === 'student' || value === 'teacher' ? value : 'all';
@@ -121,7 +121,7 @@ export function queryReportRows(role: RoleFilter, grade: number | null, limit?: 
   return rows.map(toRow);
 }
 
-export type ReportTotals = {
+type ReportTotals = {
   students: number;
   teachers: number;
   watchedSeconds: number;

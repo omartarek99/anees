@@ -6,7 +6,7 @@ import type { ZoneKey } from './schema';
 // block. Static: it depends only on the layout, never on progress. The terrain carves a corridor along it, the path
 // ribbon is laid on it, and scenery uses it to stay clear of the road.
 
-export interface PathPoint {
+interface PathPoint {
   x: number;
   z: number;
   /** Unit tangent in the ground plane (the direction of travel, towards the next level). */
@@ -56,7 +56,7 @@ for (const p of PATH_POINTS) {
   else buckets.set(b, [p]);
 }
 
-export interface PathHit {
+interface PathHit {
   /** Distance from (x, z) to the nearest point of the route; Infinity when it is far from the road. */
   d: number;
   point: PathPoint | null;

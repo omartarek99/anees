@@ -17,9 +17,9 @@ import { db } from '../db/db.js';
 //   teacher_upload  uploading and managing lessons        (teachers)
 //   signup          new accounts: students / teachers can (not) sign up, with e-mail or with Google
 
-export type FeatureRole = 'student' | 'teacher';
+type FeatureRole = 'student' | 'teacher';
 
-export const FEATURES = [
+const FEATURES = [
   { key: 'site', roles: ['student', 'teacher'] },
   { key: 'reels', roles: ['student', 'teacher'] },
   { key: 'map', roles: ['student'] },
@@ -45,9 +45,6 @@ let loaded = false;
 type Override = { enabled: boolean; updatedAt: string | null; updatedBy: string | null };
 const overrides = new Map<string, Override>(); // `${userId}|${feature}`
 const ovSlot = (userId: number, key: string) => `${userId}|${key}`;
-
-/** Every switch except new sign-ups can be set for one account (a sign-up has no account yet). */
-export const PER_ACCOUNT = FEATURES.filter((f) => f.key !== 'signup').map((f) => f.key);
 
 const slot = (key: string, role: string) => `${key}|${role}`;
 

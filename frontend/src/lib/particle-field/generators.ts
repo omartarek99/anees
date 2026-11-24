@@ -31,7 +31,7 @@ const GRAD3 = new Float32Array([1,1,0, -1,1,0, 1,-1,0, -1,-1,0, 1,0,1, -1,0,1, 1
 
 const F3 = 1 / 3, G3 = 1 / 6;
 
-export function makeNoise(rng) {
+function makeNoise(rng) {
   const p = new Uint8Array(256);
   for (let i = 0; i < 256; i++) p[i] = i;
   for (let i = 255; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); const t = p[i]; p[i] = p[j]; p[j] = t; }
@@ -94,21 +94,21 @@ export const R = (rng, a, b) => a + (b - a) * rng();
 
 export const int = (rng, a, b) => Math.floor(a + (b - a + 1) * rng());
 
-export const sgn = (rng) => (rng() < 0.5 ? -1 : 1);
+const sgn = (rng) => (rng() < 0.5 ? -1 : 1);
 
-export function gauss(rng) {
+function gauss(rng) {
   let u = 0; while (u === 0) u = rng();
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * rng());
 }
 
-export function unitVec(rng, out = [0, 0, 0]) {
+function unitVec(rng, out = [0, 0, 0]) {
   const z = rng() * 2 - 1, a = rng() * TAU, r = Math.sqrt(1 - z * z);
   out[0] = r * Math.cos(a); out[1] = z; out[2] = r * Math.sin(a);
   return out;
 }
 
 // Random rotation matrix (row-major 3x3)
-export function randRot(rng) {
+function randRot(rng) {
   const a = rng() * TAU, b = Math.acos(rng() * 2 - 1), c = rng() * TAU;
   const ca = Math.cos(a), sa = Math.sin(a), cb = Math.cos(b), sb = Math.sin(b), cc = Math.cos(c), sc = Math.sin(c);
   return [
@@ -118,7 +118,7 @@ export function randRot(rng) {
   ];
 }
 
-export function applyRot(m, o) {
+function applyRot(m, o) {
   const x = o[0], y = o[1], z = o[2];
   o[0] = m[0] * x + m[1] * y + m[2] * z;
   o[1] = m[3] * x + m[4] * y + m[5] * z;
@@ -150,7 +150,7 @@ function arcResample(row, closed) {
   return out;
 }
 
-export function makeLayout(rng, nz) {
+function makeLayout(rng, nz) {
   const rows = [];
   const layers = [];
   const tmp = [0, 0, 0, 0.5];
@@ -369,7 +369,7 @@ function forEachPoint(F, cb) {
   for (let i = 0; i < N; i++) if (aL[i * 4 + 3] > 1.5) cb(aO, i * 4);
 }
 
-export function deform(F, rng) {
+function deform(F, rng) {
   const k = R(rng, 0.4, 1.2) * sgn(rng), pinch = rng() < 0.35;
   forEachPoint(F, (a, i) => {
     const x = a[i], y = a[i + 1], z = a[i + 2];
@@ -384,7 +384,7 @@ export function deform(F, rng) {
 }
 
 // Re-assigns the color blend by a spatial rule so the same structure can read very differently.
-export function remix(F, mode, freq) {
+function remix(F, mode, freq) {
   const f = (x, y, z, m) => {
     const r = Math.hypot(x, y, z);
     if (mode === 1) return 1 - m;
@@ -403,7 +403,7 @@ export function remix(F, mode, freq) {
   }
 }
 
-export function normalize(F, target = 1.25) {
+function normalize(F, target = 1.25) {
   const N = F.aL.length / 4;
   const step = Math.max(1, Math.floor(N / 5000));
   const o = [0, 0, 0, 0, 0];
@@ -500,7 +500,7 @@ export function vortex(L) {
 // ── src/lib/particle-field/forms-c.ts
 
 // ── Accents: optional extra layers that make a form feel like a scene ──────
-export function addAccent(L) {
+function addAccent(L) {
   const { rng } = L;
   const kind = int(rng, 0, 3);
   if (kind === 0) {
@@ -537,7 +537,7 @@ export function addAccent(L) {
 // ── src/lib/particle-field/generators.ts
 
 // ARCHETYPES narrowed to the current archetype (entry verbatim).
-export const ARCHETYPES = {
+const ARCHETYPES = {
   vortex:    { fn: vortex,    label: 'Vortex' },
 };
 

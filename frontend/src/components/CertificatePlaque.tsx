@@ -17,7 +17,7 @@ export const PLAQUE_IMAGE: Record<CertificateType, string> = {
 
 // Height over width of each picture: the Bronze, Gold and Platinum plaques are tall (574 x 786), Silver and Diamond nearly square, Warrior and
 // Champion in between.
-export const PLAQUE_RATIO: Record<CertificateType, number> = {
+const PLAQUE_RATIO: Record<CertificateType, number> = {
   bronze: 786 / 574,
   gold: 786 / 574,
   platinum: 786 / 574,

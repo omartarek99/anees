@@ -27,7 +27,7 @@ export function mathLatin(text: string): string {
 const ARABIC_COMMA_BETWEEN_MATH = /(?<=[\dA-Za-z)])\s*،\s*(?=[\dA-Za-z(−-])/g;
 const BLANK_QUESTION = /=\s*؟/g;
 const MATH_ONLY_BRACKET = /^[\dA-Za-z.,\s−+/-]+$/;
-export function mathSymbols(text: string): string {
+function mathSymbols(text: string): string {
   if (!text) return text;
   return text
     .replace(ARABIC_COMMA_BETWEEN_MATH, ', ')

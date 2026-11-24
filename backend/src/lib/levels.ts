@@ -1,10 +1,10 @@
 // A student's account level, from their total points: level 1 to MAX_LEVEL, each level a little more work than the one before
 // (level L to L + 1 takes 50 + 10 x (L - 1) points: 50, 60, 70, ... 730 for 69 to 70). Mirrored by frontend/src/lib/levels.ts.
 // Teachers keep their own flat scale (lib/xp.ts TEACHER_POINTS_PER_LEVEL).
-export const MAX_LEVEL = 70;
+const MAX_LEVEL = 70;
 
 /** Points from level `level` to the next. */
-export const pointsToNext = (level: number) => 50 + 10 * (level - 1);
+const pointsToNext = (level: number) => 50 + 10 * (level - 1);
 
 /** Total points at which a level starts (level 1 at 0, level 10 at 810, level 20 at 2660, level 70 at 26910). */
 export function xpAtLevel(level: number): number {

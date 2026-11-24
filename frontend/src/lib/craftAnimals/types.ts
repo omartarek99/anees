@@ -50,7 +50,7 @@ export interface Paint {
 
 export type SkinFn = (g: Paint) => void;
 
-export type JointChan =
+type JointChan =
   /** limb swing: gain follows how fast the animal is moving */
   | 'walk'
   /** wing / fin beat: gain follows flapping */
@@ -91,7 +91,7 @@ export interface PartSpec {
 }
 
 /** How the animal gets around. */
-export type MoveKind =
+type MoveKind =
   /** walks on the ground, steps up one block, avoids ledges */
   | 'walk'
   /** hops: short ground leaps (rabbit, frog) */
@@ -103,7 +103,7 @@ export type MoveKind =
   /** floats slowly high above the ground (happy ghast) */
   | 'float';
 
-export interface Habitat {
+interface Habitat {
   /** biomes it spawns in. Omit = anywhere. */
   biomes?: readonly Biome[];
   /** relative spawn weight within its habitat (1 = common farm animal, 0.2 = rare) */

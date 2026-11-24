@@ -64,7 +64,7 @@ export function Env({ intensity = 0.55 }: { intensity?: number }) {
 }
 
 /** A round glow, bright in the middle fading to nothing: used additively for light bursts and halos. */
-export function useGlowTexture() {
+function useGlowTexture() {
   return useMemo(
     () =>
       canvasTexture(128, 128, (x) => {

@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, FEATURES_CHANGED_EVENT } from './api';
 import { useAuth } from './auth-context';
-import { lockedUntil, type Feature as LevelFeature } from './levels';
 
 // What the admin has switched on or off for this kind of account (backend lib/features.ts, the "Features" page of the admin panel). Asked for when the
 // app opens, again about once a minute while the page is in view, when the person comes back to the tab, and the moment the server answers "closed"
@@ -9,12 +8,17 @@ import { lockedUntil, type Feature as LevelFeature } from './levels';
 
 export type FeatureKey = 'reels' | 'map' | 'craft' | 'challenges' | 'worksheets' | 'ai_worksheets' | 'leaderboard' | 'friends' | 'teacher_upload';
 
+/** The pages a student's level opens (backend lib/levels.ts UNLOCK_LEVEL; the server sends the numbers with the feature switches). */
+export type LevelFeature = 'ranks' | 'leaderboard' | 'map' | 'quarry';
+
 const LEVEL_FREE_SWITCH: Partial<Record<LevelFeature, string>> = { map: 'map_open', quarry: 'craft_open' };
 
 type Snapshot = {
   site: { on: boolean; message: string | null };
   features: Record<string, boolean>;
   signup: { student: boolean; teacher: boolean };
+  /** what each level-locked page needs: its level, and the points that level starts at */
+  levels?: { unlock: Record<LevelFeature, number>; unlockXp: Record<LevelFeature, number> };
 };
 
 const OPEN: Snapshot = { site: { on: true, message: null }, features: {}, signup: { student: true, teacher: true } };
@@ -29,6 +33,8 @@ type Value = {
   siteMessage: string | null;
   /** The level a student still needs before this page opens, or null when it is open (their level is enough, or the admin opened it without a level). */
   levelLock: (feature: LevelFeature) => number | null;
+  /** The points at which the level that opens this page starts (0 until the server has answered). */
+  unlockXp: (feature: LevelFeature) => number;
   /** New accounts of this kind allowed? (for the sign-up page) */
   signupOn: (role: 'student' | 'teacher') => boolean;
   refresh: () => void;
@@ -81,7 +87,13 @@ export function FeaturesProvider({ children }: { children: ReactNode }) {
       siteOn: snap.site.on,
       siteMessage: snap.site.message,
       // the admin's "open without a level" switches are OFF unless the server says true (backend lib/features.ts map_open / craft_open)
-      levelLock: (feature) => (snap.features[LEVEL_FREE_SWITCH[feature] ?? ''] === true ? null : lockedUntil(user, feature)),
+      levelLock: (feature) => {
+        const need = snap.levels?.unlock[feature];
+        // not a student, not known yet (the server still refuses a locked page), or the admin opened it without a level
+        if (!user || user.role !== 'student' || !need || snap.features[LEVEL_FREE_SWITCH[feature] ?? ''] === true) return null;
+        return user.playerLevel < need ? need : null;
+      },
+      unlockXp: (feature) => snap.levels?.unlockXp[feature] ?? 0,
       signupOn: (role) => snap.signup[role] !== false,
       refresh: () => load(true),
     }),

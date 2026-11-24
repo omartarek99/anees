@@ -94,7 +94,7 @@ export async function compressVideoFile(inputPath: string): Promise<{ buffer: Bu
   }
 }
 
-export async function compressVideo(buffer: Buffer): Promise<{ buffer: Buffer; durationSeconds: number | null }> {
+async function compressVideo(buffer: Buffer): Promise<{ buffer: Buffer; durationSeconds: number | null }> {
   const workDir = await mkdtemp(join(tmpdir(), 'anees-video-'));
   const inputPath = join(workDir, 'input');
   const outputPath = join(workDir, 'output.mp4');

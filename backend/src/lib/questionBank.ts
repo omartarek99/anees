@@ -8,9 +8,9 @@ import { callGemini } from './gemini.js';
 // a teacher types) the matching bank lessons are found and handed to the AI, which writes new questions from them and works out the
 // correct answers itself.
 
-export type BankSubject = 'math' | 'science';
+type BankSubject = 'math' | 'science';
 export const BANK_IMAGE_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../question-bank/images');
-export const BANK_GRADES = [5, 6, 8] as const;
+const BANK_GRADES = [5, 6, 8] as const;
 export const isBankGrade = (g: unknown): g is (typeof BANK_GRADES)[number] => BANK_GRADES.some((x) => x === g);
 
 type BankQuestion = { kind: 'mcq' | 'fill' | 'tf' | 'problem'; text: string; image?: string };
@@ -147,7 +147,7 @@ async function pickWithAi(pool: BankLesson[], topic: string): Promise<BankLesson
   return ids.filter((n): n is number => Number.isInteger(n) && n >= 0 && n < pool.length).slice(0, 2).map((n) => pool[n]);
 }
 
-export type BankMatch = { lessons: BankLesson[]; reference: string };
+type BankMatch = { lessons: BankLesson[]; reference: string };
 
 /** The bank lessons that fit a lesson, plus a text block of their questions to put in the AI prompt. null when nothing fits. */
 export async function findBankMatch(params: { subject: BankSubject; grade: number | null; topic: string; topicAr?: string; scriptText?: string; scriptTextAr?: string }): Promise<BankMatch | null> {
@@ -177,7 +177,7 @@ export async function findBankMatch(params: { subject: BankSubject; grade: numbe
 }
 
 /** Reference text for the prompt: a spread of every kind of question from each lesson, capped so the prompt stays small. */
-export function buildReference(lessons: BankLesson[], maxChars = 6500): string {
+function buildReference(lessons: BankLesson[], maxChars = 6500): string {
   const perLesson = Math.floor(maxChars / lessons.length);
   const parts = lessons.map((l) => {
     const header = `# ${l.unit} -- ${l.title}`;
@@ -196,12 +196,3 @@ export function buildReference(lessons: BankLesson[], maxChars = 6500): string {
   return parts.join('\n\n');
 }
 
-/** The single best bank lesson for a title by word overlap alone (no AI call); null when nothing fits well. */
-export function matchByTitle(subject: BankSubject, grade: number | null, text: string): BankLesson | null {
-  const best = scoreLessons(lessonsFor(subject, grade), text)[0];
-  return best && best.score >= 0.4 ? best.lesson : null;
-}
-
-export function lessonsOf(subject: BankSubject, grade: number): BankLesson[] {
-  return lessonsFor(subject, grade);
-}

@@ -1,25 +1,26 @@
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
-import { STUDENT_LADDER, TEACHER_LADDER, divisionLabel } from '../lib/medalLevels';
+import { useMemo } from 'react';
+import { RANK_LADDER, TEACHER_RANK_LADDER, makeLadder, divisionLabel } from '../lib/medalLevels';
 import { RankBadge, type RankTier } from './RankBadge';
 
 // A student's (or, with `teacher`, a teacher's) rank on their profile: the eight tiers in a row (the ones reached are lit, the current one is ringed) and, under them, a bar
-// for how far they are through their current division. Each tier's divisions are wider than the one below, and a student is unranked
-// until level 10, where Iron 1 starts (see backend/src/lib/ranks.ts).
+// for how far they are through their current division. Each tier's divisions are wider than the one below; where they start comes from the
+// server with the profile (backend/src/lib/ranks.ts ladderStarts).
 
-export function MedalLevelBar({ points, teacher = false }: { points: number; teacher?: boolean }) {
+export function MedalLevelBar({ points, starts, teacher = false }: { points: number; starts: number[]; teacher?: boolean }) {
   const { t, lang } = useLanguage();
-  const ladder = teacher ? TEACHER_LADDER : STUDENT_LADDER;
+  const ladder = useMemo(() => makeLadder(teacher ? TEACHER_RANK_LADDER : RANK_LADDER, starts), [teacher, starts]);
   const { tiers, divisions, tierStart } = ladder;
-  const { current, next, unranked } = ladder.standingFor(points);
+  const { current, next } = ladder.standingFor(points);
   const frac = ladder.lineFraction(points);
   return (
     // dir="ltr": the bar is laid out the same way in Arabic as in English (first rank on the left, the bar filling to the right); only the words are Arabic.
     <div className={`card stack medal-bar${teacher ? " is-teacher" : ""}`} dir="ltr">
       <div className="flex-between" style={{ alignItems: 'baseline', flexWrap: 'wrap', gap: 6 }}>
         <h3 style={{ fontSize: 16, margin: 0 }}>{t('profile.medalTitle')}</h3>
-        <span className="medal-level-pill" style={{ background: unranked ? 'var(--sand-dark)' : `linear-gradient(135deg, ${current.tier.color}, color-mix(in srgb, ${current.tier.color} 55%, ${current.tier.colorDark}))`, color: '#14181f' }}>
-          {unranked ? t('levels.unranked') : t('profile.medalNow', { level: divisionLabel(current, lang) })}
+        <span className="medal-level-pill" style={{ background: `linear-gradient(135deg, ${current.tier.color}, color-mix(in srgb, ${current.tier.color} 55%, ${current.tier.colorDark}))`, color: '#14181f' }}>
+          {t('profile.medalNow', { level: divisionLabel(current, lang) })}
         </span>
       </div>
 
@@ -45,7 +46,7 @@ export function MedalLevelBar({ points, teacher = false }: { points: number; tea
         {tiers.map((tier, i) => {
           const reached = points >= tierStart[i];
           return (
-            <div key={tier.key} className={`medal-tier${reached ? ' is-reached' : ''}${!unranked && tier.key === current.tier.key ? ' is-current' : ''}`}>
+            <div key={tier.key} className={`medal-tier${reached ? ' is-reached' : ''}${tier.key === current.tier.key ? ' is-current' : ''}`}>
               <RankBadge tier={{ ...tier, key: tier.key as RankTier['key'], minXp: 0, nextMinXp: null, progress: 0, division: null }} size={44} showName={false} />
               <span>{pickText(lang, tier.name, tier.nameAr)}</span>
               <b>{tierStart[i]}</b>
@@ -55,7 +56,7 @@ export function MedalLevelBar({ points, teacher = false }: { points: number; tea
       </div>
 
       <p className="muted" style={{ fontSize: 13, margin: 0 }}>
-        {unranked ? t('levels.rankAt10') : next ? t('profile.medalToNext', { points: next.start - Math.max(0, points), level: divisionLabel(next, lang) }) : t('profile.medalTop')}
+        {next ? t('profile.medalToNext', { points: next.start - Math.max(0, points), level: divisionLabel(next, lang) }) : t('profile.medalTop')}
       </p>
     </div>
   );

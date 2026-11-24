@@ -27,7 +27,7 @@ export type BankItem = {
 
 export type SolvedItem = { choices: string[]; correctIndex: number; explanation: string; explanationAr: string };
 
-export const TF_CHOICES = ['صح', 'خطأ'];
+const TF_CHOICES = ['صح', 'خطأ'];
 
 export const keyOf = (subject: string, grade: number, text: string) => crypto.createHash('sha1').update(`${subject}|${grade}|${text}`).digest('hex').slice(0, 16);
 

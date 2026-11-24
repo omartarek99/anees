@@ -5,7 +5,7 @@
 // The AudioContext only starts after a click or key press (browsers refuse sound before that).
 // -------------------------------------------------------------------------------------------
 export type AudioSettings = { master: number; music: number; sfx: number; muted: boolean };
-export type Sfx = 'dig' | 'break' | 'place' | 'hit' | 'hurt' | 'growl' | 'splash' | 'eat' | 'pop';
+type Sfx = 'dig' | 'break' | 'place' | 'hit' | 'hurt' | 'growl' | 'splash' | 'eat' | 'pop';
 
 const KEY = 'anees_craft_audio';
 const DEFAULTS: AudioSettings = { master: 0.7, music: 0.5, sfx: 0.8, muted: false };
@@ -171,7 +171,7 @@ export function startMusic(): void {
   scheduleMusic();
 }
 
-export function stopMusic(): void {
+function stopMusic(): void {
   if (musicTimer !== null) window.clearInterval(musicTimer);
   musicTimer = null;
 }

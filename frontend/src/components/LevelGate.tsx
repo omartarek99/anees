@@ -3,14 +3,13 @@ import { Link } from 'react-router-dom';
 import { RiLockFill } from '@remixicon/react';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
-import { useFeatures } from '../lib/features-context';
-import { xpAtLevel, type Feature } from '../lib/levels';
+import { useFeatures, type LevelFeature as Feature } from '../lib/features-context';
 
 /** A page a student's level has not opened yet: says at which level it opens and points at what earns points meanwhile. */
 export function LevelGate({ feature, children }: { feature: Feature; children: ReactNode }) {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const { levelLock } = useFeatures();
+  const { levelLock, unlockXp } = useFeatures();
   const level = levelLock(feature);
   if (level === null) return <>{children}</>;
   const card = (
@@ -22,7 +21,7 @@ export function LevelGate({ feature, children }: { feature: Feature; children: R
       <p>{t(`levels.locked_${feature}`)}</p>
       {/* how close the student is: points still to earn, and a bar from the start to the level that opens this */}
       {(() => {
-        const from = 0, to = xpAtLevel(level), xp = Math.min(to, Math.max(from, user!.totalXp));
+        const from = 0, to = unlockXp(feature), xp = Math.min(to, Math.max(from, user!.totalXp));
         return (
           <div className="level-gate-progress">
             <p className="muted" style={{ margin: 0 }}>

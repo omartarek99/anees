@@ -1,3 +1,4 @@
+import { UNLOCK_LEVEL, xpAtLevel } from '../lib/levels.js';
 import { Router } from 'express';
 import { db } from '../db/db.js';
 import { SESSION_COOKIE, getUserIdForToken } from '../lib/session.js';
@@ -18,5 +19,7 @@ featuresRouter.get('/', (req, res) => {
     // the admin has no switches of its own: everything is on for it
     features: role === 'admin' ? {} : stateFor(role, userId),
     signup: { student: isFeatureOn('signup', 'student'), teacher: isFeatureOn('signup', 'teacher') },
+    // what a student's level opens, and the points each of those levels starts at (lib/levels.ts): the app's only copy of these numbers
+    levels: { unlock: UNLOCK_LEVEL, unlockXp: Object.fromEntries(Object.entries(UNLOCK_LEVEL).map(([k, l]) => [k, xpAtLevel(l)])) },
   });
 });

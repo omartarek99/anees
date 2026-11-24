@@ -59,7 +59,7 @@ const QUESTIONS_RESPONSE_SCHEMA = {
   },
 };
 
-export type GeminiResult<T> = { ok: true; data: T } | { ok: false; error: string };
+type GeminiResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
 export async function generateQuizQuestions(params: {
   scriptText: string;

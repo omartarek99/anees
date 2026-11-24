@@ -4,7 +4,7 @@ import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { pickText, translateApiError } from '../lib/i18n';
 import { useEscapeToClose } from '../lib/useEscapeToClose';
-import { QuizCard, type QuizAnswer, type QuizQuestion } from './QuizCard';
+import { Quiz, type QuizAnswer, type QuizQuestion } from './Quiz';
 import { QuizResults, type ResultItem } from './QuizResults';
 
 type QuizResponse = {
@@ -97,7 +97,7 @@ export function LevelQuizModal({ levelNumber, onClose }: { levelNumber: number; 
           </button>
         )}
 
-        {quiz && !result && <QuizCard questions={questions} onSubmit={submit} submitting={submitting} />}
+        {quiz && !result && <Quiz questions={questions} onSubmit={submit} submitting={submitting} matchPool={[]} />}
 
         {quiz && result && (
           <div className="stack">

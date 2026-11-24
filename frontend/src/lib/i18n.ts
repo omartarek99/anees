@@ -2730,7 +2730,7 @@ const ar: typeof en = {
   },
 };
 
-export const dictionaries: Record<Lang, typeof en> = { en, ar };
+const dictionaries: Record<Lang, typeof en> = { en, ar };
 
 function getByPath(obj: any, path: string): string | undefined {
   return path.split('.').reduce((acc, key) => (acc && typeof acc === 'object' ? acc[key] : undefined), obj);

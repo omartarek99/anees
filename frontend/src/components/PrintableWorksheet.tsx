@@ -7,7 +7,7 @@ import { QText } from './QText';
 /** Every worksheet is marked out of 20, whatever the number of questions. */
 const WORKSHEET_TOTAL = 20;
 
-export type PrintableQuestion = { id: number; text: string; choices: string[]; image?: string | null };
+type PrintableQuestion = { id: number; text: string; choices: string[]; image?: string | null };
 
 /** Renders into a portal on document.body (a sibling of #root, not nested inside the app
  * shell) so `@media print` (theme.css) can hide #root entirely and show only this --

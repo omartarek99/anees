@@ -30,9 +30,9 @@ export const teacherReelsRouter = asyncRouter();
 // the app accepts goes the other way, POST /:id/video, and is compressed by this server in the background; raise DIRECT_VIDEO_BYTES (to 100MB) if the
 // Supabase plan's file size limit is raised.
 const VIDEO_TYPE_EXTENSIONS: Record<string, string> = { 'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov' };
-export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 /** The most Supabase takes in one file from the browser on the free plan is 50MB; a little under it leaves room for the upload's own overhead. */
-export const DIRECT_VIDEO_BYTES = 49 * 1024 * 1024;
+const DIRECT_VIDEO_BYTES = 49 * 1024 * 1024;
 const VIDEO_TOO_LARGE = 'This video is bigger than 100MB. Choose a smaller video or make it shorter.';
 const VIDEO_BAD_TYPE = 'The video must be an MP4, WebM or MOV file smaller than 100MB. Choose another file.';
 // Phones record HEVC (H.265), which many browsers cannot play, and nothing re-encodes it now: ask for an H.264 / VP8 / VP9 / AV1 video instead.

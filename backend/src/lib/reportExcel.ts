@@ -9,7 +9,7 @@ import type { MonthlyUser, PageViewRow, ReportRow } from './reportData.js';
 // a guard against accidental or casual edits -- not encryption: anyone can still copy the values
 // into a new file.
 
-export type ReportLang = 'ar' | 'en';
+type ReportLang = 'ar' | 'en';
 
 const TEXT = {
   ar: {
@@ -351,7 +351,7 @@ function pageSetup(ws: ExcelJS.Worksheet, headerRow: number) {
   ws.headerFooter = { oddFooter: '&L&8Anees&C&8Page &P of &N&R&8&D' };
 }
 
-export type ReportInput = {
+type ReportInput = {
   lang: ReportLang;
   /** Grade filter -- applies to the students only; teachers have no grade. */
   grade: number | null;

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 const SERVICE_ACCOUNT_PATH = process.env.FIREBASE_SERVICE_ACCOUNT_PATH ?? './secrets/firebase-service-account.json';
 
 type ServiceAccount = { project_id: string; client_email: string; private_key: string; [key: string]: unknown };
-export type ServiceAccountResult = { ok: true; account: ServiceAccount; source: string } | { ok: false; reason: string };
+type ServiceAccountResult = { ok: true; account: ServiceAccount; source: string } | { ok: false; reason: string };
 
 function parseServiceAccount(raw: string): ServiceAccount {
   let parsed: unknown;

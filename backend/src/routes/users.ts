@@ -7,7 +7,7 @@ import { updateProfileSchema } from '../lib/schemas.js';
 import { moderateText } from '../lib/moderation.js';
 import { getLevelInfo, getMapLevel, teacherCreatorStats } from '../lib/xp.js';
 import { hasShield } from '../lib/battle.js';
-import { earnedAuraRank, getRankTier, getTeacherRankTier } from '../lib/ranks.js';
+import { earnedAuraRank, getRankTier, getTeacherRankTier, ladderStarts } from '../lib/ranks.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { AVATAR_PHOTO_BUCKET, AVATAR_PHOTO_PATH_PREFIX, deleteAvatarPhotoIfAny } from '../lib/avatarPhoto.js';
 import { looksLikeImage } from '../lib/imageValidation.js';
@@ -108,6 +108,8 @@ function profileSummary(user: any) {
     xpIntoLevel,
     xpForNext,
     rankTier: user.role === 'teacher' ? getTeacherRankTier(user.teacher_points ?? 0) : getRankTier(user.total_xp),
+    // the points each rank division starts at, for the rank bar
+    rankLadder: ladderStarts(user.role === 'teacher'),
     // A teacher makes the lessons instead of playing the map (index.ts): their profile shows what they made -- the same counts their teacher
     // points come from (lib/xp.ts) -- and their videos as a portfolio.
     ...(user.role === 'teacher' ? { creatorStats: teacherCreatorStats(user.id), videos: teacherVideos(user.id) } : playerStats(user.id)),

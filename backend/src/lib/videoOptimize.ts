@@ -15,7 +15,7 @@ import { VIDEO_PATH_PREFIX } from './reelVideo.js';
 // modest quality with the index at the front (compressVideoFile: +faststart), a fraction of the size, and playable at once.
 // It runs after the lesson is already saved (the original keeps playing until the optimised copy replaces it), one video at a time (a small shared
 // server), and a failure leaves the original in place. A file made here ends in OPTIMISED_SUFFIX, which is how it is told from one that still needs it.
-export const OPTIMISED_SUFFIX = '-opt.mp4';
+const OPTIMISED_SUFFIX = '-opt.mp4';
 
 const queue: number[] = [];
 let running = false;

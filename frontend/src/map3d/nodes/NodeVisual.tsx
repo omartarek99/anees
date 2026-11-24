@@ -13,7 +13,7 @@ import { BEACON, BEACON_Y, farPadModel, padModel } from './pad';
  * `hovered` is true while the pointer is over it. `still` is true for reduced-motion users: nothing moves by itself and a
  * hover is an instant change. `far` is true for a node far from where the camera looks: only a cheap static stand-in.
  */
-export interface NodeVisualProps {
+interface NodeVisualProps {
   node: MapNode;
   hovered: boolean;
   still: boolean;

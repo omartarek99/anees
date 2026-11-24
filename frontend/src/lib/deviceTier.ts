@@ -2,7 +2,7 @@
 // 'off' when the browser draws WebGL in software (no usable GPU: SwiftShader, llvmpipe, Microsoft Basic Render -- a full-screen particle
 // field there runs at about one frame a second) or the person asked to save data; 'lite' on phones and on computers with 4 cores or fewer or
 // 4 GB of memory or less; 'full' otherwise. Worked out once per page load. Development only: ?pf=full|lite|off forces one (performance tests).
-export type DeviceTier = 'full' | 'lite' | 'off';
+type DeviceTier = 'full' | 'lite' | 'off';
 
 let cached: DeviceTier | null = null;
 

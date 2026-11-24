@@ -133,7 +133,7 @@ export function Lights() {
 }
 
 /** Catches the shadows on the floor, so objects sit on something. */
-export function Floor() {
+function Floor() {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]} receiveShadow>
       <planeGeometry args={[40, 40]} />

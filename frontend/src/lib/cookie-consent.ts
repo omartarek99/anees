@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'anees_cookie_consent';
 
-export type ConsentChoice = 'accepted' | 'declined';
+type ConsentChoice = 'accepted' | 'declined';
 
 /** The session cookie itself (auth) is strictly necessary and never gated by this -- consent
  * only controls whether the optional, first-party pageview analytics (lib/analytics.ts) run.

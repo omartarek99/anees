@@ -19,7 +19,7 @@ function startMinuteForHour(date: Date): number {
   return hash[0] % (60 - WINDOW_MINUTES + 1);
 }
 
-export type DoublePointsStatus = {
+type DoublePointsStatus = {
   active: boolean;
   /** Stable id for "this specific window" (changes every hour) -- lets a client tell a
    * freshly-dismissed notification apart from a brand new hour's window. */

@@ -58,7 +58,7 @@ const PHONE_PATTERN = /\b\d[\d\-\s]{6,}\d\b/;
 const CONTACT_SOLICIT_PATTERN =
   /\b(add|follow|dm|message)\s+me\s+on\b|\bmy\s+(whats\s?app|snap(chat)?|insta(gram)?|number|phone|discord|tiktok)\b|\bwhats\s?app\s+me\b/i;
 
-export type ModerationResult = { allowed: true } | { allowed: false; reason: string };
+type ModerationResult = { allowed: true } | { allowed: false; reason: string };
 
 /** Profanity/slur blocklist check only -- no email/phone/contact-solicit heuristics.
  * Those exist to stop chat participants exchanging off-platform contact info, which

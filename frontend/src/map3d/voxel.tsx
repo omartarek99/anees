@@ -69,7 +69,7 @@ export function sphere(cx: number, cy: number, cz: number, r: number, c: string,
   return out;
 }
 
-export interface VoxelGeometry {
+interface VoxelGeometry {
   solid: THREE.BufferGeometry | null;
   glow: THREE.BufferGeometry | null;
 }
@@ -145,7 +145,7 @@ export interface Spot {
 }
 
 /** Many copies of one model in a single draw call (trees, cacti, pots, shells...). */
-export function VoxelInstances({ model, items }: { model: VoxelModel; items: readonly Spot[] }) {
+function VoxelInstances({ model, items }: { model: VoxelModel; items: readonly Spot[] }) {
   const geo = useMemo(() => model.get(), [model]);
   const solid = useRef<THREE.InstancedMesh>(null);
   const glow = useRef<THREE.InstancedMesh>(null);

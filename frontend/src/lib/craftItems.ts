@@ -35,38 +35,38 @@ import {
 
 // ---- non-block item ids -----------------------------------------------------------------
 export const STICK = 40;
-export const COAL = 41;
+const COAL = 41;
 export const IRON = 42;
 export const GOLD = 43;
-export const REDSTONE = 44;
-export const LAPIS = 45;
-export const DIAMOND = 46;
-export const EMERALD = 47;
-export const GLOWDUST = 48;
-export const WHEAT = 49;
-export const APPLE = 50;
+const REDSTONE = 44;
+const LAPIS = 45;
+const DIAMOND = 46;
+const EMERALD = 47;
+const GLOWDUST = 48;
+const WHEAT = 49;
+const APPLE = 50;
 export const RAW_PORK = 51;
-export const COOKED_PORK = 52;
-export const BREAD = 53;
-export const APPLE_PIE = 54;
-export const COOKIE = 55;
-export const STEW = 56;
+const COOKED_PORK = 52;
+const BREAD = 53;
+const APPLE_PIE = 54;
+const COOKIE = 55;
+const STEW = 56;
 export const BOTTLE = 57;
-export const POT_HEAL = 60;
-export const POT_SPEED = 61;
-export const POT_JUMP = 62;
-export const POT_NIGHT = 63;
-export const AXE = 70;
-export const PICK_WOOD = 71;
-export const PICK_STONE = 72;
-export const PICK_DIAMOND = 73;
-export const SWORD = 74;
+const POT_HEAL = 60;
+const POT_SPEED = 61;
+const POT_JUMP = 62;
+const POT_NIGHT = 63;
+const AXE = 70;
+const PICK_WOOD = 71;
+const PICK_STONE = 72;
+const PICK_DIAMOND = 73;
+const SWORD = 74;
 
-export type ItemKind = 'block' | 'material' | 'food' | 'potion' | 'tool';
+type ItemKind = 'block' | 'material' | 'food' | 'potion' | 'tool';
 export type PotionKind = 'heal' | 'speed' | 'jump' | 'night';
-export type ToolKind = 'axe' | 'pick' | 'sword';
+type ToolKind = 'axe' | 'pick' | 'sword';
 
-export type ItemDef = {
+type ItemDef = {
   nameKey: string;
   kind: ItemKind;
   emoji?: string; // shown in menu / hotbar for non-block items
@@ -150,7 +150,7 @@ export const POTION_SECONDS: Record<PotionKind, number> = { heal: 0, speed: 30, 
 
 // ---- recipes ----------------------------------------------------------------------------
 export type RecipeCategory = 'blocks' | 'tools' | 'food' | 'potions';
-export type Recipe = {
+type Recipe = {
   id: string;
   category: RecipeCategory;
   out: number;
@@ -267,7 +267,7 @@ export function blockDrop(blockId: number, rand: () => number): [number, number]
   }
 }
 
-export const CONSUMABLE_HOTBAR: number[] = [
+const CONSUMABLE_HOTBAR: number[] = [
   BREAD,
   COOKED_PORK,
   APPLE_PIE,
@@ -280,9 +280,9 @@ export const CONSUMABLE_HOTBAR: number[] = [
   POT_JUMP,
   POT_NIGHT,
 ];
-export const TOOL_HOTBAR: number[] = [AXE, PICK_WOOD, PICK_STONE, PICK_DIAMOND, SWORD];
-export const CORE_HOTBAR: number[] = [GRASS, DIRT, STONE, COBBLE, PLANKS, GLASS];
-export const EXTRA_BLOCK_HOTBAR: number[] = [
+const TOOL_HOTBAR: number[] = [AXE, PICK_WOOD, PICK_STONE, PICK_DIAMOND, SWORD];
+const CORE_HOTBAR: number[] = [GRASS, DIRT, STONE, COBBLE, PLANKS, GLASS];
+const EXTRA_BLOCK_HOTBAR: number[] = [
   WOOD,
   LEAVES,
   SAND,

@@ -9,7 +9,7 @@ import { moderateText } from './moderation.js';
 // have given their name, school and grade (a student) or their name, school, subject and ID (a teacher): routes/auth.ts POST /complete-profile,
 // and the gate in middleware/auth.ts.
 
-export type GoogleIdentity = { email: string; uid: string; name: string };
+type GoogleIdentity = { email: string; uid: string; name: string };
 
 export async function verifyGoogleToken(idToken: string): Promise<{ ok: true; identity: GoogleIdentity } | { ok: false; error: string }> {
   const r = await firebaseLookup(idToken);

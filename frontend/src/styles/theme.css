@@ -5022,7 +5022,7 @@ label,
   }
 }
 
-/* ---------------- A reel's quiz (ReelQuiz): multiple-choice tiles and a matching set ---------------- */
+/* ---------------- A quiz (Quiz.tsx): multiple-choice tiles and a matching set ---------------- */
 .rq-kind {
   margin: 0 0 6px;
   color: var(--maroon);
@@ -5229,16 +5229,6 @@ label,
   gap: 10px;
 }
 
-/* a student with no rank yet (below level 10): a plain dashed disc where the rank artwork goes */
-.rank-unranked {
-  display: inline-grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 2px dashed var(--ink-soft);
-  color: var(--ink-soft);
-  font-weight: 900;
-  line-height: 1;
-}
 
 /* ---------------- Admin > Features: two tabs, and one card per part of the site with a switch for students and one for teachers ---------------- */
 /* Tabs: one pill track, the chosen tab is the gold one. */

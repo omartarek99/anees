@@ -1,6 +1,6 @@
 import { RiCheckboxCircleFill, RiCloseCircleFill, RiLightbulbLine } from '@remixicon/react';
 import { QFigure } from './QFigure';
-import type { QuizQuestion } from './QuizCard';
+import type { QuizQuestion } from './Quiz';
 import { useLanguage } from '../lib/language-context';
 import { pickText } from '../lib/i18n';
 import { QText } from './QText';

@@ -127,7 +127,7 @@ export function HBarList({ rows }: { rows: { key: string; label: ReactNode; valu
   );
 }
 
-export type DonutSlice = { key: string; label: string; value: number; color: string };
+type DonutSlice = { key: string; label: string; value: number; color: string };
 
 const DONUT_SIZE = 120;
 const DONUT_R = 44;

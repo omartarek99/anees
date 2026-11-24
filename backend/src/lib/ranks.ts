@@ -1,6 +1,6 @@
 import { RANK_START_XP } from './levels.js';
 
-export type RankTierKey = 'iron' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'warrior' | 'champion';
+type RankTierKey = 'iron' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'warrior' | 'champion';
 
 type RankTierDef = {
   key: string;
@@ -16,11 +16,11 @@ type RankTierDef = {
 
 // Ordered low to high. total_xp (boosted by quizzes, bosses, worksheets, and reel watch time) determines a student's persistent rank,
 // shown on the leaderboard and profile, and it is the same ladder as the points bar on the profile (frontend lib/medalLevels.ts) and
-// the tier certificates (lib/rankCertificates.ts). A student is unranked until level 10 (lib/levels.ts RANK_START_XP); Iron 1 starts
-// there. Eighteen divisions -- Iron 1-3, Bronze 1-3, Silver 1-3, Gold 1-3, Platinum 1-3, Diamond, Warrior, Champion -- and each tier's
+// the tier certificates (lib/rankCertificates.ts). The divisions are laid out from level 10's points (lib/levels.ts RANK_START_XP), and
+// Iron 1 is everyone's first rank: it covers 0 points up to Iron 2. Eighteen divisions -- Iron 1-3, Bronze 1-3, Silver 1-3, Gold 1-3, Platinum 1-3, Diamond, Warrior, Champion -- and each tier's
 // divisions are wider than the one below (300 points an Iron division up to 1600 for Warrior), so the higher ranks take real work:
 // Champion is about 10,750 points past level 10. The questions get harder on the way up too (see difficultyTierFor).
-export const RANK_TIERS: (RankTierDef & { key: RankTierKey })[] = [
+const RANK_TIERS: (RankTierDef & { key: RankTierKey })[] = [
   { key: 'iron', name: 'Iron', nameAr: 'حديدي', color: '#9aa3b0', colorDark: '#5f6875', divisions: 3, width: 300 },
   { key: 'bronze', name: 'Bronze', nameAr: 'برونزي', color: '#c88355', colorDark: '#8a5a35', divisions: 3, width: 400 },
   { key: 'silver', name: 'Silver', nameAr: 'فضي', color: '#c8ccd4', colorDark: '#8b9099', divisions: 3, width: 500 },
@@ -36,7 +36,7 @@ export const RANK_TIERS: (RankTierDef & { key: RankTierKey })[] = [
  * Consultant (معلّم، مُرشد، أخصائي، خبير، أستاذ بروفسيور، استشاري) -- 16 divisions, the first five tiers in three, so every rank but the last is 300 teacher points wide. The keys are also the
  * file names of the badges (public/images/ranks/<key>.webp). Mirrored by TEACHER_RANK_LADDER in the frontend's lib/medalLevels.ts.
  */
-export const TEACHER_RANK_TIERS: RankTierDef[] = [
+const TEACHER_RANK_TIERS: RankTierDef[] = [
   { key: 'teacher_teacher', name: 'Teacher', nameAr: 'معلّم', color: '#3f9a63', colorDark: '#1f5a35', divisions: 3 },
   { key: 'teacher_guide', name: 'Guide', nameAr: 'مُرشد', color: '#5fb0ad', colorDark: '#2a6f6c', divisions: 3 },
   { key: 'teacher_specialist', name: 'Specialist', nameAr: 'أخصائي', color: '#9a6fd0', colorDark: '#5a3a8a', divisions: 3 },
@@ -60,7 +60,7 @@ function expandDivisions(tiers: RankTierDef[], per: number, from = 0): Division[
 }
 
 /** Points one teacher division is wide (teacher points: a lesson posted is 20, a like 2 and a worksheet a student solved 5 -- lib/xp.ts). */
-export const TEACHER_POINTS_PER_DIVISION = 100;
+const TEACHER_POINTS_PER_DIVISION = 100;
 
 /** Every student division, lowest first: 18 of them. `division` is 1-3, or null for the single-division tiers. */
 const DIVISIONS = expandDivisions(RANK_TIERS, 0, RANK_START_XP);
@@ -86,7 +86,6 @@ function ladderFor(points: number, divisions: Division[]) {
     minXp: start,
     nextMinXp,
     progress: nextMinXp === null ? 1 : Math.min(1, Math.max(0, (points - start) / (nextMinXp - start))),
-    unranked: false,
   };
 }
 
@@ -108,7 +107,6 @@ export const RANK_KEYS = RANK_TIERS.map((t) => t.key) as [RankTierKey, ...RankTi
  */
 export function earnedAuraRank(picked: string | null | undefined, totalXp: number): RankTierKey | 'normal' | null {
   if (picked === 'normal') return 'normal';
-  if (getRankTier(totalXp).unranked) return null;
   const i = RANK_KEYS.indexOf(picked as RankTierKey);
   return i >= 0 && i <= RANK_KEYS.indexOf(getRankTier(totalXp).key) ? RANK_KEYS[i] : null;
 }
@@ -132,3 +130,6 @@ export function tierStartXp(key: RankTierKey): number {
 export function difficultyTierFor(totalXp: number): number {
   return 1 + Math.floor((getRankTier(totalXp).index * 9) / (DIVISION_COUNT - 1));
 }
+
+/** Where each division of a ladder starts, lowest first: sent with a profile so the app's rank bar (MedalLevelBar) has no copy of these numbers. */
+export const ladderStarts = (teacher: boolean) => (teacher ? TEACHER_DIVISIONS : DIVISIONS).map((d, i) => (i === 0 ? 0 : d.start)); // the first rank covers 0 points up

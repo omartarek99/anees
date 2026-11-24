@@ -14,7 +14,7 @@ import { noteRankDrop } from './xp.js';
 // GET /api/violations serves this list as it is, so the Terms page and the admin panel always show what is really enforced.
 export type Measure = { deductPoints?: boolean; revoke?: 'unearned' | 'all'; suspendDays?: number; deactivate?: boolean };
 
-export type Violation = {
+type Violation = {
   key: string;
   title: string;
   titleAr: string;
@@ -119,7 +119,7 @@ function sendWarning(userId: number, message: string, adminId: number): number {
 export const VIOLATION_KEYS = VIOLATIONS.map((v) => v.key) as [string, ...string[]];
 
 /** The measure for the `offense`-th time (1 = first) a rule is broken. */
-export function measureFor(violation: Violation, offense: number): Measure {
+function measureFor(violation: Violation, offense: number): Measure {
   return violation.steps[Math.min(offense, violation.steps.length) - 1];
 }
 

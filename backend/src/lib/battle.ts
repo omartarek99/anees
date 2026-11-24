@@ -4,10 +4,10 @@ import { db } from '../db/db.js';
 // clock starts with the first loss, not the last). Losing all three before then locks the guardians until that same moment. A cleared boss can be
 // replayed freely (see map.ts).
 
-export const BATTLE_TRIES = 3;
-export const BATTLE_WAIT_MS = 24 * 60 * 60 * 1000;
+const BATTLE_TRIES = 3;
+const BATTLE_WAIT_MS = 24 * 60 * 60 * 1000;
 
-export type BattleStatus = {
+type BattleStatus = {
   triesLeft: number;
   maxTries: number;
   /** ISO time the wait ends, or null when the player can fight. */

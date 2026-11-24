@@ -13,7 +13,7 @@ const RESEND_API_KEY = clean(process.env.RESEND_API_KEY);
 const EMAIL_FROM = clean(process.env.EMAIL_FROM)?.replace(/^<([^<>]+)>$/, '$1');
 const EMAIL_REPLY_TO = clean(process.env.EMAIL_REPLY_TO);
 
-export const resendConfigured = !!(RESEND_API_KEY && EMAIL_FROM);
+const resendConfigured = !!(RESEND_API_KEY && EMAIL_FROM);
 
 if (!resendConfigured) {
   console.warn(
@@ -38,7 +38,7 @@ if (resendConfigured) {
 export type SendResult = { ok: true } | { ok: false; error: string };
 type EmailContent = { subject: string; html: string; text: string };
 
-export function verificationContent(link: string, lang: 'ar' | 'en'): EmailContent {
+function verificationContent(link: string, lang: 'ar' | 'en'): EmailContent {
   if (lang === 'ar') {
     return {
       subject: 'فعّل حسابك في أنيس',
@@ -72,7 +72,7 @@ export function verificationContent(link: string, lang: 'ar' | 'en'): EmailConte
 }
 
 /** The 6-digit-code version of the verification email (the code is typed on the site). */
-export function otpContent(code: string, lang: 'ar' | 'en'): EmailContent {
+function otpContent(code: string, lang: 'ar' | 'en'): EmailContent {
   const codeBox = `<p dir="ltr" style="text-align:center;margin:26px 0"><span style="display:inline-block;background:#f6f1ea;border:2px dashed #8a1538;border-radius:14px;padding:14px 26px;font-family:Consolas,Menlo,monospace;font-size:36px;font-weight:bold;letter-spacing:10px;color:#8a1538">${code}</span></p>`;
   if (lang === 'ar') {
     return {
@@ -107,7 +107,7 @@ export function otpContent(code: string, lang: 'ar' | 'en'): EmailContent {
 }
 
 /** The "reset your password" email: same look as the verification email, with the code in a box. */
-export function resetOtpContent(code: string, lang: 'ar' | 'en'): EmailContent {
+function resetOtpContent(code: string, lang: 'ar' | 'en'): EmailContent {
   const codeBox = `<p dir="ltr" style="text-align:center;margin:26px 0"><span style="display:inline-block;background:#f6f1ea;border:2px dashed #8a1538;border-radius:14px;padding:14px 26px;font-family:Consolas,Menlo,monospace;font-size:36px;font-weight:bold;letter-spacing:10px;color:#8a1538">${code}</span></p>`;
   if (lang === 'ar') {
     return {
@@ -186,7 +186,7 @@ export function sendOtpEmail(to: string, code: string, lang: 'ar' | 'en'): Promi
 const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /** The email that delivers a certificate: its picture and a button to the profile, in Arabic and then English. */
-export function certificateContent(title: string, imageUrl: string): EmailContent {
+function certificateContent(title: string, imageUrl: string): EmailContent {
   const picture = escapeHtml(imageUrl.startsWith('/') ? `${FRONTEND_ORIGIN}${imageUrl}` : imageUrl);
   const profile = `${FRONTEND_ORIGIN}/profile`;
   const name = escapeHtml(title);

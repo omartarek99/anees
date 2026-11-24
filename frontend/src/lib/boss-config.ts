@@ -1,4 +1,4 @@
-export type MechanicType = 'standard' | 'shield' | 'combo' | 'regen' | 'enrage';
+type MechanicType = 'standard' | 'shield' | 'combo' | 'regen' | 'enrage';
 
 export type BossArtKey =
   | 'sandworm'
@@ -12,7 +12,7 @@ export type BossArtKey =
   | 'stoneColossus'
   | 'falconGuardian';
 
-export type BossConfig = {
+type BossConfig = {
   levelNumber: number;
   mechanic: MechanicType;
   artKey: BossArtKey;
@@ -27,7 +27,7 @@ export type BossConfig = {
   regenFactor?: number;
 };
 
-export const BOSS_ROSTER: BossConfig[] = [
+const BOSS_ROSTER: BossConfig[] = [
   {
     levelNumber: 5,
     mechanic: 'standard',

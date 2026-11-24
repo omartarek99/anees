@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 
 const STORAGE_KEY = 'anees_theme';
 
-export type Theme = 'light' | 'dark';
+type Theme = 'light' | 'dark';
 
 type ThemeContextValue = {
   theme: Theme;

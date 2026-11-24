@@ -3,25 +3,24 @@ import { useLanguage } from '../lib/language-context';
 import { choiceLabel } from '../lib/bidi';
 import { QText } from './QText';
 import { QFigure } from './QFigure';
-import type { QuizQuestion } from './QuizCard';
 
-export type ReelQuizQuestion = QuizQuestion & { format?: 'choice' | 'match' };
-export type ReelQuizAnswer = { questionId: number; choiceIndex: number } | { questionId: number; matchIndex: number };
+export type QuizQuestion = { id: number; text: string; choices: string[]; image?: string | null; format?: 'choice' | 'match' };
+export type QuizAnswer = { questionId: number; choiceIndex: number } | { questionId: number; matchIndex: number };
 
-// A reel's quiz in two styles (the server decides which question is which, backend/src/routes/reels.ts matchSet):
+// A quiz (reels, worksheets, map levels) in two styles (the server decides which question is which, backend/src/routes/reels.ts matchSet):
 // - multiple choice: the answers as lettered tiles, two a row;
 // - matching: the questions in a column and their answers in a pool below; pick a question, then the answer that goes with it
 //   (or the answer first, then the question). Each answer goes with one question; giving it to another moves it there.
-export function ReelQuiz({
+export function Quiz({
   questions,
   matchPool,
   onSubmit,
   submitting,
   onDirty,
 }: {
-  questions: ReelQuizQuestion[];
+  questions: QuizQuestion[];
   matchPool: string[];
-  onSubmit: (answers: ReelQuizAnswer[]) => void;
+  onSubmit: (answers: QuizAnswer[]) => void;
   submitting: boolean;
   /** told whether any answer has been given yet, so leaving can ask first */
   onDirty?: (dirty: boolean) => void;

@@ -10,7 +10,7 @@ import { GROVES, isMeadow, MASSIFS } from './falconTerrain';
 // Where Falcon's Peak's static scenery stands. Seeded, so it is the same on every device; everything keeps off the road and the
 // level pads and stands on the terrain. Call it once the zones are registered (it reads ground heights).
 
-export interface FalconLayout {
+interface FalconLayout {
   /** Everything that does not move: one Baked. */
   parts: Placement[];
   /** The flag pole (the cloth waves on it). */

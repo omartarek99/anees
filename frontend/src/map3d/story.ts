@@ -9,7 +9,7 @@ export const KEY_COUNT = 10;
 /** The world a level belongs to, 0..9 (levels 1-5 are world 0, 6-10 world 1, ...). */
 export const worldOf = (level: number) => Math.floor((level - 1) / 5);
 
-export type MilestoneId = 'mapA' | 'mapB' | 'ring' | 'shield';
+type MilestoneId = 'mapA' | 'mapB' | 'ring' | 'shield';
 
 export interface Milestone {
   id: MilestoneId;
