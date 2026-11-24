@@ -55,10 +55,8 @@ const generateSchema = z
   .refine((b) => b.subject || b.reelId, { message: 'Choose a subject or a video first.' });
 
 // Videos a user can build a worksheet from -- the same visibility as the reels feed
-// (routes/reels.ts): a student sees the teacher videos tagged with their own grade, a
-// teacher sees the videos they uploaded themselves.
-function loadVisibleVideo(reelId: number, userId: number) {
-  const user = db.prepare(`SELECT grade FROM users WHERE id = ?`).get(userId) as { grade: number | null } | undefined;
+// (routes/reels.ts): every teacher video of every grade.
+function loadVisibleVideo(reelId: number, _userId: number) {
   const reel = db
     .prepare(
       `SELECT r.*, s.key as subject_key, s.name as subject_name FROM reels r
@@ -66,9 +64,7 @@ function loadVisibleVideo(reelId: number, userId: number) {
        WHERE r.id = ? AND r.grade IS NOT NULL AND r.author_user_id IS NOT NULL`
     )
     .get(reelId) as any;
-  if (!reel) return null;
-  if (reel.author_user_id === userId || (user?.grade && reel.grade === user.grade)) return reel;
-  return null;
+  return reel ?? null;
 }
 
 // The figures of the book's questions (question-bank/images). Only a plain file name is accepted.
@@ -87,18 +83,17 @@ worksheetsRouter.get('/image/:name', (req, res) => {
   res.type('image/jpeg').send(fs.readFileSync(file));
 });
 
-worksheetsRouter.get('/videos', (req, res) => {
-  const user = db.prepare(`SELECT grade FROM users WHERE id = ?`).get(req.userId!) as { grade: number | null } | undefined;
+worksheetsRouter.get('/videos', (_req, res) => {
   const rows = db
     .prepare(
       `SELECT r.id, r.title, r.title_ar, r.grade, s.key as subject_key, u.display_name as author_name
        FROM reels r
        JOIN subjects s ON s.id = r.subject_id
        LEFT JOIN users u ON u.id = r.author_user_id
-       WHERE r.grade IS NOT NULL AND r.author_user_id IS NOT NULL AND (r.author_user_id = ? OR r.grade = ?)
+       WHERE r.grade IS NOT NULL AND r.author_user_id IS NOT NULL
        ORDER BY r.id DESC`
     )
-    .all(req.userId!, user?.grade ?? -1) as any[];
+    .all() as any[];
   res.json({
     videos: rows.map((r) => ({
       id: r.id,

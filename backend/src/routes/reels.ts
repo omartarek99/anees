@@ -20,12 +20,12 @@ reelsRouter.get('/double-points-status', (_req, res) => {
 
 // Videos and the adventure map are separate systems: a video has its own quiz (reel_questions), and nothing in here reads or writes map
 // levels or level progress -- the map's questions live in their own pool and routes (routes/mapQuiz.ts, routes/map.ts). A video is
-// for one grade: a student can watch and take the quiz of the videos tagged with their own grade, a teacher of any.
+// tagged with a grade, but every signed-in account can watch and take the quiz of any of them (a grade 6 student may revise the grade 5 videos).
 function visibleReel(userId: number, reelId: number): any | null {
   const reel = db.prepare(`SELECT * FROM reels WHERE id = ? AND grade IS NOT NULL`).get(reelId) as any;
   if (!reel) return null;
-  const user = db.prepare(`SELECT grade, role FROM users WHERE id = ?`).get(userId) as { grade: number | null; role: string } | undefined;
-  return user && (user.role === 'teacher' || user.grade === reel.grade) ? reel : null;
+  const user = db.prepare(`SELECT 1 FROM users WHERE id = ?`).get(userId);
+  return user ? reel : null;
 }
 
 // Every lesson the caller can watch, in one response: each reel with its subject, its author (`rankKey` is the rank the uploader's picture is
@@ -49,16 +49,9 @@ function matchSet(rows: QuizRow[]) {
 
 reelsRouter.get('/feed', (req, res) => {
   // Only teachers' grade-based videos live in Reels. The adventure-map levels are plain question rounds (routes/mapQuiz.ts), with no
-  // video behind them. The lessons are always available (nothing to unlock, no lock state). A student gets every lesson tagged with their own grade.
-  // Teachers don't set a grade at signup, so they see every grade-based lesson from every grade and
-  // every teacher -- the same full library a student is shown, not just the ones they uploaded.
-  const user = db.prepare(`SELECT grade, role FROM users WHERE id = ?`).get(req.userId!) as { grade: number | null; role: string };
-  const scope =
-    user?.role === 'teacher' ? { where: `r.grade IS NOT NULL AND r.video_url IS NOT NULL`, params: [] as number[] } : user?.grade ? { where: `r.grade = ? AND r.video_url IS NOT NULL`, params: [user.grade] } : null;
-  if (!scope) {
-    res.json([]);
-    return;
-  }
+  // video behind them. The lessons are always available (nothing to unlock, no lock state). Everyone sees the whole library -- every grade and every
+  // teacher -- so a student can also watch the videos of the grades below theirs.
+  const scope = { where: `r.grade IS NOT NULL AND r.video_url IS NOT NULL`, params: [] as number[] };
   const reels = db
     .prepare(
       `SELECT r.*, s.key AS subject_key, s.name AS subject_name, s.name_ar AS subject_name_ar, s.icon AS subject_icon,
