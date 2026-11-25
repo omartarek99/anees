@@ -347,9 +347,9 @@ export function ReelsPage() {
           wrapper resets back to the real page direction so the reel's own caption/badge/exit-
           button logical-property layout still mirrors correctly for Arabic. */}
       <div className="reels-frame-row flex-center gap-md" style={{ direction: 'ltr' }}>
-        <div ref={wheelFrame} className="reels-stage" style={{ direction: dir, width: 'min(100%, 560px)', height: '100%', position: 'relative' }}>
-        {/* Floating overlay instead of a block above the frame -- doesn't eat into the
-            frame's own height budget. */}
+        <div ref={wheelFrame} className="reels-stage" style={{ direction: dir, width: 'min(100%, 560px)', height: '100%' }}>
+        {/* For you / Playlists: a bar of buttons above the reel (not over the video), the playlists under it */}
+        <div className="reels-switch">
         <div className="reels-tabs" role="tablist">
           {(['forYou', 'playlists'] as const).map((k) => {
             const on = k === 'forYou' ? tab === 'forYou' : tab !== 'forYou';
@@ -369,6 +369,8 @@ export function ReelsPage() {
             ))}
           </div>
         )}
+        </div>
+        <div className="reels-screen">
         {slides.length === 0 ? (
           <div className="reels-playlist-empty">{t('reels.playlistEmpty')}</div>
         ) : (
@@ -414,6 +416,7 @@ export function ReelsPage() {
           ))}
         </Swiper>
         )}
+        </div>
         </div>
 
         {/* Action rail lives outside the reel frame (TikTok-desktop style), always reflecting

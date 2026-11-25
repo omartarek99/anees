@@ -2254,8 +2254,9 @@ button.list-row.selected {
     inset-inline-end: 10px;
     /* Anchored above center, not bottom: the caption below the video is real, often-long
        text (not TikTok's thin one-line overlay), so its top edge moves depending on how
-       much there is -- a fixed bottom offset would collide with it on a longer lesson. */
-    top: 38%;
+       much there is -- a fixed bottom offset would collide with it on a longer lesson. The For you / Playlists bar sits above the reel,
+       so the rail starts a little lower to stay clear of it. */
+    top: calc(38% + 48px);
     transform: translateY(-50%);
     z-index: 3;
     padding-bottom: 0 !important;
@@ -2883,70 +2884,74 @@ html {
 .reels-frame-row {
   height: 100vh;
 }
-/* ReelsPage's tabs over the top of the reel (For you / Playlists), TikTok-style: white text on the video, the chosen one underlined */
+/* ReelsPage: For you / Playlists as a bar of buttons above the reel, the reel filling what is left under it */
 .reels-stage {
-  --reel-badge-top: 52px;
-}
-.reels-stage:has(.reels-playlists) {
-  --reel-badge-top: 92px;
-}
-.reels-tabs,
-.reels-playlists {
-  position: absolute;
-  inset-inline: 0;
-  z-index: 2;
   display: flex;
-  justify-content: center;
-  gap: 6px;
-  pointer-events: none;
+  flex-direction: column;
+}
+.reels-switch {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #0b0b0f;
+}
+.reels-screen {
+  position: relative;
+  flex: 1;
+  min-block-size: 0;
 }
 .reels-tabs {
-  top: 8px;
-  gap: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
 }
 .reels-playlists {
-  top: 48px;
-  padding-inline: 12px;
-  overflow-x: auto;
+  display: flex;
   justify-content: safe center;
+  gap: 6px;
+  overflow-x: auto;
   scrollbar-width: none;
 }
 .reels-tab,
 .reels-playlist {
-  pointer-events: auto;
   border: none;
   font: inherit;
   cursor: pointer;
   white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
 }
 .reels-tab {
-  padding: 6px 2px;
-  background: none;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 16px;
-  font-weight: 700;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
-  border-block-end: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 15.5px;
+  font-weight: 800;
+}
+.reels-tab:hover {
+  color: #fff;
 }
 .reels-tab.is-on {
-  color: #fff;
-  border-block-end-color: #fff;
+  background: #fff;
+  color: #14141a;
 }
 .reels-playlist {
   flex: 0 0 auto;
-  padding: 5px 14px;
+  padding: 6px 14px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.35);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.85);
   font-size: 13.5px;
   font-weight: 700;
-  transition: background 0.15s, color 0.15s;
+}
+.reels-playlist:hover {
+  background: rgba(255, 255, 255, 0.18);
 }
 .reels-playlist.is-on {
-  background: #fff;
+  background: var(--gold);
   color: #14141a;
 }
 .reels-tab:focus-visible,
@@ -2954,18 +2959,11 @@ html {
   outline: 3px solid var(--gold);
   outline-offset: 2px;
 }
-/* a quiz or its results fill the reel: the tabs step aside */
-.reels-stage:has(.swiper-slide-active .reel-sheet) :is(.reels-tabs, .reels-playlists) {
-  display: none;
-}
-.reels-stage:has(.swiper-slide-active .reel-sheet) {
-  --reel-badge-top: 14px;
-}
 .reels-playlist-empty {
   display: grid;
   place-items: center;
   height: 100%;
-  padding: 120px 32px 32px;
+  padding: 32px;
   background: #0b0b0f;
   color: rgba(255, 255, 255, 0.8);
   text-align: center;

@@ -326,7 +326,7 @@ export const ReelSlide = memo(function ReelSlide({
       </div>
 
       {/* level badge */}
-      <div style={{ position: 'absolute', top: 'var(--reel-badge-top, 14px)', insetInlineStart: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ position: 'absolute', top: 14, insetInlineStart: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
         <span className="badge badge-gold">
           {data.levelNumber < 0 ? t('reels.bonusLesson') : t('reels.level', { n: data.levelNumber })}
         </span>
