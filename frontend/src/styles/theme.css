@@ -3475,8 +3475,9 @@ label,
   inline-size: 14px;
   block-size: 14px;
   border-radius: 50%;
-  background: var(--surface-chip);
-  border: 1.5px solid var(--glass-border);
+  /* a key still to win: an empty ring in the text colour, so it reads on the pale glass panel */
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  border: 2px solid color-mix(in srgb, var(--ink) 30%, transparent);
 }
 .story-pips i.is-on {
   background: var(--gold);
@@ -3497,22 +3498,30 @@ label,
   gap: 6px;
   padding: 4px 12px;
   border-radius: 99px;
-  background: var(--surface-chip);
-  border: 1px solid var(--glass-border);
+  /* an item still to win: readable text on a faint tint with a dashed edge (faded to half it vanished into the glass); only its icon is grey */
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  border: 1.5px dashed color-mix(in srgb, var(--ink) 28%, transparent);
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
   font-size: 0.85rem;
   font-weight: 700;
-  opacity: 0.5;
+}
+.story-bag li > span {
   filter: grayscale(1);
+  opacity: 0.7;
 }
 .story-bag li.is-owned {
-  opacity: 1;
+  background: color-mix(in srgb, var(--gold) 22%, transparent);
+  border: 1.5px solid var(--gold);
+  color: var(--ink);
+}
+.story-bag li.is-owned > span {
   filter: none;
-  border-color: var(--gold);
+  opacity: 1;
 }
 .story-next {
   margin: 0;
   font-size: 0.9rem;
-  opacity: 0.85;
+  color: color-mix(in srgb, var(--ink) 80%, transparent);
 }
 /* A phone: the keys panel above the map stays short. The items are one row that scrolls sideways instead of three rows of chips. */
 @media (max-width: 640px) {
