@@ -56,6 +56,9 @@ type FlatReelEntry = {
   comingSoon: boolean;
   level: { levelNumber: number; title: string; titleAr?: string | null; kind: string };
   subject: { key: string; name: string; nameAr?: string | null; icon: string };
+  grade: number | null;
+  /** where the video sits in the books (backend lib/questionBank.ts curriculumPlace): its unit (skill area), lesson and book order; null when unknown */
+  place: { unit: string; lesson: string; order: number } | null;
   reel: {
     id: number;
     title: string;
@@ -199,13 +202,15 @@ export function ReelsPage() {
   const [brokenIds, setBrokenIds] = useState<number[]>([]);
   const handleVideoFailed = useCallback((reelId: number) => setBrokenIds((b) => (b.includes(reelId) ? b : [...b, reelId])), []);
 
-  // For you: every lesson, newest first (the server's order). A playlist: that subject's lessons only.
+  // For you: every lesson in a random order (the server's). A playlist: one subject and one grade, in curriculum order (unit, then lesson).
   const [tab, setTab] = useState<Tab>('forYou');
+  const [grade, setGrade] = useState<number | null>(null);
   const [lastPlaylist, setLastPlaylist] = useState<Tab>('math');
   const pickTab = (next: Tab) => {
     if (next === tab) return;
     if (next !== 'forYou') setLastPlaylist(next);
     setTab(next);
+    setGrade(null); // the student's own grade, or the first one there is (below)
     setActiveIndex(0);
   };
 
@@ -220,6 +225,8 @@ export function ReelsPage() {
         subjectIcon: detail.subject.icon,
         subjectKey: detail.subject.key,
         subjectName: pickText(lang, detail.subject.name, detail.subject.nameAr),
+        grade: detail.grade,
+        place: detail.place,
         author: detail.reel.author,
         questions: [...detail.reel.questions]
           .sort((a, b) => a.order - b.order)
@@ -235,7 +242,19 @@ export function ReelsPage() {
       })),
     [rawDetails, lang, brokenIds]
   );
-  const slides = useMemo(() => (tab === 'forYou' ? allSlides : allSlides.filter((s) => s.subjectKey === tab)), [allSlides, tab]);
+  // the grades this subject has videos for, and the one shown: picked, else the student's own, else the first
+  const grades = useMemo(
+    () => (tab === 'forYou' ? [] : [...new Set(allSlides.filter((s) => s.subjectKey === tab && s.grade != null).map((s) => s.grade!))].sort((a, b) => a - b)),
+    [allSlides, tab]
+  );
+  const shownGrade = grade ?? (user?.grade && grades.includes(user.grade) ? user.grade : grades[0] ?? null);
+  const slides = useMemo(() => {
+    if (tab === 'forYou') return allSlides;
+    return allSlides
+      .filter((s) => s.subjectKey === tab && (shownGrade === null || s.grade === shownGrade))
+      .map((s) => ({ ...s, placeLabel: s.place ? `${s.place.unit} · ${s.place.lesson}` : undefined }))
+      .sort((a, b) => (a.place?.order ?? Infinity) - (b.place?.order ?? Infinity) || a.title.localeCompare(b.title));
+  }, [allSlides, tab, shownGrade]);
 
   // Swiper's own `loop` mode gives us the endless-feed behavior for free (it clones slides
   // internally for seamless wraparound) — no need to manually duplicate laps of data.
@@ -369,13 +388,31 @@ export function ReelsPage() {
             ))}
           </div>
         )}
+        {tab !== 'forYou' && grades.length > 0 && (
+          <div className="reels-playlists reels-grades">
+            {grades.map((g) => (
+              <button
+                key={g}
+                type="button"
+                aria-pressed={g === shownGrade}
+                className={`reels-playlist${g === shownGrade ? ' is-on' : ''}`}
+                onClick={() => {
+                  setGrade(g);
+                  setActiveIndex(0);
+                }}
+              >
+                {t('teacherReels.gradeOption', { number: String(g) })}
+              </button>
+            ))}
+          </div>
+        )}
         </div>
         <div className="reels-screen">
         {slides.length === 0 ? (
           <div className="reels-playlist-empty">{t('reels.playlistEmpty')}</div>
         ) : (
         <Swiper
-          key={`${tab}-${slides.length}`}
+          key={`${tab}-${shownGrade}-${slides.length}`}
           direction="vertical"
           speed={380}
           threshold={4}

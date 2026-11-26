@@ -1,3 +1,4 @@
+import { curriculumPlace } from '../lib/questionBank.js';
 import { matchSet, resolveAnswers, type SentAnswer } from '../lib/matching.js';
 import { asyncRouter } from '../lib/asyncRouter.js';
 import { z } from 'zod';
@@ -51,7 +52,7 @@ reelsRouter.get('/feed', (req, res) => {
        JOIN subjects s ON s.id = r.subject_id
        LEFT JOIN users u ON u.id = r.author_user_id
        WHERE ${scope.where}
-       ORDER BY r.id DESC`
+`
     )
     .all(req.userId!, ...scope.params) as any[];
   const questionsByReel = new Map<number, any[]>();
@@ -80,12 +81,19 @@ reelsRouter.get('/feed', (req, res) => {
       matchPoolAr: pool.map((p) => p.ar),
     };
   };
-  // Newest upload first (ids only grow); the page keeps this order for the whole visit (ReelsPage's handleCompleted refreshes in place).
+  // For you: a random order, new every time Reels is opened; the page keeps it for the whole visit (ReelsPage's handleCompleted refreshes in place).
+  // The playlists put the same lessons in curriculum order on the page, by grade and by each video's place in the books (curriculumPlace).
+  for (let i = reels.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [reels[i], reels[j]] = [reels[j], reels[i]];
+  }
   res.json(
     reels.map((reel) => ({
       comingSoon: false,
       level: { levelNumber: -reel.id, title: 'Grade Lesson', titleAr: null, kind: 'normal' },
       subject: { key: reel.subject_key, name: reel.subject_name, nameAr: reel.subject_name_ar, icon: reel.subject_icon },
+      grade: reel.grade,
+      place: curriculumPlace(reel.subject_key, reel.grade, `${reel.title_ar ?? ''} ${reel.title} ${(reel.script_text_ar || reel.script_text || '').slice(0, 300)}`),
       reel: {
         id: reel.id,
         title: reel.title,

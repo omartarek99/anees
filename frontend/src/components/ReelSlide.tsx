@@ -21,6 +21,10 @@ export type ReelSlideData = {
   subjectIcon: string;
   subjectKey: string;
   subjectName: string;
+  grade?: number | null;
+  place?: { unit: string; lesson: string; order: number } | null;
+  /** in a playlist: the video's unit and lesson, shown in place of the badge */
+  placeLabel?: string;
   // Only set for teacher-authored reels (null for seeded curriculum content, which has
   // no single author to credit).
   author: { username: string; displayName: string; avatarKey: string; avatarUrl: string | null; rankKey?: string } | null;
@@ -326,9 +330,10 @@ export const ReelSlide = memo(function ReelSlide({
       </div>
 
       {/* level badge */}
-      <div style={{ position: 'absolute', top: 14, insetInlineStart: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
+      {/* physical left in both languages: the action rail is always on the right (ReelsPage), so the two never meet */}
+      <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
         <span className="badge badge-gold">
-          {data.levelNumber < 0 ? t('reels.bonusLesson') : t('reels.level', { n: data.levelNumber })}
+          {data.placeLabel ?? (data.levelNumber < 0 ? t('reels.bonusLesson') : t('reels.level', { n: data.levelNumber }))}
         </span>
         {data.completed && <span style={{ fontSize: 14 }}>{'⭐'.repeat(data.stars)}</span>}
       </div>

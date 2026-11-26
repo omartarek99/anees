@@ -128,6 +128,20 @@ function scoreLessons(pool: BankLesson[], query: string): { lesson: BankLesson; 
     .sort((a, b) => b.score - a.score);
 }
 
+// Where a video sits in the curriculum, for the Reels playlists (routes/reels.ts): the bank lesson its title and text match best by word overlap
+// (no AI call), as its unit (the skill area, e.g. fractions), the lesson's title and the lesson's place in the books (term, then book order).
+// Null for a subject the bank does not cover or a video that matches no lesson well. Kept per text: the feed asks on every load.
+const placeCache = new Map<string, { unit: string; lesson: string; order: number } | null>();
+export function curriculumPlace(subject: string, grade: number | null, text: string) {
+  if (subject !== 'math' && subject !== 'science') return null;
+  const key = `${subject}|${grade}|${text}`;
+  if (!placeCache.has(key)) {
+    const best = scoreLessons(lessonsFor(subject, grade), text)[0];
+    placeCache.set(key, best && best.score >= 0.4 ? { unit: best.lesson.unit, lesson: best.lesson.title, order: loadBank().indexOf(best.lesson) } : null);
+  }
+  return placeCache.get(key)!;
+}
+
 const PICK_SCHEMA = { type: 'OBJECT', properties: { lessons: { type: 'ARRAY', items: { type: 'INTEGER' } } }, required: ['lessons'] };
 
 // Titles in the bank are Arabic. When the lesson text does not overlap with them (an English video title, a short name), ask the AI

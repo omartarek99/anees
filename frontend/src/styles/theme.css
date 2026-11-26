@@ -6178,3 +6178,12 @@ button.feature-switch:active:not(:disabled) {
 .level-gate-progress .level-bar {
   inline-size: min(260px, 100%);
 }
+
+/* a playlist reel's unit and lesson in its corner badge: one line, cut short when long */
+.reels-screen .badge {
+  display: inline-block;
+  max-inline-size: min(300px, 62vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
