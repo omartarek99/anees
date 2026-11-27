@@ -1980,7 +1980,7 @@ export function CraftPage() {
               </div>
             )}
 
-            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 5, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 5, display: 'flex', gap: 6, flexWrap: 'wrap', maxWidth: 'calc(100% - 104px)' /* wraps before the two icon buttons on the right (fold cover screens) */ }}>
               <button type="button" onClick={() => setMenuOpen(true)} style={cornerPillStyle}>
                 {t('craft.craftMenuButton')}
                 {!showTouch && ' · F'}
