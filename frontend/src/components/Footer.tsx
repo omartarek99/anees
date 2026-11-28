@@ -14,6 +14,7 @@ export function Footer() {
       <Link to="/cookies" style={{ color: 'inherit', textDecoration: 'none' }}>
         {t('legal.cookies')}
       </Link>
+      <span>{t('landing.copyright')}</span>
     </footer>
   );
 }

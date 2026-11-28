@@ -1,6 +1,7 @@
 {
   "name": "anees",
   "private": true,
+  "license": "UNLICENSED",
   "version": "1.0.0",
   "description": "Qatari-themed educational platform for students - all subjects",
   "scripts": {

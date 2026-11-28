@@ -40,7 +40,11 @@ const CONTENT = {
     },
     {
       heading: '6. Intellectual Property',
-      body: ['The Anees name, design, and original lesson/quiz content belong to its developer. You may use the app for your own learning; you may not copy or redistribute its content commercially.'],
+      body: [
+        'The Anees name, logo, design, features, source code, videos, pictures, and lesson, quiz and worksheet content belong to its developer and are protected by copyright. All rights are reserved.',
+        'You may use the app for your own learning. Without written permission you may not copy, reproduce, republish or sell any part of Anees, build a similar service from its design, features or content, or scrape, bulk-download or automatically collect its questions, answers, videos or other content.',
+        'Breaking these rules can lead to the suspension of your account and to legal action.',
+      ],
     },
     {
       heading: '7. No Warranty',
@@ -91,7 +95,11 @@ const CONTENT = {
     },
     {
       heading: '٦. الملكية الفكرية',
-      body: ['اسم أنيس وتصميمه ومحتوى الدروس والاختبارات الأصلي مملوكة لمطوّره. يمكنك استخدام التطبيق لتعلّمك الخاص؛ ولا يجوز نسخ محتواه أو إعادة توزيعه تجاريًا.'],
+      body: [
+        'اسم أنيس وشعاره وتصميمه وميزاته وشيفرته البرمجية وفيديوهاته وصوره ومحتوى الدروس والاختبارات وأوراق العمل مملوكة لمطوّره ومحمية بحقوق النشر. جميع الحقوق محفوظة.',
+        'يمكنك استخدام التطبيق لتعلّمك الخاص. ولا يجوز دون إذن كتابي نسخ أي جزء من أنيس أو إعادة نشره أو بيعه، ولا بناء خدمة مشابهة اعتمادًا على تصميمه أو ميزاته أو محتواه، ولا سحب أسئلته وإجاباته وفيديوهاته ومحتواه الآخر أو تحميله بالجملة أو جمعه آليًا.',
+        'مخالفة هذه القواعد قد تؤدي إلى إيقاف حسابك وإلى إجراءات قانونية.',
+      ],
     },
     {
       heading: '٧. عدم وجود ضمان',

@@ -3,7 +3,10 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  // The source code is not shipped with the site: no source maps, and no comments left in the built files.
+  esbuild: { legalComments: 'none' },
   build: {
+    sourcemap: false,
     rollupOptions: {
       // Libraries change far less often than app code: separate chunks stay cached across deploys.
       output: { manualChunks: { react: ['react', 'react-dom', 'react-router-dom'], motion: ['framer-motion'] } },
