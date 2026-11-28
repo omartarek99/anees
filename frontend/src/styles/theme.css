@@ -2254,9 +2254,8 @@ button.list-row.selected {
     inset-inline-end: 10px;
     /* Anchored above center, not bottom: the caption below the video is real, often-long
        text (not TikTok's thin one-line overlay), so its top edge moves depending on how
-       much there is -- a fixed bottom offset would collide with it on a longer lesson. The For you / Playlists bar sits above the reel,
-       so the rail starts a little lower to stay clear of it. */
-    top: calc(38% + 48px);
+       much there is -- a fixed bottom offset would collide with it on a longer lesson. */
+    top: 38%;
     transform: translateY(-50%);
     z-index: 3;
     padding-bottom: 0 !important;
@@ -2884,28 +2883,39 @@ html {
 .reels-frame-row {
   height: 100vh;
 }
-/* ReelsPage: For you / Playlists as a bar of buttons above the reel, the reel filling what is left under it */
+/* ReelsPage: the reel fills the whole frame up to the top; For you / Playlists and the subjects float over its top edge as frosted glass (the reel's own badge steps below them) */
 .reels-stage {
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  --reel-badge-top: 54px;
+}
+.reels-stage:has(.reels-playlists) {
+  --reel-badge-top: 98px;
 }
 .reels-switch {
+  position: absolute;
+  inset-inline: 0;
+  top: 8px;
+  z-index: 5;
   display: grid;
   gap: 8px;
-  padding: 10px 12px;
-  /* no black panel: the buttons are frosted glass over the page's own background */
+  padding: 0 12px;
   background: transparent;
+  pointer-events: none;
+}
+.reels-switch > * {
+  pointer-events: auto;
 }
 .reels-screen {
-  position: relative;
-  flex: 1;
-  min-block-size: 0;
+  position: absolute;
+  inset: 0;
 }
 .reels-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
   padding: 4px;
+  inline-size: min(100%, 320px);
+  margin-inline: auto;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.14);
   border: 1px solid rgba(255, 255, 255, 0.28);
@@ -2972,11 +2982,18 @@ html {
   outline: 3px solid var(--gold);
   outline-offset: 2px;
 }
+/* a quiz or its results fill the reel: the switch steps aside */
+.reels-stage:has(.swiper-slide-active .reel-sheet) .reels-switch {
+  display: none;
+}
+.reels-stage:has(.swiper-slide-active .reel-sheet) {
+  --reel-badge-top: 14px;
+}
 .reels-playlist-empty {
   display: grid;
   place-items: center;
   height: 100%;
-  padding: 32px;
+  padding: 120px 32px 32px;
   background: #0b0b0f;
   color: rgba(255, 255, 255, 0.8);
   text-align: center;

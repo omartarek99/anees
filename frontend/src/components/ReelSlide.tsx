@@ -350,7 +350,7 @@ export const ReelSlide = memo(function ReelSlide({
 
       {/* level badge */}
       {/* physical left in both languages: the action rail is always on the right (ReelsPage), so the two never meet */}
-      <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ position: 'absolute', top: 'var(--reel-badge-top, 14px)', left: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
         <span className="badge badge-gold">
           {data.placeLabel ?? (data.levelNumber < 0 ? t('reels.bonusLesson') : t('reels.level', { n: data.levelNumber }))}
         </span>
