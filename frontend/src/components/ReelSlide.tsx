@@ -132,7 +132,7 @@ export const ReelSlide = memo(function ReelSlide({
     const visible = Math.min(1, Math.min(size.w / size.h / (frame.clientWidth / frame.clientHeight), frame.clientWidth / frame.clientHeight / (size.w / size.h)));
     // a video close to the frame's shape fills it edge to edge, left to right and top to bottom (at most ~30% trimmed, usually nothing: the frame is 9:16 on a laptop);
     // a very different one (a wide screen recording) is shown whole instead
-    setVideoFit(visible >= 0.7 ? 'cover' : 'contain');
+    setVideoFit(visible >= 0.6 ? 'cover' : 'contain');
   };
   useEffect(() => {
     if (!isActive) return;

@@ -2885,19 +2885,19 @@ html {
 }
 /* ReelsPage: the reel fills the whole frame up to the top; For you / Playlists and the subjects float over its top edge as frosted glass (the reel's own badge steps below them) */
 .reels-stage {
-  display: flex;
-  flex-direction: column;
-  --reel-badge-top: 14px;
-}
-.reels-stage:has(.reels-playlists) {
+  position: relative;
   --reel-badge-top: 46px;
 }
-/* the subjects float over the reel's top edge */
+.reels-stage:has(.reels-playlists) {
+  --reel-badge-top: 78px;
+}
 .reels-switch {
   position: absolute;
   inset-inline: 0;
   top: 8px;
   z-index: 5;
+  display: grid;
+  gap: 4px;
   padding: 0 12px;
   background: transparent;
   pointer-events: none;
@@ -2905,11 +2905,9 @@ html {
 .reels-switch > * {
   pointer-events: auto;
 }
-/* the reel fills what is left under the For you / Playlists words */
 .reels-screen {
-  position: relative;
-  flex: 1;
-  min-block-size: 0;
+  position: absolute;
+  inset: 0;
 }
 .reels-tabs,
 .reels-playlists {
@@ -2920,7 +2918,6 @@ html {
 }
 .reels-tabs {
   gap: 24px;
-  padding: 8px 12px 6px;
 }
 .reels-playlists {
   gap: 16px;
@@ -2961,31 +2958,6 @@ html {
 .reels-playlist.is-on {
   color: var(--gold);
   border-block-end-color: var(--gold);
-}
-/* the bar above the reel: a blurred extension of the reel (ReelTopGlow draws the video's top strip into the canvas), white words over it */
-.reels-tabbar {
-  position: relative;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.08);
-}
-.reels-top-glow {
-  position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-  filter: blur(14px) saturate(1.5);
-  transform: scale(1.35);
-}
-.reels-tabbar::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.12));
-  pointer-events: none;
-}
-.reels-tabbar .reels-tabs {
-  position: relative;
-  z-index: 1;
 }
 .reels-tab:focus-visible,
 .reels-playlist:focus-visible {
