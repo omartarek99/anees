@@ -240,18 +240,19 @@ export function ReelsPage() {
       })),
     [rawDetails, lang, brokenIds]
   );
-  // A playlist is the whole subject: the grades one after the other (lowest first), each in curriculum order, with the grade written on the video.
+  // A playlist is one subject in curriculum order. A student sees only the videos of their own grade (For you shows every grade); a teacher, or an account
+  // with no grade, sees every grade, the lowest first.
   const slides = useMemo(() => {
     if (tab === 'forYou') return allSlides;
     return allSlides
-      .filter((s) => s.subjectKey === tab)
+      .filter((s) => s.subjectKey === tab && (!isStudent || !user?.grade || s.grade === user.grade))
       .map((s) => {
         const gradeText = s.grade != null ? t('teacherReels.gradeOption', { number: String(s.grade) }) : '';
         const placeText = s.place ? `${s.place.unit} · ${s.place.lesson}` : '';
         return { ...s, placeLabel: [gradeText, placeText].filter(Boolean).join(' · ') || undefined };
       })
       .sort((a, b) => (a.grade ?? Infinity) - (b.grade ?? Infinity) || (a.place?.order ?? Infinity) - (b.place?.order ?? Infinity) || a.title.localeCompare(b.title));
-  }, [allSlides, tab, t]);
+  }, [allSlides, tab, t, isStudent, user?.grade]);
 
   // Swiper's own `loop` mode gives us the endless-feed behavior for free (it clones slides
   // internally for seamless wraparound) — no need to manually duplicate laps of data.
