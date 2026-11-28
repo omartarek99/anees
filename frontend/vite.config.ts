@@ -9,7 +9,9 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       // Libraries change far less often than app code: separate chunks stay cached across deploys.
-      output: { manualChunks: { react: ['react', 'react-dom', 'react-router-dom'], motion: ['framer-motion'] } },
+      // 10-character hashes (the default is 8): every built file gets a new address, so a browser that cached a "not found" for an old address during a
+      // deploy (the files are cached for a year) never asks for it again.
+      output: { entryFileNames: 'assets/[name]-[hash:10].js', chunkFileNames: 'assets/[name]-[hash:10].js', assetFileNames: 'assets/[name]-[hash:10][extname]', manualChunks: { react: ['react', 'react-dom', 'react-router-dom'], motion: ['framer-motion'] } },
     },
   },
   server: {
