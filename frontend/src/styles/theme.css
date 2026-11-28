@@ -2932,7 +2932,7 @@ html {
   white-space: nowrap;
   color: rgba(255, 255, 255, 0.78);
   /* no boxes: plain text over the video, with a soft shadow so it reads on a light picture too */
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7), 0 0 8px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.65), 0 0 22px rgba(0, 0, 0, 0.4);
   border-block-end: 2px solid transparent;
   transition: color 0.15s, border-color 0.15s;
 }
@@ -2970,6 +2970,20 @@ html {
 }
 .reels-stage:has(.swiper-slide-active .reel-sheet) {
   --reel-badge-top: 14px;
+}
+/* a soft dark fade behind the words at the top, so they read on a bright video too (it steps aside for a quiz) */
+.reels-screen::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  block-size: 96px;
+  z-index: 4;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.42), transparent);
+  pointer-events: none;
+}
+.reels-stage:has(.swiper-slide-active .reel-sheet) .reels-screen::before {
+  display: none;
 }
 .reels-playlist-empty {
   display: grid;

@@ -116,33 +116,15 @@ export const ReelSlide = memo(function ReelSlide({
   const [levelUpValue, setLevelUpValue] = useState<number | null>(null);
   const [watchProgress, setWatchProgress] = useState(0); // 0-1, real playback position of the video itself
   const videoRef = useRef<HTMLVideoElement>(null);
-  // How the video fills the screen (laptop frame or phone): a video close to the frame's shape fills it edge to edge, a very different one (a wide screen
-  // recording) is shown whole instead of being cut. Measured when the video's size is known and again when the window changes.
+  // The video is never cut: it is scaled down until its whole picture fits the frame (it touches the frame left to right or top to bottom, whichever comes first),
+  // on a laptop and on any phone. The space left beside or above/below it is filled with a blurred copy of the video itself (the canvas below), so no bar is empty.
   const frameRef = useRef<HTMLDivElement>(null);
-  const [videoFit, setVideoFit] = useState<'cover' | 'contain'>('cover');
-  const sizeRef = useRef<{ w: number; h: number } | null>(null);
-  const measureFit = () => {
-    const size = sizeRef.current;
-    const frame = frameRef.current;
-    if (!size || !frame || !frame.clientWidth || !frame.clientHeight) return;
-    // the share of the video that stays visible when it fills the frame: 1 = nothing is cut
-    const visible = Math.min(1, Math.min(size.w / size.h / (frame.clientWidth / frame.clientHeight), frame.clientWidth / frame.clientHeight / (size.w / size.h)));
-    // the frame keeps its own size (laptop frame, or the phone's screen, whatever its size) and the video adapts to it: it fills the frame left to right and top to
-    // bottom; only a video far wider than the frame (a landscape screen recording) is shown whole, with a bar above and below
-    setVideoFit(visible >= 0.5 ? 'cover' : 'contain');
-  };
-  useEffect(() => {
-    // the frame changes size with the window and with the video itself (ReelsPage shapes it to the playing video): measure again each time
-    if (!isActive || !frameRef.current) return;
-    const observer = new ResizeObserver(measureFit);
-    observer.observe(frameRef.current);
-    return () => observer.disconnect();
-  }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
-  // A video shown whole (it is much wider than the frame) gets its bars filled with a blurred copy of its own picture, so the screen is never left empty: a tiny
+  const videoFit = 'contain';
+  // A video shown whole gets the space around it filled with a blurred copy of its own picture, so the screen is never left empty: a tiny
   // canvas redrawn a few times a second and blurred by CSS.
   const backdropRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    if (!isActive || videoFit !== 'contain') return;
+    if (!isActive) return;
     const canvas = backdropRef.current;
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
@@ -158,7 +140,7 @@ export const ReelSlide = memo(function ReelSlide({
     draw();
     const id = window.setInterval(draw, 250);
     return () => window.clearInterval(id);
-  }, [isActive, videoFit]);
+  }, [isActive]);
   // true from landing on a reel until its video is actually playing (and again whenever it stalls): a spinner shows meanwhile, so a slow start
   // reads as loading and not as a frozen page
   const [buffering, setBuffering] = useState(true);
@@ -397,7 +379,7 @@ export const ReelSlide = memo(function ReelSlide({
               });
             }}
           >
-            {videoFit === 'contain' && data.videoUrl && loadVideo && !videoFailed && (
+            {data.videoUrl && loadVideo && !videoFailed && (
               <canvas
                 ref={backdropRef}
                 width={32}
@@ -423,12 +405,7 @@ export const ReelSlide = memo(function ReelSlide({
                 playsInline
                 onEnded={handleVideoEnded}
                 onTimeUpdate={handleTimeUpdate}
-                onLoadedMetadata={(e) => {
-                  sizeRef.current = { w: e.currentTarget.videoWidth, h: e.currentTarget.videoHeight };
-                  measureFit();
-                }}
-                // cover when the video is close to the frame's shape (it fills the whole screen, laptop and phone); contain
-                // when it is very different (a landscape screen recording would lose its sides), so nothing important is cut.
+                // contain: the whole picture is shown, scaled to the frame's length or width, never cut
                 style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', objectFit: videoFit }}
               />
             ) : (
