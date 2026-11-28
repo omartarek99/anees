@@ -130,7 +130,8 @@ export const ReelSlide = memo(function ReelSlide({
     if (!size || !frame || !frame.clientWidth || !frame.clientHeight) return;
     // the share of the video that stays visible when it fills the frame: 1 = nothing is cut
     const visible = Math.min(1, Math.min(size.w / size.h / (frame.clientWidth / frame.clientHeight), frame.clientWidth / frame.clientHeight / (size.w / size.h)));
-    setVideoFit(visible >= 0.6 ? 'cover' : 'contain');
+    // only a video that is almost the frame's own shape fills it edge to edge (at most ~8% trimmed); any other is shown whole, its length and width both inside the screen
+    setVideoFit(visible >= 0.92 ? 'cover' : 'contain');
   };
   useEffect(() => {
     if (!isActive) return;
@@ -358,7 +359,7 @@ export const ReelSlide = memo(function ReelSlide({
       </div>
 
       {mode === 'watch' && (
-        <div style={{ position: 'absolute', inset: 0 }}>
+        <div style={{ position: 'absolute', top: 'var(--reel-top-pad, 0px)', left: 0, right: 0, bottom: 0 }}>
           {/* full-bleed background */}
           <div
             style={{

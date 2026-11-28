@@ -2886,20 +2886,24 @@ html {
 /* ReelsPage: the reel fills the whole frame up to the top; For you / Playlists and the subjects float over its top edge as frosted glass (the reel's own badge steps below them) */
 .reels-stage {
   position: relative;
-  --reel-badge-top: 46px;
+  /* the height the For you / Playlists words take at the top: the video starts under it, the dark frame itself goes up to the top of the screen */
+  --reel-top-pad: 40px;
+  --reel-badge-top: 48px;
 }
 .reels-stage:has(.reels-playlists) {
-  --reel-badge-top: 78px;
+  --reel-top-pad: 72px;
+  --reel-badge-top: 80px;
 }
+/* the words float over a soft shadow at the top, like the one behind the caption at the bottom */
 .reels-switch {
   position: absolute;
   inset-inline: 0;
-  top: 8px;
+  top: 0;
   z-index: 5;
   display: grid;
   gap: 4px;
-  padding: 0 12px;
-  background: transparent;
+  padding: 8px 12px 18px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.55) 60%, transparent);
   pointer-events: none;
 }
 .reels-switch > * {
@@ -2969,6 +2973,7 @@ html {
   display: none;
 }
 .reels-stage:has(.swiper-slide-active .reel-sheet) {
+  --reel-top-pad: 0px;
   --reel-badge-top: 14px;
 }
 .reels-playlist-empty {
