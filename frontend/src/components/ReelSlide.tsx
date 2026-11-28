@@ -115,9 +115,6 @@ export const ReelSlide = memo(function ReelSlide({
   const [error, setError] = useState<string | null>(null);
   const [levelUpValue, setLevelUpValue] = useState<number | null>(null);
   const [watchProgress, setWatchProgress] = useState(0); // 0-1, real playback position of the video itself
-  // Collapsed: only the subject and the topic are shown. "See more" reveals the details (who made the
-  // lesson and its description).
-  const [captionExpanded, setCaptionExpanded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   // How the video fills the screen (laptop frame or phone): a video close to the frame's shape fills it edge to edge, a very different one (a wide screen
   // recording) is shown whole instead of being cut. Measured when the video's size is known and again when the window changes.
@@ -141,6 +138,27 @@ export const ReelSlide = memo(function ReelSlide({
     observer.observe(frameRef.current);
     return () => observer.disconnect();
   }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A video shown whole (it is much wider than the frame) gets its bars filled with a blurred copy of its own picture, so the screen is never left empty: a tiny
+  // canvas redrawn a few times a second and blurred by CSS.
+  const backdropRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    if (!isActive || videoFit !== 'contain') return;
+    const canvas = backdropRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    const draw = () => {
+      const video = videoRef.current;
+      if (document.hidden || !video || video.readyState < 2) return;
+      try {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      } catch {
+        /* a frame that cannot be drawn yet */
+      }
+    };
+    draw();
+    const id = window.setInterval(draw, 250);
+    return () => window.clearInterval(id);
+  }, [isActive, videoFit]);
   // true from landing on a reel until its video is actually playing (and again whenever it stalls): a spinner shows meanwhile, so a slow start
   // reads as loading and not as a frozen page
   const [buffering, setBuffering] = useState(true);
@@ -322,12 +340,6 @@ export const ReelSlide = memo(function ReelSlide({
     }
   }
 
-  // Scrolling away from a reel collapses its caption again, so it's back to the short form
-  // the next time the student lands on it.
-  useEffect(() => {
-    if (!isActive) setCaptionExpanded(false);
-  }, [isActive]);
-
   return (
     <div
       ref={frameRef}
@@ -355,9 +367,6 @@ export const ReelSlide = memo(function ReelSlide({
       {/* level badge */}
       {/* physical left in both languages: the action rail is always on the right (ReelsPage), so the two never meet */}
       <div style={{ position: 'absolute', top: 'var(--reel-badge-top, 14px)', left: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span className="badge badge-gold">
-          {data.placeLabel ?? (data.levelNumber < 0 ? t('reels.bonusLesson') : t('reels.level', { n: data.levelNumber }))}
-        </span>
         {data.completed && <span style={{ fontSize: 14 }}>{'⭐'.repeat(data.stars)}</span>}
       </div>
 
@@ -388,6 +397,15 @@ export const ReelSlide = memo(function ReelSlide({
               });
             }}
           >
+            {videoFit === 'contain' && data.videoUrl && loadVideo && !videoFailed && (
+              <canvas
+                ref={backdropRef}
+                width={32}
+                height={56}
+                aria-hidden="true"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none', filter: 'blur(18px) saturate(1.4) brightness(0.75)', transform: 'scale(1.25)' }}
+              />
+            )}
             {data.videoUrl && loadVideo && !videoFailed ? (
               <video
                 ref={videoRef}
@@ -411,7 +429,7 @@ export const ReelSlide = memo(function ReelSlide({
                 }}
                 // cover when the video is close to the frame's shape (it fills the whole screen, laptop and phone); contain
                 // when it is very different (a landscape screen recording would lose its sides), so nothing important is cut.
-                style={{ width: '100%', height: '100%', objectFit: videoFit }}
+                style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', objectFit: videoFit }}
               />
             ) : (
               <div
@@ -455,18 +473,8 @@ export const ReelSlide = memo(function ReelSlide({
               (see ReelActionRail, rendered by ReelsPage), so this only needs to clear its own
               padding, not reserved space for an overlay. */}
           <div className="on-dark" style={{ position: 'absolute', left: 16, right: 16, bottom: 20, zIndex: 3 }}>
-            {/* Who added the video -- always visible, above the topic. */}
-            {data.author && (
-              <Link
-                to={`/profile/${data.author.username}`}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, width: 'fit-content', textDecoration: 'none' }}
-              >
-                <Avatar avatarKey={data.author.avatarKey} photoUrl={data.author.avatarUrl} size={22} />
-                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12.5, textShadow: '0 1px 3px rgba(0,0,0,0.5)', textDecoration: 'underline' }}>
-                  {t('reels.lessonBy', { name: data.author.displayName })}
-                </span>
-              </Link>
-            )}
+            {/* grade · unit · lesson, right above the name of the video */}
+            {data.placeLabel && (<span className="badge badge-gold" style={{ marginBottom: 6 }}>{data.placeLabel}</span>)}
             {/* Topic on one side, subject on the opposite side of the same line. */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
               <h2 style={{ flex: 1, minWidth: 0, color: 'white', fontSize: 19, margin: 0, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
@@ -487,37 +495,17 @@ export const ReelSlide = memo(function ReelSlide({
                 {data.subjectName}
               </span>
             </div>
-            {/* The details open ABOVE the See more toggle, so the toggle always sits right over the
-                quiz / next-lesson button below. */}
-            {captionExpanded && (
-              <div
-                className="no-scrollbar swiper-no-swiping swiper-no-mousewheel"
-                style={{ marginBottom: 6, maxHeight: '32vh', overflowY: 'auto', overscrollBehavior: 'contain' }}
+            {/* "By" the teacher who added the video, under the topic (where "See more" used to be). */}
+            {data.author && (
+              <Link
+                to={`/profile/${data.author.username}`}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, width: 'fit-content', textDecoration: 'none' }}
               >
-                <p style={{ color: 'rgba(255,255,255,0.92)', fontSize: 13.5, lineHeight: 1.4, margin: 0, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-                  {data.scriptText}
-                </p>
-              </div>
-            )}
-            {data.scriptText && (
-              <button
-                type="button"
-                aria-expanded={captionExpanded}
-                onClick={() => setCaptionExpanded((v) => !v)}
-                style={{
-                  display: 'block',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  color: 'rgba(255,255,255,0.8)',
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                }}
-              >
-                {captionExpanded ? t('reels.seeLess') : t('reels.seeMore')}
-              </button>
+                <Avatar avatarKey={data.author.avatarKey} photoUrl={data.author.avatarUrl} size={22} />
+                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12.5, textShadow: '0 1px 3px rgba(0,0,0,0.5)', textDecoration: 'underline' }}>
+                  {t('reels.lessonBy', { name: data.author.displayName })}
+                </span>
+              </Link>
             )}
             {!data.videoUrl && (
               <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11.5, marginTop: 6 }}>{t('reels.videoComingSoon')}</p>

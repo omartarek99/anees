@@ -225,6 +225,8 @@ export function ReelsPage() {
         subjectName: pickText(lang, detail.subject.name, detail.subject.nameAr),
         grade: detail.grade,
         place: detail.place,
+        // the grade, unit and lesson, written above the video's name (in For you and in Playlists alike)
+        placeLabel: [detail.grade != null ? t('teacherReels.gradeOption', { number: String(detail.grade) }) : '', detail.place ? detail.place.unit + ' · ' + detail.place.lesson : ''].filter(Boolean).join(' · ') || undefined,
         author: detail.reel.author,
         questions: [...detail.reel.questions]
           .sort((a, b) => a.order - b.order)
@@ -238,7 +240,7 @@ export function ReelsPage() {
         completed: detail.progress.status === 'completed',
         stars: detail.progress.stars,
       })),
-    [rawDetails, lang, brokenIds]
+    [rawDetails, lang, brokenIds, t]
   );
   // A playlist is the whole subject: the grades one after the other (lowest first), each in curriculum order, with the grade written on the video.
   const slides = useMemo(() => {
