@@ -130,8 +130,9 @@ export const ReelSlide = memo(function ReelSlide({
     if (!size || !frame || !frame.clientWidth || !frame.clientHeight) return;
     // the share of the video that stays visible when it fills the frame: 1 = nothing is cut
     const visible = Math.min(1, Math.min(size.w / size.h / (frame.clientWidth / frame.clientHeight), frame.clientWidth / frame.clientHeight / (size.w / size.h)));
-    // only a video that is almost the frame's own shape fills it edge to edge (at most ~8% trimmed); any other is shown whole, its length and width both inside the screen
-    setVideoFit(visible >= 0.92 ? 'cover' : 'contain');
+    // a video close to the frame's shape fills it edge to edge, left to right and top to bottom (at most ~30% trimmed, usually nothing: the frame is 9:16 on a laptop);
+    // a very different one (a wide screen recording) is shown whole instead
+    setVideoFit(visible >= 0.7 ? 'cover' : 'contain');
   };
   useEffect(() => {
     if (!isActive) return;
@@ -469,15 +470,18 @@ export const ReelSlide = memo(function ReelSlide({
               <h2 style={{ flex: 1, minWidth: 0, color: 'white', fontSize: 19, margin: 0, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{data.title}</h2>
               <span
                 className="badge"
-                style={{ flexShrink: 0, background: 'rgba(255,255,255,0.22)', color: 'white' /* no backdrop blur: it re-blurs the playing video under it on every frame */ }}
+                // the icon sits beside the subject's name on one line, for every subject (the playlist badge rule would otherwise stack them)
+                style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', background: 'rgba(255,255,255,0.22)', color: 'white' /* no backdrop blur: it re-blurs the playing video under it on every frame */ }}
               >
-                {data.subjectKey === 'math' ? (
-                  <RiCalculatorLine size={13} />
-                ) : data.subjectKey === 'science' ? (
-                  <RiAtomLine size={13} />
-                ) : (
-                  data.subjectIcon
-                )}{' '}
+                <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+                  {data.subjectKey === 'math' ? (
+                    <RiCalculatorLine size={14} />
+                  ) : data.subjectKey === 'science' ? (
+                    <RiAtomLine size={14} />
+                  ) : (
+                    data.subjectIcon
+                  )}
+                </span>
                 {data.subjectName}
               </span>
             </div>

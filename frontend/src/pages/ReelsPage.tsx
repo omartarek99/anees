@@ -94,6 +94,31 @@ const PLAYLISTS = [
 ] as const;
 type Tab = 'forYou' | (typeof PLAYLISTS)[number]['key'];
 
+/** The bar above the reel is a blurred continuation of the reel: the top strip of the playing video, drawn tiny a few times a second and blurred by CSS
+ *  (a 140x10 canvas, so it costs nothing). Shows only a soft tint until a video is playing. */
+function ReelTopGlow() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    const draw = () => {
+      if (document.hidden) return;
+      const video = document.querySelector<HTMLVideoElement>('.reels-screen .swiper-slide-active video');
+      if (!video || video.readyState < 2 || !video.videoWidth) return;
+      try {
+        ctx.drawImage(video, 0, 0, video.videoWidth, Math.max(1, video.videoHeight * 0.28), 0, 0, canvas.width, canvas.height);
+      } catch {
+        /* a frame that cannot be drawn yet: keep the last one */
+      }
+    };
+    draw();
+    const id = window.setInterval(draw, 300);
+    return () => window.clearInterval(id);
+  }, []);
+  return <canvas ref={canvasRef} className="reels-top-glow" width={140} height={10} aria-hidden="true" />;
+}
+
 export function ReelsPage() {
   const { user, refreshUser } = useAuth();
   // Only a student earns XP (and so has the points explainer); a teacher's empty feed points to their own lessons, not the map.
@@ -363,17 +388,21 @@ export function ReelsPage() {
           wrapper resets back to the real page direction so the reel's own caption/badge/exit-
           button logical-property layout still mirrors correctly for Arabic. */}
       <div className="reels-frame-row flex-center gap-md" style={{ direction: 'ltr' }}>
-        <div ref={wheelFrame} className="reels-stage" style={{ direction: dir, width: 'min(100%, 560px)', height: '100%' }}>
+        <div ref={wheelFrame} className="reels-stage" style={{ direction: dir, width: 'min(100%, 560px, calc((100dvh - 40px) * 0.5625))', height: '100%' /* never wider than a 9:16 video needs: the picture fills left to right with nothing cut */ }}>
         {/* For you / Playlists: two small words above the reel, outside it; the subjects float inside the reel's top edge */}
-        <div className="reels-tabs" role="tablist">
-          {(['forYou', 'playlists'] as const).map((k) => {
-            const on = k === 'forYou' ? tab === 'forYou' : tab !== 'forYou';
-            return (
-              <button key={k} type="button" role="tab" aria-selected={on} className={`reels-tab${on ? ' is-on' : ''}`} onClick={() => pickTab(k === 'forYou' ? 'forYou' : lastPlaylist)}>
-                {t(k === 'forYou' ? 'reels.tabForYou' : 'reels.tabPlaylists')}
-              </button>
-            );
-          })}
+        {/* its background is a blurred extension of the reel's own picture, continuing upward */}
+        <div className="reels-tabbar">
+          <ReelTopGlow />
+          <div className="reels-tabs" role="tablist">
+            {(['forYou', 'playlists'] as const).map((k) => {
+              const on = k === 'forYou' ? tab === 'forYou' : tab !== 'forYou';
+              return (
+                <button key={k} type="button" role="tab" aria-selected={on} className={`reels-tab${on ? ' is-on' : ''}`} onClick={() => pickTab(k === 'forYou' ? 'forYou' : lastPlaylist)}>
+                  {t(k === 'forYou' ? 'reels.tabForYou' : 'reels.tabPlaylists')}
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="reels-screen">
         {tab !== 'forYou' && (

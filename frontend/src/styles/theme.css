@@ -2962,17 +2962,30 @@ html {
   color: var(--gold);
   border-block-end-color: var(--gold);
 }
-/* the two words sit above the reel on the page itself, so they follow the theme text colours */
-.reels-tabs .reels-tab {
-  color: var(--ink-soft);
-  text-shadow: none;
+/* the bar above the reel: a blurred extension of the reel (ReelTopGlow draws the video's top strip into the canvas), white words over it */
+.reels-tabbar {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
 }
-.reels-tabs .reels-tab:hover,
-.reels-tabs .reels-tab.is-on {
-  color: var(--ink);
+.reels-top-glow {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  filter: blur(14px) saturate(1.5);
+  transform: scale(1.35);
 }
-.reels-tabs .reels-tab.is-on {
-  border-block-end-color: var(--ink);
+.reels-tabbar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.12));
+  pointer-events: none;
+}
+.reels-tabbar .reels-tabs {
+  position: relative;
+  z-index: 1;
 }
 .reels-tab:focus-visible,
 .reels-playlist:focus-visible {
