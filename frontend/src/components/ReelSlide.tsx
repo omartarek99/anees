@@ -117,30 +117,9 @@ export const ReelSlide = memo(function ReelSlide({
   const [watchProgress, setWatchProgress] = useState(0); // 0-1, real playback position of the video itself
   const videoRef = useRef<HTMLVideoElement>(null);
   // The video is never cut: it is scaled down until its whole picture fits the frame (it touches the frame left to right or top to bottom, whichever comes first),
-  // on a laptop and on any phone. The space left beside or above/below it is filled with a blurred copy of the video itself (the canvas below), so no bar is empty.
+  // on a laptop and on any phone.
   const frameRef = useRef<HTMLDivElement>(null);
   const videoFit = 'contain';
-  // A video shown whole gets the space around it filled with a blurred copy of its own picture, so the screen is never left empty: a tiny
-  // canvas redrawn a few times a second and blurred by CSS.
-  const backdropRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    if (!isActive) return;
-    const canvas = backdropRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
-    const draw = () => {
-      const video = videoRef.current;
-      if (document.hidden || !video || video.readyState < 2) return;
-      try {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      } catch {
-        /* a frame that cannot be drawn yet */
-      }
-    };
-    draw();
-    const id = window.setInterval(draw, 250);
-    return () => window.clearInterval(id);
-  }, [isActive]);
   // true from landing on a reel until its video is actually playing (and again whenever it stalls): a spinner shows meanwhile, so a slow start
   // reads as loading and not as a frozen page
   const [buffering, setBuffering] = useState(true);
@@ -379,15 +358,6 @@ export const ReelSlide = memo(function ReelSlide({
               });
             }}
           >
-            {data.videoUrl && loadVideo && !videoFailed && (
-              <canvas
-                ref={backdropRef}
-                width={32}
-                height={56}
-                aria-hidden="true"
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none', filter: 'blur(18px) saturate(1.4) brightness(0.75)', transform: 'scale(1.25)' }}
-              />
-            )}
             {data.videoUrl && loadVideo && !videoFailed ? (
               <video
                 ref={videoRef}
