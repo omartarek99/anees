@@ -130,9 +130,9 @@ export const ReelSlide = memo(function ReelSlide({
     if (!size || !frame || !frame.clientWidth || !frame.clientHeight) return;
     // the share of the video that stays visible when it fills the frame: 1 = nothing is cut
     const visible = Math.min(1, Math.min(size.w / size.h / (frame.clientWidth / frame.clientHeight), frame.clientWidth / frame.clientHeight / (size.w / size.h)));
-    // the frame is shaped like the playing video (ReelsPage), so the picture normally fills it exactly, left to right and top to bottom, with nothing cut;
-    // only a video much wider than the frame (a landscape screen recording) is shown whole, with a bar above and below
-    setVideoFit(visible >= 0.75 ? 'cover' : 'contain');
+    // the frame keeps its own size (laptop frame, or the phone's screen, whatever its size) and the video adapts to it: it fills the frame left to right and top to
+    // bottom; only a video far wider than the frame (a landscape screen recording) is shown whole, with a bar above and below
+    setVideoFit(visible >= 0.5 ? 'cover' : 'contain');
   };
   useEffect(() => {
     // the frame changes size with the window and with the video itself (ReelsPage shapes it to the playing video): measure again each time
