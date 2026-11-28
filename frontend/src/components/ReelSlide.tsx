@@ -359,7 +359,7 @@ export const ReelSlide = memo(function ReelSlide({
       </div>
 
       {mode === 'watch' && (
-        <div style={{ position: 'absolute', top: 'var(--reel-top-pad, 0px)', left: 0, right: 0, bottom: 0 }}>
+        <div style={{ position: 'absolute', inset: 0 }}>
           {/* full-bleed background */}
           <div
             style={{

@@ -2885,33 +2885,31 @@ html {
 }
 /* ReelsPage: the reel fills the whole frame up to the top; For you / Playlists and the subjects float over its top edge as frosted glass (the reel's own badge steps below them) */
 .reels-stage {
-  position: relative;
-  /* the height the For you / Playlists words take at the top: the video starts under it, the dark frame itself goes up to the top of the screen */
-  --reel-top-pad: 40px;
-  --reel-badge-top: 48px;
+  display: flex;
+  flex-direction: column;
+  --reel-badge-top: 14px;
 }
 .reels-stage:has(.reels-playlists) {
-  --reel-top-pad: 72px;
-  --reel-badge-top: 80px;
+  --reel-badge-top: 46px;
 }
-/* the words float over a soft shadow at the top, like the one behind the caption at the bottom */
+/* the subjects float over the reel's top edge */
 .reels-switch {
   position: absolute;
   inset-inline: 0;
-  top: 0;
+  top: 8px;
   z-index: 5;
-  display: grid;
-  gap: 4px;
-  padding: 8px 12px 18px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.55) 60%, transparent);
+  padding: 0 12px;
+  background: transparent;
   pointer-events: none;
 }
 .reels-switch > * {
   pointer-events: auto;
 }
+/* the reel fills what is left under the For you / Playlists words */
 .reels-screen {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  flex: 1;
+  min-block-size: 0;
 }
 .reels-tabs,
 .reels-playlists {
@@ -2922,6 +2920,7 @@ html {
 }
 .reels-tabs {
   gap: 24px;
+  padding: 8px 12px 6px;
 }
 .reels-playlists {
   gap: 16px;
@@ -2963,6 +2962,18 @@ html {
   color: var(--gold);
   border-block-end-color: var(--gold);
 }
+/* the two words sit above the reel on the page itself, so they follow the theme text colours */
+.reels-tabs .reels-tab {
+  color: var(--ink-soft);
+  text-shadow: none;
+}
+.reels-tabs .reels-tab:hover,
+.reels-tabs .reels-tab.is-on {
+  color: var(--ink);
+}
+.reels-tabs .reels-tab.is-on {
+  border-block-end-color: var(--ink);
+}
 .reels-tab:focus-visible,
 .reels-playlist:focus-visible {
   outline: 3px solid var(--gold);
@@ -2973,7 +2984,6 @@ html {
   display: none;
 }
 .reels-stage:has(.swiper-slide-active .reel-sheet) {
-  --reel-top-pad: 0px;
   --reel-badge-top: 14px;
 }
 .reels-playlist-empty {

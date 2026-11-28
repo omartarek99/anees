@@ -364,8 +364,7 @@ export function ReelsPage() {
           button logical-property layout still mirrors correctly for Arabic. */}
       <div className="reels-frame-row flex-center gap-md" style={{ direction: 'ltr' }}>
         <div ref={wheelFrame} className="reels-stage" style={{ direction: dir, width: 'min(100%, 560px)', height: '100%' }}>
-        {/* For you / Playlists: a bar of buttons above the reel (not over the video), the playlists under it */}
-        <div className="reels-switch">
+        {/* For you / Playlists: two small words above the reel, outside it; the subjects float inside the reel's top edge */}
         <div className="reels-tabs" role="tablist">
           {(['forYou', 'playlists'] as const).map((k) => {
             const on = k === 'forYou' ? tab === 'forYou' : tab !== 'forYou';
@@ -376,17 +375,18 @@ export function ReelsPage() {
             );
           })}
         </div>
+        <div className="reels-screen">
         {tab !== 'forYou' && (
-          <div className="reels-playlists">
-            {PLAYLISTS.map((p) => (
-              <button key={p.key} type="button" aria-pressed={tab === p.key} className={`reels-playlist${tab === p.key ? ' is-on' : ''}`} onClick={() => pickTab(p.key)}>
-                {t(p.label)}
-              </button>
-            ))}
+          <div className="reels-switch">
+            <div className="reels-playlists">
+              {PLAYLISTS.map((p) => (
+                <button key={p.key} type="button" aria-pressed={tab === p.key} className={`reels-playlist${tab === p.key ? ' is-on' : ''}`} onClick={() => pickTab(p.key)}>
+                  {t(p.label)}
+                </button>
+              ))}
+            </div>
           </div>
         )}
-        </div>
-        <div className="reels-screen">
         {slides.length === 0 ? (
           <div className="reels-playlist-empty">{t('reels.playlistEmpty')}</div>
         ) : (
