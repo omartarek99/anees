@@ -119,6 +119,24 @@ export const ReelSlide = memo(function ReelSlide({
   // lesson and its description).
   const [captionExpanded, setCaptionExpanded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  // How the video fills the screen (laptop frame or phone): a video close to the frame's shape fills it edge to edge, a very different one (a wide screen
+  // recording) is shown whole instead of being cut. Measured when the video's size is known and again when the window changes.
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [videoFit, setVideoFit] = useState<'cover' | 'contain'>('cover');
+  const sizeRef = useRef<{ w: number; h: number } | null>(null);
+  const measureFit = () => {
+    const size = sizeRef.current;
+    const frame = frameRef.current;
+    if (!size || !frame || !frame.clientWidth || !frame.clientHeight) return;
+    // the share of the video that stays visible when it fills the frame: 1 = nothing is cut
+    const visible = Math.min(1, Math.min(size.w / size.h / (frame.clientWidth / frame.clientHeight), frame.clientWidth / frame.clientHeight / (size.w / size.h)));
+    setVideoFit(visible >= 0.6 ? 'cover' : 'contain');
+  };
+  useEffect(() => {
+    if (!isActive) return;
+    window.addEventListener('resize', measureFit);
+    return () => window.removeEventListener('resize', measureFit);
+  }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
   // true from landing on a reel until its video is actually playing (and again whenever it stalls): a spinner shows meanwhile, so a slow start
   // reads as loading and not as a frozen page
   const [buffering, setBuffering] = useState(true);
@@ -308,6 +326,7 @@ export const ReelSlide = memo(function ReelSlide({
 
   return (
     <div
+      ref={frameRef}
       style={{
         height: '100%',
         width: '100%',
@@ -382,10 +401,13 @@ export const ReelSlide = memo(function ReelSlide({
                 playsInline
                 onEnded={handleVideoEnded}
                 onTimeUpdate={handleTimeUpdate}
-                // contain, not cover: lesson videos are often landscape screen recordings, and cover
-                // crops them (sides cut off) to fill the tall phone frame. Contain shows the whole
-                // video, letterboxed on the dark background.
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                onLoadedMetadata={(e) => {
+                  sizeRef.current = { w: e.currentTarget.videoWidth, h: e.currentTarget.videoHeight };
+                  measureFit();
+                }}
+                // cover when the video is close to the frame's shape (it fills the whole screen, laptop and phone); contain
+                // when it is very different (a landscape screen recording would lose its sides), so nothing important is cut.
+                style={{ width: '100%', height: '100%', objectFit: videoFit }}
               />
             ) : (
               <div
