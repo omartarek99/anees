@@ -130,14 +130,16 @@ export const ReelSlide = memo(function ReelSlide({
     if (!size || !frame || !frame.clientWidth || !frame.clientHeight) return;
     // the share of the video that stays visible when it fills the frame: 1 = nothing is cut
     const visible = Math.min(1, Math.min(size.w / size.h / (frame.clientWidth / frame.clientHeight), frame.clientWidth / frame.clientHeight / (size.w / size.h)));
-    // a video close to the frame's shape fills it edge to edge, left to right and top to bottom (at most ~30% trimmed, usually nothing: the frame is 9:16 on a laptop);
-    // a very different one (a wide screen recording) is shown whole instead
-    setVideoFit(visible >= 0.6 ? 'cover' : 'contain');
+    // the frame is shaped like the playing video (ReelsPage), so the picture normally fills it exactly, left to right and top to bottom, with nothing cut;
+    // only a video much wider than the frame (a landscape screen recording) is shown whole, with a bar above and below
+    setVideoFit(visible >= 0.75 ? 'cover' : 'contain');
   };
   useEffect(() => {
-    if (!isActive) return;
-    window.addEventListener('resize', measureFit);
-    return () => window.removeEventListener('resize', measureFit);
+    // the frame changes size with the window and with the video itself (ReelsPage shapes it to the playing video): measure again each time
+    if (!isActive || !frameRef.current) return;
+    const observer = new ResizeObserver(measureFit);
+    observer.observe(frameRef.current);
+    return () => observer.disconnect();
   }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
   // true from landing on a reel until its video is actually playing (and again whenever it stalls): a spinner shows meanwhile, so a slow start
   // reads as loading and not as a frozen page

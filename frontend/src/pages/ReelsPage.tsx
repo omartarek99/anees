@@ -205,6 +205,22 @@ export function ReelsPage() {
   // For you: every lesson in a random order (the server's). A playlist: one subject and one grade, in curriculum order (unit, then lesson).
   const [tab, setTab] = useState<Tab>('forYou');
   const [lastPlaylist, setLastPlaylist] = useState<Tab>('math');
+  // The frame is shaped like the playing video (its width from the video's own proportions, up to 680px), so the picture fits the frame's length and width
+  // exactly, with no bars at the sides and nothing cut. Read from the playing video when its size is known and whenever the swipe lands on another one.
+  const [videoAspect, setVideoAspect] = useState<number | null>(null);
+  useEffect(() => {
+    const read = () => {
+      const video = document.querySelector<HTMLVideoElement>('.reels-screen .swiper-slide-active video');
+      if (video?.videoWidth && video.videoHeight) setVideoAspect(Math.round((video.videoWidth / video.videoHeight) * 1000) / 1000);
+    };
+    read();
+    document.addEventListener('loadedmetadata', read, true);
+    const id = window.setInterval(read, 600);
+    return () => {
+      document.removeEventListener('loadedmetadata', read, true);
+      window.clearInterval(id);
+    };
+  }, []);
   const pickTab = (next: Tab) => {
     if (next === tab) return;
     if (next !== 'forYou') setLastPlaylist(next);
@@ -363,7 +379,7 @@ export function ReelsPage() {
           wrapper resets back to the real page direction so the reel's own caption/badge/exit-
           button logical-property layout still mirrors correctly for Arabic. */}
       <div className="reels-frame-row flex-center gap-md" style={{ direction: 'ltr' }}>
-        <div ref={wheelFrame} className="reels-stage" style={{ direction: dir, width: 'min(100%, 680px)', height: '100%' }}>
+        <div ref={wheelFrame} className="reels-stage" style={{ direction: dir, width: videoAspect ? `min(100%, 680px, calc(100dvh * ${videoAspect}))` : 'min(100%, 680px)', height: '100%', transition: 'width 0.25s ease' }}>
         {/* For you / Playlists: a bar of buttons above the reel (not over the video), the playlists under it */}
         <div className="reels-switch">
         <div className="reels-tabs" role="tablist">
