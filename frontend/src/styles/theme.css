@@ -2886,10 +2886,10 @@ html {
 /* ReelsPage: the reel fills the whole frame up to the top; For you / Playlists and the subjects float over its top edge as frosted glass (the reel's own badge steps below them) */
 .reels-stage {
   position: relative;
-  --reel-badge-top: 54px;
+  --reel-badge-top: 46px;
 }
 .reels-stage:has(.reels-playlists) {
-  --reel-badge-top: 98px;
+  --reel-badge-top: 78px;
 }
 .reels-switch {
   position: absolute;
@@ -2897,7 +2897,7 @@ html {
   top: 8px;
   z-index: 5;
   display: grid;
-  gap: 8px;
+  gap: 4px;
   padding: 0 12px;
   background: transparent;
   pointer-events: none;
@@ -2909,73 +2909,55 @@ html {
   position: absolute;
   inset: 0;
 }
-.reels-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  padding: 4px;
-  inline-size: min(100%, 320px);
-  margin-inline: auto;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 20px rgba(0, 0, 0, 0.18);
-  -webkit-backdrop-filter: blur(14px) saturate(1.5);
-  backdrop-filter: blur(14px) saturate(1.5);
-}
+.reels-tabs,
 .reels-playlists {
   display: flex;
   justify-content: safe center;
-  gap: 6px;
   overflow-x: auto;
   scrollbar-width: none;
 }
+.reels-tabs {
+  gap: 24px;
+}
+.reels-playlists {
+  gap: 16px;
+}
 .reels-tab,
 .reels-playlist {
+  flex: 0 0 auto;
   border: none;
+  background: none;
   font: inherit;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
+  color: rgba(255, 255, 255, 0.78);
+  /* no boxes: plain text over the video, with a soft shadow so it reads on a light picture too */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7), 0 0 8px rgba(0, 0, 0, 0.35);
+  border-block-end: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
 }
 .reels-tab {
-  padding: 9px 12px;
-  border-radius: 999px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 15.5px;
+  padding: 4px 2px;
+  font-size: 14px;
   font-weight: 800;
 }
-.reels-tab:hover {
-  color: #fff;
-}
-.reels-tab.is-on {
-  background: rgba(255, 255, 255, 0.82);
-  color: #14141a;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 10px rgba(0, 0, 0, 0.18);
-}
 .reels-playlist {
-  flex: 0 0 auto;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  -webkit-backdrop-filter: blur(12px) saturate(1.5);
-  backdrop-filter: blur(12px) saturate(1.5);
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
-  font-size: 13.5px;
+  padding: 3px 1px;
+  font-size: 12.5px;
   font-weight: 700;
 }
+.reels-tab:hover,
 .reels-playlist:hover {
-  background: rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+/* the chosen one: white (the subject, gold) with a thin line under it */
+.reels-tab.is-on {
+  color: #fff;
+  border-block-end-color: #fff;
 }
 .reels-playlist.is-on {
-  background: rgba(240, 170, 50, 0.78);
-  border-color: rgba(255, 220, 140, 0.7);
-  color: #14141a;
-  text-shadow: none;
+  color: var(--gold);
+  border-block-end-color: var(--gold);
 }
 .reels-tab:focus-visible,
 .reels-playlist:focus-visible {
