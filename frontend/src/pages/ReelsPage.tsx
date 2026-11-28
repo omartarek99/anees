@@ -364,7 +364,7 @@ export function ReelsPage() {
           wrapper resets back to the real page direction so the reel's own caption/badge/exit-
           button logical-property layout still mirrors correctly for Arabic. */}
       <div className="reels-frame-row flex-center gap-md" style={{ direction: 'ltr' }}>
-        <div ref={wheelFrame} className="reels-stage" style={{ direction: dir, width: 'min(100%, 560px)', height: '100%' }}>
+        <div ref={wheelFrame} className="reels-stage" style={{ direction: dir, width: 'min(100%, 560px, calc(100dvh * 0.6))', height: '100%' /* about the shape of a 9:16 video, so on a laptop it fills the frame almost edge to edge */ }}>
         {/* For you / Playlists: a bar of buttons above the reel (not over the video), the playlists under it */}
         <div className="reels-switch">
         <div className="reels-tabs" role="tablist">
